@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>判定1-C/D: Vosk 動作確認</title>
+<script>
+  // ?coi=1 のとき mini-coi を先頭で読む
+  if (new URLSearchParams(location.search).has('coi')) {
+    document.write('<script src="../mini-coi.js" scope="../"><\/script>');
+  }
+</script>
+<style>
+  body{font-family:system-ui,sans-serif;padding:1.2em;line-height:1.7;font-size:16px}
+  button{font-size:1.1em;padding:.6em 1em;margin:.3em .3em .3em 0;min-height:48px}
+  #log{white-space:pre-wrap;background:#f2f2f2;padding:.8em;margin-top:1em;border-radius:6px}
+  .ok{color:#0a7a0a;font-weight:700}.ng{color:#b00;font-weight:700}
+  code{background:#eee;padding:.1em .3em}
+</style>
+</head>
+<body>
+<h1>判定1-C / 1-D: Vosk 動作確認</h1>
+<p>
+  <code>?coi=1</code> で mini-coi あり。<code>?model=&lt;URL&gt;</code> で別オリジンのモデルを指定（1-D）。<br>
+  既定モデルURLは同一オリジンの <code>./model/model.tar.gz</code>。先にモデルを配置してください。
+</p>
+<p>分離状態: <span id="coi" class="ok"></span></p>
+<button id="btnLoad">モデル読込</button>
+<button id="btnRec" disabled>マイクで認識（「みぎ」等）</button>
+<div id="log"></div>
+
+<!-- vosk-browser を CDN から。実運用では lib/ に配置するが、probe では取得の手間を省く -->
+<script src="https://cdn.jsdelivr.net/npm/vosk-browser@0.0.8/dist/vosk.js"></script>
+<script>
+const q = new URLSearchParams(location.search);
+const logEl = document.getElementById('log');
+const log = (m, cls) => { const d=document.createElement('div'); if(cls)d.className=cls; d.textContent=m; logEl.appendChild(d); };
+document.getElementById('coi').textContent = self.crossOriginIsolated ? 'crossOriginIsolated=true' : 'crossOriginIsolated=false';
+document.getElementById('coi').className = self.crossOriginIsolated ? 'ok' : 'ng';
+
+const MODEL_URL = q.get('model') || './model/model.tar.gz';
+let model = null, t0 = 0;
+
+document.getElementById('btnLoad').onclick = async () => {
+  log('--- モデル読込 ---');
+  log('SharedArrayBuffer: ' + (typeof SharedArrayBuffer !== 'undefined' ? 'あり' : 'なし'),
+      typeof SharedArrayBuffer !== 'undefined' ? 'ok' : 'ng');
+  log('URL: ' + MODEL_URL);
+  t0 = performance.now();
+  try {
+    model = await Vosk.createModel(MODEL_URL);
+    const sec = ((performance.now() - t0) / 1000).toFixed(1);
+    log('読込成功。所要 ' + sec + ' 秒', 'ok');
+    if (performance.memory) log('JSヒープ概算: ' + (performance.memory.usedJSHeapSize/1048576).toFixed(0) + 'MB');
+    document.getElementById('btnRec').disabled = false;
+  } catch (e) {
+    log('読込失敗: ' + e.message, 'ng');
+    log('→ 分離が必要な可能性。?coi=1 を付けて再試行、またはNetworkでblocked:...Coepを確認', 'ng');
+  }
+};
+
+document.getElementById('btnRec').onclick = async () => {
+  log('--- 認識 ---');
+  try {
+    const rec = new model.KaldiRecognizer(16000);
+    rec.on('result', (msg) => log('結果: 「' + msg.result.text + '」', 'ok'));
+    rec.on('partialresult', (msg) => { if (msg.result.partial) log('（途中: ' + msg.result.partial + '）'); });
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation:true, noiseSuppression:true, channelCount:1, sampleRate:16000 }, video:false });
+    const ac = new AudioContext();
+    const node = ac.createScriptProcessor(4096, 1, 1);
+    node.onaudioprocess = (ev) => { try { rec.acceptWaveform(ev.inputBuffer); } catch(e){ console.error(e); } };
+    ac.createMediaStreamSource(stream).connect(node);
+    node.connect(ac.destination);
+    log('話してください（「みぎ」「ひだり」「ストップ」）…');
+  } catch (e) {
+    log('認識開始に失敗: ' + e.message, 'ng');
+  }
+};
+</script>
+</body>
+</html>

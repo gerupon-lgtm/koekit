@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>判定2: 端末内Web Speech (ja-JP)</title>
+<style>
+  body{font-family:system-ui,sans-serif;padding:1.2em;line-height:1.7;font-size:16px}
+  button{font-size:1.1em;padding:.6em 1em;margin:.3em .3em .3em 0;min-height:48px}
+  #log{white-space:pre-wrap;background:#f2f2f2;padding:.8em;margin-top:1em;border-radius:6px}
+  .ok{color:#0a7a0a;font-weight:700}.ng{color:#b00;font-weight:700}
+</style>
+</head>
+<body>
+<h1>判定2: 端末内 Web Speech (ja-JP)</h1>
+<p>Chromeのバージョンも <code>chrome://version</code> で控えてください。</p>
+<button id="btnCheck">B: 端末内の可否確認</button>
+<button id="btnInstall">B: 導入して認識（「ストップ」）</button>
+<button id="btnPlainA">A: 既定モードで認識（参考）</button>
+<div id="log"></div>
+<script>
+const logEl = document.getElementById('log');
+const log = (m, cls) => {
+  const line = document.createElement('div');
+  if (cls) line.className = cls;
+  line.textContent = m;
+  logEl.appendChild(line);
+};
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+document.getElementById('btnCheck').onclick = async () => {
+  log('--- 可否確認 ---');
+  if (!SR) { log('SpeechRecognition が存在しない → B不可', 'ng'); return; }
+  log('SpeechRecognition 存在: yes', 'ok');
+  if (typeof SR.available !== 'function') {
+    log('SR.available() が無い → 端末内モード未対応の可能性が高い（B不可）', 'ng');
+    return;
+  }
+  try {
+    const r = await SR.available({ langs: ['ja-JP'], processLocally: true });
+    log('ja-JP 端末内 可否 = ' + JSON.stringify(r),
+        (r && r !== 'unavailable') ? 'ok' : 'ng');
+  } catch (e) {
+    log('available() 例外: ' + e.message + ' → B不可の可能性', 'ng');
+  }
+};
+
+document.getElementById('btnInstall').onclick = async () => {
+  log('--- 導入して認識 ---');
+  if (!SR) { log('SpeechRecognition 無し', 'ng'); return; }
+  try {
+    if (typeof SR.install === 'function') {
+      log('install() 実行中…');
+      await SR.install({ langs: ['ja-JP'], processLocally: true });
+      log('install() 完了', 'ok');
+    } else {
+      log('install() が無い。そのまま認識を試す');
+    }
+    const rec = new SR();
+    rec.lang = 'ja-JP';
+    rec.processLocally = true;          // 端末内を要求
+    rec.continuous = false;
+    rec.interimResults = false;
+    rec.onresult = (ev) => log('認識: 「' + ev.results[0][0].transcript + '」', 'ok');
+    rec.onerror  = (ev) => log('onerror: ' + ev.error, 'ng');
+    rec.onend    = ()   => log('onend（セッション終了）');
+    rec.start();
+    log('話してください（「ストップ」）…');
+  } catch (e) {
+    log('例外: ' + e.message + ' → B不可', 'ng');
+  }
+};
+
+document.getElementById('btnPlainA').onclick = () => {
+  log('--- 既定モード（方式A・参考）---');
+  if (!SR) { log('SpeechRecognition 無し', 'ng'); return; }
+  const rec = new SR();
+  rec.lang = 'ja-JP';
+  rec.continuous = false;
+  rec.interimResults = false;
+  rec.onresult = (ev) => log('認識: 「' + ev.results[0][0].transcript + '」', 'ok');
+  rec.onerror  = (ev) => log('onerror: ' + ev.error, 'ng');
+  rec.onend    = ()   => log('onend');
+  rec.start();
+  log('話してください（「ストップ」）…');
+};
+</script>
+</body>
+</html>

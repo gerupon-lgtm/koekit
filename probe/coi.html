@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>判定1: クロスオリジン分離</title>
+<!-- ?coi=1 のときだけ mini-coi を先頭で読む。mini-coi.js はリポジトリ直下に配置する -->
+<script>
+  if (new URLSearchParams(location.search).has('coi')) {
+    document.write('<script src="../mini-coi.js" scope="../"><\/script>');
+  }
+</script>
+<style>
+  body{font-family:system-ui,sans-serif;padding:1.2em;line-height:1.7;font-size:16px}
+  .v{font-weight:700}
+  .ok{color:#0a7a0a}.ng{color:#b00}
+  table{border-collapse:collapse;margin-top:1em}
+  td,th{border:1px solid #ccc;padding:.4em .7em;text-align:left}
+  code{background:#f2f2f2;padding:.1em .3em}
+</style>
+</head>
+<body>
+<h1>判定1: クロスオリジン分離</h1>
+<p>URLに <code>?coi=1</code> を付けると mini-coi を挟みます（初回は自動リロード）。</p>
+<table>
+  <tr><th>項目</th><th>値</th></tr>
+  <tr><td><code>?coi=1</code> 指定</td><td class="v" id="coiFlag"></td></tr>
+  <tr><td><code>crossOriginIsolated</code></td><td class="v" id="coi"></td></tr>
+  <tr><td><code>SharedArrayBuffer</code> 利用可</td><td class="v" id="sab"></td></tr>
+  <tr><td>この文書のCOOP/COEP（参考）</td><td class="v" id="hdr"></td></tr>
+</table>
+<p id="hint" style="margin-top:1em"></p>
+<script>
+  const q = new URLSearchParams(location.search);
+  const set = (id, ok, txt) => {
+    const el = document.getElementById(id);
+    el.textContent = txt;
+    el.className = 'v ' + (ok ? 'ok' : 'ng');
+  };
+  set('coiFlag', q.has('coi'), q.has('coi') ? 'あり' : 'なし');
+  set('coi', !!self.crossOriginIsolated, String(!!self.crossOriginIsolated));
+  set('sab', typeof SharedArrayBuffer !== 'undefined', typeof SharedArrayBuffer !== 'undefined' ? 'true' : 'false');
+  // ヘッダは JS から直接は読めないため参考メッセージのみ
+  document.getElementById('hdr').textContent = '（DevTools > Network > 文書レスポンスで確認）';
+  document.getElementById('hint').textContent =
+    self.crossOriginIsolated
+      ? '分離が有効です。この状態で判定1-CのVoskが動くか確かめてください。'
+      : '分離は無効です。素の状態でVoskが動けばmini-coiは不要、動かなければ ?coi=1 で再確認してください。';
+</script>
+</body>
+</html>
