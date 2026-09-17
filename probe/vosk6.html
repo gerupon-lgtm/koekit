@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>判定1-C改5: partial可視化</title>
+<style>
+  body{font-family:system-ui,sans-serif;padding:1.2em;line-height:1.7;font-size:16px}
+  button{font-size:1.1em;padding:.7em 1.1em;margin:.3em .3em .3em 0;min-height:52px}
+  #big{font-size:2em;font-weight:700;color:#0a7a0a;min-height:1.3em;margin:.3em 0}
+  #partial{font-size:1.3em;color:#555;min-height:1.3em}
+  #meter{height:20px;background:#ddd;border-radius:10px;overflow:hidden;margin:.3em 0}
+  #bar{height:100%;width:0;background:#0a7a0a}
+  #stat{font-size:1em;font-weight:700}
+  #log{white-space:pre-wrap;background:#f2f2f2;padding:.8em;margin-top:1em;border-radius:6px;font-size:.9em}
+  .ok{color:#0a7a0a;font-weight:700}.ng{color:#b00;font-weight:700}
+</style>
+</head>
+<body>
+<h1>判定1-C改5</h1>
+<p>partial（途中経過）とイベント発火を全部ログに出します。</p>
+<p>分離: <span id="coi"></span></p>
+
+<button id="btnLoad">1. モデル読込</button>
+<button id="btnRec" disabled>2. 認識開始</button>
+<button id="btnStop" disabled>停止</button>
+
+<div style="margin-top:.8em">確定: <span id="big"></span></div>
+<div>途中: <span id="partial"></span></div>
+<div id="meter"><div id="bar"></div></div>
+<div id="stat">送った回数:0 ／ result:0 ／ partial:0</div>
+
+<div id="log"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/vosk-browser@0.0.8/dist/vosk.js"></script>
+<script>
+const q=new URLSearchParams(location.search);
+const $=id=>document.getElementById(id);
+const log=(m,cls)=>{const d=document.createElement('div');if(cls)d.className=cls;d.textContent=m;$('log').appendChild(d);};
+$('coi').textContent='crossOriginIsolated='+!!self.crossOriginIsolated;
+
+const MODEL_URL=q.get('model')||'./model/model.tar.gz';
+let model=null, rec=null, ac=null, node=null, src=null, stream=null;
+let sent=0, nRes=0, nPar=0, peak=0, errShown=false;
+
+$('btnLoad').onclick=async()=>{
+  log('--- モデル読込 ---'); log('URL: '+MODEL_URL);
+  const t0=performance.now();
+  try{
+    model=await Vosk.createModel(MODEL_URL);
+    log('createModel 成功 '+((performance.now()-t0)/1000).toFixed(1)+'秒','ok');
+    // モデルオブジェクトの中身をのぞく
+    log('model のキー: '+Object.keys(model).join(', '));
+    if (model.messagePort) log('messagePort: あり');
+    $('btnRec').disabled=false;
+  }catch(e){ log('createModel 失敗: '+e.message,'ng'); }
+};
+
+$('btnRec').onclick=async()=>{
+  log('--- 認識開始 ---'); sent=0;nRes=0;nPar=0;peak=0;errShown=false;
+  try{
+    rec=new model.KaldiRecognizer(16000);
+    log('KaldiRecognizer 生成 OK','ok');
+    // 考えうるイベントを全部拾う
+    ['result','partialresult','finalresult','error'].forEach(name=>{
+      try{
+        rec.on(name,(m)=>{
+          if(name==='result'){ nRes++; const t=m&&m.result&&m.result.text; if(t){$('big').textContent=t;} log('[result] '+JSON.stringify(m&&m.result),'ok'); }
+          else if(name==='partialresult'){ nPar++; const p=m&&m.result&&m.result.partial; if(p){$('partial').textContent=p;} if(nPar<=3) log('[partial] '+JSON.stringify(m&&m.result)); }
+          else log('['+name+'] '+JSON.stringify(m));
+          $('stat').textContent='送った回数:'+sent+' ／ result:'+nRes+' ／ partial:'+nPar;
+        });
+      }catch(e){ log('on('+name+') 失敗: '+e.message,'ng'); }
+    });
+
+    stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,channelCount:1},video:false});
+    ac=new AudioContext({sampleRate:16000});
+    if(ac.state==='suspended') await ac.resume();
+    log('sampleRate='+ac.sampleRate+' state='+ac.state);
+
+    await ac.audioWorklet.addModule('./vosk-worklet.js');
+    src=ac.createMediaStreamSource(stream);
+    node=new AudioWorkletNode(ac,'vosk-capture');
+    node.port.onmessage=(ev)=>{
+      const data=ev.data; if(!data||!data.length)return;
+      let mx=0; for(let i=0;i<data.length;i++){const v=Math.abs(data[i]);if(v>mx)mx=v;}
+      if(mx>peak)peak=mx; $('bar').style.width=Math.min(100,mx*300).toFixed(0)+'%';
+      sent++; if(sent%10===0)$('stat').textContent='送った回数:'+sent+' ／ result:'+nRes+' ／ partial:'+nPar;
+      try{
+        const buf=ac.createBuffer(1,data.length,16000);
+        buf.copyToChannel?buf.copyToChannel(data,0):buf.getChannelData(0).set(data);
+        rec.acceptWaveform(buf);
+      }catch(e){ if(!errShown){log('acceptWaveform失敗: '+e.message,'ng');errShown=true;} }
+    };
+    src.connect(node); node.connect(ac.destination);
+    $('btnStop').disabled=false;
+    log('話してください。「みぎ」と言って2秒黙る、を数回。','ok');
+  }catch(e){ log('認識開始 失敗: '+e.message,'ng'); }
+};
+
+$('btnStop').onclick=()=>{
+  try{ node&&node.disconnect(); src&&src.disconnect(); stream&&stream.getTracks().forEach(t=>t.stop()); ac&&ac.close(); }catch(e){}
+  log('停止。送った回数='+sent+' result='+nRes+' partial='+nPar+' 最大音量='+peak.toFixed(3));
+  $('btnStop').disabled=true;
+};
+</script>
+</body>
+</html>
