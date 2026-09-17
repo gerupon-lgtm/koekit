@@ -285,6 +285,9 @@
 | 2026-09-18 | T-009語彙照合・T-013 CSV/JST境界・T-014 metrics・T-010区間遷移を Node で検証（39項目、通常/TZ=UTC 両通過） | `node scripts/test-logic.cjs` / `TZ=UTC node scripts/test-logic.cjs` |
 | 2026-09-18 | T-011 ルーレット：タッチで start→加速→stop→惰性→出目確定（0-9巡回）を確認 | ローカルHTTP＋ブラウザ操作 |
 | 2026-09-18 | T-003 SW/オフラインはビルトインブラウザでは登録不可のため本番HTTPSで検証する方針 | ペイン制約（getRegistrations空） |
+| 2026-09-18 | 本番HTTPSで SW登録成功（scope /koekit/）・キャッシュ名 koekit-v0.1.0・アプリシェル11件プリキャッシュ | ライブサイトで getRegistrations/caches 確認 |
+| 2026-09-18 | 方式C 本番モデルURL（R2）を config.js に確定設定。R2到達確認(206/application/gzip/ACAO) | curl＋実ブラウザ |
+| 2026-09-18 | 本番実ブラウザで方式C: R2からモデル取得(47.3MB・約3.6秒)→KaldiRecognizer生成まで成功。詰め方問題は再現せず | ライブサイトで createModel＋KaldiRecognizer 実行 |
 
 ## フェーズ0 実装状況（T-001〜T-014）
 
@@ -299,7 +302,7 @@
 | T-005 入力層インターフェース | ✅ | `src/speech/index.js` ファクトリ。ゲーム側は方式名を知らない |
 | T-006 方式A アダプタ | ✅(実装) / 🧪 | `webspeech.js`。実発話の認識は実機 |
 | T-007 方式B アダプタ・ja-JP可否 | ✅(実装) / 判明済 | `available()`で可否判定。実機で ja-JP 非対応と判明済（予備） |
-| T-008 方式C アダプタ・モデル配信 | ✅(実装) / 🧪 / ⏳ | `vosk.js`＋`lib/vosk/vosk.js`。**R2公開URLの設定待ち**（config.js） |
+| T-008 方式C アダプタ・モデル配信 | ✅(実装) / ✅(取得〜Recognizer生成) / 🧪(実発話) | `vosk.js`＋`lib/vosk/vosk.js`。R2 URL確定・config.jsに設定。本番実ブラウザで取得〜生成成功 |
 | T-009 語彙テーブルと照合 | ✅ | Nodeテスト通過。同義語表はデータ、コード不変で拡張可 |
 | T-010 受け付け区間ステートマシン | ✅ | 5状態。result で認識停止。Nodeテスト通過 |
 | T-011 レベル0 ルーレット | ✅(タッチ) / 🧪(音声) | 二重start防止・惰性停止。タッチ経路を確認 |
@@ -307,4 +310,4 @@
 | T-013 CSVクリップボード出力 | ✅ | 全クォート・JST変換・境界。clipboard＋textareaフォールバック |
 | T-014 合格ライン判定・計測パネル | ✅ | 4指標＋合否。閾値1箇所。ログ0件表示。S-07実装 |
 
-**⏳ 入力待ち（発案者）**: 方式C の本番モデルURL（Cloudflare R2 公開URL）。`src/speech/config.js` の `DEFAULT_MODEL_URL` を差し替える。フィールド検証時は `?model=<URL>` で上書き可。
+**残るは実機フィールド検証（発案者）**: 音声の実発話に関わる指標（要件11.1 の認識成功率・反映時間・連続使用）と、方式Cの実認識・オフライン起動。計測パネル（S-07）で方式を切り替え、CSVを取得して合否を判定する。
