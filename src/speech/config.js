@@ -9,8 +9,9 @@
 // 既定値は placeholder。公開前に発案者のR2公開URL（または同梱するローカルパス）へ差し替える。
 // モデルは `model/` を一段かませて tar.gz 化したものを指すこと（field-check-results.md）。
 
-// TODO(発案者): 公開版のR2公開URLに差し替える。ローカル検証時は ?model= で上書きできる。
-export const DEFAULT_MODEL_URL = 'https://REPLACE-WITH-YOUR-BUCKET.r2.dev/model.tar.gz';
+// 公開版のモデル配信先（Cloudflare R2 公開URL）。実機検証で github.io から CORS設定なしで取得できたバケット。
+// 検証時は ?model= で別URLに上書きできる。
+export const DEFAULT_MODEL_URL = 'https://pub-4c91bbf040094f6aab68bd9faf87468d.r2.dev/model.tar.gz';
 
 export function resolveModelUrl() {
   try {
