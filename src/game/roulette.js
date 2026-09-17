@@ -9,12 +9,18 @@
 import { Emitter } from '../util/emitter.js';
 
 const DEFAULT = {
-  faces: 10,          // 出目 0..9
+  faces: 10,          // 出目 0..9（盤面では札の枚数）
   startInterval: 120, // 開始時の桁送り間隔(ms)
   minInterval: 45,    // 加速の下限(ms)
   accel: 0.94,        // 1ステップごとに間隔へ掛ける係数（<1で加速）
   decel: 1.18,        // 停止時に間隔へ掛ける係数（>1で減速）
   stopInterval: 320,  // これを超えたら停止確定(ms)
+  // フェイント停止（要件0章A区分・T-016異常系「単調にならない速度カーブ」）:
+  // 止まりそうになった瞬間、確率で再加速してから改めて止まる。正解の先読みを防ぐ。
+  // 既定は無効。レベル3以降で有効化する（呼び出し側でパラメータ指定）。
+  fakeoutProb: 0,     // 各「止まりそう」判定での再加速確率
+  fakeoutMax: 0,      // 1停止あたりの再加速の上限回数（必ず有限回で止まる）
+  fakeoutNear: 0.6,   // stopInterval に対しこの割合を超えたら「止まりそう」域
 };
 
 export class Roulette extends Emitter {
@@ -49,6 +55,7 @@ export class Roulette extends Emitter {
     if (this._state !== 'idle') return false;
     this._state = 'spinning';
     this._interval = this._c.startInterval;
+    this._fakeoutsLeft = this._c.fakeoutMax; // この停止で使えるフェイント回数
     this._nextAt = this._now() + this._interval;
     if (!this._running) { this._running = true; this._raf(this._loop); }
     this.emit('start');
@@ -74,14 +81,22 @@ export class Roulette extends Emitter {
     const t = this._now();
     if (t >= this._nextAt) {
       this._value = (this._value + 1) % this._c.faces;
-      this.emit('tick', this._value);
+      // 現在の送り間隔も渡す（音のピッチ・cadenceを速さに追従させるため）
+      this.emit('tick', this._value, this._interval);
       if (this._state === 'spinning') {
         // 加速（間隔を下限まで詰める）
         this._interval = Math.max(this._c.minInterval, this._interval * this._c.accel);
       } else if (this._state === 'stopping') {
         // 減速（間隔を広げ、しきい値を超えたら確定）
         this._interval *= this._c.decel;
-        if (this._interval >= this._c.stopInterval) {
+        // フェイント: 「止まりそう」域に入った瞬間、確率で再加速してから改めて止まる
+        if (this._fakeoutsLeft > 0 &&
+            this._interval >= this._c.stopInterval * this._c.fakeoutNear &&
+            Math.random() < this._c.fakeoutProb) {
+          this._fakeoutsLeft--;
+          this._interval = this._c.minInterval * 2.2; // 再加速（速くなる）
+          this.emit('fakeout');
+        } else if (this._interval >= this._c.stopInterval) {
           this._state = 'idle';
           this._running = false;
           this.emit('stop', this._value);

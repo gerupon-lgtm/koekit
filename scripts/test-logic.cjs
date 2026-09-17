@@ -25,6 +25,8 @@ function ok(cond, name) { eq(!!cond, true, name); }
   const csv     = await import(url('src/log/csv.js'));
   const metrics = await import(url('src/log/metrics.js'));
   const phase   = await import(url('src/game/phase.js'));
+  const judgeM  = await import(url('src/game/judge.js'));
+  const roul    = await import(url('src/game/roulette.js'));
 
   // ---- T-009 語彙照合 ----
   eq(vocab.match('みぎ'), 'right', 'みぎ → right');
@@ -119,6 +121,57 @@ function ok(cond, name) { eq(!!cond, true, name); }
   eq(ignored, 'みぎ', 'await_stop で みぎ は ignored（区間外）');
   pm.handleRaw('ストップ');
   eq(matched, 'stop', 'await_stop で ストップ は match');
+
+  // ---- T-020 成否判定と回数管理 ----
+  {
+    const J = judgeM.Judge;
+    // 3回正解で即クリア（4・5回目を待たない）
+    let j = new J();
+    eq(j.record('correct'), 'playing', '1正解: playing');
+    eq(j.record('wrong'), 'playing', '1正解1失敗: playing');
+    eq(j.record('correct'), 'playing', '2正解: playing');
+    eq(j.record('correct'), 'clear', '3正解で即クリア');
+    eq(j.attempts, 4, 'クリア時の試行数は4（5を待たない）');
+    // ignored はカウントしない
+    j = new J();
+    j.record('ignored'); j.record('ignored');
+    eq(j.attempts, 0, 'ignored はカウントしない');
+    // 2正解3失敗でゲームオーバー
+    j = new J();
+    ['correct','wrong','correct','wrong','wrong'].forEach(o => j.record(o));
+    eq(j.status, 'gameover', '2正解3失敗でゲームオーバー');
+    // 認識なしが何回あってもカウントが増えない → 決着しない
+    j = new J();
+    for (let i=0;i<10;i++) j.record('ignored');
+    eq(j.status, 'playing', 'ignoredのみでは決着しない');
+    // 決着後は二重遷移しない
+    j = new J();
+    ['correct','correct','correct'].forEach(o=>j.record(o));
+    eq(j.record('correct'), 'clear', 'クリア後にrecordしてもclearのまま');
+    eq(j.attempts, 3, 'クリア後にattemptsが増えない');
+  }
+
+  // ---- T-016 フェイント停止（必ず有限回で止まる） ----
+  {
+    // now を毎フレーム大きく進め、raf をキューで同期駆動して決定的に検証
+    const drive = (opts) => {
+      let now = 0; const q = [];
+      const r = new roul.Roulette({ now: () => now, raf: cb => q.push(cb), ...opts });
+      let fakeouts = 0, stopped = false;
+      r.on('fakeout', () => fakeouts++);
+      r.on('stop', () => { stopped = true; });
+      r.start(); r.stop();
+      let guard = 0;
+      while (q.length && guard++ < 200000) { const cb = q.shift(); now += 1000; cb(); if (stopped) break; }
+      return { fakeouts, stopped };
+    };
+    const a = drive({ fakeoutProb: 1, fakeoutMax: 2 });
+    eq(a.stopped, true, 'フェイント有でも必ず停止する');
+    eq(a.fakeouts, 2, 'フェイント回数は上限(2)で打ち止め');
+    const b = drive({ fakeoutProb: 0, fakeoutMax: 0 });
+    eq(b.stopped, true, 'フェイント無効でも停止する');
+    eq(b.fakeouts, 0, 'フェイント無効なら再加速しない');
+  }
 
   // ---- 結果 ----
   console.log(`\nテスト: ${passed} 通過 / ${failed} 失敗`);

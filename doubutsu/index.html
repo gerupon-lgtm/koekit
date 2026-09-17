@@ -15,42 +15,64 @@
     .screen { display: none; min-height: 100vh; }
     .screen.active { display: flex; flex-direction: column; }
 
-    /* 縦画面固定を基本とし、大きめのタップ領域を確保 */
     .btn-round {
       border: none; background: var(--color-accent); color: #fff;
-      width: 40vw; max-width: 200px; aspect-ratio: 1/1; border-radius: 50%;
-      display: grid; place-items: center; box-shadow: 0 6px 16px rgba(0,0,0,.18);
-      cursor: pointer;
+      width: 34vw; max-width: 170px; aspect-ratio: 1/1; border-radius: 50%;
+      display: grid; place-items: center; box-shadow: 0 6px 16px rgba(0,0,0,.18); cursor: pointer;
     }
     .btn-round:active { transform: scale(.97); }
     .btn-round svg { width: 45%; height: 45%; fill: #fff; }
-    .icon-btn {
-      border: none; background: transparent; padding: 10px; min-width: var(--tap-min);
-      min-height: var(--tap-min); border-radius: 12px; cursor: pointer;
-    }
+    .btn-round.confirm { background: #2ea44f; }
+    .icon-btn { border: none; background: transparent; padding: 10px; min-width: var(--tap-min);
+      min-height: var(--tap-min); border-radius: 12px; cursor: pointer; }
     .icon-btn svg { width: 28px; height: 28px; }
     .icon-btn:active { background: rgba(0,0,0,.06); }
+    .hidden { display: none !important; }
 
     /* S-02 タイトル */
-    #title { align-items: center; justify-content: center; gap: 28px; padding: 24px; position: relative; }
+    #title { align-items: center; justify-content: center; gap: 22px; padding: 24px; position: relative; }
     #title .app-title { font-size: 2rem; font-weight: 700; }
     #title .gear { position: absolute; top: 10px; right: 10px; color: #bbb; }
+    /* レベル選択（保護者用・数字/記号のみ） */
+    #level-select { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; max-width: 320px; }
+    .lv-btn { width: 52px; height: 52px; border-radius: 14px; border: 2px solid var(--color-accent);
+      background: #fff; color: var(--color-fg); font-family: var(--font-family); font-size: 1.3rem;
+      font-weight: 700; cursor: pointer; display: grid; place-items: center; }
+    .lv-btn:active { background: #fff8e6; }
+    .lv-btn svg { width: 26px; height: 26px; fill: var(--color-accent); }
     .title-footer { position: fixed; bottom: 12px; left: 0; right: 0; text-align: center; font-size: .8rem; color: #999; }
 
-    /* S-03 ゲーム（ルーレット） */
+    /* S-03/S-04 ゲーム */
     #game { padding: 0; }
     #game .topbar { display: flex; align-items: center; justify-content: space-between; padding: 8px 10px; }
-    /* 受け付け状態の枠（F-003）: 受け付け中は太い枠を光らせる */
-    #stage {
-      flex: 1; margin: 6px 12px; border-radius: 24px; border: 6px solid transparent;
-      display: grid; place-items: center; transition: border-color .15s, box-shadow .15s;
-    }
+    #stage { flex: 1; margin: 6px 12px; border-radius: 24px; border: 6px solid transparent;
+      display: grid; place-items: center; position: relative; transition: border-color .15s, box-shadow .15s; }
     #stage.listening { border-color: var(--color-accent); box-shadow: 0 0 0 6px rgba(255,179,0,.18) inset; }
     #stage.restarting { border-color: #ffd980; }
-    #roulette-num { font-size: 34vw; font-weight: 700; line-height: 1; color: var(--color-fg); font-variant-numeric: tabular-nums; }
-    #game .controls { display: grid; place-items: center; padding: 14px 0 26px; }
+    #roulette-num { font-size: 30vw; font-weight: 700; line-height: 1; color: var(--color-fg); font-variant-numeric: tabular-nums; }
 
-    /* マイク状態アイコン（F-003） */
+    /* 盤面（3×3グリッドに位置キーで札を置く） */
+    #board { display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr);
+      gap: 3vw; width: min(86vw, 86vh, 460px); aspect-ratio: 1/1; }
+    .card { border-radius: 16px; background: var(--color-accent); box-shadow: 0 3px 8px rgba(0,0,0,.15);
+      display: grid; place-items: center; position: relative; min-width: 0; }
+    .card.focus { outline: 6px solid #333; outline-offset: -3px; }
+    .card.selected { outline: 6px solid #2ea44f; outline-offset: -3px; }
+    .card.flipped { background: #fff; border: 3px solid #eee; }
+    /* 正解カードの仮置き（動物の絵の代わりに赤丸） */
+    .card .animal { width: 62%; height: 62%; border-radius: 50%; background: #e23b3b; display: none; }
+    .card.flipped.correct .animal { display: block; }
+
+    /* 認識結果の図示（矢印/中点）— 盤面中央に大きく重ねる */
+    #figure { position: absolute; inset: 0; pointer-events: none; display: none; place-items: center; }
+    #figure.show { display: grid; }
+    #figure svg { width: 42%; height: 42%; transition: transform .1s; }
+    #figure .arrow { fill: #2ea44f; }
+    #figure .dot { fill: #2ea44f; }
+
+    #game .controls { display: flex; gap: 20px; justify-content: center; padding: 12px 0 22px; }
+
+    /* マイク状態（F-003） */
     .mic { width: 34px; height: 34px; }
     .mic .body { fill: #c9c9c9; transition: fill .15s; }
     .mic .slash { stroke: #d33; stroke-width: 6; display: none; }
@@ -59,8 +81,18 @@
     .mic-state.denied .mic .slash { display: block; }
     .mic-state.restarting .mic .body { fill: var(--color-accent); animation: blink .6s steps(2,end) infinite; }
     @keyframes blink { 50% { opacity: .3; } }
-    .finger { width: 30px; height: 30px; margin-left: 6px; display: none; }
-    .mic-state.denied + .finger { display: inline-block; }
+    .finger { width: 30px; height: 30px; display: none; }
+    .mic-state.denied ~ .finger { display: inline-block; }
+
+    /* S-06 認定書（文字を使わず、メダル＋星で到達を示す） */
+    #cert { align-items: center; justify-content: center; gap: 26px; padding: 24px; text-align: center; }
+    .medal { width: 46vw; max-width: 220px; aspect-ratio: 1/1; border-radius: 50%;
+      display: grid; place-items: center; box-shadow: 0 8px 20px rgba(0,0,0,.18); }
+    .medal.clear { background: radial-gradient(circle at 50% 38%, #ffe08a, #ffb300); }
+    .medal.over  { background: radial-gradient(circle at 50% 38%, #d8d8d8, #a8a8a8); }
+    .medal svg { width: 56%; height: 56%; }
+    #cert-stars { display: flex; gap: 6px; }
+    #cert-stars svg { width: 26px; height: 26px; }
 
     /* S-07 計測パネル（検証用・文字あり） */
     #panel { padding: 16px; gap: 14px; overflow: auto; }
@@ -69,13 +101,10 @@
     #panel .metrics { width: 100%; border-collapse: collapse; font-size: .95rem; }
     #panel .metrics th, #panel .metrics td { border: 1px solid #eee; padding: 6px 8px; text-align: left; }
     .badge { padding: 2px 8px; border-radius: 999px; font-size: .8rem; font-weight: 700; }
-    .badge.pass { background: #e3f6e3; color: #0a7a0a; }
-    .badge.fail { background: #fdeaea; color: #b00; }
-    .badge.na   { background: #eee; color: #888; }
-    #panel button.text-btn {
-      font-family: var(--font-family); font-size: 1rem; padding: 10px 14px; min-height: var(--tap-min);
-      border: 2px solid var(--color-accent); background: #fff; border-radius: 12px; cursor: pointer;
-    }
+    .badge.pass { background: #e3f6e3; color: #0a7a0a; } .badge.fail { background: #fdeaea; color: #b00; }
+    .badge.na { background: #eee; color: #888; }
+    #panel button.text-btn { font-family: var(--font-family); font-size: 1rem; padding: 10px 14px;
+      min-height: var(--tap-min); border: 2px solid var(--color-accent); background: #fff; border-radius: 12px; cursor: pointer; }
     #panel label { display: inline-flex; align-items: center; gap: 4px; }
     #copy-area { width: 100%; height: 96px; font-family: monospace; font-size: .8rem; display: none; }
   </style>
@@ -90,10 +119,12 @@
     <button class="btn-round" id="start-play" aria-label="はじめる">
       <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
     </button>
+    <!-- レベル選択（保護者用） -->
+    <div id="level-select"></div>
     <footer class="title-footer">v0.1.0 &nbsp; © 2026 SIKUMI LAB</footer>
   </section>
 
-  <!-- ============ S-03 ゲーム（レベル0 ルーレット） ============ -->
+  <!-- ============ S-03/S-04 ゲーム ============ -->
   <section class="screen" id="game" data-screen="game">
     <div class="topbar">
       <button class="icon-btn" id="to-title" aria-label="タイトルへ">
@@ -112,12 +143,35 @@
       </span>
       <svg class="finger" id="touch-hint" viewBox="0 0 24 24" fill="#888"><path d="M9 11V5a1.5 1.5 0 013 0v6h1V6.5a1.5 1.5 0 013 0V13a6 6 0 01-6 6h-1a5 5 0 01-4-2l-3-4 1.2-1.1a2 2 0 012.6-.1L9 13z"/></svg>
     </div>
-    <div id="stage"><div id="roulette-num">0</div></div>
+    <div id="stage">
+      <div id="roulette-num" class="hidden">0</div>
+      <div id="board" class="hidden"></div>
+      <div id="figure">
+        <svg viewBox="0 0 100 100">
+          <path class="arrow" d="M50 6 L74 44 L58 44 L58 92 L42 92 L42 44 L26 44 Z"/>
+          <circle class="dot" cx="50" cy="50" r="16" style="display:none"/>
+        </svg>
+      </div>
+    </div>
     <div class="controls">
       <button class="btn-round" id="spin-btn" aria-label="スタート／ストップ">
         <svg id="spin-icon" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
       </button>
+      <button class="btn-round confirm hidden" id="confirm-btn" aria-label="けってい">
+        <svg viewBox="0 0 24 24"><path d="M9 16.2l-3.5-3.5L4 14.2 9 19l11-11-1.4-1.4z"/></svg>
+      </button>
     </div>
+  </section>
+
+  <!-- ============ S-06 認定書 ============ -->
+  <section class="screen" id="cert" data-screen="cert">
+    <div class="medal" id="medal">
+      <svg id="medal-icon" viewBox="0 0 24 24" fill="#fff"><path d="M12 2l3 6 6 .5-4.5 4 1.5 6-6-3.5L6 18.5 7.5 12.5 3 8.5 9 8z"/></svg>
+    </div>
+    <div id="cert-stars"></div>
+    <button class="btn-round" id="cert-next" aria-label="つぎへ">
+      <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+    </button>
   </section>
 
   <!-- ============ S-07 計測パネル（検証用） ============ -->
@@ -128,7 +182,6 @@
         <svg viewBox="0 0 24 24" fill="#888"><path d="M15 6l-6 6 6 6z"/></svg>
       </button>
     </div>
-
     <div class="row">
       <strong>方式:</strong>
       <label><input type="radio" name="method" value="vosk">Vosk（本命）</label>
@@ -136,14 +189,12 @@
       <label><input type="radio" name="method" value="webspeech">既定WebSpeech(A・検証専用)</label>
     </div>
     <div class="row" id="method-note" style="font-size:.85rem;color:#888"></div>
-
     <table class="metrics">
       <thead><tr><th>指標</th><th>実測</th><th>閾値</th><th>合否</th></tr></thead>
       <tbody id="metrics-body"></tbody>
     </table>
     <div class="row"><strong>総合:</strong> <span id="overall" class="badge na">—</span>
       <span style="color:#888">記録件数: <span id="log-count">0</span></span></div>
-
     <div class="row">
       <button class="text-btn" id="copy-csv">CSVをコピー</button>
       <button class="text-btn" id="mark-spurious">誤発動を記録</button>
