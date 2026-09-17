@@ -11,88 +11,19 @@
   <link rel="stylesheet" href="../styles.css">
   <script type="module" src="../sw-register.js"></script>
   <style>
+    /* 共有UIコンポーネント（.screen/.btn-round/.card/#board/#figure/.mic/.medal/.lv-btn 等）は
+       ../styles.css に集約。ここはどうぶつめくり固有のみ。 */
     html, body { height: 100%; overflow: hidden; overscroll-behavior: none; }
-    .screen { display: none; min-height: 100vh; }
-    .screen.active { display: flex; flex-direction: column; }
-
-    .btn-round {
-      border: none; background: var(--color-accent); color: #fff;
-      width: 34vw; max-width: 170px; aspect-ratio: 1/1; border-radius: 50%;
-      display: grid; place-items: center; box-shadow: 0 6px 16px rgba(0,0,0,.18); cursor: pointer;
-    }
-    .btn-round:active { transform: scale(.97); }
-    .btn-round svg { width: 45%; height: 45%; fill: #fff; }
-    .btn-round.confirm { background: #2ea44f; }
-    .icon-btn { border: none; background: transparent; padding: 10px; min-width: var(--tap-min);
-      min-height: var(--tap-min); border-radius: 12px; cursor: pointer; }
-    .icon-btn svg { width: 28px; height: 28px; }
-    .icon-btn:active { background: rgba(0,0,0,.06); }
-    .hidden { display: none !important; }
 
     /* S-02 タイトル */
     #title { align-items: center; justify-content: center; gap: 22px; padding: 24px; position: relative; }
     #title .app-title { font-size: 2rem; font-weight: 700; }
     #title .gear { position: absolute; top: 10px; right: 10px; color: #bbb; }
-    /* レベル選択（保護者用・数字/記号のみ） */
     #level-select { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; max-width: 320px; }
-    .lv-btn { width: 52px; height: 52px; border-radius: 14px; border: 2px solid var(--color-accent);
-      background: #fff; color: var(--color-fg); font-family: var(--font-family); font-size: 1.3rem;
-      font-weight: 700; cursor: pointer; display: grid; place-items: center; }
-    .lv-btn:active { background: #fff8e6; }
-    .lv-btn svg { width: 26px; height: 26px; fill: var(--color-accent); }
     .title-footer { position: fixed; bottom: 12px; left: 0; right: 0; text-align: center; font-size: .8rem; color: #999; }
 
-    /* S-03/S-04 ゲーム */
-    #game { padding: 0; }
-    #game .topbar { display: flex; align-items: center; justify-content: space-between; padding: 8px 10px; }
-    #stage { flex: 1; margin: 6px 12px; border-radius: 24px; border: 6px solid transparent;
-      display: grid; place-items: center; position: relative; transition: border-color .15s, box-shadow .15s; }
-    #stage.listening { border-color: var(--color-accent); box-shadow: 0 0 0 6px rgba(255,179,0,.18) inset; }
-    #stage.restarting { border-color: #ffd980; }
+    /* レベル0 ルーレットの数字 */
     #roulette-num { font-size: 30vw; font-weight: 700; line-height: 1; color: var(--color-fg); font-variant-numeric: tabular-nums; }
-
-    /* 盤面（3×3グリッドに位置キーで札を置く） */
-    #board { display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr);
-      gap: 3vw; width: min(86vw, 86vh, 460px); aspect-ratio: 1/1; }
-    .card { border-radius: 16px; background: var(--color-accent); box-shadow: 0 3px 8px rgba(0,0,0,.15);
-      display: grid; place-items: center; position: relative; min-width: 0; }
-    .card.focus { outline: 6px solid #333; outline-offset: -3px; }
-    .card.selected { outline: 6px solid #2ea44f; outline-offset: -3px; }
-    .card.flipped { background: #fff; border: 3px solid #eee; }
-    /* 正解カードの仮置き（動物の絵の代わりに赤丸） */
-    .card .animal { width: 62%; height: 62%; border-radius: 50%; background: #e23b3b; display: none; }
-    .card.flipped.correct .animal { display: block; }
-
-    /* 認識結果の図示（矢印/中点）— 盤面中央に大きく重ねる */
-    #figure { position: absolute; inset: 0; pointer-events: none; display: none; place-items: center; }
-    #figure.show { display: grid; }
-    #figure svg { width: 42%; height: 42%; transition: transform .1s; }
-    #figure .arrow { fill: #2ea44f; }
-    #figure .dot { fill: #2ea44f; }
-
-    #game .controls { display: flex; gap: 20px; justify-content: center; padding: 12px 0 22px; }
-
-    /* マイク状態（F-003） */
-    .mic { width: 34px; height: 34px; }
-    .mic .body { fill: #c9c9c9; transition: fill .15s; }
-    .mic .slash { stroke: #d33; stroke-width: 6; display: none; }
-    .mic-state.listening .mic .body { fill: var(--color-accent); }
-    .mic-state.denied .mic .body { fill: #bbb; }
-    .mic-state.denied .mic .slash { display: block; }
-    .mic-state.restarting .mic .body { fill: var(--color-accent); animation: blink .6s steps(2,end) infinite; }
-    @keyframes blink { 50% { opacity: .3; } }
-    .finger { width: 30px; height: 30px; display: none; }
-    .mic-state.denied ~ .finger { display: inline-block; }
-
-    /* S-06 認定書（文字を使わず、メダル＋星で到達を示す） */
-    #cert { align-items: center; justify-content: center; gap: 26px; padding: 24px; text-align: center; }
-    .medal { width: 46vw; max-width: 220px; aspect-ratio: 1/1; border-radius: 50%;
-      display: grid; place-items: center; box-shadow: 0 8px 20px rgba(0,0,0,.18); }
-    .medal.clear { background: radial-gradient(circle at 50% 38%, #ffe08a, #ffb300); }
-    .medal.over  { background: radial-gradient(circle at 50% 38%, #d8d8d8, #a8a8a8); }
-    .medal svg { width: 56%; height: 56%; }
-    #cert-stars { display: flex; gap: 6px; }
-    #cert-stars svg { width: 26px; height: 26px; }
 
     /* S-07 計測パネル（検証用・文字あり） */
     #panel { padding: 16px; gap: 14px; overflow: auto; }

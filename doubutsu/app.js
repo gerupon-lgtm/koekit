@@ -17,6 +17,11 @@ import { Recorder } from '../src/log/recorder.js';
 import { toCSV } from '../src/log/csv.js';
 import { computeMetrics, judge as judgeMetrics, THRESHOLDS } from '../src/log/metrics.js';
 import * as sfx from '../src/audio/sfx.js';
+import { POS } from '../src/game/positions.js';
+import { BoardView } from '../src/ui/board.js';
+import { renderCertificate } from '../src/ui/certificate.js';
+import { buildLevelSelect as buildLevelSelectUI } from '../src/ui/levelselect.js';
+import { setMicState as setMicStateUI } from '../src/ui/micstate.js';
 
 const $ = s => document.querySelector(s);
 const METHOD_KEY = 'koekit.method';
@@ -24,19 +29,6 @@ const FAKEOUT_LEVELS = new Set(['3', '4', '5', 'extra']); // フェイント停�
 // 停止後にフォーカス枠（止まった位置）を見せる時間(ms)。レベルが上がるほど短く＝記憶要素を強める。
 // Infinity は消えない。完全停止した瞬間から計測。パッと消す（フェードなし）。救済・下限なし（A区分）。
 const FOCUS_HOLD_MS = { '0': Infinity, '1': Infinity, '2': 1500, '3': 1000, '4': 700, '5': 400, 'extra': 250 };
-
-// 位置キー → 3×3グリッドのセル(r,c)と矢印回転(deg)。center は中点。
-const POS = {
-  up:        { r: 1, c: 2, deg: 0 },
-  down:      { r: 3, c: 2, deg: 180 },
-  left:      { r: 2, c: 1, deg: 270 },
-  right:     { r: 2, c: 3, deg: 90 },
-  center:    { r: 2, c: 2, deg: null },
-  upleft:    { r: 1, c: 1, deg: 315 },
-  upright:   { r: 1, c: 3, deg: 45 },
-  downleft:  { r: 3, c: 1, deg: 225 },
-  downright: { r: 3, c: 3, deg: 135 },
-};
 
 // ---- 状態 ----
 let method = resolveInitialMethod();
@@ -47,7 +39,7 @@ let judge = null;
 let level = null;
 let mode = 'roulette';        // 'roulette'(レベル0) | 'board'(レベル1+)
 let orderedKeys = [];         // 盤面のフォーカス移動順（グリッド行優先）
-const cardEls = new Map();    // key -> card要素
+const board = new BoardView($('#board'), $('#figure'), { onCardTap });
 let targetKey = null;         // 止まった位置
 let selectedKey = null;       // 言った/選んだ位置
 let trialResolved = false;    // 確定の二重発火防止（E-07）
@@ -75,15 +67,8 @@ function resolveInitialMethod() {
 }
 function setMethod(m) { method = m; try { localStorage.setItem(METHOD_KEY, m); } catch {} }
 
-// ---- 受け付け状態（F-003） ----
-function setMicState(state) {
-  const el = $('#mic-state'), stage = $('#stage');
-  el.classList.remove('listening', 'denied', 'restarting');
-  stage.classList.remove('listening', 'restarting');
-  if (state === 'listening') { el.classList.add('listening'); stage.classList.add('listening'); }
-  else if (state === 'restarting') { el.classList.add('restarting'); stage.classList.add('restarting'); }
-  else if (state === 'denied') { el.classList.add('denied'); }
-}
+// ---- 受け付け状態（F-003・共有ビュー） ----
+function setMicState(state) { setMicStateUI($('#mic-state'), $('#stage'), state); }
 
 // ---- 音声 ----
 function buildAdapter() {
@@ -104,42 +89,15 @@ function startListening(keys) {
 }
 function stopListening() { if (adapter) adapter.stop(); }
 
-// ---- 盤面描画（T-015） ----
+// ---- 盤面描画（T-015・共有 BoardView） ----
 function renderBoard() {
-  const board = $('#board');
-  board.innerHTML = '';
-  cardEls.clear();
   // フォーカス移動順：グリッド行優先（左上→右下に自然に流れる）
   orderedKeys = [...level.vocab].sort((a, b) => (POS[a].r - POS[b].r) || (POS[a].c - POS[b].c));
-  for (const key of level.vocab) {
-    const el = document.createElement('div');
-    el.className = 'card';
-    el.style.gridRow = POS[key].r;
-    el.style.gridColumn = POS[key].c;
-    el.dataset.key = key;
-    el.innerHTML = '<div class="animal"></div>';
-    el.addEventListener('click', () => onCardTap(key));
-    board.appendChild(el);
-    cardEls.set(key, el);
-  }
+  board.render(level.vocab);
 }
-function setFocus(key) {
-  cardEls.forEach((el, k) => el.classList.toggle('focus', k === key));
-}
-function clearBoardMarks() {
-  cardEls.forEach(el => { el.classList.remove('focus', 'selected', 'flipped', 'correct'); });
-  showFigure(null);
-}
-
-// ---- 図示（矢印/中点・T-017） ----
-function showFigure(key) {
-  const fig = $('#figure'), svg = fig.querySelector('svg');
-  const arrow = fig.querySelector('.arrow'), dot = fig.querySelector('.dot');
-  if (!key) { fig.classList.remove('show'); return; }
-  if (POS[key].deg === null) { arrow.style.display = 'none'; dot.style.display = 'block'; svg.style.transform = 'none'; }
-  else { arrow.style.display = 'block'; dot.style.display = 'none'; svg.style.transform = `rotate(${POS[key].deg}deg)`; }
-  fig.classList.add('show');
-}
+function setFocus(key) { board.setFocus(key); }
+function clearBoardMarks() { board.clearMarks(); }
+function showFigure(key) { board.showFigure(key); }
 
 // ---- コントロール表示（区間で出し分け） ----
 function updateControls(ph) {
@@ -224,7 +182,7 @@ function onRouletteStop(v) {
     const hold = FOCUS_HOLD_MS[level.id];
     clearTimeout(focusHideTimer);
     if (hold !== Infinity) {
-      focusHideTimer = setTimeout(() => { cardEls.forEach(el => el.classList.remove('focus')); }, hold);
+      focusHideTimer = setTimeout(() => board.clearFocus(), hold);
     }
     phase.to(PHASES.AWAIT_POSITION);      // 位置語を待つ
   }
@@ -278,8 +236,8 @@ function onIgnored(raw) {
 // ---- 位置の選択（図示）／確定 ----
 function selectPosition(key) {
   selectedKey = key;
-  cardEls.forEach((el, k) => el.classList.toggle('selected', k === key));
-  showFigure(key);
+  board.setSelected(key);
+  board.showFigure(key);
   if (phase.phase === PHASES.AWAIT_POSITION) phase.to(PHASES.AWAIT_CONFIRM); // 確定語＋言い直しを待つ
   else updateControls(PHASES.AWAIT_CONFIRM); // 言い直し時は区間そのまま、確定ボタンは出したまま
 }
@@ -290,10 +248,13 @@ function doConfirm() {
   phase.to(PHASES.RESULT); // 認識停止（結果表示中）
 
   const correct = (selectedKey === targetKey);
-  const card = cardEls.get(selectedKey);
-  card.classList.add('flipped');
-  if (correct) { card.classList.add('correct'); sfx.playCorrect(); }
-  else { sfx.playBlip(220); }
+  board.setFlipped(selectedKey, true);
+  if (correct) {
+    const dot = document.createElement('div'); dot.className = 'card-dot'; // 正解の赤丸プレースホルダ
+    board.setContent(selectedKey, dot);
+    board.setCorrect(selectedKey, true);
+    sfx.playCorrect();
+  } else { sfx.playBlip(220); }
 
   recorder.add({ method: adapter.name, level: level.id, phase: PHASES.AWAIT_CONFIRM,
     expected: targetKey, rawText: lastPosRaw, matchedKey: selectedKey,
@@ -331,16 +292,7 @@ function showCertificate(kind, levelId) {
   const idx = LEVELS.findIndex(l => l.id === levelId);
   const stars = levelId === 'extra' ? 6 : Math.max(1, idx); // レベル番号ぶんの星（延長は最大）
   if (kind === 'clear') sfx.playClear(); else sfx.playGameover();
-  const medal = $('#medal');
-  medal.className = 'medal ' + (kind === 'clear' ? 'clear' : 'over');
-  const starsEl = $('#cert-stars');
-  starsEl.innerHTML = '';
-  const litColor = kind === 'clear' ? '#ffb300' : '#bbb';
-  for (let i = 0; i < 6; i++) {
-    const lit = i < stars;
-    starsEl.insertAdjacentHTML('beforeend',
-      `<svg viewBox="0 0 24 24" fill="${lit ? litColor : '#eee'}"><path d="M12 2l3 6 6 .5-4.5 4 1.5 6-6-3.5L6 18.5 7.5 12.5 3 8.5 9 8z"/></svg>`);
-  }
+  renderCertificate($('#medal'), $('#cert-stars'), { kind, stars });
   $('#cert').dataset.kind = kind;
   $('#cert').dataset.level = levelId;
   show('cert');
@@ -355,20 +307,6 @@ function onCertNext() {
     const idx = LEVELS.findIndex(l => l.id === id);
     const next = LEVELS[idx + 1];
     startLevel(next ? next.id : '1');
-  }
-}
-
-// ---- レベル選択（S-02 / T-025） ----
-function buildLevelSelect() {
-  const wrap = $('#level-select');
-  wrap.innerHTML = '';
-  for (const l of LEVELS) {
-    const b = document.createElement('button');
-    b.className = 'lv-btn';
-    if (l.id === 'extra') b.innerHTML = '<svg viewBox="0 0 24 24"><path d="M12 2l3 6 6 .5-4.5 4 1.5 6-6-3.5L6 18.5 7.5 12.5 3 8.5 9 8z"/></svg>';
-    else b.textContent = l.id;
-    b.addEventListener('click', () => startLevel(l.id));
-    wrap.appendChild(b);
   }
 }
 
@@ -417,7 +355,7 @@ async function copyCSV() {
 function flash(sel, text) { const b = $(sel), old = b.textContent; b.textContent = text; setTimeout(() => { b.textContent = old; }, 1200); }
 
 // ---- 配線 ----
-buildLevelSelect();
+buildLevelSelectUI($('#level-select'), LEVELS, startLevel);
 $('#start-play').addEventListener('click', () => startLevel('0')); // はじめる＝練習（レベル0）
 $('#spin-btn').addEventListener('click', onSpinTouch);
 $('#confirm-btn').addEventListener('click', doConfirm);

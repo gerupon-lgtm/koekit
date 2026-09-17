@@ -3,11 +3,8 @@
 // レベル4（四隅）は斜め4語を切り出して測るために設けた段。
 // レベル3から直接9枚へ進めない（要件8.6）。フェーズ0で使うのは '0'（ルーレット）のみ。
 
-/** 位置語キー（9語）。レベル5・延長で使う。 */
-export const ALL_POSITIONS = [
-  'up', 'down', 'left', 'right', 'center',
-  'upleft', 'upright', 'downleft', 'downright',
-];
+import { ALL_POSITIONS } from './positions.js';
+export { ALL_POSITIONS } from './positions.js';
 
 export const LEVELS = [
   { id: '0',     layout: 'roulette', cards: 0, vocab: [] },
