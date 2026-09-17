@@ -6,7 +6,9 @@ if ('serviceWorker' in navigator) {
   // /koekit/ 配下全体を対象にできる。scope は指定しない。
   const swUrl = new URL('./sw.js', import.meta.url).href;
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register(swUrl).catch(() => {
+    // updateViaCache:'none' … sw.js 自体をHTTPキャッシュせず毎回検証する。
+    // これで各デプロイの新しい BUILD（キャッシュバスター）を確実に検知・更新する。
+    navigator.serviceWorker.register(swUrl, { updateViaCache: 'none' }).catch(() => {
       /* 登録失敗してもアプリは動く（オフライン起動だけ効かない） */
     });
   });

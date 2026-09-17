@@ -1,34 +1,37 @@
-// Service Worker（PWA / T-003 / 要件12）
+// Service Worker（PWA / T-003 / 要件12）＋ キャッシュバスター
 //
-// - アプリシェル（HTML/CSS/JS/フォント/アイコン）をキャッシュし、オフラインで起動する
-// - キャッシュ名に version を含める。更新時に古いキャッシュを破棄する
-//   （VERSION は version.json の値と一致させる。scripts/check-version.cjs で同値検証）
-// - 日本語モデル（Cloudflare R2・別オリジン・約48MB）はここでは事前キャッシュしない。
-//   vosk-browser が自前で Cache Storage に載せる（field-check-results.md）。
+// キャッシュ方針:
+// - アプリ本体（HTML/CSS/JS/フォント/アイコン）: network-first。オンラインなら常に最新を取得し、
+//   デプロイのたびに自動で最新化される（＝キャッシュバスター）。オフライン時はキャッシュへフォールバック。
+//   さらに APP_CACHE 名に BUILD を含め、デプロイごとに旧キャッシュを破棄する。
+// - Voskモデル（Cloudflare R2・別オリジン・約48MB）: SWは一切触らない。vosk-browser 側の Cache Storage に任せる
+//   （＝キャッシュバスターの対象外。再取得しない）。
+// - vosk.js ライブラリ（同一オリジン・約5.8MB）: STATIC_CACHE に cache-first。毎デプロイでの再取得を避ける。
+//   ライブラリを更新したときだけ STATIC_CACHE の版を上げて更新する。
+//
+// BUILD は scripts/stamp-cache.cjs が各デプロイ前に一意な値へ置換する。
 
-const VERSION = '0.1.0'; // ← version.json と一致させる（反映先: implementation-guide 9節）
-const CACHE = 'koekit-v' + VERSION;
+const VERSION = '0.1.0';            // version.json と一致（scripts/check-version 対象）
+const BUILD = 'v0.1.0-20260917214602-be680a5';         // ← scripts/stamp-cache.cjs がデプロイ毎に置換
+const APP_CACHE = 'koekit-app-' + BUILD;
+const STATIC_CACHE = 'koekit-static-v1'; // 大きい静的資産（vosk.js等）。中身を変えたときだけ版を上げる
 
-// 起動に要る最小のアプリシェル。残り（src配下・lib・worklet等）は fetch時に随時キャッシュする。
+// オフライン初回用に事前キャッシュする最小シェル（すべて小さいアプリ本体）
 const SHELL = [
-  './',
-  './index.html',
-  './styles.css',
-  './manifest.json',
-  './doubutsu/',
-  './doubutsu/index.html',
-  './doubutsu/app.js',
-  './assets/fonts/MPLUSRounded1c-Regular.subset.woff2',
-  './assets/fonts/MPLUSRounded1c-Bold.subset.woff2',
-  './assets/icons/icon-192.png',
-  './assets/icons/icon-512.png',
+  './', './index.html', './styles.css', './manifest.json',
+  './doubutsu/', './doubutsu/index.html', './doubutsu/app.js',
 ];
+
+// cache-first にする大きい静的資産（同一オリジン）。ここに載るものは毎デプロイでは再取得しない。
+function isStatic(url) {
+  return url.pathname.includes('/lib/vosk/');
+}
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE)
-      // 一部が404でも install を止めない（addAll は全成功必須のため個別に入れる）
-      .then(cache => Promise.allSettled(SHELL.map(u => cache.add(u))))
+    caches.open(APP_CACHE)
+      // HTTPキャッシュの古い版を避けるため reload で取得して新しい APP_CACHE に入れる
+      .then(cache => Promise.allSettled(SHELL.map(u => cache.add(new Request(u, { cache: 'reload' })))))
       .then(() => self.skipWaiting())
   );
 });
@@ -36,7 +39,9 @@ self.addEventListener('install', (event) => {
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys()
-      .then(keys => Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k))))
+      .then(keys => Promise.all(
+        keys.filter(k => k !== APP_CACHE && k !== STATIC_CACHE).map(k => caches.delete(k))
+      ))
       .then(() => self.clients.claim())
   );
 });
@@ -44,27 +49,35 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const req = event.request;
   if (req.method !== 'GET') return;
-
   const url = new URL(req.url);
-  // 別オリジン（R2のモデル等）はSWで触らない。vosk-browser 側のキャッシュに任せる。
+
+  // 別オリジン（R2のモデル等）はSWで触らない＝キャッシュバスター対象外
   if (url.origin !== self.location.origin) return;
 
-  // 同一オリジンは cache-first。無ければ取得してキャッシュに載せる（次回オフライン可）。
-  event.respondWith(
-    caches.match(req).then(hit => {
-      if (hit) return hit;
-      return fetch(req).then(res => {
-        // 正常な同一オリジン応答のみ複製してキャッシュ
+  // 大きい静的資産（vosk.js）は cache-first で保持（毎デプロイで再取得しない）
+  if (isStatic(url)) {
+    event.respondWith(
+      caches.match(req).then(hit => hit || fetch(req).then(res => {
         if (res && res.ok && res.type === 'basic') {
           const copy = res.clone();
-          caches.open(CACHE).then(c => c.put(req, copy)).catch(() => {});
+          caches.open(STATIC_CACHE).then(c => c.put(req, copy)).catch(() => {});
         }
         return res;
-      }).catch(() => {
-        // オフラインでナビゲーションに失敗したらトップへフォールバック
-        if (req.mode === 'navigate') return caches.match('./index.html');
-        return Response.error();
-      });
-    })
+      }))
+    );
+    return;
+  }
+
+  // アプリ本体は network-first（オンラインなら常に最新＝キャッシュバスター）
+  event.respondWith(
+    fetch(req).then(res => {
+      if (res && res.ok && res.type === 'basic') {
+        const copy = res.clone();
+        caches.open(APP_CACHE).then(c => c.put(req, copy)).catch(() => {});
+      }
+      return res;
+    }).catch(() =>
+      caches.match(req).then(hit => hit || (req.mode === 'navigate' ? caches.match('./index.html') : Response.error()))
+    )
   );
 });
