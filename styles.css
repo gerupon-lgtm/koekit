@@ -1,0 +1,35 @@
+/* コエキット 共通デザイントークン（正典: docs/screens.md 1節） */
+:root {
+  /* フォント — T-002 で woff2 を assets/fonts/ に自前配置し @font-face を追加する。
+     この時点ではフォールバック書体で表示される。font-family は必ず指定する。 */
+  --font-family: "M PLUS Rounded 1c", "Hiragino Maru Gothic ProN",
+                 "Yu Gothic UI", "Meiryo", sans-serif;
+
+  /* 色 */
+  --color-bg: #ffffff;
+  --color-fg: #333333;
+  --color-accent: #ffb300;
+
+  /* 基準値（docs/screens.md 1節・【想定】） */
+  --base-size: 16px;
+  --line-height: 1.6;
+  --tap-min: 48px;   /* 最小タップ領域 */
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-family);
+  font-size: var(--base-size);
+  line-height: var(--line-height);
+  color: var(--color-fg);
+  background: var(--color-bg);
+  min-height: 100vh;
+}

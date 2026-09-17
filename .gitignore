@@ -1,0 +1,11 @@
+# Voskモデル本体 — 実行時は Cloudflare R2 から配信するため、リポジトリには載せない
+# （再パック用のローカル素材として手元には残す）
+/model.tar.gz
+/vosk-model-small-ja-0.22.zip
+
+# 整理で退避した旧版・重複・上流構想メモ — ローカル保管の履歴。公開リポジトリには載せない
+/docs/archive/
+
+# OS / エディタ
+.DS_Store
+Thumbs.db

@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#ffb300">
+  <title>どうぶつめくり</title>
+  <link rel="manifest" href="../manifest.json">
+  <link rel="stylesheet" href="../styles.css">
+  <style>
+    /* S-02 タイトル画面 — T-001 では遷移先の骨組みのみ。
+       開始・レベル選択・受け付け区間などは後続タスク（T-006 以降）で実装する。 */
+    .title-screen {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 24px;
+      padding: 24px 16px;
+    }
+    .app-title {
+      font-size: 2rem;
+      font-weight: 700;
+    }
+    .back-link {
+      color: #888;
+      text-decoration: none;
+      font-size: 0.9rem;
+    }
+    /* フッタ（バージョン・コピーライト）はタイトル画面のみに表示する。
+       version.json を正典に反映する処理は T-026 / T-027 で実装する。 */
+    .title-footer {
+      position: fixed;
+      bottom: 12px;
+      left: 0;
+      right: 0;
+      text-align: center;
+      font-size: 0.8rem;
+      color: #999;
+    }
+  </style>
+</head>
+<body>
+  <main class="title-screen">
+    <h1 class="app-title">どうぶつめくり</h1>
+    <a class="back-link" href="../">← コエキット</a>
+  </main>
+  <footer class="title-footer">v0.1.0 &nbsp; © 2026 SIKUMI LAB</footer>
+</body>
+</html>

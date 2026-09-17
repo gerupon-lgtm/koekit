@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#ffb300">
+  <meta name="description" content="音声認識検証のPWA試作群">
+  <title>コエキット</title>
+  <link rel="manifest" href="./manifest.json">
+  <link rel="stylesheet" href="./styles.css">
+  <style>
+    /* S-01 コエキット メインページ（試作アプリの一覧） */
+    .page {
+      max-width: 640px;
+      margin: 0 auto;
+      padding: 24px 16px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    .site-title {
+      font-size: 1.75rem;
+      font-weight: 700;
+      margin: 8px 0 24px;
+    }
+    .app-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      flex: 1;
+    }
+    .app-card {
+      display: block;
+      padding: 20px;
+      min-height: var(--tap-min);
+      border: 2px solid var(--color-accent);
+      border-radius: 16px;
+      background: #fff;
+      color: var(--color-fg);
+      text-decoration: none;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+    }
+    .app-card:active {
+      background: #fff8e6;
+    }
+    .app-name {
+      font-size: 1.25rem;
+      font-weight: 700;
+    }
+    .app-desc {
+      font-size: 0.95rem;
+      color: #666;
+      margin-top: 4px;
+    }
+    .site-footer {
+      margin-top: 24px;
+      font-size: 0.8rem;
+      color: #999;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <h1 class="site-title">コエキット</h1>
+
+    <ul class="app-list">
+      <li>
+        <a class="app-card" href="./doubutsu/">
+          <div class="app-name">どうぶつめくり</div>
+          <div class="app-desc">こえで めくる（フェーズ0：音声ルーレット）</div>
+        </a>
+      </li>
+    </ul>
+
+    <footer class="site-footer">© 2026 SIKUMI LAB</footer>
+  </main>
+</body>
+</html>

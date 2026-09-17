@@ -276,4 +276,9 @@
 
 | 日付 | 事実 | 検証方法 |
 |---|---|---|
-| — | （フェーズ0の計測結果をここに記録する） | — |
+| 2026-09-16 | 方式C（Vosk）でPixel 6a上で日本語操作語を認識できた。本命Cで確定 | 実機。詳細は `docs/field-check-results.md` |
+| 2026-09-16 | 方式B（端末内WebSpeech）は ja-JP 非対応（language-not-supported） | 実機（probe/webspeech.html） |
+| 2026-09-16 | Voskは分離なしで動作（crossOriginIsolated=false）。mini-coi不要・CORS不要 | 実機（probe/vosk6.html＋R2） |
+| 2026-09-16 | モデルは `model/` を一段かませて tar.gz 化するのが正しい。am等を直下にすると KaldiRecognizer 生成に失敗 | 公式英語モデルとの比較で切り分け |
+| 2026-09-16 | モデルはCache Storageにキャッシュされる。更新時はキャッシュ切替が必要（1.3秒→削除後8.6秒） | 実機（キャッシュ削除前後の読込時間） |
+| 2026-09-16 | 音声は AudioWorklet → AudioBuffer(16kHz) を acceptWaveform に渡す形で認識可 | 実機（probe/vosk6.html） |

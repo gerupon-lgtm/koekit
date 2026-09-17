@@ -130,6 +130,22 @@
 
 **方式Dは不採用**（要件10.2）。実装しない。
 
+### 実機検証で確定した事実（2026-09-16 / Pixel 6a / Chrome 153）
+
+詳細は `docs/field-check-results.md`。実装で必ず守ること。
+
+1. **モデルの詰め方** — Voskモデルは `model/` フォルダを一段かませて tar.gz 化する。
+   ```
+   unzip vosk-model-small-ja-0.22.zip
+   mv vosk-model-small-ja-0.22 model
+   tar zcf model.tar.gz model
+   ```
+   `am` `conf` `graph` を tar の直下に置くと、createModel は成功するが **KaldiRecognizer の生成で失敗**する（`Could not be created` → `Not ready` 連発、結果が出ない）。この失敗は「モデルが読めない」ではなく「認識器が作れない」形で出るので紛らわしい。
+2. **クロスオリジン分離は不要** — Vosk は `crossOriginIsolated=false` でも動作した。mini-coi も CORS 設定も入れない（要件T-004の結論）。将来 SharedArrayBuffer 前提のビルドに変える場合のみ再検討。
+3. **モデルのキャッシュ更新** — vosk-browser はモデルを Cache Storage にキャッシュする。モデルを差し替えたら、キャッシュを切り替えないと古いモデルが使われ続ける。**モデルURLにバージョンを含める等の更新戦略を実装する**（要件12・T-003・T-028）。
+4. **音声の渡し方** — AudioWorklet で取り込み、`AudioBuffer`（16kHz）を作って `acceptWaveform` に渡す。Int16 を直接渡すと `getChannelData is not a function` になる。`ScriptProcessorNode` は使わない。
+5. **モデル配信** — Cloudflare R2 の公開URLから、CORS設定なしで github.io から読めた。本番もこの構成を踏襲してよい。
+
 ### 実装上の注意
 
 - **認識セッションが落ちたら自動再開する。** Android Chromeは連続認識が途中で終わる。`end` イベントで再開し、再開回数をログに残す

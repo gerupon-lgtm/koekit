@@ -1,0 +1,13 @@
+{
+  "name": "コエキット",
+  "short_name": "コエキット",
+  "description": "音声認識検証のPWA試作群",
+  "lang": "ja",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#ffffff",
+  "theme_color": "#ffb300",
+  "version": "0.1.0"
+}
