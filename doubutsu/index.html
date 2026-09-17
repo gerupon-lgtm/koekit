@@ -6,46 +6,152 @@
   <meta name="theme-color" content="#ffb300">
   <title>どうぶつめくり</title>
   <link rel="manifest" href="../manifest.json">
+  <link rel="apple-touch-icon" href="../assets/icons/icon-180.png">
+  <link rel="icon" href="../assets/icons/icon-192.png">
   <link rel="stylesheet" href="../styles.css">
+  <script type="module" src="../sw-register.js"></script>
   <style>
-    /* S-02 タイトル画面 — T-001 では遷移先の骨組みのみ。
-       開始・レベル選択・受け付け区間などは後続タスク（T-006 以降）で実装する。 */
-    .title-screen {
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 24px;
-      padding: 24px 16px;
+    html, body { height: 100%; overflow: hidden; overscroll-behavior: none; }
+    .screen { display: none; min-height: 100vh; }
+    .screen.active { display: flex; flex-direction: column; }
+
+    /* 縦画面固定を基本とし、大きめのタップ領域を確保 */
+    .btn-round {
+      border: none; background: var(--color-accent); color: #fff;
+      width: 40vw; max-width: 200px; aspect-ratio: 1/1; border-radius: 50%;
+      display: grid; place-items: center; box-shadow: 0 6px 16px rgba(0,0,0,.18);
+      cursor: pointer;
     }
-    .app-title {
-      font-size: 2rem;
-      font-weight: 700;
+    .btn-round:active { transform: scale(.97); }
+    .btn-round svg { width: 45%; height: 45%; fill: #fff; }
+    .icon-btn {
+      border: none; background: transparent; padding: 10px; min-width: var(--tap-min);
+      min-height: var(--tap-min); border-radius: 12px; cursor: pointer;
     }
-    .back-link {
-      color: #888;
-      text-decoration: none;
-      font-size: 0.9rem;
+    .icon-btn svg { width: 28px; height: 28px; }
+    .icon-btn:active { background: rgba(0,0,0,.06); }
+
+    /* S-02 タイトル */
+    #title { align-items: center; justify-content: center; gap: 28px; padding: 24px; position: relative; }
+    #title .app-title { font-size: 2rem; font-weight: 700; }
+    #title .gear { position: absolute; top: 10px; right: 10px; color: #bbb; }
+    .title-footer { position: fixed; bottom: 12px; left: 0; right: 0; text-align: center; font-size: .8rem; color: #999; }
+
+    /* S-03 ゲーム（ルーレット） */
+    #game { padding: 0; }
+    #game .topbar { display: flex; align-items: center; justify-content: space-between; padding: 8px 10px; }
+    /* 受け付け状態の枠（F-003）: 受け付け中は太い枠を光らせる */
+    #stage {
+      flex: 1; margin: 6px 12px; border-radius: 24px; border: 6px solid transparent;
+      display: grid; place-items: center; transition: border-color .15s, box-shadow .15s;
     }
-    /* フッタ（バージョン・コピーライト）はタイトル画面のみに表示する。
-       version.json を正典に反映する処理は T-026 / T-027 で実装する。 */
-    .title-footer {
-      position: fixed;
-      bottom: 12px;
-      left: 0;
-      right: 0;
-      text-align: center;
-      font-size: 0.8rem;
-      color: #999;
+    #stage.listening { border-color: var(--color-accent); box-shadow: 0 0 0 6px rgba(255,179,0,.18) inset; }
+    #stage.restarting { border-color: #ffd980; }
+    #roulette-num { font-size: 34vw; font-weight: 700; line-height: 1; color: var(--color-fg); font-variant-numeric: tabular-nums; }
+    #game .controls { display: grid; place-items: center; padding: 14px 0 26px; }
+
+    /* マイク状態アイコン（F-003） */
+    .mic { width: 34px; height: 34px; }
+    .mic .body { fill: #c9c9c9; transition: fill .15s; }
+    .mic .slash { stroke: #d33; stroke-width: 6; display: none; }
+    .mic-state.listening .mic .body { fill: var(--color-accent); }
+    .mic-state.denied .mic .body { fill: #bbb; }
+    .mic-state.denied .mic .slash { display: block; }
+    .mic-state.restarting .mic .body { fill: var(--color-accent); animation: blink .6s steps(2,end) infinite; }
+    @keyframes blink { 50% { opacity: .3; } }
+    .finger { width: 30px; height: 30px; margin-left: 6px; display: none; }
+    .mic-state.denied + .finger { display: inline-block; }
+
+    /* S-07 計測パネル（検証用・文字あり） */
+    #panel { padding: 16px; gap: 14px; overflow: auto; }
+    #panel h2 { font-size: 1.1rem; margin: 4px 0; }
+    #panel .row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    #panel .metrics { width: 100%; border-collapse: collapse; font-size: .95rem; }
+    #panel .metrics th, #panel .metrics td { border: 1px solid #eee; padding: 6px 8px; text-align: left; }
+    .badge { padding: 2px 8px; border-radius: 999px; font-size: .8rem; font-weight: 700; }
+    .badge.pass { background: #e3f6e3; color: #0a7a0a; }
+    .badge.fail { background: #fdeaea; color: #b00; }
+    .badge.na   { background: #eee; color: #888; }
+    #panel button.text-btn {
+      font-family: var(--font-family); font-size: 1rem; padding: 10px 14px; min-height: var(--tap-min);
+      border: 2px solid var(--color-accent); background: #fff; border-radius: 12px; cursor: pointer;
     }
+    #panel label { display: inline-flex; align-items: center; gap: 4px; }
+    #copy-area { width: 100%; height: 96px; font-family: monospace; font-size: .8rem; display: none; }
   </style>
 </head>
 <body>
-  <main class="title-screen">
+  <!-- ============ S-02 タイトル ============ -->
+  <section class="screen active" id="title" data-screen="title">
+    <button class="icon-btn gear" id="to-panel" aria-label="計測パネル">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.4 13a7.6 7.6 0 000-2l2-1.6-2-3.4-2.4 1a7.6 7.6 0 00-1.7-1L14.8 3H9.2l-.5 2.6a7.6 7.6 0 00-1.7 1l-2.4-1-2 3.4L2.6 11a7.6 7.6 0 000 2l-2 1.6 2 3.4 2.4-1c.5.4 1.1.7 1.7 1l.5 2.6h5.6l.5-2.6c.6-.3 1.2-.6 1.7-1l2.4 1 2-3.4-2-1.6zM12 15.5A3.5 3.5 0 1112 8.5a3.5 3.5 0 010 7z"/></svg>
+    </button>
     <h1 class="app-title">どうぶつめくり</h1>
-    <a class="back-link" href="../">← コエキット</a>
-  </main>
-  <footer class="title-footer">v0.1.0 &nbsp; © 2026 SIKUMI LAB</footer>
+    <button class="btn-round" id="start-play" aria-label="はじめる">
+      <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+    </button>
+    <footer class="title-footer">v0.1.0 &nbsp; © 2026 SIKUMI LAB</footer>
+  </section>
+
+  <!-- ============ S-03 ゲーム（レベル0 ルーレット） ============ -->
+  <section class="screen" id="game" data-screen="game">
+    <div class="topbar">
+      <button class="icon-btn" id="to-title" aria-label="タイトルへ">
+        <svg viewBox="0 0 24 24" fill="#888"><path d="M15 6l-6 6 6 6z"/></svg>
+      </button>
+      <span class="mic-state" id="mic-state">
+        <svg class="mic" viewBox="0 0 24 24">
+          <g class="body">
+            <rect x="9" y="2.5" width="6" height="11" rx="3"/>
+            <path d="M6 11a6 6 0 0012 0" fill="none" stroke="#c9c9c9" stroke-width="1.6"/>
+            <rect x="11.2" y="17" width="1.6" height="3.4"/>
+            <rect x="8.5" y="20.2" width="7" height="1.6" rx=".8"/>
+          </g>
+          <line class="slash" x1="4" y1="4" x2="20" y2="20"/>
+        </svg>
+      </span>
+      <svg class="finger" id="touch-hint" viewBox="0 0 24 24" fill="#888"><path d="M9 11V5a1.5 1.5 0 013 0v6h1V6.5a1.5 1.5 0 013 0V13a6 6 0 01-6 6h-1a5 5 0 01-4-2l-3-4 1.2-1.1a2 2 0 012.6-.1L9 13z"/></svg>
+    </div>
+    <div id="stage"><div id="roulette-num">0</div></div>
+    <div class="controls">
+      <button class="btn-round" id="spin-btn" aria-label="スタート／ストップ">
+        <svg id="spin-icon" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+      </button>
+    </div>
+  </section>
+
+  <!-- ============ S-07 計測パネル（検証用） ============ -->
+  <section class="screen" id="panel" data-screen="panel">
+    <div class="row" style="justify-content:space-between">
+      <h2>計測パネル（検証用）</h2>
+      <button class="icon-btn" id="panel-back" aria-label="戻る">
+        <svg viewBox="0 0 24 24" fill="#888"><path d="M15 6l-6 6 6 6z"/></svg>
+      </button>
+    </div>
+
+    <div class="row">
+      <strong>方式:</strong>
+      <label><input type="radio" name="method" value="vosk">Vosk（本命）</label>
+      <label><input type="radio" name="method" value="webspeech-local">端末内WebSpeech(B)</label>
+      <label><input type="radio" name="method" value="webspeech">既定WebSpeech(A・検証専用)</label>
+    </div>
+    <div class="row" id="method-note" style="font-size:.85rem;color:#888"></div>
+
+    <table class="metrics">
+      <thead><tr><th>指標</th><th>実測</th><th>閾値</th><th>合否</th></tr></thead>
+      <tbody id="metrics-body"></tbody>
+    </table>
+    <div class="row"><strong>総合:</strong> <span id="overall" class="badge na">—</span>
+      <span style="color:#888">記録件数: <span id="log-count">0</span></span></div>
+
+    <div class="row">
+      <button class="text-btn" id="copy-csv">CSVをコピー</button>
+      <button class="text-btn" id="mark-spurious">誤発動を記録</button>
+      <button class="text-btn" id="clear-log">ログをクリア</button>
+    </div>
+    <textarea id="copy-area" readonly></textarea>
+  </section>
+
+  <script type="module" src="./app.js"></script>
 </body>
 </html>
