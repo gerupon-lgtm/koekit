@@ -21,6 +21,9 @@ import * as sfx from '../src/audio/sfx.js';
 const $ = s => document.querySelector(s);
 const METHOD_KEY = 'koekit.method';
 const FAKEOUT_LEVELS = new Set(['3', '4', '5', 'extra']); // フェイント停止を有効にするレベル
+// 停止後にフォーカス枠（止まった位置）を見せる時間(ms)。レベルが上がるほど短く＝記憶要素を強める。
+// Infinity は消えない。完全停止した瞬間から計測。パッと消す（フェードなし）。救済・下限なし（A区分）。
+const FOCUS_HOLD_MS = { '0': Infinity, '1': Infinity, '2': 1500, '3': 1000, '4': 700, '5': 400, 'extra': 250 };
 
 // 位置キー → 3×3グリッドのセル(r,c)と矢印回転(deg)。center は中点。
 const POS = {
@@ -48,6 +51,7 @@ const cardEls = new Map();    // key -> card要素
 let targetKey = null;         // 止まった位置
 let selectedKey = null;       // 言った/選んだ位置
 let trialResolved = false;    // 確定の二重発火防止（E-07）
+let focusHideTimer = null;    // 停止後にフォーカス枠を消すタイマー
 let lastPosRaw = '', lastPosElapsed = 0;
 let sessionRestart = 0;
 let micDenied = false;
@@ -194,6 +198,7 @@ function startLevel(id) {
 function beginTrial() {
   targetKey = null; selectedKey = null; trialResolved = false;
   lastPosRaw = ''; lastPosElapsed = 0;
+  clearTimeout(focusHideTimer);
   if (mode === 'board') clearBoardMarks();
   updateSpinIcon(false);
   phase.to(PHASES.AWAIT_START); // マイク許可はこの区間の start で要求される
@@ -214,7 +219,13 @@ function onRouletteStop(v) {
     setTimeout(() => { if (phase && level && level.id === '0') phase.to(PHASES.AWAIT_START); }, 700);
   } else {
     targetKey = orderedKeys[v];
-    setFocus(targetKey);                  // 止まった位置を残す
+    setFocus(targetKey);                  // 止まった位置を表示
+    // レベルに応じて枠を一定時間で消す（記憶要素）。完全停止したここから計測。
+    const hold = FOCUS_HOLD_MS[level.id];
+    clearTimeout(focusHideTimer);
+    if (hold !== Infinity) {
+      focusHideTimer = setTimeout(() => { cardEls.forEach(el => el.classList.remove('focus')); }, hold);
+    }
     phase.to(PHASES.AWAIT_POSITION);      // 位置語を待つ
   }
 }
@@ -363,6 +374,7 @@ function buildLevelSelect() {
 
 // ---- 終了/タイトル ----
 function goTitle() {
+  clearTimeout(focusHideTimer);
   try { phase && phase.to(PHASES.RESULT); } catch {}
   try { adapter && (adapter.dispose ? adapter.dispose() : adapter.stop()); } catch {}
   adapter = null; roulette = null; phase = null; judge = null; level = null;
