@@ -1,7 +1,28 @@
 /* コエキット 共通デザイントークン（正典: docs/screens.md 1節） */
+
+/* フォント自前配置（T-002）— M PLUS Rounded 1c を woff2 で assets/fonts/ に配置。
+   Google Fonts CDN は使わない（オフライン対応）。使用文字だけにサブセット済み。
+   ライセンス: SIL OFL 1.1（assets/fonts/LICENSE.txt）。
+   url() は本CSSの位置基準で解決されるため、/koekit/ 配下でもそのまま動作する。
+   font-display: swap により、読込前・読込失敗時はフォールバック書体で表示される。 */
+@font-face {
+  font-family: "M PLUS Rounded 1c";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("./assets/fonts/MPLUSRounded1c-Regular.subset.woff2") format("woff2");
+}
+@font-face {
+  font-family: "M PLUS Rounded 1c";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("./assets/fonts/MPLUSRounded1c-Bold.subset.woff2") format("woff2");
+}
+
 :root {
-  /* フォント — T-002 で woff2 を assets/fonts/ に自前配置し @font-face を追加する。
-     この時点ではフォールバック書体で表示される。font-family は必ず指定する。 */
+  /* フォント — 自前配置した M PLUS Rounded 1c を最優先、以降はフォールバック。
+     font-family は必ず指定する（無指定でOS依存の sans-serif に任せない）。 */
   --font-family: "M PLUS Rounded 1c", "Hiragino Maru Gothic ProN",
                  "Yu Gothic UI", "Meiryo", sans-serif;
 
