@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>判定1-C改4: Vosk 認識確認</title>
+<style>
+  body{font-family:system-ui,sans-serif;padding:1.2em;line-height:1.7;font-size:16px}
+  button{font-size:1.1em;padding:.7em 1.1em;margin:.3em .3em .3em 0;min-height:52px}
+  #big{font-size:2.2em;font-weight:700;color:#0a7a0a;min-height:1.4em;margin:.4em 0}
+  #meter{height:24px;background:#ddd;border-radius:12px;overflow:hidden;margin:.4em 0}
+  #bar{height:100%;width:0;background:#0a7a0a}
+  #counts{font-size:1.05em;font-weight:700;margin:.3em 0}
+  #log{white-space:pre-wrap;background:#f2f2f2;padding:.8em;margin-top:1em;border-radius:6px;font-size:.95em}
+  .ok{color:#0a7a0a;font-weight:700}.ng{color:#b00;font-weight:700}
+</style>
+</head>
+<body>
+<h1>判定1-C改4: Vosk 認識確認</h1>
+<p>AudioBuffer(16kHz) を Vosk へ渡す版。acceptWaveform失敗は最初の1回だけ記録します。</p>
+<p>分離状態: <span id="coi"></span></p>
+
+<button id="btnLoad">1. モデル読込</button>
+<button id="btnRec" disabled>2. 認識開始</button>
+<button id="btnStop" disabled>停止</button>
+
+<div style="margin-top:1em">音の大きさ:</div>
+<div id="meter"><div id="bar"></div></div>
+<div id="counts">送った回数: 0 ／ 最大音量: 0.000</div>
+
+<div style="margin-top:.6em">認識結果 → <span id="big"></span></div>
+<div id="log"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/vosk-browser@0.0.8/dist/vosk.js"></script>
+<script>
+const q=new URLSearchParams(location.search);
+const logEl=document.getElementById('log'), bigEl=document.getElementById('big');
+const barEl=document.getElementById('bar'), countsEl=document.getElementById('counts');
+const log=(m,cls)=>{const d=document.createElement('div');if(cls)d.className=cls;d.textContent=m;logEl.appendChild(d);};
+document.getElementById('coi').textContent='crossOriginIsolated='+!!self.crossOriginIsolated;
+
+const MODEL_URL=q.get('model')||'./model/model.tar.gz';
+let model=null, rec=null, ac=null, node=null, src=null, stream=null, sent=0, peak=0, errShown=false;
+
+document.getElementById('btnLoad').onclick=async()=>{
+  log('--- モデル読込 ---');
+  const t0=performance.now();
+  try{ model=await Vosk.createModel(MODEL_URL);
+    log('読込成功 '+((performance.now()-t0)/1000).toFixed(1)+'秒','ok');
+    document.getElementById('btnRec').disabled=false;
+  }catch(e){ log('読込失敗: '+e.message,'ng'); }
+};
+
+document.getElementById('btnRec').onclick=async()=>{
+  log('--- 認識開始 ---'); sent=0; peak=0; errShown=false;
+  try{
+    rec=new model.KaldiRecognizer(16000);
+    rec.on('result',(m)=>{ if(m.result.text){ bigEl.textContent=m.result.text; log('結果: 「'+m.result.text+'」','ok'); }});
+    rec.on('partialresult',(m)=>{ if(m.result.partial) bigEl.textContent='（'+m.result.partial+'）'; });
+
+    stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,channelCount:1},video:false});
+    log('マイク取得 OK','ok');
+    ac=new AudioContext({sampleRate:16000});
+    if(ac.state==='suspended') await ac.resume();
+    log('AudioContext sampleRate='+ac.sampleRate+' state='+ac.state);
+
+    // 音量メーター用に元のFloat32を送る素のworkletを使う
+    await ac.audioWorklet.addModule('./vosk-worklet.js');
+    src=ac.createMediaStreamSource(stream);
+    node=new AudioWorkletNode(ac,'vosk-capture');
+
+    node.port.onmessage=(ev)=>{
+      const data=ev.data;
+      if(!data||!data.length) return;
+      let mx=0; for(let i=0;i<data.length;i++){const v=Math.abs(data[i]); if(v>mx)mx=v;}
+      if(mx>peak)peak=mx;
+      barEl.style.width=Math.min(100,mx*300).toFixed(0)+'%';
+      sent++; if(sent%10===0) countsEl.textContent='送った回数: '+sent+' ／ 最大音量: '+peak.toFixed(3);
+      // AudioBuffer(16kHz) を作って渡す（vosk-browser が期待する形）
+      try{
+        const buf=ac.createBuffer(1, data.length, 16000);
+        buf.copyToChannel ? buf.copyToChannel(data,0) : buf.getChannelData(0).set(data);
+        rec.acceptWaveform(buf);
+      }catch(e){
+        if(!errShown){ log('acceptWaveform失敗(初回のみ表示): '+e.message,'ng'); errShown=true; }
+      }
+    };
+
+    src.connect(node); node.connect(ac.destination);
+    document.getElementById('btnStop').disabled=false;
+    log('話してください（「みぎ」「ひだり」「ストップ」）…');
+  }catch(e){ log('認識開始に失敗: '+e.message,'ng'); }
+};
+
+document.getElementById('btnStop').onclick=()=>{
+  try{ node&&node.disconnect(); src&&src.disconnect(); stream&&stream.getTracks().forEach(t=>t.stop()); ac&&ac.close(); }catch(e){}
+  log('停止。最終: 送った回数='+sent+' 最大音量='+peak.toFixed(3));
+  document.getElementById('btnStop').disabled=true;
+};
+</script>
+</body>
+</html>
