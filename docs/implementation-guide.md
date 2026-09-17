@@ -194,6 +194,16 @@
 
 - `check-version.cjs` — バージョン反映先の同値検証
 - `test-logic.cjs` — 語彙照合、CSVエスケープ、合格ライン判定、レベル遷移判定の検証
+- `stamp-cache.cjs` — キャッシュバスターの刻印。**各デプロイ前に実行し** `sw.js` の `BUILD` を一意値へ置換する
+
+### キャッシュ方針（キャッシュバスター）
+
+- アプリ本体（HTML/CSS/JS/フォント/アイコン）は SW で **network-first**。オンラインなら常に最新を取得し、
+  デプロイごとに自動で最新化される。`APP_CACHE` 名に `BUILD` を含め、旧キャッシュは activate で破棄する
+- **Voskモデル（R2・別オリジン・約48MB）は SW 非対象＝キャッシュバスターの対象外**（再取得しない）。
+  vosk-browser 側の Cache Storage に任せる
+- `lib/vosk/vosk.js`（約5.8MB）は `STATIC_CACHE` に cache-first で保持し、毎デプロイでの再取得を避ける。
+  ライブラリ更新時のみ `STATIC_CACHE` の版を上げる
 
 ## 11. コマンド
 
@@ -204,9 +214,11 @@ npx serve .                 # ローカル確認（HTTPSが必要な機能はhtt
 node scripts/test-logic.cjs
 TZ=UTC node scripts/test-logic.cjs
 node scripts/check-version.cjs
+node scripts/stamp-cache.cjs # デプロイ前: キャッシュバスターを刻印（sw.js の BUILD を更新）→ commit → push
 ```
 
 **マイクはHTTPSまたはlocalhostでのみ使える。** 実機確認はGitHub Pages（HTTPS）で行う。
+**デプロイ手順**: `stamp-cache.cjs` を実行して `sw.js` を更新 → commit → push（GitHub Pages が自動ビルド）。
 
 ## 12. 参照
 
