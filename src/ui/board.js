@@ -1,7 +1,7 @@
 // 盤面ビュー（両アプリ共通）。3×3グリッドに位置キーで札を置き、フォーカス/選択/めくり/図示を扱う。
 // カード構造: <div class="card"><div class="front"></div></div>
 //   .card.flipped で前面(.front)を表示。前面の中身は各アプリが setContent で差し込む
-//   （どうぶつめくり=赤丸プレースホルダ、きおくめくり=絵の img）。
+//   （ピタリズム=赤丸プレースホルダ、メモリズム=絵の img）。
 import { POS } from '../game/positions.js';
 
 export class BoardView {

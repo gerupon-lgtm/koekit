@@ -16,7 +16,7 @@ export class Judge {
    * @param {number} [opts.maxAttempts]
    * @param {number} [opts.clearHits]
    * @param {boolean} [opts.continueAfterClear] true なら規定回数に達しても即クリアにせず、
-   *   5回まで続行できる（`cleared` フラグが立つ／決着は5回到達時）。きおくめくり用。
+   *   5回まで続行できる（`cleared` フラグが立つ／決着は5回到達時）。メモリズム用。
    */
   constructor({ maxAttempts = MAX_ATTEMPTS, clearHits = CLEAR_HITS, continueAfterClear = false } = {}) {
     this._max = maxAttempts;

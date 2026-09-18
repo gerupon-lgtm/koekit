@@ -59,7 +59,7 @@ body {
   min-height: 100vh;
 }
 
-/* ===== 共有UIコンポーネント（どうぶつめくり／きおくめくり 共通） =====
+/* ===== 共有UIコンポーネント（ピタリズム／メモリズム 共通） =====
    src/ui/* のビューが前提とするクラス。各アプリの index.html は同じIDで組む。 */
 .hidden { display: none !important; }
 .screen { display: none; min-height: 100svh; }
@@ -107,7 +107,7 @@ body {
 /* 前面（絵/文字/赤丸）はめくった時だけ見せる。裏向き(.card:not(.flipped))では隠す。 */
 .card .front { width: 100%; height: 100%; display: none; place-items: center; overflow: hidden; }
 .card.flipped .front { display: grid; }
-.card .front img { width: 100%; height: 100%; min-height: 0; padding: 6%; object-fit: contain; } /* きおくめくりの絵：縦横比維持・トリミングなし */
+.card .front img { width: 100%; height: 100%; min-height: 0; padding: 6%; object-fit: contain; } /* メモリズムの絵：縦横比維持・トリミングなし */
 .card-dot { width: 62%; aspect-ratio: 1; border-radius: 50%; background: #e23b3b; } /* 正解の赤丸プレースホルダ */
 
 /* 認識結果の図示は、盤面上部の「トースト」として出す。
@@ -174,13 +174,6 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--color-primary);
 #title .home, #title .gear { position: absolute; top: max(16px, env(safe-area-inset-top)); color: var(--color-muted); }
 #title .home { left: 20px; text-decoration: none; }
 #title .gear { right: 20px; }
-.title-art { display: flex; align-items: center; justify-content: center; height: 152px; width: 260px; isolation: isolate; }
-.art-card { display: grid; place-items: center; width: 104px; height: 124px; border-radius: 26px; background: var(--color-accent); border: 3px solid white; box-shadow: 0 8px 0 #223c6009; }
-.art-card:first-child { transform: rotate(-18deg) translate(24px, 10px); background: #c7ddef; }
-.art-card:nth-child(2) { z-index: 1; transform: rotate(-5deg); flex-shrink: 0; background: white; }
-.art-card:last-child { transform: rotate(18deg) translate(-24px, 10px); }
-.art-card img { width: 94%; height: 94%; object-fit: contain; }
-.kioku .art-card:first-child { background: #bfe0d7; }
 .level-picker { text-align: center; margin-top: 6px; }
 .level-picker p { margin: 0 0 12px; color: var(--color-muted); font-size: .8rem; }
 #level-select { display: grid; grid-template-columns: repeat(4, 48px); gap: 10px; justify-content: center; }
@@ -232,7 +225,6 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--color-primary);
 @keyframes introIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
 @media (max-height: 700px) {
   #title { gap: 16px; padding-top: 64px; }
-  .title-art { height: 116px; transform: scale(.85); }
   .intro-card { padding: 16px 22px 22px; }
   #intro-heading { margin-top: 4px; margin-bottom: 6px; }
   .intro-text { font-size: .8rem; line-height: 1.6; }
@@ -251,23 +243,14 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--color-primary);
 /* 一覧は、動物の絵そのものを入口にする。 */
 .page { max-width: 720px; margin: 0 auto; min-height: 100svh; padding: 48px 24px 24px; display: flex; flex-direction: column; }
 .site-header { margin-bottom: 36px; }
-.voice-mark { height: 30px; display: inline-flex; align-items: center; gap: 5px; vertical-align: middle; margin-right: 10px; }
-.voice-mark i { width: 7px; height: 14px; border-radius: 6px; background: var(--color-primary); }
-.voice-mark i:nth-child(2) { height: 28px; }
-.voice-mark i:nth-child(3) { height: 22px; background: #d29b14; }
-.site-title { display: inline; font-size: 1rem; }
+.site-title { display: flex; align-items: center; gap: 2px; margin: -12px 0 0 -14px; font-size: 1.35rem; letter-spacing: -.04em; }
 .site-lead { font-size: clamp(25px, 6.5vw, 40px); font-weight: 700; margin: 32px 0 8px; letter-spacing: -.045em; }
 .site-note { color: var(--color-muted); margin: 0; font-size: .88rem; }
 .app-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 18px; }
 .app-card { position: relative; min-height: 172px; display: flex; gap: 22px; align-items: center; background: #fff; color: var(--color-fg); text-decoration: none; padding: 24px; border-radius: 28px; border: 1px solid #e2eaf2; box-shadow: 0 5px 0 #223c6007; }
-.app-art { position: relative; width: 108px; height: 116px; flex-shrink: 0; background: #fff0b7; border-radius: 22px; transform: rotate(-6deg); display: grid; place-items: center; }
-.app-art img { width: 96%; height: 96%; object-fit: contain; z-index: 1; }
-.memory .app-art { background: #d8efe7; transform: rotate(5deg); }
-.mini-tile { position: absolute; width: 58px; height: 72px; background: #f4c64e; border: 3px solid white; right: -15px; bottom: -6px; border-radius: 14px; transform: rotate(18deg); }
-.memory .mini-tile { background: #aacbdc; }
 .app-info { flex: 1; }
 .app-name { font-size: clamp(18px, 4.7vw, 25px); font-weight: 700; letter-spacing: -.04em; }
-.app-desc { margin-top: 8px; font-size: .8rem; line-height: 1.8; color: var(--color-muted); }
+.app-desc { margin-top: 0; font-size: .8rem; line-height: 1.8; color: var(--color-muted); }
 .app-open { color: var(--color-primary); font-size: 18px; }
 .app-card:active { transform: translateY(2px); box-shadow: none; }
 .family-note { margin: 30px 0; color: var(--color-muted); font-size: .8rem; line-height: 1.9; text-align: center; }
@@ -275,6 +258,18 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--color-primary);
 @media (max-width: 420px) {
   .page { padding: 32px 20px 20px; }
   .app-card { padding: 20px 16px; gap: 18px; min-height: 156px; }
-  .app-art { width: 80px; height: 96px; }
   .app-open { position: absolute; right: 20px; bottom: 14px; font-size: 12px; }
+}
+
+/* ロゴ：コエキットのみシンボル、各小品は文字ロゴ。 */
+.brand-symbol { display: block; flex-shrink: 0; }
+.wordmark { display: block; width: 100%; height: auto; object-fit: contain; }
+#title .app-title { width: min(340px, 86vw); margin: 12px 0 20px; }
+.app-card .app-name { width: min(260px, 100%); }
+.app-card .wordmark { height: 88px; object-position: left center; }
+.app-card .app-info { min-width: 0; }
+@media (max-width: 420px) {
+  .app-card { padding: 16px 22px 24px; }
+  .app-card .wordmark { height: 76px; }
+  .app-open { bottom: 22px; }
 }

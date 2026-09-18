@@ -81,7 +81,7 @@ export function playGameover() {
 /** スタート/ストップの軽い合図（任意）。 */
 export function playBlip(freq = 440) { tone(freq, 0, 0.06, 0.5, 'square'); }
 
-/** カウントダウンの1秒ごとのビープ（きおくめくりの記憶提示）。はっきり聞こえる「ピッ」。 */
+/** カウントダウンの1秒ごとのビープ（メモリズムの記憶提示）。はっきり聞こえる「ピッ」。 */
 export function playCountdownTick() {
   tone(1000, 0, 0.14, 1.6, 'triangle');
 }
