@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#ffb300">
+  <title>合成音デモ</title>
+  <link rel="icon" href="../assets/icons/icon-192.png">
+  <link rel="stylesheet" href="../styles.css">
+  <style>
+    .wrap { max-width: 640px; margin: 0 auto; padding: 20px 16px 48px; }
+    h1 { font-size: 1.4rem; margin: 8px 0; }
+    h2 { font-size: 1.05rem; margin: 20px 0 8px; color: #666; }
+    p.note { color: #777; font-size: .9rem; line-height: 1.6; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 12px; }
+    .sound-btn {
+      font-family: var(--font-family); font-size: 1.1rem; font-weight: 700;
+      padding: 18px 12px; min-height: 64px; border: 2px solid var(--color-accent);
+      background: #fff; color: var(--color-fg); border-radius: 16px; cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0,0,0,.08);
+    }
+    .sound-btn:active { background: #fff8e6; transform: scale(.98); }
+    .sound-btn .emoji { display: block; font-size: 1.6rem; margin-bottom: 4px; }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <h1>コエキット 合成音デモ</h1>
+    <p class="note">タップで鳴ります（Web Audio API で合成・録音素材なし）。<br>
+      音量・音色は後から調整できます。気に入ったものはそのままアプリの鳴き声/効果音に採用します。</p>
+
+    <h2>どうぶつ</h2>
+    <div class="grid" id="animals"></div>
+
+    <h2>のりもの・もの</h2>
+    <div class="grid" id="vehicles"></div>
+
+    <h2>ゲームの効果音（参考）</h2>
+    <div class="grid" id="sfx"></div>
+  </main>
+
+  <script type="module">
+    import { CRIES, primeCries } from '../src/audio/cries.js';
+    import * as sfx from '../src/audio/sfx.js';
+
+    const EMOJI = { cat:'🐱', dog:'🐶', cow:'🐮', bird:'🐤', frog:'🐸', sheep:'🐑',
+      carHorn:'🚗', siren:'🚑', trainHorn:'🚃' };
+
+    function makeBtn(label, emoji, onPlay) {
+      const b = document.createElement('button');
+      b.className = 'sound-btn';
+      b.innerHTML = `<span class="emoji">${emoji || '🔊'}</span>${label}`;
+      b.addEventListener('click', () => { primeCries(); sfx.primeAudio(); onPlay(); });
+      return b;
+    }
+
+    const animalsEl = document.getElementById('animals');
+    const vehiclesEl = document.getElementById('vehicles');
+    for (const c of CRIES) {
+      const isVehicle = ['carHorn','siren','trainHorn'].includes(c.key);
+      (isVehicle ? vehiclesEl : animalsEl).appendChild(makeBtn(c.label, EMOJI[c.key], c.fn));
+    }
+
+    // ゲーム効果音（きおくめくり/どうぶつめくり共通）
+    const sfxList = [
+      ['せいかい', '⭕', () => sfx.playCorrect()],
+      ['ふせいかい', '❌', () => sfx.playBlip(220)],
+      ['クリア', '🎉', () => sfx.playClear()],
+      ['ゲームオーバー', '💤', () => sfx.playGameover()],
+      ['カウントダウン', '⏱', () => sfx.playCountdownTick()],
+      ['タイムアップ', '⏰', () => sfx.playTimeUp()],
+    ];
+    const sfxEl = document.getElementById('sfx');
+    for (const [label, emoji, fn] of sfxList) sfxEl.appendChild(makeBtn(label, emoji, fn));
+  </script>
+</body>
+</html>
