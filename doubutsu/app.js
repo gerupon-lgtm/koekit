@@ -13,6 +13,7 @@ import { PhaseMachine, PHASES } from '../src/game/phase.js';
 import { Roulette } from '../src/game/roulette.js';
 import { Judge } from '../src/game/judge.js';
 import { getLevel, LEVELS } from '../src/game/levels.js';
+import { ANIMAL_FILES, animalImg } from '../src/game/animals.js';
 import { Recorder } from '../src/log/recorder.js';
 import { toCSV } from '../src/log/csv.js';
 import { computeMetrics, judge as judgeMetrics, THRESHOLDS } from '../src/log/metrics.js';
@@ -285,8 +286,8 @@ function doConfirm() {
   const correct = (selectedKey === targetKey);
   board.setFlipped(selectedKey, true);
   if (correct) {
-    const dot = document.createElement('div'); dot.className = 'card-dot'; // 正解の赤丸プレースホルダ
-    board.setContent(selectedKey, dot);
+    const file = ANIMAL_FILES[Math.floor(Math.random() * ANIMAL_FILES.length)]; // ランダムな動物
+    board.setContent(selectedKey, animalImg(file));
     board.setCorrect(selectedKey, true);
     sfx.playCorrect();
   } else { sfx.playBlip(220); }

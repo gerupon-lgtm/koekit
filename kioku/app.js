@@ -13,6 +13,7 @@ import { PhaseMachine, PHASES } from '../src/game/phase.js';
 import { Judge } from '../src/game/judge.js';
 import { getLevel, LEVELS } from '../src/game/levels.js';
 import { deal } from '../src/game/deal.js';
+import { ANIMAL_FILES, animalImg } from '../src/game/animals.js';
 import { BoardView } from '../src/ui/board.js';
 import { renderCertificate } from '../src/ui/certificate.js';
 import { buildLevelSelect } from '../src/ui/levelselect.js';
@@ -125,9 +126,9 @@ function beginTrial() {
   board.clearMarks(); board.clearContent();
   $('#confirm-btn').classList.add('hidden');
 
-  // 配置（毎試行ランダム）。各セルに絵（文字）を仕込み、裏向きで置く。
-  dealt = deal(level.vocab);
-  for (const key of level.vocab) board.setContent(key, letterEl(dealt.map[key]));
+  // 配置（毎試行ランダム）。各セルに動物画像を仕込み、裏向きで置く。
+  dealt = deal(level.vocab, { letters: ANIMAL_FILES });
+  for (const key of level.vocab) board.setContent(key, animalImg(dealt.map[key]));
 
   phase.to(PHASES.AWAIT_START); // 「スタート」発話 or ▶ボタンで記憶提示が始まる
 }
@@ -169,7 +170,9 @@ function runCountdown(sec, onDone) {
 // ---- 対象提示（探す絵を一瞬）→ 回答受付 ----
 function showTarget() {
   const tp = $('#target-prompt');
-  tp.querySelector('.tp-letter').textContent = dealt.targetLetter;
+  const holder = tp.querySelector('.tp-letter');
+  holder.innerHTML = '';
+  holder.appendChild(animalImg(dealt.targetLetter)); // 探す動物を大きく提示
   tp.classList.remove('hidden');
   seqTimer = setTimeout(() => {
     tp.classList.add('hidden');

@@ -12,7 +12,7 @@
 // BUILD は scripts/stamp-cache.cjs が各デプロイ前に一意な値へ置換する。
 
 const VERSION = '0.1.0';            // version.json と一致（scripts/check-version 対象）
-const BUILD = 'v0.1.0-20260918114727-11af9a5';         // ← scripts/stamp-cache.cjs がデプロイ毎に置換
+const BUILD = 'v0.1.0-20260918123622-dc2c1e1';         // ← scripts/stamp-cache.cjs がデプロイ毎に置換
 const APP_CACHE = 'koekit-app-' + BUILD;
 const STATIC_CACHE = 'koekit-static-v1'; // 大きい静的資産（vosk.js等）。中身を変えたときだけ版を上げる
 
@@ -25,7 +25,9 @@ const SHELL = [
 
 // cache-first にする大きい静的資産（同一オリジン）。ここに載るものは毎デプロイでは再取得しない。
 function isStatic(url) {
-  return url.pathname.includes('/lib/vosk/');
+  // 大きめ・変化の少ない静的資産は cache-first で保持（毎デプロイで再取得しない）。
+  // 画像を差し替えたら STATIC_CACHE の版を上げる。
+  return url.pathname.includes('/lib/vosk/') || url.pathname.includes('/assets/animals/');
 }
 
 self.addEventListener('install', (event) => {
