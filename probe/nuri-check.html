@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="ja">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ヌリリズム 聞き分けチェック</title>
+<style>
+body{font-family:system-ui,sans-serif;background:#faf5ed;color:#493f36;margin:0;padding:24px;line-height:1.7}
+main{max-width:680px;margin:auto}
+h1{font-size:22px}
+h2{font-size:17px;margin:20px 0 6px}
+button{font:inherit;font-weight:bold;padding:12px 16px;border:0;border-radius:16px;background:#dce9d5;color:#30462e;margin:6px 6px 6px 0;min-height:52px}
+button.set{background:#e7ddef;color:#3d2f4a}
+button:disabled{opacity:.45}
+#status{font-weight:bold}
+table{border-collapse:collapse;width:100%;font-size:14px;margin-top:8px}
+th,td{border:1px solid #d8cfc2;padding:6px 8px;text-align:left}
+td.n{text-align:right;font-variant-numeric:tabular-nums}
+tr.ok td{background:#eef6ea}tr.mid td{background:#fef7e6}tr.bad td{background:#fbeceb}
+pre{white-space:pre-wrap;overflow-wrap:anywhere;background:white;border-radius:16px;padding:14px;font-size:13px;max-height:36vh;overflow:auto}
+a{color:inherit}
+.small{font-size:13px;color:#7a6f62}
+</style>
+<main>
+<h1>ヌリリズム 聞き分けチェック</h1>
+<p class="small">保護者向けの確認ページです。ヌリリズムで使う語（座標・色・移動など）を Vosk が聞き分けられるかを、区間ごとに確かめます。音声は端末内で処理し、外部へ送信しません。初回は約50MBのモデルを読み込みます。<b>既存アプリには影響しません（音声入力層を読み込むだけの独立ページです）。</b></p>
+
+<h2>1. 準備</h2>
+<button id="init" disabled>マイクを許可して開始</button>
+<button id="stop" disabled>停止</button>
+<p id="status" role="status">確認プログラムを読み込んでいます…</p>
+
+<h2>2. 区間を選ぶ</h2>
+<p class="small">ボタンを押すと、その区間で受け付ける語だけを認識対象にします。表の語を上から順に、はっきり2〜3回ずつ読み上げてください。</p>
+<div id="sets"></div>
+
+<h2>3. 結果</h2>
+<p class="small">「言った回数」に対して「正しく認識」と「取り違え（別の語に化けた）」を数えます。取り違えが多い語が、実装前に語彙・色数を調整すべき候補です。</p>
+<div id="result"></div>
+
+<h2>ログ（生の認識結果）</h2>
+<pre id="log"></pre>
+<button id="copy">結果とログをコピー</button>
+<p><a href="../">コエキットへ戻る</a></p>
+</main>
+<script type="module" src="./nuri-check.js"></script>
+</html>
