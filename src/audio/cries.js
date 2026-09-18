@@ -107,15 +107,16 @@ export function siren() { const ac = ctx(); if (!ac) return; // ピーポー
   const seq = [980, 760, 980, 760];
   seq.forEach((f, i) => voice(ac, { type: 'sine', f0: f, t0: i * 0.34, dur: 0.33, gain: 0.4 }));
 }
-// 日本の踏切の「カンカンカン」。2つの鐘が速く交互に鳴る（明るい金属音＋打撃のカチッ）。
-function bellHit(ac, t, base) {
-  voice(ac, { type: 'square', f0: base, t0: t, dur: 0.10, gain: 0.30, filter: { type: 'bandpass', freq: base, Q: 7 } });
-  voice(ac, { type: 'sine', f0: base * 2.4, t0: t, dur: 0.07, gain: 0.14 });
-  noise(ac, { t0: t, dur: 0.015, gain: 0.14, filter: { type: 'highpass', freq: 2600 } }); // アタックのカチッ
+// 日本の踏切の「カンカンカン」。単一の鐘を叩く音を一定間隔で繰り返す。
+const CROSSING_BASE = 1150; // 鐘の音の高さ
+function bellHit(ac, t) {
+  // 明るい金属音＋非整数の上部倍音＋打撃のカチッ。速い減衰で「カン」。
+  voice(ac, { type: 'square', f0: CROSSING_BASE, t0: t, dur: 0.13, gain: 0.32, filter: { type: 'bandpass', freq: CROSSING_BASE, Q: 8 } });
+  voice(ac, { type: 'sine', f0: CROSSING_BASE * 2.6, t0: t, dur: 0.09, gain: 0.13 });
+  noise(ac, { t0: t, dur: 0.012, gain: 0.12, filter: { type: 'highpass', freq: 2800 } });
 }
-export function crossingBell() { const ac = ctx(); if (!ac) return; // カン カン カン（2音交互）
-  const A = 1245, B = 1046; // 少し高い/低い2つの鐘
-  for (let k = 0; k < 10; k++) bellHit(ac, k * 0.11, k % 2 ? B : A);
+export function crossingBell() { const ac = ctx(); if (!ac) return; // カン カン カン（同じ音の繰り返し）
+  for (let k = 0; k < 7; k++) bellHit(ac, k * 0.15);
 }
 
 /** デモ・割当用の一覧（ラベルと関数）。 */
