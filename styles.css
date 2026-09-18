@@ -91,7 +91,9 @@ body {
 .card.focus { outline: 6px solid #333; outline-offset: -3px; }
 .card.selected { outline: 6px solid #2ea44f; outline-offset: -3px; }
 .card.flipped { background: #fff; border: 3px solid #eee; }
-.card .front { width: 100%; height: 100%; display: grid; place-items: center; overflow: hidden; }
+/* 前面（絵/文字/赤丸）はめくった時だけ見せる。裏向き(.card:not(.flipped))では隠す。 */
+.card .front { width: 100%; height: 100%; display: none; place-items: center; overflow: hidden; }
+.card.flipped .front { display: grid; }
 .card .front img { width: 100%; height: 100%; object-fit: contain; } /* きおくめくりの絵：縦横比維持・トリミングなし */
 .card-dot { width: 62%; aspect-ratio: 1; border-radius: 50%; background: #e23b3b; } /* 正解の赤丸プレースホルダ */
 

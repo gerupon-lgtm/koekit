@@ -27,6 +27,7 @@ function ok(cond, name) { eq(!!cond, true, name); }
   const phase   = await import(url('src/game/phase.js'));
   const judgeM  = await import(url('src/game/judge.js'));
   const roul    = await import(url('src/game/roulette.js'));
+  const dealM   = await import(url('src/game/deal.js'));
 
   // ---- T-009 語彙照合 ----
   eq(vocab.match('みぎ'), 'right', 'みぎ → right');
@@ -149,6 +150,34 @@ function ok(cond, name) { eq(!!cond, true, name); }
     ['correct','correct','correct'].forEach(o=>j.record(o));
     eq(j.record('correct'), 'clear', 'クリア後にrecordしてもclearのまま');
     eq(j.attempts, 3, 'クリア後にattemptsが増えない');
+
+    // continueAfterClear（きおくめくり）: 規定回数到達でも即クリアにせず5回まで続行
+    j = new J({ clearHits: 1, continueAfterClear: true });
+    eq(j.record('correct'), 'playing', '1正解でも playing（続行可）');
+    eq(j.cleared, true, 'ただし cleared フラグは立つ');
+    eq(j.record('wrong'), 'playing', '続行中は playing');
+    ['wrong','wrong','wrong'].forEach(o=>j.record(o)); // 計5回
+    eq(j.status, 'clear', 'クリア済のまま5回到達で clear');
+    // continueAfterClear で一度も規定回数に達しなければ5回でゲームオーバー
+    j = new J({ clearHits: 2, continueAfterClear: true });
+    ['correct','wrong','wrong','wrong','wrong'].forEach(o=>j.record(o));
+    eq(j.status, 'gameover', '規定未達で5回→ゲームオーバー');
+  }
+
+  // ---- KM-010 配置デール（絵→セル・対象選定） ----
+  {
+    for (let t = 0; t < 20; t++) {
+      const keys = ['upleft','up','upright','left','center','right','downleft','down','downright'];
+      const d = dealM.deal(keys);
+      const letters = keys.map(k => d.map[k]);
+      eq(new Set(letters).size, keys.length, '9セルすべて別の絵（重複なし）');
+      ok(keys.includes(d.targetKey), '対象は盤面のいずれかの位置');
+      eq(d.targetLetter, d.map[d.targetKey], 'targetLetter は対象位置の絵と一致');
+    }
+    // 2枚レベルでも成立
+    const d2 = dealM.deal(['left','right']);
+    eq(Object.keys(d2.map).length, 2, '2枚レベルは2セル');
+    eq(new Set(Object.values(d2.map)).size, 2, '2枚も別の絵');
   }
 
   // ---- T-016 フェイント停止（必ず有限回で止まる） ----

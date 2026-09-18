@@ -81,5 +81,14 @@ export function playGameover() {
 /** スタート/ストップの軽い合図（任意）。 */
 export function playBlip(freq = 440) { tone(freq, 0, 0.06, 0.5, 'square'); }
 
+/** カウントダウンの1秒ごとのビープ（きおくめくりの記憶提示）。 */
+export function playCountdownTick() { tone(720, 0, 0.09, 0.55, 'square'); }
+
+/** タイムアップの効果音（下行2音）。 */
+export function playTimeUp() {
+  tone(520, 0.00, 0.12, 0.8, 'square');
+  tone(350, 0.12, 0.22, 0.8, 'square');
+}
+
 /** 実機調整用: tick 音量や有効/無効を後から変える。 */
 export function configureSfx(opts = {}) { Object.assign(CFG, opts); }

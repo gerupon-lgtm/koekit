@@ -11,11 +11,22 @@ export const MAX_ATTEMPTS = 5;
 export const CLEAR_HITS = 3;
 
 export class Judge {
-  constructor({ maxAttempts = MAX_ATTEMPTS, clearHits = CLEAR_HITS } = {}) {
+  /**
+   * @param {object} [opts]
+   * @param {number} [opts.maxAttempts]
+   * @param {number} [opts.clearHits]
+   * @param {boolean} [opts.continueAfterClear] true なら規定回数に達しても即クリアにせず、
+   *   5回まで続行できる（`cleared` フラグが立つ／決着は5回到達時）。きおくめくり用。
+   */
+  constructor({ maxAttempts = MAX_ATTEMPTS, clearHits = CLEAR_HITS, continueAfterClear = false } = {}) {
     this._max = maxAttempts;
     this._need = clearHits;
+    this._continue = continueAfterClear;
     this.reset();
   }
+
+  /** 規定回数の正解に達しているか（continueAfterClear 時に「クリア済だが続行中」を判定） */
+  get cleared() { return this._correct >= this._need; }
 
   reset() {
     this._correct = 0;
@@ -42,11 +53,15 @@ export class Judge {
     if (outcome === 'correct') this._correct++;
     if (outcome === 'correct' || outcome === 'wrong') this._attempts++;
 
-    // 3回正解で即クリア（4・5回目を待たない）
-    if (this._correct >= this._need) this._status = 'clear';
-    // 5回で3回に届かなければゲームオーバー
-    else if (this._attempts >= this._max) this._status = 'gameover';
-
+    if (this._continue) {
+      // クリア到達後も続行可（自動遷移しない）。決着は最大回数到達時。
+      if (this._attempts >= this._max) this._status = this.cleared ? 'clear' : 'gameover';
+    } else {
+      // 規定回数の正解で即クリア（残り回数を待たない）
+      if (this._correct >= this._need) this._status = 'clear';
+      // 最大回数で規定回数に届かなければゲームオーバー
+      else if (this._attempts >= this._max) this._status = 'gameover';
+    }
     return this._status;
   }
 }

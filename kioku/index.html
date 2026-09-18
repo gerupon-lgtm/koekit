@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#ffb300">
+  <title>きおくめくり</title>
+  <link rel="manifest" href="../manifest.json">
+  <link rel="apple-touch-icon" href="../assets/icons/icon-180.png">
+  <link rel="icon" href="../assets/icons/icon-192.png">
+  <link rel="stylesheet" href="../styles.css">
+  <script type="module" src="../sw-register.js"></script>
+  <style>
+    /* 共有UIコンポーネントは ../styles.css。ここはきおくめくり固有のみ。 */
+    html, body { height: 100%; overflow: hidden; overscroll-behavior: none; }
+
+    /* S-02 タイトル */
+    #title { align-items: center; justify-content: center; gap: 22px; padding: 24px; position: relative; }
+    #title .app-title { font-size: 2rem; font-weight: 700; }
+    #level-select { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; max-width: 320px; }
+    .title-footer { position: fixed; bottom: 12px; left: 0; right: 0; text-align: center; font-size: .8rem; color: #999; }
+
+    /* 絵の仮置き：カードに大きな文字（A〜I） */
+    .card-letter { font-family: var(--font-family); font-weight: 700; font-size: clamp(24px, 14vw, 96px);
+      line-height: 1; color: var(--color-fg); }
+
+    /* 記憶提示のカウントダウン数字（盤面の上に重ねる） */
+    #countdown { position: absolute; top: 6px; left: 50%; transform: translateX(-50%);
+      font-family: var(--font-family); font-weight: 700; font-size: 14vw; color: var(--color-accent);
+      text-shadow: 0 2px 6px rgba(0,0,0,.18); pointer-events: none; }
+
+    /* 探す絵（対象）の一瞬提示：大きな文字を中央に */
+    #target-prompt { position: absolute; inset: 0; display: grid; place-items: center;
+      background: rgba(255,255,255,.94); }
+    #target-prompt .tp-letter { font-family: var(--font-family); font-weight: 700; font-size: 40vw; color: var(--color-fg); }
+  </style>
+</head>
+<body>
+  <!-- ============ S-02 タイトル ============ -->
+  <section class="screen active" id="title" data-screen="title">
+    <h1 class="app-title">きおくめくり</h1>
+    <button class="btn-round" id="start-play" aria-label="はじめる">
+      <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+    </button>
+    <div id="level-select"></div>
+    <footer class="title-footer">v0.1.0 &nbsp; © 2026 SIKUMI LAB</footer>
+  </section>
+
+  <!-- ============ S-04 ゲーム ============ -->
+  <section class="screen" id="game" data-screen="game">
+    <div class="topbar">
+      <button class="icon-btn" id="to-title" aria-label="タイトルへ">
+        <svg viewBox="0 0 24 24" fill="#888"><path d="M15 6l-6 6 6 6z"/></svg>
+      </button>
+      <span class="mic-state" id="mic-state">
+        <svg class="mic" viewBox="0 0 24 24">
+          <g class="body">
+            <rect x="9" y="2.5" width="6" height="11" rx="3"/>
+            <path d="M6 11a6 6 0 0012 0" fill="none" stroke="#c9c9c9" stroke-width="1.6"/>
+            <rect x="11.2" y="17" width="1.6" height="3.4"/>
+            <rect x="8.5" y="20.2" width="7" height="1.6" rx=".8"/>
+          </g>
+          <line class="slash" x1="4" y1="4" x2="20" y2="20"/>
+        </svg>
+      </span>
+      <svg class="finger" id="touch-hint" viewBox="0 0 24 24" fill="#888"><path d="M9 11V5a1.5 1.5 0 013 0v6h1V6.5a1.5 1.5 0 013 0V13a6 6 0 01-6 6h-1a5 5 0 01-4-2l-3-4 1.2-1.1a2 2 0 012.6-.1L9 13z"/></svg>
+    </div>
+    <div id="stage">
+      <div id="board"></div>
+      <div id="figure">
+        <svg viewBox="0 0 100 100">
+          <path class="arrow" d="M50 6 L74 44 L58 44 L58 92 L42 92 L42 44 L26 44 Z"/>
+          <circle class="dot" cx="50" cy="50" r="16" style="display:none"/>
+        </svg>
+      </div>
+      <div id="countdown" class="hidden"></div>
+      <div id="target-prompt" class="hidden"><div class="tp-letter"></div></div>
+    </div>
+    <div class="controls">
+      <button class="btn-round confirm hidden" id="confirm-btn" aria-label="けってい">
+        <svg viewBox="0 0 24 24"><path d="M9 16.2l-3.5-3.5L4 14.2 9 19l11-11-1.4-1.4z"/></svg>
+      </button>
+      <button class="btn-round hidden" id="next-btn" aria-label="つぎのレベルへ">
+        <svg viewBox="0 0 24 24"><path d="M6 4l12 8-12 8z"/></svg>
+      </button>
+    </div>
+  </section>
+
+  <!-- ============ S-06 認定書 ============ -->
+  <section class="screen" id="cert" data-screen="cert">
+    <div class="medal" id="medal">
+      <svg id="medal-icon" viewBox="0 0 24 24" fill="#fff"><path d="M12 2l3 6 6 .5-4.5 4 1.5 6-6-3.5L6 18.5 7.5 12.5 3 8.5 9 8z"/></svg>
+    </div>
+    <div id="cert-stars"></div>
+    <button class="btn-round" id="cert-next" aria-label="つぎへ">
+      <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+    </button>
+  </section>
+
+  <script type="module" src="./app.js"></script>
+</body>
+</html>
