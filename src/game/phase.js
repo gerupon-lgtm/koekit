@@ -33,14 +33,14 @@ export const PHASES = Object.freeze({
  */
 export function vocabForPhase(phase, levelVocab = []) {
   switch (phase) {
-    case PHASES.AWAIT_INTRO:    return ['confirm'];
-    case PHASES.AWAIT_NEXT:     return ['next'];
-    case PHASES.AWAIT_RESULT_NEXT: return ['next', 'confirm'];
-    case PHASES.AWAIT_START:    return ['start'];
-    case PHASES.AWAIT_STOP:     return ['stop'];
-    case PHASES.AWAIT_POSITION: return [...levelVocab];
+    case PHASES.AWAIT_INTRO:    return ['confirm', 'quit'];
+    case PHASES.AWAIT_NEXT:     return ['next', 'quit'];
+    case PHASES.AWAIT_RESULT_NEXT: return ['next', 'confirm', 'quit'];
+    case PHASES.AWAIT_START:    return ['start', 'quit'];
+    case PHASES.AWAIT_STOP:     return ['stop', 'quit'];
+    case PHASES.AWAIT_POSITION: return [...levelVocab, 'quit'];
     // 確定待ちは確定語＋位置語（言い直し用）。要件8.3
-    case PHASES.AWAIT_CONFIRM:  return ['confirm', ...levelVocab];
+    case PHASES.AWAIT_CONFIRM:  return ['confirm', ...levelVocab, 'quit'];
     case PHASES.RESULT:         return []; // 認識停止
     default:                    return [];
   }

@@ -238,6 +238,7 @@ function onRouletteStop(v) {
 // ---- 認識マッチ ----
 function onMatch(key, raw, elapsedMs) {
   const ph = phase.phase;
+  if (key === 'quit') { goTitle(); return; }
   if (ph === PHASES.AWAIT_RESULT_NEXT && (key === 'next' || key === 'confirm')) { afterResult(); return; }
   if (ph === PHASES.AWAIT_INTRO && key === 'confirm') { beginFromIntro(); return; }
   if (ph === PHASES.AWAIT_NEXT && key === 'next') { onCertNext(); return; }
@@ -385,6 +386,8 @@ function onCertNext() {
 
 // ---- 終了/タイトル ----
 function goTitle() {
+  roulette?.reset();
+  sfx.stopAll();
   pendingAdvance = false;
   screenAwake.setActive(false);
   reveal.clear();
@@ -445,6 +448,7 @@ $('#to-title').addEventListener('click', goTitle);
 $('#to-panel').addEventListener('click', () => show('panel'));
 $('#panel-back').addEventListener('click', () => show('title'));
 $('#cert-next').addEventListener('click', onCertNext);
+$('#cert-quit').addEventListener('click', goTitle);
 document.querySelectorAll('input[name="method"]').forEach(r => r.addEventListener('change', () => { setMethod(r.value); renderPanel(); }));
 $('#copy-csv').addEventListener('click', copyCSV);
 $('#clear-log').addEventListener('click', () => { recorder.clear(); renderPanel(); });

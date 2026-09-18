@@ -17,6 +17,7 @@ import { ANIMAL_FILES, animalImg } from '../src/game/animals.js';
 import { openLevelIntro, closeLevelIntro } from '../src/ui/levelintro.js';
 import { ScreenAwake } from '../src/ui/screenawake.js';
 import { LevelNavigation } from '../src/ui/levelnavigation.js';
+import { CardReveal } from '../src/ui/cardreveal.js';
 import { BoardView } from '../src/ui/board.js';
 import { renderCertificate } from '../src/ui/certificate.js';
 import { buildLevelSelect } from '../src/ui/levelselect.js';
@@ -24,6 +25,7 @@ import { setMicState as setMicStateUI } from '../src/ui/micstate.js';
 import * as sfx from '../src/audio/sfx.js';
 
 const $ = s => document.querySelector(s);
+const reveal = new CardReveal($('#stage'));
 const navigation = new LevelNavigation();
 const screenAwake = new ScreenAwake();
 const METHOD_KEY = 'koekit.method';
@@ -89,6 +91,7 @@ function stopListening() { if (adapter) adapter.stop(); }
 
 // ---- レベル開始 ----
 function startLevel(id) {
+  reveal.clear();
   navigation.cancel();
   phase?.to(PHASES.RESULT);
   sfx.primeAudio();
@@ -127,6 +130,7 @@ function hideLevelIntro() { closeLevelIntro(); }
 function clearTimers() { clearTimeout(cdTimer); clearTimeout(seqTimer); }
 
 function beginTrial() {
+  reveal.clear();
   clearTimers();
   selectedKey = null; trialResolved = false; pendingStatus = null;
   board.clearMarks(); board.clearContent();
@@ -201,6 +205,7 @@ function updateControls(ph) {
 // ---- 認識マッチ ----
 function onMatch(key, raw, elapsedMs) {
   const ph = phase.phase;
+  if (key === 'quit') { goTitle(); return; }
   if (ph === PHASES.AWAIT_RESULT_NEXT && (key === 'next' || key === 'confirm')) { afterResult(); return; }
   if (ph === PHASES.AWAIT_INTRO && key === 'confirm') { beginFromIntro(); return; }
   if (ph === PHASES.AWAIT_NEXT && key === 'next') { onCertNext(); return; }
@@ -229,9 +234,10 @@ function doConfirm() {
 
   const correct = (selectedKey === dealt.targetKey);
   board.setFlipped(selectedKey, true); // めくって中身（文字）を見せる
-  let wait = 1800;
+  let wait = 3000;
   if (correct) {
     board.setCorrect(selectedKey, true);
+    reveal.show(board.cards.get(selectedKey)?.el);
     sfx.playCorrect();
   } else {
     sfx.playBlip(220);
@@ -254,6 +260,7 @@ function doConfirm() {
 function afterResult() {
   if (!pendingAdvance) return;
   pendingAdvance = false;
+  reveal.clear();
   navigation.cancel();
   clearTimers();
   phase.to(PHASES.RESULT);
@@ -302,6 +309,8 @@ function onCertNext() {
 
 // ---- 終了/タイトル ----
 function goTitle() {
+  reveal.clear();
+  sfx.stopAll();
   pendingAdvance = false;
   screenAwake.setActive(false);
   navigation.cancel();
@@ -326,4 +335,5 @@ $('#level-intro').addEventListener('cancel', event => { event.preventDefault(); 
 $('#intro-go').addEventListener('click', beginFromIntro);
 $('#to-title').addEventListener('click', goTitle);
 $('#cert-next').addEventListener('click', onCertNext);
+$('#cert-quit').addEventListener('click', goTitle);
 window.addEventListener('pagehide', goTitle);

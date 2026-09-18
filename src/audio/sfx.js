@@ -12,6 +12,18 @@ const CFG = {
 };
 
 let _ctx = null;
+const playing = new Set();
+function oscillator(ac) {
+  const node = ac.createOscillator();
+  playing.add(node);
+  node.addEventListener('ended', () => { playing.delete(node); node.disconnect(); }, { once: true });
+  return node;
+}
+/** 途中終了時は予約済みの音も含めて止める。 */
+export function stopAll() {
+  for (const node of playing) { try { node.stop(); } catch {} }
+  playing.clear();
+}
 function ctx() {
   if (typeof window === 'undefined') return null;
   if (!_ctx) {
@@ -31,7 +43,7 @@ function tone(freq, start, dur, gain, type = 'sine') {
   const ac = ctx();
   if (!ac) return;
   const t0 = ac.currentTime + start;
-  const osc = ac.createOscillator();
+  const osc = oscillator(ac);
   const g = ac.createGain();
   osc.type = type;
   osc.frequency.setValueAtTime(freq, t0);
@@ -101,13 +113,13 @@ export function playTimeUp() {
   // 速いトレモロ（クラッパーの連打＝ジリリリ）
   const trem = ac.createGain(); trem.connect(master);
   trem.gain.setValueAtTime(0.5, t0);
-  const lfo = ac.createOscillator(); lfo.type = 'square'; lfo.frequency.value = 44;
+  const lfo = oscillator(ac); lfo.type = 'square'; lfo.frequency.value = 44;
   const lfoGain = ac.createGain(); lfoGain.gain.value = 0.5;
   lfo.connect(lfoGain); lfoGain.connect(trem.gain);
   lfo.start(t0); lfo.stop(t0 + dur);
   // 明るい金属音（複数倍音）
   for (const [f, g] of [[1200, 0.5], [1500, 0.4], [2400, 0.2]]) {
-    const o = ac.createOscillator(); o.type = 'triangle'; o.frequency.value = f;
+    const o = oscillator(ac); o.type = 'triangle'; o.frequency.value = f;
     const og = ac.createGain(); og.gain.value = g;
     o.connect(og); og.connect(trem);
     o.start(t0); o.stop(t0 + dur);

@@ -321,3 +321,7 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--color-primary);
 /* 自動フォーカスする非操作の見出しには枠を出さず、文字周囲に余白を置く。 */
 #intro-heading { padding: 2px 4px; text-align: center; }
 #intro-heading:focus { outline: none; }
+
+/* プレイ中・認定書の途中終了。操作領域を常に確保する。 */
+.quit-btn { min-width: 52px; min-height: 52px; color: #8c5144; }
+#cert-quit { position: absolute; top: 12px; left: 20px; z-index: 3; }

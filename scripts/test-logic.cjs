@@ -99,10 +99,10 @@ function ok(cond, name) { eq(!!cond, true, name); }
   eq(metrics.judge(zero).hasData, false, 'ログ0件 hasData=false（データなし）');
 
   // ---- T-010 区間の受け付け語 ----
-  eq(phase.vocabForPhase(phase.PHASES.AWAIT_START), ['start'], 'スタート待ちは start のみ');
-  eq(phase.vocabForPhase(phase.PHASES.AWAIT_STOP), ['stop'], 'ストップ待ちは stop のみ');
-  eq(phase.vocabForPhase(phase.PHASES.AWAIT_POSITION, ['left', 'right']), ['left', 'right'], '位置語待ちはレベルの位置語');
-  eq(phase.vocabForPhase(phase.PHASES.AWAIT_CONFIRM, ['left', 'right']), ['confirm', 'left', 'right'], '確定待ちは confirm＋位置語（言い直し）');
+  eq(phase.vocabForPhase(phase.PHASES.AWAIT_START), ['start', 'quit'], 'スタート待ちは start と終了語');
+  eq(phase.vocabForPhase(phase.PHASES.AWAIT_STOP), ['stop', 'quit'], 'ストップ待ちは stop と終了語');
+  eq(phase.vocabForPhase(phase.PHASES.AWAIT_POSITION, ['left', 'right']), ['left', 'right', 'quit'], '位置語待ちはレベルの位置語と終了語');
+  eq(phase.vocabForPhase(phase.PHASES.AWAIT_CONFIRM, ['left', 'right']), ['confirm', 'left', 'right', 'quit'], '確定待ちは confirm＋位置語と終了語');
   eq(phase.vocabForPhase(phase.PHASES.RESULT), [], 'result は認識停止（受け付け語なし）');
   // ステートマシン: result では stopListening、他では startListening(keys)
   const calls = [];
@@ -111,7 +111,7 @@ function ok(cond, name) { eq(!!cond, true, name); }
     stopListening: () => calls.push(['stop']),
   });
   pm.to(phase.PHASES.AWAIT_STOP);
-  eq(calls.at(-1), ['start', ['stop']], 'await_stop で start(["stop"])');
+  eq(calls.at(-1), ['start', ['stop', 'quit']], 'await_stop で start(["stop"])');
   pm.to(phase.PHASES.RESULT);
   eq(calls.at(-1), ['stop'], 'result で stopListening');
   // await_stop で「みぎ」は区間外 → ignored、「ストップ」は match
@@ -213,7 +213,7 @@ function ok(cond, name) { eq(!!cond, true, name); }
     eq(machine.handleRaw('オッケー'), 'confirm', '紹介でオッケーも受ける');
     eq(machine.handleRaw('つぎ'), '', '紹介ではつぎを無視');
     machine.to(P.AWAIT_NEXT);
-    eq(active, ['next'], '認定書は次だけを認識');
+    eq(active, ['next', 'quit'], '認定書は次と終了語を認識');
     eq(machine.handleRaw('次'), 'next', '漢字の次を照合');
     eq(machine.handleRaw('つぎ'), 'next', 'ひらがなのつぎを照合');
     eq(machine.handleRaw('オーケー'), '', '結果確定の発話で次へ飛ばない');
@@ -311,6 +311,23 @@ function ok(cond, name) { eq(!!cond, true, name); }
     denied.active = true; await denied.acquire();
     eq(denied.pending, false, '拒否で待機を解除');
     eq(denied.lock, null, '拒否でもゲームを妨げない');
+  }
+
+  // 途中終了は全受付区間に共通。停止中には認識を広げない。
+  for (const state of Object.values(phase.PHASES)) {
+    const keys = phase.vocabForPhase(state, ['left','right']);
+    const expected = state === phase.PHASES.RESULT ? '' : 'quit';
+    eq(vocab.match('やめる', keys), expected, state + ': やめる');
+    eq(vocab.match('終わり', keys), expected, state + ': 終わり');
+  }
+  {
+    let now = 0, ticks = 0, stops = 0; const queue = [];
+    const r = new roul.Roulette({ now: () => now, raf: fn => queue.push(fn) });
+    r.on('tick', () => ticks++); r.on('stop', () => stops++);
+    r.start(); r.stop(); r.reset(); now = 10000;
+    while (queue.length) queue.shift()();
+    eq(ticks, 0, '途中終了後に回転tickが来ない');
+    eq(stops, 0, '途中終了後に停止演出が来ない');
   }
 
   // ---- 結果 ----
