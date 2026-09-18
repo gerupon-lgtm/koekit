@@ -32,7 +32,7 @@ const FOCUS_HOLD_MS = { '0': Infinity, '1': Infinity, '2': 1500, '3': 1000, '4':
 
 // 各レベルの最初に出す保護者向けの概要（子に教える用。すべての語は載せない）。
 const LEVEL_INTRO = {
-  '0':     { badge: 'れんしゅう', text: '「スタート」でルーレットをまわして、「ストップ」でとめてみよう！ ねらったすうじでとめられるかな？' },
+  '0':     { badge: 'れんしゅう', text: '「スタート」でルーレットをまわして、「ストップ」でとめてみよう！ ねらったすうじでとめられるかな？ 3かいとめたら つぎのレベルへすすむよ。' },
   '1':     { badge: 'レベル1', text: '「みぎ」「ひだり」をおぼえよう。とまったカードのいちを声でいって、「けってい」でめくれるよ。' },
   '2':     { badge: 'レベル2', text: '「うえ」「した」をおぼえよう。とまったカードのいちをいってね。' },
   '3':     { badge: 'レベル3', text: '「まんなか」がふえるよ。うえ・した・みぎ・ひだり・まんなか の5つ。' },
@@ -61,6 +61,7 @@ let focusHideTimer = null;    // 停止後にフォーカス枠を消すタイ�
 let lastPosRaw = '', lastPosElapsed = 0;
 let sessionRestart = 0;
 let micDenied = false;
+let rouletteStops = 0;        // レベル0で止められた回数（3回でレベル1へ）
 const recorder = new Recorder();
 
 // ---- 画面 ----
@@ -138,7 +139,7 @@ function startLevel(id) {
   level = getLevel(id);
   if (!level) return;
   mode = id === '0' ? 'roulette' : 'board';
-  micDenied = false; sessionRestart = 0;
+  micDenied = false; sessionRestart = 0; rouletteStops = 0;
 
   if (!adapter) adapter = buildAdapter();
   else { adapter.stop?.(); } // 方式が変わっていれば作り直し
@@ -202,8 +203,14 @@ function onTick(v, interval) {
 }
 function onRouletteStop(v) {
   if (mode === 'roulette') {
-    // レベル0（練習）：少し置いて次の抽選へ
-    setTimeout(() => { if (phase && level && level.id === '0') phase.to(PHASES.AWAIT_START); }, 700);
+    // レベル0（練習）：3回止められたらレベル1へ。それまでは次の抽選（スタート待ち）へ。
+    rouletteStops++;
+    if (rouletteStops >= 3) {
+      sfx.playClear(); // 小さなごほうび
+      setTimeout(() => { if (level && level.id === '0') startLevel('1'); }, 1000);
+    } else {
+      setTimeout(() => { if (phase && level && level.id === '0') phase.to(PHASES.AWAIT_START); }, 700);
+    }
   } else {
     targetKey = orderedKeys[v];
     setFocus(targetKey);                  // 止まった位置を表示
