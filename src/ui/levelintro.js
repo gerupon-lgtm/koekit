@@ -34,7 +34,15 @@ export function openLevelIntro(level, game) {
       const key = level.vocab.find(k => POS[k].r === row && POS[k].c === col);
       const tile = document.createElement('span');
       tile.className = key ? 'preview-tile' : 'preview-empty';
-      if (key) tile.textContent = spoken(key);
+      if (key) {
+        const word = spoken(key);
+        // ななめの語は「ひだり／うえ」など意味の切れ目でだけ折り返す。
+        const parts = word.match(/^(ひだり|みぎ)(うえ|した)$/);
+        const label = document.createElement('span');
+        if (parts) label.append(parts[1], document.createElement('wbr'), parts[2]);
+        else label.textContent = word;
+        tile.append(label);
+      }
       preview.append(tile);
     }
   }

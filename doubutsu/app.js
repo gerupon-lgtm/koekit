@@ -310,7 +310,7 @@ function doConfirm() {
   board.showFigure(null);
   // 結果を少し見せてから、クリア/ゲームオーバーは認定書、続くなら次の抽選（スタート待ち）へ戻す。
   // 次はプレイヤーの「スタート」で始まるので、つぎボタンは出さない（ピタリズム固有）。
-  advanceTimer = setTimeout(afterResult, correct ? 1500 : 1800);
+  advanceTimer = setTimeout(afterResult, correct ? 3000 : 1800);
 }
 
 function afterResult() {
