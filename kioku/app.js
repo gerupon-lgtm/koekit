@@ -160,7 +160,7 @@ function revealMemory() {
   runCountdown(MEMORY_SEC[level.id] || 3, () => {
     sfx.playTimeUp();
     board.flipAll(false);       // 一斉裏返し
-    seqTimer = setTimeout(showTarget, 450);
+    seqTimer = setTimeout(showTarget, 800);
   });
 }
 function runCountdown(sec, onDone) {
