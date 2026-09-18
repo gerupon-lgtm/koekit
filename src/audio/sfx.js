@@ -81,13 +81,15 @@ export function playGameover() {
 /** スタート/ストップの軽い合図（任意）。 */
 export function playBlip(freq = 440) { tone(freq, 0, 0.06, 0.5, 'square'); }
 
-/** カウントダウンの1秒ごとのビープ（きおくめくりの記憶提示）。 */
-export function playCountdownTick() { tone(720, 0, 0.09, 0.55, 'square'); }
+/** カウントダウンの1秒ごとのビープ（きおくめくりの記憶提示）。はっきり聞こえる「ピッ」。 */
+export function playCountdownTick() {
+  tone(1000, 0, 0.14, 1.6, 'triangle');
+}
 
-/** タイムアップの効果音（下行2音）。 */
+/** タイムアップの効果音（下行2音・大きめ）。「ブッブー」。 */
 export function playTimeUp() {
-  tone(520, 0.00, 0.12, 0.8, 'square');
-  tone(350, 0.12, 0.22, 0.8, 'square');
+  tone(560, 0.00, 0.18, 1.8, 'square');
+  tone(360, 0.18, 0.34, 1.8, 'square');
 }
 
 /** 実機調整用: tick 音量や有効/無効を後から変える。 */

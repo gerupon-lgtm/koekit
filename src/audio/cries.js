@@ -95,16 +95,25 @@ export function sheep() { const ac = ctx(); if (!ac) return; // メェ
 }
 
 // ---- 乗り物・物（合成が得意）----
-export function carHorn() { const ac = ctx(); if (!ac) return; // ビーッ（2音のクラクション）
-  voice(ac, { type: 'square', f0: 440, t0: 0, dur: 0.5, gain: 0.4, filter: { type: 'lowpass', freq: 2200 } });
-  voice(ac, { type: 'square', f0: 554, t0: 0, dur: 0.5, gain: 0.35, filter: { type: 'lowpass', freq: 2200 } });
+export function carHorn() { const ac = ctx(); if (!ac) return; // プッ プー（2回のクラクション）
+  const honk = (t, dur) => {
+    voice(ac, { type: 'square', f0: 440, t0: t, dur, gain: 0.45, filter: { type: 'lowpass', freq: 2200 } });
+    voice(ac, { type: 'square', f0: 554, t0: t, dur, gain: 0.4, filter: { type: 'lowpass', freq: 2200 } });
+  };
+  honk(0.00, 0.14);   // プッ
+  honk(0.24, 0.30);   // プー（長め）
 }
 export function siren() { const ac = ctx(); if (!ac) return; // ピーポー
   const seq = [980, 760, 980, 760];
   seq.forEach((f, i) => voice(ac, { type: 'sine', f0: f, t0: i * 0.34, dur: 0.33, gain: 0.4 }));
 }
-export function trainHorn() { const ac = ctx(); if (!ac) return; // ボーッ（低い和音）
-  [233, 311, 349].forEach(f => voice(ac, { type: 'sawtooth', f0: f, t0: 0, dur: 0.8, gain: 0.3, filter: { type: 'lowpass', freq: 900 } }));
+// 踏切の「カンカンカン」。非整数倍音の鐘を速い減衰で連打する。
+function bellHit(ac, t) {
+  [{ f: 1046, g: 0.5 }, { f: 2637, g: 0.28 }, { f: 3140, g: 0.18 }].forEach(p =>
+    voice(ac, { type: 'sine', f0: p.f, t0: t, dur: 0.16, gain: p.g }));
+}
+export function crossingBell() { const ac = ctx(); if (!ac) return; // カンカンカン
+  for (let k = 0; k < 5; k++) bellHit(ac, k * 0.17);
 }
 
 /** デモ・割当用の一覧（ラベルと関数）。 */
@@ -117,5 +126,5 @@ export const CRIES = [
   { key: 'sheep', label: 'ひつじ', fn: sheep },
   { key: 'carHorn', label: 'じどうしゃ', fn: carHorn },
   { key: 'siren', label: 'きゅうきゅうしゃ', fn: siren },
-  { key: 'trainHorn', label: 'でんしゃ', fn: trainHorn },
+  { key: 'crossing', label: 'ふみきり', fn: crossingBell },
 ];
