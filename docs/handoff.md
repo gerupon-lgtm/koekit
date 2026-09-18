@@ -9,6 +9,7 @@ Claude Code が着手した部分の到達点と、続きに必要な情報を�
 ### CodexでのUI更新（2026-09-18）
 
 - ロゴ：コエキットのアイコンと、小品の文字ロゴを制作。**ピタリ／メモリが個別、ズムが共通**。柔らかなアプリコット・セージ・ブラウンへ調整。素材は `assets/brand/`、共通部品の書き出しは `scripts/export-wordmarks.cjs`、方針は `docs/brand.md`。
+- 名称・ロゴ更新 `a2d3d22` は [GitHub Pages run 35350213833](https://github.com/gerupon-lgtm/koekit/actions/runs/35350213833) で公開成功。公開13ファイル（ページ・CSS・manifest・SW・ロゴ・アイコン）が手元と一致することを確認。次作候補「ヌリリズム」は `docs/ideas.md` に発案者の回答を記録（3×3、声の相対移動、マスとパレットのタッチ対応、少数色、画像共有）。新作実装は未着手。
 
 - 公開確認：UI変更 `c784cfd` は GitHub Pages [run 35348322274](https://github.com/gerupon-lgtm/koekit/actions/runs/35348322274) で成功。公開URLのHTML・コントローラ・CSS・開始案内・manifest・SWの9ファイルがローカルと一致することを確認済み。端末上の実発話確認は別途。
 
