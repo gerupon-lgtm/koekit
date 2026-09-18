@@ -13,17 +13,27 @@ const $ = id => document.getElementById(id);
 const nowText = () => new Date().toLocaleTimeString('ja-JP');
 const log = t => { const el = $('log'); el.textContent += `${nowText()} ${t}\n`; el.scrollTop = el.scrollHeight; };
 
-// 行(1〜9)・列(A〜I)・数の代表読み。連結座標（1A=いちえー 等）や移動＋数（した5=したご）の合成に使う。
-const ROW_READ = { 1: 'いち', 2: 'に', 3: 'さん', 4: 'よん', 5: 'ご', 6: 'ろく', 7: 'なな', 8: 'はち', 9: 'きゅう' };
-const COL_READ = { A: 'えー', B: 'びー', C: 'しー', D: 'でぃー', E: 'いー', F: 'えふ', G: 'じー', H: 'えいち', I: 'あい' };
+// 実機検証（2026-09-19）で確定した重要事実:
+// - 連結発話「いちえー」(1A) や「したご」(下5) は語彙に無く、文法語にしても認識ゼロだった。
+// - 一方、自由発話では「さん Ｃ」「四 Ｄ」のように数字トークン＋英字トークンの2語で返る。
+// → 座標・移動＋数は「単独トークンの並び」で受け、認識結果を分割して合成する方式で検証する。
+const ROW_SURFACES = ['いち', 'に', 'さん', 'よん', 'し', 'ご', 'ろく', 'なな', 'しち', 'はち', 'きゅう', 'く'];
+const COL_SURFACES = ['えー', 'びー', 'しー', 'でぃー', 'いー', 'えふ', 'じー', 'えいち', 'えっち', 'あい'];
+const DIR_SURFACES = ['みぎ', 'ひだり', 'うえ', 'した'];
+// 読み（表記）→ 記号。照合は normalize 後のキーで行う。
+const ROW_SYM = { 'いち': '1', 'に': '2', 'さん': '3', 'よん': '4', 'し': '4', 'ご': '5', 'ろく': '6', 'なな': '7', 'しち': '7', 'はち': '8', 'きゅう': '9', 'く': '9' };
+const COL_SYM = { 'えー': 'A', 'びー': 'B', 'しー': 'C', 'でぃー': 'D', 'いー': 'E', 'えふ': 'F', 'じー': 'G', 'えいち': 'H', 'えっち': 'H', 'あい': 'I' };
+const ROW_SYM_N = Object.fromEntries(Object.entries(ROW_SYM).map(([k, v]) => [normalize(k), v]));
+const COL_SYM_N = Object.fromEntries(Object.entries(COL_SYM).map(([k, v]) => [normalize(k), v]));
+const DIR_SET_N = new Set(DIR_SURFACES.map(normalize));
+
 const PAIRS = [[1, 'A'], [2, 'B'], [3, 'C'], [4, 'D'], [5, 'E'], [6, 'F'], [7, 'G'], [8, 'H'], [9, 'I']];
-// 座標 行→列（1A）: 数字→英字の順で連結
-const COORD_RC = PAIRS.map(([d, c]) => ({ label: `${d}${c}`, forms: [ROW_READ[d] + COL_READ[c]] }));
-// 座標 列→行（A1）: 英字→数字の順で連結
-const COORD_CR = PAIRS.map(([d, c]) => ({ label: `${c}${d}`, forms: [COL_READ[c] + ROW_READ[d]] }));
-// 移動＋数（基本の右左上下は他アプリで実証済み。ここは数付きの合成語だけ検証）
-const MOVE_NUM = [[' した', 5], ['した', 2], ['みぎ', 3], ['ひだり', 4], ['うえ', 1], ['みぎ', 6]]
-  .map(([dir, n]) => ({ label: `${dir.trim()}${n}`, forms: [dir.trim() + ROW_READ[n]] }));
+// 座標: 発話順が違うだけで、行(row)と列(col)を当てられれば正解とする。
+const COORD_RC = PAIRS.map(([d, c]) => ({ label: `${d}${c}`, row: String(d), col: c }));
+const COORD_CR = PAIRS.map(([d, c]) => ({ label: `${c}${d}`, row: String(d), col: c }));
+// 移動＋数（基本の右左上下は他アプリで実証済み。数付きの並びを検証）
+const MOVE_NUM = [['した', 5], ['した', 2], ['みぎ', 3], ['ひだり', 4], ['うえ', 1], ['みぎ', 6]]
+  .map(([dir, n]) => ({ label: `${dir}${n}`, dir, num: String(n) }));
 
 // 区間ごとの語彙。forms = その語として受け付ける表記（照合は normalize 後の完全一致）。
 // 認識器の文法にはこの forms をすべて渡す（＝この区間で受け付ける語だけを対象にする）。
@@ -39,6 +49,7 @@ const SETS = [
     { label: 'むらさき', forms: ['むらさき'] },
     { label: 'ピンク',   forms: ['ぴんく', 'ピンク'] },
     { label: 'ちゃいろ', forms: ['ちゃいろ'] },
+    { label: 'ブラウン', forms: ['ぶらうん', 'ブラウン'] },
     { label: 'しろ',     forms: ['しろ'] },
     { label: 'くろ',     forms: ['くろ'] },
   ]},
@@ -64,9 +75,9 @@ const SETS = [
     { label: '8', forms: ['はち'] },
     { label: '9', forms: ['きゅう', 'く'] },
   ]},
-  { id: 'coordRC', name: '座標 行→列（1A の言い方）', targetReps: 3, items: COORD_RC },
-  { id: 'coordCR', name: '座標 列→行（A1 の言い方）', targetReps: 3, items: COORD_CR },
-  { id: 'moveNum', name: '移動＋数（した5 など）', targetReps: 3, items: MOVE_NUM },
+  { id: 'coordRC', name: '座標 行→列（1A＝いち えー と2語で）', mode: 'coord', targetReps: 3, items: COORD_RC, grammar: [...ROW_SURFACES, ...COL_SURFACES] },
+  { id: 'coordCR', name: '座標 列→行（A1＝えー いち と2語で）', mode: 'coord', targetReps: 3, items: COORD_CR, grammar: [...ROW_SURFACES, ...COL_SURFACES] },
+  { id: 'moveNum', name: '移動＋数（した5＝した ご と2語で）', mode: 'move', targetReps: 3, items: MOVE_NUM, grammar: [...DIR_SURFACES, ...ROW_SURFACES] },
   { id: 'range', name: '範囲・線（から/まで/せん）', targetReps: 3, items: [
     { label: 'から', forms: ['から'] },
     { label: 'まで', forms: ['まで'] },
@@ -79,10 +90,10 @@ const SETS = [
   { id: 'free', name: '自由（文法なし・生の認識を観察）', targetReps: 0, items: [] },
 ];
 
-// 各 item.forms を normalize したセットを前計算
+// 各 item.forms を normalize したセットを前計算（coord/move は forms を持たずトークン解析で判定）
 for (const set of SETS) {
   for (const it of set.items) {
-    it.norm = new Set(it.forms.map(normalize));
+    if (it.forms) it.norm = new Set(it.forms.map(normalize));
     it.said = 0; it.correct = 0; it.unknown = 0; it.confusedInto = {};
   }
 }
@@ -161,8 +172,9 @@ async function startSet(set) {
   resetTally(set);
   activeSet = set;
   targetIdx = set.items.length ? 0 : -1;
-  const grammar = [];
-  for (const it of set.items) for (const f of it.forms) grammar.push(f);
+  let grammar = [];
+  if (set.grammar) grammar = [...set.grammar];
+  else for (const it of set.items) for (const f of it.forms) grammar.push(f);
   log(`--- 区間開始: ${set.name}（文法語数 ${grammar.length}）---`);
   if (set.id === 'free') {
     $('status').textContent = '文法なしで認識します。座標・色などを自由に言ってみてください（生の結果がログに出ます）。';
@@ -177,13 +189,64 @@ async function startSet(set) {
   }
 }
 
+// 認識文字列を空白でトークン分割し、行(数字)・列(英字)・方向を拾う。
+// normalize は空白を除去するため、必ず分割してから各トークンを normalize する。
+function parseTokens(text) {
+  const toks = text.trim().split(/[\s　]+/).map(normalize).filter(Boolean);
+  let row = null, col = null, dir = null;
+  for (const t of toks) {
+    if (row === null && ROW_SYM_N[t]) row = ROW_SYM_N[t];
+    if (col === null && COL_SYM_N[t]) col = COL_SYM_N[t];
+    if (dir === null && DIR_SET_N.has(t)) dir = t;
+  }
+  return { row, col, dir, toks };
+}
+
 function onResult(text) {
   log(`認識: ${text}`);
   if (!activeSet || activeSet.id === 'free') return;
-  const n = normalize(text);
-  const matched = itemForNorm(activeSet, n);
   const target = activeSet.items[targetIdx];
   if (!target) return;
+
+  if (activeSet.mode === 'coord') {
+    const { row, col } = parseTokens(text);
+    target.said++;
+    if (row === target.row && col === target.col) {
+      target.correct++;
+    } else if (row === null && col === null) {
+      target.unknown++;
+      log(`  → 未認識/対象外: 「${text}」`);
+    } else {
+      const heard = `${row || '?'}${col || '?'}`;
+      target.confusedInto[heard] = (target.confusedInto[heard] || 0) + 1;
+      log(`  → 取り違え: 「${target.label}」と言って「${heard}」に認識`);
+    }
+    advanceTarget(false);
+    return;
+  }
+
+  if (activeSet.mode === 'move') {
+    const { dir, row } = parseTokens(text);
+    target.said++;
+    const dirOk = dir === normalize(target.dir);
+    const numOk = row === target.num;
+    if (dirOk && numOk) {
+      target.correct++;
+    } else if (dir === null && row === null) {
+      target.unknown++;
+      log(`  → 未認識/対象外: 「${text}」`);
+    } else {
+      const heard = `${target.dir && dirOk ? target.dir : (dir || '?')}${row || '?'}`;
+      target.confusedInto[heard] = (target.confusedInto[heard] || 0) + 1;
+      log(`  → 取り違え: 「${target.label}」と言って「${heard}」に認識`);
+    }
+    advanceTarget(false);
+    return;
+  }
+
+  // 単独語（色・列・行・範囲・確定）
+  const n = normalize(text);
+  const matched = itemForNorm(activeSet, n);
   target.said++;
   if (matched === target) {
     target.correct++;
