@@ -204,8 +204,8 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--color-primary);
 #intro-heading { margin: 12px 0 8px; font-size: clamp(20px, 5vw, 25px); line-height: 1.5; letter-spacing: -.045em; }
 .intro-text { margin: 0; color: var(--color-muted); font-size: 1rem; line-height: 1.8; }
 .intro-preview { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; width: 100%; max-width: 360px; margin: 20px auto; }
-.preview-tile, .preview-empty { min-height: 60px; min-width: 0; border-radius: 12px; display: grid; place-items: center; font-weight: 700; font-size: clamp(18px, 5vw, 22px); line-height: 1.4; text-align: center; word-break: keep-all; }
-.preview-tile { background: #fff0b7; color: #594316; box-shadow: 0 3px 0 #ead598; }
+.preview-tile, .preview-empty { min-height: 60px; min-width: 0; border-radius: 12px; display: grid; place-items: center; font-weight: 700; font-size: clamp(13px, 4vw, 18px); line-height: 1.5; text-align: center; word-break: keep-all; }
+.preview-tile { padding: 8px; background: #fff0b7; color: #594316; box-shadow: 0 3px 0 #ead598; }
 .preview-empty { border: 1px dashed #dce5ef; }
 .practice-preview { align-items: center; padding-block: 8px; }
 .preview-number { display: grid; place-items: center; height: 74px; border-radius: 18px; font-size: 2rem; background: #eaf1fa; color: var(--color-primary); }
