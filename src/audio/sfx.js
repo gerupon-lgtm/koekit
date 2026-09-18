@@ -86,10 +86,32 @@ export function playCountdownTick() {
   tone(1000, 0, 0.14, 1.6, 'triangle');
 }
 
-/** タイムアップの効果音（下行2音・大きめ）。「ブッブー」。 */
+/** タイムアップの効果音。目覚まし時計のベルのような「ジリリリリ」（金属音＋速いトレモロ）。 */
 export function playTimeUp() {
-  tone(560, 0.00, 0.18, 1.8, 'square');
-  tone(360, 0.18, 0.34, 1.8, 'square');
+  const ac = ctx();
+  if (!ac) return;
+  const t0 = ac.currentTime;
+  const dur = 0.9;
+  // 音量エンベロープ（マスター）
+  const master = ac.createGain(); master.connect(ac.destination);
+  master.gain.setValueAtTime(0.0001, t0);
+  master.gain.linearRampToValueAtTime(0.9 * CFG.masterGain, t0 + 0.02);
+  master.gain.setValueAtTime(0.9 * CFG.masterGain, t0 + dur - 0.12);
+  master.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+  // 速いトレモロ（クラッパーの連打＝ジリリリ）
+  const trem = ac.createGain(); trem.connect(master);
+  trem.gain.setValueAtTime(0.5, t0);
+  const lfo = ac.createOscillator(); lfo.type = 'square'; lfo.frequency.value = 44;
+  const lfoGain = ac.createGain(); lfoGain.gain.value = 0.5;
+  lfo.connect(lfoGain); lfoGain.connect(trem.gain);
+  lfo.start(t0); lfo.stop(t0 + dur);
+  // 明るい金属音（複数倍音）
+  for (const [f, g] of [[1200, 0.5], [1500, 0.4], [2400, 0.2]]) {
+    const o = ac.createOscillator(); o.type = 'triangle'; o.frequency.value = f;
+    const og = ac.createGain(); og.gain.value = g;
+    o.connect(og); og.connect(trem);
+    o.start(t0); o.stop(t0 + dur);
+  }
 }
 
 /** 実機調整用: tick 音量や有効/無効を後から変える。 */

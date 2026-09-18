@@ -107,13 +107,15 @@ export function siren() { const ac = ctx(); if (!ac) return; // ピーポー
   const seq = [980, 760, 980, 760];
   seq.forEach((f, i) => voice(ac, { type: 'sine', f0: f, t0: i * 0.34, dur: 0.33, gain: 0.4 }));
 }
-// 踏切の「カンカンカン」。非整数倍音の鐘を速い減衰で連打する。
-function bellHit(ac, t) {
-  [{ f: 1046, g: 0.5 }, { f: 2637, g: 0.28 }, { f: 3140, g: 0.18 }].forEach(p =>
-    voice(ac, { type: 'sine', f0: p.f, t0: t, dur: 0.16, gain: p.g }));
+// 日本の踏切の「カンカンカン」。2つの鐘が速く交互に鳴る（明るい金属音＋打撃のカチッ）。
+function bellHit(ac, t, base) {
+  voice(ac, { type: 'square', f0: base, t0: t, dur: 0.10, gain: 0.30, filter: { type: 'bandpass', freq: base, Q: 7 } });
+  voice(ac, { type: 'sine', f0: base * 2.4, t0: t, dur: 0.07, gain: 0.14 });
+  noise(ac, { t0: t, dur: 0.015, gain: 0.14, filter: { type: 'highpass', freq: 2600 } }); // アタックのカチッ
 }
-export function crossingBell() { const ac = ctx(); if (!ac) return; // カンカンカン
-  for (let k = 0; k < 5; k++) bellHit(ac, k * 0.17);
+export function crossingBell() { const ac = ctx(); if (!ac) return; // カン カン カン（2音交互）
+  const A = 1245, B = 1046; // 少し高い/低い2つの鐘
+  for (let k = 0; k < 10; k++) bellHit(ac, k * 0.11, k % 2 ? B : A);
 }
 
 /** デモ・割当用の一覧（ラベルと関数）。 */
