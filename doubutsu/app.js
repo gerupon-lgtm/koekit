@@ -104,8 +104,12 @@ function showFigure(key) { board.showFigure(key); }
 function updateControls(ph) {
   const spin = $('#spin-btn'), confirm = $('#confirm-btn');
   const isSpin = (ph === PHASES.AWAIT_START || ph === PHASES.AWAIT_STOP);
+  const inAnswer = (ph === PHASES.AWAIT_POSITION || ph === PHASES.AWAIT_CONFIRM);
   spin.classList.toggle('hidden', !isSpin);
-  confirm.classList.toggle('hidden', ph !== PHASES.AWAIT_CONFIRM);
+  // 確定ボタンは位置語待ちから出しておき（レイアウト固定＝選択時に盤面が動かない）、
+  // 選択前は非活性、選択後（AWAIT_CONFIRM）で活性化する。
+  confirm.classList.toggle('hidden', !inAnswer);
+  confirm.disabled = (ph !== PHASES.AWAIT_CONFIRM);
   $('#next-btn').classList.add('hidden'); // 「つぎ」は doConfirm 後にだけ出す
   if (!micDenied) setMicState(ph === PHASES.RESULT ? 'idle' : 'listening');
 }

@@ -66,6 +66,9 @@ body {
 .btn-round:active { transform: scale(.97); }
 .btn-round svg { width: 45%; height: 45%; fill: #fff; }
 .btn-round.confirm { background: #2ea44f; }
+/* 非活性（選択前の確定ボタン）。レイアウトは保持したまま押せない・薄い表示。 */
+.btn-round:disabled { opacity: .35; box-shadow: none; cursor: default; }
+.btn-round:disabled:active { transform: none; }
 .icon-btn { border: none; background: transparent; padding: 10px; min-width: var(--tap-min);
   min-height: var(--tap-min); border-radius: 12px; cursor: pointer; }
 .icon-btn svg { width: 28px; height: 28px; }

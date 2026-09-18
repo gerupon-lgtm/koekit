@@ -154,8 +154,12 @@ function showTarget() {
 
 // ---- コントロール表示 ----
 function updateControls(ph) {
-  $('#confirm-btn').classList.toggle('hidden', ph !== PHASES.AWAIT_CONFIRM);
-  if (!micDenied) setMicState((ph === PHASES.AWAIT_POSITION || ph === PHASES.AWAIT_CONFIRM) ? 'listening' : 'idle');
+  const inAnswer = (ph === PHASES.AWAIT_POSITION || ph === PHASES.AWAIT_CONFIRM);
+  const c = $('#confirm-btn');
+  // 位置語待ちから確定ボタンを出しておく（レイアウト固定）。選択前は非活性、選択後に活性。
+  c.classList.toggle('hidden', !inAnswer);
+  c.disabled = (ph !== PHASES.AWAIT_CONFIRM);
+  if (!micDenied) setMicState(inAnswer ? 'listening' : 'idle');
 }
 
 // ---- 認識マッチ ----
