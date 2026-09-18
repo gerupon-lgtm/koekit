@@ -15,6 +15,7 @@ import { getLevel, LEVELS } from '../src/game/levels.js';
 import { deal } from '../src/game/deal.js';
 import { ANIMAL_FILES, animalImg } from '../src/game/animals.js';
 import { openLevelIntro, closeLevelIntro } from '../src/ui/levelintro.js';
+import { ScreenAwake } from '../src/ui/screenawake.js';
 import { LevelNavigation } from '../src/ui/levelnavigation.js';
 import { BoardView } from '../src/ui/board.js';
 import { renderCertificate } from '../src/ui/certificate.js';
@@ -24,6 +25,7 @@ import * as sfx from '../src/audio/sfx.js';
 
 const $ = s => document.querySelector(s);
 const navigation = new LevelNavigation();
+const screenAwake = new ScreenAwake();
 const METHOD_KEY = 'koekit.method';
 
 // 難易度パラメータ（requirements-kioku 8.5・【想定】B区分）。記憶秒はカウントダウン用に整数。
@@ -50,6 +52,7 @@ const board = new BoardView($('#board'), $('#figure'), { onCardTap });
 
 // ---- 画面 ----
 function show(name) {
+  screenAwake.setActive(name === 'game' || name === 'cert');
   document.querySelectorAll('.screen').forEach(s => s.classList.toggle('active', s.dataset.screen === name));
 }
 function resolveInitialMethod() {
@@ -185,7 +188,8 @@ function showTarget() {
 
 // ---- コントロール表示 ----
 function updateControls(ph) {
-  $('#next-btn').classList.toggle('hidden', ph !== PHASES.AWAIT_START); // ▶ ＝ スタート
+  $('#next-btn').setAttribute('aria-label', ph === PHASES.AWAIT_RESULT_NEXT ? 'つぎへ' : 'スタート');
+  $('#next-btn').classList.toggle('hidden', ph !== PHASES.AWAIT_START && ph !== PHASES.AWAIT_RESULT_NEXT); // ▶ ＝ 開始または正解表示の先送り
   const inAnswer = (ph === PHASES.AWAIT_POSITION || ph === PHASES.AWAIT_CONFIRM);
   const c = $('#confirm-btn');
   // 位置語待ちから確定ボタンを出しておく（レイアウト固定）。選択前は非活性、選択後に活性。
@@ -197,6 +201,7 @@ function updateControls(ph) {
 // ---- 認識マッチ ----
 function onMatch(key, raw, elapsedMs) {
   const ph = phase.phase;
+  if (ph === PHASES.AWAIT_RESULT_NEXT && (key === 'next' || key === 'confirm')) { afterResult(); return; }
   if (ph === PHASES.AWAIT_INTRO && key === 'confirm') { beginFromIntro(); return; }
   if (ph === PHASES.AWAIT_NEXT && key === 'next') { onCertNext(); return; }
   if (ph === PHASES.AWAIT_START && key === 'start') { startReveal(); return; } // スタート発話
@@ -237,11 +242,21 @@ function doConfirm() {
   }
 
   pendingStatus = judge.record(correct ? 'correct' : 'wrong');
+  pendingAdvance = true;
+  if (correct) {
+    navigation.afterSound(500); // 正解音は約440ms。鳴り終わってから先送りを受け付ける。
+    navigation.listen(phase, PHASES.AWAIT_RESULT_NEXT);
+  }
   // 結果を少し見せてから、クリア/GOは認定書、続くならスタート待ちへ戻る（次はスタートで始まる）。
   seqTimer = setTimeout(afterResult, wait);
 }
 
 function afterResult() {
+  if (!pendingAdvance) return;
+  pendingAdvance = false;
+  navigation.cancel();
+  clearTimers();
+  phase.to(PHASES.RESULT);
   if (pendingStatus === 'clear') showCertificate('clear', level.id);
   else if (pendingStatus === 'gameover') showCertificate('gameover', level.id);
   else beginTrial(); // スタート待ちへ
@@ -287,6 +302,8 @@ function onCertNext() {
 
 // ---- 終了/タイトル ----
 function goTitle() {
+  pendingAdvance = false;
+  screenAwake.setActive(false);
   navigation.cancel();
   clearTimers();
   hideLevelIntro();
@@ -303,7 +320,7 @@ function goTitle() {
 buildLevelSelect($('#level-select'), LEVELS.filter(l => l.id !== '0'), startLevel); // レベル0は無し
 $('#start-play').addEventListener('click', () => startLevel('1')); // はじめる＝レベル1
 $('#confirm-btn').addEventListener('click', doConfirm);
-$('#next-btn').addEventListener('click', startReveal); // ▶ ＝ スタート（記憶提示を始める）
+$('#next-btn').addEventListener('click', () => { if (phase?.phase === PHASES.AWAIT_RESULT_NEXT) afterResult(); else startReveal(); }); // ▶ ＝ スタート（記憶提示を始める）
 $('#intro-back').addEventListener('click', goTitle);
 $('#level-intro').addEventListener('cancel', event => { event.preventDefault(); goTitle(); });
 $('#intro-go').addEventListener('click', beginFromIntro);

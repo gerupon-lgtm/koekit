@@ -17,6 +17,7 @@ import { match as matchVocab } from '../speech/vocabulary.js';
 export const PHASES = Object.freeze({
   AWAIT_INTRO:    'await_intro',
   AWAIT_NEXT:     'await_next',
+  AWAIT_RESULT_NEXT: 'await_result_next',
   AWAIT_START:    'await_start',
   AWAIT_STOP:     'await_stop',
   AWAIT_POSITION: 'await_position',
@@ -34,6 +35,7 @@ export function vocabForPhase(phase, levelVocab = []) {
   switch (phase) {
     case PHASES.AWAIT_INTRO:    return ['confirm'];
     case PHASES.AWAIT_NEXT:     return ['next'];
+    case PHASES.AWAIT_RESULT_NEXT: return ['next', 'confirm'];
     case PHASES.AWAIT_START:    return ['start'];
     case PHASES.AWAIT_STOP:     return ['stop'];
     case PHASES.AWAIT_POSITION: return [...levelVocab];

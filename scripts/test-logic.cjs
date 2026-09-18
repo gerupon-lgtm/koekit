@@ -271,6 +271,48 @@ function ok(cond, name) { eq(!!cond, true, name); }
     } finally { global.setTimeout = savedSet; global.clearTimeout = savedClear; }
   }
 
+  // 正解表示の先送り語は専用区間だけで受ける。
+  {
+    const keys = phase.vocabForPhase(phase.PHASES.AWAIT_RESULT_NEXT);
+    eq(vocab.match('つぎ', keys), 'next', '正解表示のつぎ');
+    eq(vocab.match('オッケー', keys), 'confirm', '正解表示のオッケー');
+    eq(vocab.match('オーケー', keys), 'confirm', '正解表示のオーケー');
+    eq(vocab.match('みぎ', keys), '', '正解表示中に位置は変えない');
+  }
+  // Screen Wake Lock: 復帰、解除、取得待ち中の終了、非対応・拒否。
+  {
+    const { ScreenAwake } = await import(url('src/ui/screenawake.js'));
+    const listeners = {};
+    const doc = { visibilityState: 'visible', addEventListener: (t, fn) => listeners[t] = fn };
+    let locks = [], requests = 0;
+    const newLock = () => { const l = { released: false, addEventListener(t, fn) { this.onrelease = fn; }, async release() { this.released = true; this.onrelease?.(); } }; locks.push(l); return l; };
+    const manager = new ScreenAwake({ doc, wakeLock: { async request() { requests++; return newLock(); } } });
+    manager.setActive(true); await Promise.resolve();
+    eq(requests, 1, '開始で画面維持を取得');
+    manager.setActive(true); await Promise.resolve();
+    eq(requests, 1, '画面遷移で二重取得しない');
+    doc.visibilityState = 'hidden'; listeners.visibilitychange();
+    eq(locks[0].released, true, '非表示で解除');
+    doc.visibilityState = 'visible'; listeners.visibilitychange(); await Promise.resolve();
+    eq(requests, 2, '復帰時に再取得');
+    manager.setActive(false);
+    eq(locks[1].released, true, 'タイトルで解除');
+    listeners.visibilitychange(); await Promise.resolve();
+    eq(requests, 2, 'タイトルでは再取得しない');
+    let resolve;
+    const pending = new ScreenAwake({ doc, wakeLock: { request: () => new Promise(r => resolve = r) } });
+    pending.setActive(true); pending.setActive(false);
+    const late = newLock(); resolve(late); await Promise.resolve(); await Promise.resolve();
+    eq(late.released, true, '終了後に届いたロックも解除');
+    const unsupported = new ScreenAwake({ doc, wakeLock: null });
+    unsupported.setActive(true); await unsupported.acquire();
+    eq(unsupported.lock, null, '非対応でも継続');
+    const denied = new ScreenAwake({ doc, wakeLock: { request: async () => { throw Error('denied'); } } });
+    denied.active = true; await denied.acquire();
+    eq(denied.pending, false, '拒否で待機を解除');
+    eq(denied.lock, null, '拒否でもゲームを妨げない');
+  }
+
   // ---- 結果 ----
   console.log(`\nテスト: ${passed} 通過 / ${failed} 失敗`);
   if (failed) { console.log(fails.join('\n')); process.exit(1); }

@@ -6,7 +6,7 @@
 // - 認識に使う 16kHz キャプチャ用 AudioContext とは別に、出力専用の AudioContext を持つ。
 
 const CFG = {
-  masterGain: 0.22,  // 全体音量
+  masterGain: 0.35,  // 全体音量
   tickGain: 0.05,    // 移動tickは控えめ（発話に影響しないレベル）
   enabledTick: true, // 実機で干渉したら false に
 };

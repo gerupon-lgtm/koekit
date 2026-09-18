@@ -20,6 +20,7 @@ import { computeMetrics, judge as judgeMetrics, THRESHOLDS } from '../src/log/me
 import * as sfx from '../src/audio/sfx.js';
 import { POS } from '../src/game/positions.js';
 import { openLevelIntro, closeLevelIntro } from '../src/ui/levelintro.js';
+import { ScreenAwake } from '../src/ui/screenawake.js';
 import { LevelNavigation } from '../src/ui/levelnavigation.js';
 import { CardReveal } from '../src/ui/cardreveal.js';
 import { BoardView } from '../src/ui/board.js';
@@ -30,6 +31,7 @@ import { setMicState as setMicStateUI } from '../src/ui/micstate.js';
 const $ = s => document.querySelector(s);
 const reveal = new CardReveal($('#stage'));
 const navigation = new LevelNavigation();
+const screenAwake = new ScreenAwake();
 const METHOD_KEY = 'koekit.method';
 const FAKEOUT_LEVELS = new Set(['3', '4', '5', 'extra']); // フェイント停止を有効にするレベル
 // 停止後にフォーカス枠（止まった位置）を見せる時間(ms)。レベルが上がるほど短く＝記憶要素を強める。
@@ -62,6 +64,7 @@ const recorder = new Recorder();
 
 // ---- 画面 ----
 function show(name) {
+  screenAwake.setActive(name === 'game' || name === 'cert');
   document.querySelectorAll('.screen').forEach(s => s.classList.toggle('active', s.dataset.screen === name));
   if (name === 'panel') renderPanel();
 }
@@ -115,6 +118,7 @@ function showFigure(key) { board.showFigure(key); }
 
 // ---- コントロール表示（区間で出し分け） ----
 function updateControls(ph) {
+  $('#next-btn').setAttribute('aria-label', ph === PHASES.AWAIT_RESULT_NEXT ? 'つぎへ' : 'スタート');
   const spin = $('#spin-btn'), confirm = $('#confirm-btn');
   const isSpin = (ph === PHASES.AWAIT_START || ph === PHASES.AWAIT_STOP);
   const inAnswer = (ph === PHASES.AWAIT_POSITION || ph === PHASES.AWAIT_CONFIRM);
@@ -123,7 +127,7 @@ function updateControls(ph) {
   // 選択前は非活性、選択後（AWAIT_CONFIRM）で活性化する。
   confirm.classList.toggle('hidden', !inAnswer);
   confirm.disabled = (ph !== PHASES.AWAIT_CONFIRM);
-  $('#next-btn').classList.add('hidden'); // 「つぎ」は doConfirm 後にだけ出す
+  $('#next-btn').classList.toggle('hidden', ph !== PHASES.AWAIT_RESULT_NEXT);
   if (!micDenied) setMicState(ph === PHASES.RESULT ? 'idle' : 'listening');
 }
 function updateSpinIcon(spinning) {
@@ -234,6 +238,7 @@ function onRouletteStop(v) {
 // ---- 認識マッチ ----
 function onMatch(key, raw, elapsedMs) {
   const ph = phase.phase;
+  if (ph === PHASES.AWAIT_RESULT_NEXT && (key === 'next' || key === 'confirm')) { afterResult(); return; }
   if (ph === PHASES.AWAIT_INTRO && key === 'confirm') { beginFromIntro(); return; }
   if (ph === PHASES.AWAIT_NEXT && key === 'next') { onCertNext(); return; }
   if (ph === PHASES.AWAIT_START && key === 'start') {
@@ -306,14 +311,24 @@ function doConfirm() {
     elapsedMs: lastPosElapsed, outcome: correct ? 'correct' : 'wrong', sessionRestart });
 
   pendingStatus = judge.record(correct ? 'correct' : 'wrong');
+  pendingAdvance = true;
+  if (correct) {
+    navigation.afterSound(500); // 正解音は約440ms。鳴り終わってから先送りを受け付ける。
+    navigation.listen(phase, PHASES.AWAIT_RESULT_NEXT);
+  }
   $('#confirm-btn').classList.add('hidden');
   board.showFigure(null);
   // 結果を少し見せてから、クリア/ゲームオーバーは認定書、続くなら次の抽選（スタート待ち）へ戻す。
-  // 次はプレイヤーの「スタート」で始まるので、つぎボタンは出さない（ピタリズム固有）。
+  // 正解は声・次へボタンで表示を短縮できる。次の抽選自体はスタートで始める。
   advanceTimer = setTimeout(afterResult, correct ? 3000 : 1800);
 }
 
 function afterResult() {
+  if (!pendingAdvance) return;
+  pendingAdvance = false;
+  navigation.cancel();
+  clearTimeout(advanceTimer);
+  phase.to(PHASES.RESULT);
   reveal.clear();
   if (pendingStatus === 'clear') showCertificate('clear', level.id);
   else if (pendingStatus === 'gameover') showCertificate('gameover', level.id);
@@ -370,6 +385,8 @@ function onCertNext() {
 
 // ---- 終了/タイトル ----
 function goTitle() {
+  pendingAdvance = false;
+  screenAwake.setActive(false);
   reveal.clear();
   navigation.cancel();
   clearTimeout(focusHideTimer); clearTimeout(advanceTimer);
@@ -418,6 +435,7 @@ function flash(sel, text) { const b = $(sel), old = b.textContent; b.textContent
 // ---- 配線 ----
 buildLevelSelectUI($('#level-select'), LEVELS, startLevel);
 $('#start-play').addEventListener('click', () => startLevel('0')); // はじめる＝練習（レベル0）
+$('#next-btn').addEventListener('click', () => { if (phase?.phase === PHASES.AWAIT_RESULT_NEXT) afterResult(); });
 $('#spin-btn').addEventListener('click', onSpinTouch);
 $('#confirm-btn').addEventListener('click', doConfirm);
 $('#intro-back').addEventListener('click', goTitle);
