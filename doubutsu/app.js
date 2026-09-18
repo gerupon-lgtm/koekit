@@ -202,18 +202,18 @@ function beginTrial() {
 // ---- ルーレット イベント ----
 function onTick(v, interval) {
   if (mode === 'roulette') {
-    $('#roulette-num').textContent = v;   // レベル0は計測保護のため移動音を鳴らさない
+    $('#roulette-num').textContent = v;
   } else {
     setFocus(orderedKeys[v]);
-    sfx.playTick(interval);               // 盤面は移動音（速さでピッチ・cadence追従）
   }
+  sfx.playTick(interval); // 数字・カード共通。送り間隔に合わせて鳴らす。
 }
 function onRouletteStop(v) {
   if (mode === 'roulette') {
     // レベル0（練習）：3回止められたらレベル1へ。それまでは次の抽選（スタート待ち）へ。
     rouletteStops++;
+    sfx.playCorrect(); // 完全停止時。音声受付は停止済み。
     if (rouletteStops >= 3) {
-      sfx.playClear(); // 小さなごほうび
       advanceTimer = setTimeout(() => { if (level && level.id === '0') startLevel('1'); }, 1000);
     } else {
       advanceTimer = setTimeout(() => { if (phase && level && level.id === '0') phase.to(PHASES.AWAIT_START); }, 700);

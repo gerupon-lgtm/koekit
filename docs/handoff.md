@@ -189,3 +189,10 @@ scripts/               test-logic.cjs / stamp-cache.cjs
 | `docs/field-check.md` / `field-check-results.md` | 実機判定の手順 / 結果（フェーズ0合格の証跡） |
 | `docs/kioku-design.md` | メモリズムの薄い設計メモ（共有化・新規モジュール・タスク） |
 | `docs/archive/` | 旧版・上流構想メモ（履歴。公開リポジトリには push していない＝ローカル保管、`.gitignore`） |
+
+## 2026-09-19 音声ルーレットの効果音
+
+- レベル0の数字の回転にも、カード移動と同じ `playTick(interval)` を使用。
+- 完全停止ごとに `playCorrect()` を鳴らす。3回目も同じ正解音に統一。
+- 停止後は従来どおり700ms待って受付再開、3回目は1000ms待ってレベル1へ。正解音中の認識停止を維持。
+- 回転音を有効にした状態での実発話精度は実機確認が必要。
