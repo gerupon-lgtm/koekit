@@ -36,7 +36,8 @@ let level = null;
 let dealt = null;             // { map, targetKey, targetLetter }
 let selectedKey = null;
 let trialResolved = false;
-let pendingStatus = null;     // 結果表示後、「つぎ」タップで進む先の判定結果
+let pendingStatus = null;     // 結果表示後に進む先の判定結果
+let pendingAdvance = false;   // 自動送り待ち中か（タイマーとボタンの二重発火を防ぐ）
 let micDenied = false;
 let sessionRestart = 0;
 let cdTimer = null, seqTimer = null; // カウントダウン / シーケンス用タイマー
@@ -101,7 +102,7 @@ function clearTimers() { clearTimeout(cdTimer); clearTimeout(seqTimer); }
 
 function beginTrial() {
   clearTimers();
-  selectedKey = null; trialResolved = false; pendingStatus = null;
+  selectedKey = null; trialResolved = false; pendingStatus = null; pendingAdvance = false;
   board.clearMarks(); board.clearContent();
   $('#confirm-btn').classList.add('hidden');
   $('#next-btn').classList.add('hidden');
@@ -189,23 +190,30 @@ function doConfirm() {
 
   const correct = (selectedKey === dealt.targetKey);
   board.setFlipped(selectedKey, true); // めくって中身（文字）を見せる
+  let wait = 1800;
   if (correct) {
     board.setCorrect(selectedKey, true);
     sfx.playCorrect();
   } else {
     sfx.playBlip(220);
-    // 失敗時は全カードを表に戻して正解位置を見せる（KM-007）
+    // 失敗時は全カードを表に戻して正解位置を見せる（KM-007）。少し長めに見せる。
     board.flipAll(true);
     board.setCorrect(dealt.targetKey, true);
+    wait = 2800;
   }
 
   pendingStatus = judge.record(correct ? 'correct' : 'wrong');
-  // 自動で進めず、「つぎ」ボタンをはっきり出す（間をとる＋進めるのを明確に）
+  // 少し間を置いて自動で次へ。急ぐ場合は「つぎ」ボタンで早送り。
+  pendingAdvance = true;
   $('#next-btn').classList.remove('hidden');
+  seqTimer = setTimeout(proceedNext, wait);
 }
 
-// 「つぎ」をタップして次へ（次の問題／クリア演出／ゲームオーバー）
+// 次へ（自動送り or 「つぎ」タップ）。二重発火を防ぎ、次の問題／クリア／ゲームオーバーへ。
 function proceedNext() {
+  if (!pendingAdvance) return;
+  pendingAdvance = false;
+  clearTimers();
   $('#next-btn').classList.add('hidden');
   board.showFigure(null);
   if (pendingStatus === 'clear') showCertificate('clear', level.id);

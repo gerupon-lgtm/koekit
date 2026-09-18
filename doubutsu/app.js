@@ -43,7 +43,9 @@ const board = new BoardView($('#board'), $('#figure'), { onCardTap });
 let targetKey = null;         // 止まった位置
 let selectedKey = null;       // 言った/選んだ位置
 let trialResolved = false;    // 確定の二重発火防止（E-07）
-let pendingStatus = null;     // 結果表示後、「つぎ」タップで進む先
+let pendingStatus = null;     // 結果表示後に進む先
+let pendingAdvance = false;   // 自動送り待ち中か（タイマーとボタンの二重発火防止）
+let advanceTimer = null;      // 次の試行へ自動で進むタイマー
 let focusHideTimer = null;    // 停止後にフォーカス枠を消すタイマー
 let lastPosRaw = '', lastPosElapsed = 0;
 let sessionRestart = 0;
@@ -160,9 +162,9 @@ function startLevel(id) {
 }
 
 function beginTrial() {
-  targetKey = null; selectedKey = null; trialResolved = false; pendingStatus = null;
+  targetKey = null; selectedKey = null; trialResolved = false; pendingStatus = null; pendingAdvance = false;
   lastPosRaw = ''; lastPosElapsed = 0;
-  clearTimeout(focusHideTimer);
+  clearTimeout(focusHideTimer); clearTimeout(advanceTimer);
   $('#next-btn').classList.add('hidden');
   if (mode === 'board') clearBoardMarks();
   updateSpinIcon(false);
@@ -268,13 +270,18 @@ function doConfirm() {
 
   pendingStatus = judge.record(correct ? 'correct' : 'wrong');
   $('#confirm-btn').classList.add('hidden');
-  board.showFigure(null); // 矢印トーストを消す
-  // 自動で進めず、「つぎ」ボタンで進む（間をとる＋進めるのを明確に）
+  board.showFigure(null);
+  // 少し間を置いて自動で次へ。急ぐ場合は「つぎ」ボタンで早送り。
+  pendingAdvance = true;
   $('#next-btn').classList.remove('hidden');
+  advanceTimer = setTimeout(proceedNext, correct ? 1800 : 2000);
 }
 
-// 「つぎ」をタップして次へ（次の試行／クリア／ゲームオーバー）
+// 次へ（自動送り or 「つぎ」タップ）。二重発火を防ぐ。
 function proceedNext() {
+  if (!pendingAdvance) return;
+  pendingAdvance = false;
+  clearTimeout(advanceTimer);
   $('#next-btn').classList.add('hidden');
   board.showFigure(null);
   if (pendingStatus === 'clear') showCertificate('clear', level.id);
@@ -326,7 +333,7 @@ function onCertNext() {
 
 // ---- 終了/タイトル ----
 function goTitle() {
-  clearTimeout(focusHideTimer);
+  clearTimeout(focusHideTimer); clearTimeout(advanceTimer);
   try { phase && phase.to(PHASES.RESULT); } catch {}
   try { adapter && (adapter.dispose ? adapter.dispose() : adapter.stop()); } catch {}
   adapter = null; roulette = null; phase = null; judge = null; level = null;
