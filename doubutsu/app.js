@@ -271,22 +271,15 @@ function doConfirm() {
   pendingStatus = judge.record(correct ? 'correct' : 'wrong');
   $('#confirm-btn').classList.add('hidden');
   board.showFigure(null);
-  // 少し間を置いて自動で次へ。急ぐ場合は「つぎ」ボタンで早送り。
-  pendingAdvance = true;
-  $('#next-btn').classList.remove('hidden');
-  advanceTimer = setTimeout(proceedNext, correct ? 1800 : 2000);
+  // 結果を少し見せてから、クリア/ゲームオーバーは認定書、続くなら次の抽選（スタート待ち）へ戻す。
+  // 次はプレイヤーの「スタート」で始まるので、つぎボタンは出さない（どうぶつめくり固有）。
+  advanceTimer = setTimeout(afterResult, correct ? 1500 : 1800);
 }
 
-// 次へ（自動送り or 「つぎ」タップ）。二重発火を防ぐ。
-function proceedNext() {
-  if (!pendingAdvance) return;
-  pendingAdvance = false;
-  clearTimeout(advanceTimer);
-  $('#next-btn').classList.add('hidden');
-  board.showFigure(null);
+function afterResult() {
   if (pendingStatus === 'clear') showCertificate('clear', level.id);
   else if (pendingStatus === 'gameover') showCertificate('gameover', level.id);
-  else beginTrial();
+  else beginTrial(); // スタート待ちへ。プレイヤーの「スタート」で次の試行が始まる
 }
 
 // ---- タッチ操作（F-016） ----
@@ -380,7 +373,6 @@ buildLevelSelectUI($('#level-select'), LEVELS, startLevel);
 $('#start-play').addEventListener('click', () => startLevel('0')); // はじめる＝練習（レベル0）
 $('#spin-btn').addEventListener('click', onSpinTouch);
 $('#confirm-btn').addEventListener('click', doConfirm);
-$('#next-btn').addEventListener('click', proceedNext);
 $('#to-title').addEventListener('click', goTitle);
 $('#to-panel').addEventListener('click', () => show('panel'));
 $('#panel-back').addEventListener('click', () => show('title'));

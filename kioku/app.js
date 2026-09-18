@@ -102,16 +102,21 @@ function clearTimers() { clearTimeout(cdTimer); clearTimeout(seqTimer); }
 
 function beginTrial() {
   clearTimers();
-  selectedKey = null; trialResolved = false; pendingStatus = null; pendingAdvance = false;
+  selectedKey = null; trialResolved = false; pendingStatus = null;
   board.clearMarks(); board.clearContent();
   $('#confirm-btn').classList.add('hidden');
-  $('#next-btn').classList.add('hidden');
 
-  // 配置（毎試行ランダム）。各セルに絵（文字）を仕込む。
+  // 配置（毎試行ランダム）。各セルに絵（文字）を仕込み、裏向きで置く。
   dealt = deal(level.vocab);
   for (const key of level.vocab) board.setContent(key, letterEl(dealt.map[key]));
 
-  phase.to(PHASES.RESULT); // 記憶/対象提示中は認識停止
+  phase.to(PHASES.AWAIT_START); // 「スタート」発話 or ▶ボタンで記憶提示が始まる
+}
+
+// スタート → 記憶提示（券面表示＋カウントダウン）を開始
+function startReveal() {
+  if (!phase || phase.phase !== PHASES.AWAIT_START) return;
+  phase.to(PHASES.RESULT); // 記憶提示中は認識停止
   revealMemory();
 }
 
@@ -155,17 +160,19 @@ function showTarget() {
 
 // ---- コントロール表示 ----
 function updateControls(ph) {
+  $('#next-btn').classList.toggle('hidden', ph !== PHASES.AWAIT_START); // ▶ ＝ スタート
   const inAnswer = (ph === PHASES.AWAIT_POSITION || ph === PHASES.AWAIT_CONFIRM);
   const c = $('#confirm-btn');
   // 位置語待ちから確定ボタンを出しておく（レイアウト固定）。選択前は非活性、選択後に活性。
   c.classList.toggle('hidden', !inAnswer);
   c.disabled = (ph !== PHASES.AWAIT_CONFIRM);
-  if (!micDenied) setMicState(inAnswer ? 'listening' : 'idle');
+  if (!micDenied) setMicState((ph === PHASES.AWAIT_START || inAnswer) ? 'listening' : 'idle');
 }
 
 // ---- 認識マッチ ----
 function onMatch(key, raw, elapsedMs) {
   const ph = phase.phase;
+  if (ph === PHASES.AWAIT_START && key === 'start') { startReveal(); return; } // スタート発話
   if ((ph === PHASES.AWAIT_POSITION || ph === PHASES.AWAIT_CONFIRM) && level.vocab.includes(key)) {
     selectPosition(key); // 言い直しも含む
   } else if (ph === PHASES.AWAIT_CONFIRM && key === 'confirm') {
@@ -203,22 +210,14 @@ function doConfirm() {
   }
 
   pendingStatus = judge.record(correct ? 'correct' : 'wrong');
-  // 少し間を置いて自動で次へ。急ぐ場合は「つぎ」ボタンで早送り。
-  pendingAdvance = true;
-  $('#next-btn').classList.remove('hidden');
-  seqTimer = setTimeout(proceedNext, wait);
+  // 結果を少し見せてから、クリア/GOは認定書、続くならスタート待ちへ戻る（次はスタートで始まる）。
+  seqTimer = setTimeout(afterResult, wait);
 }
 
-// 次へ（自動送り or 「つぎ」タップ）。二重発火を防ぎ、次の問題／クリア／ゲームオーバーへ。
-function proceedNext() {
-  if (!pendingAdvance) return;
-  pendingAdvance = false;
-  clearTimers();
-  $('#next-btn').classList.add('hidden');
-  board.showFigure(null);
+function afterResult() {
   if (pendingStatus === 'clear') showCertificate('clear', level.id);
   else if (pendingStatus === 'gameover') showCertificate('gameover', level.id);
-  else beginTrial();
+  else beginTrial(); // スタート待ちへ
 }
 
 // ---- タッチ（位置選択・F-016） ----
@@ -269,7 +268,7 @@ function goTitle() {
 buildLevelSelect($('#level-select'), LEVELS.filter(l => l.id !== '0'), startLevel); // レベル0は無し
 $('#start-play').addEventListener('click', () => startLevel('1')); // はじめる＝レベル1
 $('#confirm-btn').addEventListener('click', doConfirm);
-$('#next-btn').addEventListener('click', proceedNext); // つぎへ（次の問題／クリア／GO）
+$('#next-btn').addEventListener('click', startReveal); // ▶ ＝ スタート（記憶提示を始める）
 $('#to-title').addEventListener('click', goTitle);
 $('#cert-next').addEventListener('click', onCertNext);
 window.addEventListener('pagehide', goTitle);
