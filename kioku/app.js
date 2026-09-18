@@ -36,6 +36,7 @@ let level = null;
 let dealt = null;             // { map, targetKey, targetLetter }
 let selectedKey = null;
 let trialResolved = false;
+let pendingStatus = null;     // 結果表示後、「つぎ」タップで進む先の判定結果
 let micDenied = false;
 let sessionRestart = 0;
 let cdTimer = null, seqTimer = null; // カウントダウン / シーケンス用タイマー
@@ -84,7 +85,7 @@ function startLevel(id) {
   if (!adapter) adapter = buildAdapter();
   if (adapter.name !== method) { try { adapter.dispose?.(); } catch {} adapter = buildAdapter(); }
 
-  judge = new Judge({ clearHits: CLEAR_HITS[level.id] || 3, continueAfterClear: true });
+  judge = new Judge({ clearHits: CLEAR_HITS[level.id] || 3 }); // 規定回数正解で即クリア演出→次へ
   phase = new PhaseMachine({ startListening, stopListening });
   phase.setLevelVocab(level.vocab);
   phase.on('match', onMatch);
@@ -100,10 +101,10 @@ function clearTimers() { clearTimeout(cdTimer); clearTimeout(seqTimer); }
 
 function beginTrial() {
   clearTimers();
-  selectedKey = null; trialResolved = false;
+  selectedKey = null; trialResolved = false; pendingStatus = null;
   board.clearMarks(); board.clearContent();
   $('#confirm-btn').classList.add('hidden');
-  $('#next-btn').classList.toggle('hidden', !judge.cleared); // クリア済なら「つぎへ」は出したまま
+  $('#next-btn').classList.add('hidden');
 
   // 配置（毎試行ランダム）。各セルに絵（文字）を仕込む。
   dealt = deal(level.vocab);
@@ -168,8 +169,7 @@ function onMatch(key, raw, elapsedMs) {
 }
 function selectPosition(key) {
   selectedKey = key;
-  board.setSelected(key);
-  board.showFigure(key);
+  board.setSelected(key); // 認識した位置のカードをマーク（矢印は使わない）
   if (phase.phase === PHASES.AWAIT_POSITION) phase.to(PHASES.AWAIT_CONFIRM);
   else $('#confirm-btn').classList.remove('hidden');
 }
@@ -178,12 +178,13 @@ function selectPosition(key) {
 function doConfirm() {
   if (trialResolved || !selectedKey) return;
   trialResolved = true;
+  clearTimers();
   phase.to(PHASES.RESULT); // 認識停止
   $('#confirm-btn').classList.add('hidden');
+  board.showFigure(null);  // 矢印トーストを消す
 
   const correct = (selectedKey === dealt.targetKey);
   board.setFlipped(selectedKey, true); // めくって中身（文字）を見せる
-  let wait = 1200;
   if (correct) {
     board.setCorrect(selectedKey, true);
     sfx.playCorrect();
@@ -192,23 +193,28 @@ function doConfirm() {
     // 失敗時は全カードを表に戻して正解位置を見せる（KM-007）
     board.flipAll(true);
     board.setCorrect(dealt.targetKey, true);
-    wait = 1900;
   }
 
-  const status = judge.record(correct ? 'correct' : 'wrong');
-  $('#next-btn').classList.toggle('hidden', !judge.cleared); // クリア済なら「つぎへ」を出す
+  pendingStatus = judge.record(correct ? 'correct' : 'wrong');
+  // 自動で進めず、「つぎ」ボタンをはっきり出す（間をとる＋進めるのを明確に）
+  $('#next-btn').classList.remove('hidden');
+}
 
-  seqTimer = setTimeout(() => {
-    if (status === 'clear') showCertificate('clear', level.id);
-    else if (status === 'gameover') showCertificate('gameover', level.id);
-    else beginTrial(); // 続行（クリア済でも5回まで）
-  }, wait);
+// 「つぎ」をタップして次へ（次の問題／クリア演出／ゲームオーバー）
+function proceedNext() {
+  $('#next-btn').classList.add('hidden');
+  board.showFigure(null);
+  if (pendingStatus === 'clear') showCertificate('clear', level.id);
+  else if (pendingStatus === 'gameover') showCertificate('gameover', level.id);
+  else beginTrial();
 }
 
 // ---- タッチ（位置選択・F-016） ----
 function onCardTap(key) {
   if (trialResolved) return;
   if (phase.phase !== PHASES.AWAIT_POSITION && phase.phase !== PHASES.AWAIT_CONFIRM) return;
+  // 同じ札を再タップ（ダブルタップ）＝直接めくる。別の札なら言い直し。
+  if (key === selectedKey && phase.phase === PHASES.AWAIT_CONFIRM) { doConfirm(); return; }
   selectPosition(key);
 }
 
@@ -251,7 +257,7 @@ function goTitle() {
 buildLevelSelect($('#level-select'), LEVELS.filter(l => l.id !== '0'), startLevel); // レベル0は無し
 $('#start-play').addEventListener('click', () => startLevel('1')); // はじめる＝レベル1
 $('#confirm-btn').addEventListener('click', doConfirm);
-$('#next-btn').addEventListener('click', () => showCertificate('clear', level.id)); // つぎへ＝クリア認定書
+$('#next-btn').addEventListener('click', proceedNext); // つぎへ（次の問題／クリア／GO）
 $('#to-title').addEventListener('click', goTitle);
 $('#cert-next').addEventListener('click', onCertNext);
 window.addEventListener('pagehide', goTitle);

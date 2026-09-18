@@ -89,7 +89,10 @@ body {
 .card { border-radius: 16px; background: var(--color-accent); box-shadow: 0 3px 8px rgba(0,0,0,.15);
   display: grid; place-items: center; position: relative; min-width: 0; }
 .card.focus { outline: 6px solid #333; outline-offset: -3px; }
-.card.selected { outline: 6px solid #2ea44f; outline-offset: -3px; }
+/* 認識/選択した位置は、カード自体をはっきりフォーカス（矢印は使わない）。 */
+.card.selected { outline: 6px solid #2ea44f; outline-offset: -3px;
+  box-shadow: 0 0 0 6px rgba(46,164,79,.25), 0 6px 16px rgba(0,0,0,.22);
+  transform: scale(1.05); z-index: 3; transition: transform .1s; }
 .card.flipped { background: #fff; border: 3px solid #eee; }
 /* 前面（絵/文字/赤丸）はめくった時だけ見せる。裏向き(.card:not(.flipped))では隠す。 */
 .card .front { width: 100%; height: 100%; display: none; place-items: center; overflow: hidden; }
@@ -97,11 +100,18 @@ body {
 .card .front img { width: 100%; height: 100%; object-fit: contain; } /* きおくめくりの絵：縦横比維持・トリミングなし */
 .card-dot { width: 62%; aspect-ratio: 1; border-radius: 50%; background: #e23b3b; } /* 正解の赤丸プレースホルダ */
 
-#figure { position: absolute; inset: 0; pointer-events: none; display: none; place-items: center; }
-#figure.show { display: grid; }
-#figure svg { width: 42%; height: 42%; transition: transform .1s; }
+/* 認識結果の図示は、盤面上部の「トースト」として出す。
+   pointer-events:none で下の盤面・ボタンを塞がない（言い直しの札タップ・確定が可能）。 */
+#figure { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); z-index: 5;
+  display: none; align-items: center; justify-content: center; padding: 6px 14px;
+  background: rgba(255,255,255,.96); border: 2px solid #2ea44f; border-radius: 999px;
+  box-shadow: 0 4px 12px rgba(0,0,0,.18); pointer-events: none; }
+#figure.show { display: flex; animation: toastIn .18s ease both; }
+#figure svg { width: 44px; height: 44px; transition: transform .12s; }
 #figure .arrow { fill: #2ea44f; }
 #figure .dot { fill: #2ea44f; }
+@keyframes toastIn { from { opacity: 0; transform: translateX(-50%) translateY(-8px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); } }
 
 .mic { width: 34px; height: 34px; }
 .mic .body { fill: #c9c9c9; transition: fill .15s; }
@@ -114,11 +124,31 @@ body {
 .finger { width: 30px; height: 30px; display: none; }
 .mic-state.denied ~ .finger { display: inline-block; }
 
-#cert { align-items: center; justify-content: center; gap: 26px; padding: 24px; text-align: center; }
+#cert { align-items: center; justify-content: center; gap: 26px; padding: 24px; text-align: center; position: relative; overflow: hidden; }
 .medal { width: 46vw; max-width: 220px; aspect-ratio: 1/1; border-radius: 50%;
-  display: grid; place-items: center; box-shadow: 0 8px 20px rgba(0,0,0,.18); }
+  display: grid; place-items: center; box-shadow: 0 8px 20px rgba(0,0,0,.18); position: relative; z-index: 2; }
 .medal.clear { background: radial-gradient(circle at 50% 38%, #ffe08a, #ffb300); }
 .medal.over { background: radial-gradient(circle at 50% 38%, #d8d8d8, #a8a8a8); }
 .medal svg { width: 56%; height: 56%; }
-#cert-stars { display: flex; gap: 6px; }
-#cert-stars svg { width: 26px; height: 26px; }
+#cert-stars { display: flex; gap: 6px; z-index: 2; }
+#cert-stars svg { width: 30px; height: 30px; }
+
+/* クリア演出：メダルが弾んで出て、星が順に光る。クリア時のみ後光＋きらめき。 */
+#cert.active .medal { animation: medalPop .5s cubic-bezier(.2, 1.5, .4, 1) both; }
+@keyframes medalPop { 0% { transform: scale(0) rotate(-35deg); opacity: 0; }
+  70% { transform: scale(1.12) rotate(6deg); } 100% { transform: scale(1) rotate(0); opacity: 1; } }
+#cert.active #cert-stars svg { animation: starPop .35s ease both; transform: scale(0); }
+#cert.active #cert-stars svg:nth-child(1) { animation-delay: .45s; }
+#cert.active #cert-stars svg:nth-child(2) { animation-delay: .55s; }
+#cert.active #cert-stars svg:nth-child(3) { animation-delay: .65s; }
+#cert.active #cert-stars svg:nth-child(4) { animation-delay: .75s; }
+#cert.active #cert-stars svg:nth-child(5) { animation-delay: .85s; }
+#cert.active #cert-stars svg:nth-child(6) { animation-delay: .95s; }
+@keyframes starPop { 0% { transform: scale(0) rotate(-20deg); } 70% { transform: scale(1.3); } 100% { transform: scale(1) rotate(0); } }
+/* クリア時だけメダル背後に広がる後光 */
+#cert[data-kind="clear"].active .medal::after {
+  content: ""; position: absolute; inset: -22%; border-radius: 50%; z-index: -1;
+  background: radial-gradient(circle, rgba(255,214,102,.55), rgba(255,214,102,0) 70%);
+  animation: halo 1.2s ease-out .2s both; }
+@keyframes halo { 0% { transform: scale(.4); opacity: 0; } 40% { opacity: 1; } 100% { transform: scale(1.15); opacity: .5; } }
+#cert .cert-next-wrap { z-index: 2; }

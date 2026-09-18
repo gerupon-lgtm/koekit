@@ -43,6 +43,7 @@ const board = new BoardView($('#board'), $('#figure'), { onCardTap });
 let targetKey = null;         // 止まった位置
 let selectedKey = null;       // 言った/選んだ位置
 let trialResolved = false;    // 確定の二重発火防止（E-07）
+let pendingStatus = null;     // 結果表示後、「つぎ」タップで進む先
 let focusHideTimer = null;    // 停止後にフォーカス枠を消すタイマー
 let lastPosRaw = '', lastPosElapsed = 0;
 let sessionRestart = 0;
@@ -105,6 +106,7 @@ function updateControls(ph) {
   const isSpin = (ph === PHASES.AWAIT_START || ph === PHASES.AWAIT_STOP);
   spin.classList.toggle('hidden', !isSpin);
   confirm.classList.toggle('hidden', ph !== PHASES.AWAIT_CONFIRM);
+  $('#next-btn').classList.add('hidden'); // 「つぎ」は doConfirm 後にだけ出す
   if (!micDenied) setMicState(ph === PHASES.RESULT ? 'idle' : 'listening');
 }
 function updateSpinIcon(spinning) {
@@ -154,9 +156,10 @@ function startLevel(id) {
 }
 
 function beginTrial() {
-  targetKey = null; selectedKey = null; trialResolved = false;
+  targetKey = null; selectedKey = null; trialResolved = false; pendingStatus = null;
   lastPosRaw = ''; lastPosElapsed = 0;
   clearTimeout(focusHideTimer);
+  $('#next-btn').classList.add('hidden');
   if (mode === 'board') clearBoardMarks();
   updateSpinIcon(false);
   phase.to(PHASES.AWAIT_START); // マイク許可はこの区間の start で要求される
@@ -236,8 +239,7 @@ function onIgnored(raw) {
 // ---- 位置の選択（図示）／確定 ----
 function selectPosition(key) {
   selectedKey = key;
-  board.setSelected(key);
-  board.showFigure(key);
+  board.setSelected(key); // 認識した位置のカードをマーク（矢印は使わない）
   if (phase.phase === PHASES.AWAIT_POSITION) phase.to(PHASES.AWAIT_CONFIRM); // 確定語＋言い直しを待つ
   else updateControls(PHASES.AWAIT_CONFIRM); // 言い直し時は区間そのまま、確定ボタンは出したまま
 }
@@ -260,14 +262,20 @@ function doConfirm() {
     expected: targetKey, rawText: lastPosRaw, matchedKey: selectedKey,
     elapsedMs: lastPosElapsed, outcome: correct ? 'correct' : 'wrong', sessionRestart });
 
-  const status = judge.record(correct ? 'correct' : 'wrong');
+  pendingStatus = judge.record(correct ? 'correct' : 'wrong');
   $('#confirm-btn').classList.add('hidden');
+  board.showFigure(null); // 矢印トーストを消す
+  // 自動で進めず、「つぎ」ボタンで進む（間をとる＋進めるのを明確に）
+  $('#next-btn').classList.remove('hidden');
+}
 
-  setTimeout(() => {
-    if (status === 'clear') showCertificate('clear', level.id);
-    else if (status === 'gameover') showCertificate('gameover', level.id);
-    else beginTrial();
-  }, 1200);
+// 「つぎ」をタップして次へ（次の試行／クリア／ゲームオーバー）
+function proceedNext() {
+  $('#next-btn').classList.add('hidden');
+  board.showFigure(null);
+  if (pendingStatus === 'clear') showCertificate('clear', level.id);
+  else if (pendingStatus === 'gameover') showCertificate('gameover', level.id);
+  else beginTrial();
 }
 
 // ---- タッチ操作（F-016） ----
@@ -280,9 +288,11 @@ function onSpinTouch() {
   }
 }
 function onCardTap(key) {
-  // 停止後（位置選択/確定中）だけタップで位置を選べる。2段階確定はタッチでも維持
+  // 停止後（位置選択/確定中）だけタップで位置を選べる。2段階確定はタッチでも維持。
   if (mode !== 'board' || !targetKey || trialResolved) return;
   if (phase.phase !== PHASES.AWAIT_POSITION && phase.phase !== PHASES.AWAIT_CONFIRM) return;
+  // 同じ札を再タップ（ダブルタップ）＝直接めくる。別の札なら言い直し。
+  if (key === selectedKey && phase.phase === PHASES.AWAIT_CONFIRM) { doConfirm(); return; }
   lastPosRaw = ''; lastPosElapsed = 0;
   selectPosition(key);
 }
@@ -359,6 +369,7 @@ buildLevelSelectUI($('#level-select'), LEVELS, startLevel);
 $('#start-play').addEventListener('click', () => startLevel('0')); // はじめる＝練習（レベル0）
 $('#spin-btn').addEventListener('click', onSpinTouch);
 $('#confirm-btn').addEventListener('click', doConfirm);
+$('#next-btn').addEventListener('click', proceedNext);
 $('#to-title').addEventListener('click', goTitle);
 $('#to-panel').addEventListener('click', () => show('panel'));
 $('#panel-back').addEventListener('click', () => show('title'));
