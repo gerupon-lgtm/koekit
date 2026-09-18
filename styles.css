@@ -317,3 +317,7 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--color-primary);
   .intro-voice-hint { font-size: 13px; line-height: 1.4; }
   .intro-family { margin-top: 6px; padding-top: 6px; }
 }
+
+/* 自動フォーカスする非操作の見出しには枠を出さず、文字周囲に余白を置く。 */
+#intro-heading { padding: 2px 4px; text-align: center; }
+#intro-heading:focus { outline: none; }
