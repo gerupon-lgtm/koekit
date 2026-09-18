@@ -2,6 +2,8 @@
 
 **実装指示の本文は `docs/implementation-guide.md` を読むこと。** このファイルには重複して書かない。
 
+**引き継ぎの現状スナップショットは `docs/handoff.md`（Claude Code → Codex）。着手前にまず読む。**
+
 ## 最初に読む順
 
 1. `docs/implementation-guide.md` — 技術スタック・変更禁止事項・音声入力層

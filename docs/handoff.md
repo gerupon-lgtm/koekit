@@ -1,0 +1,167 @@
+# 引き継ぎ（Claude Code → Codex）
+
+Claude Code が着手した部分の到達点と、続きに必要な情報をまとめる。**まず `AGENTS.md` → `docs/implementation-guide.md` → `docs/requirements.md`（0章A/B/C）→ `docs/tasks.md` を読むこと。** 本書はその上での現状スナップショット（最終更新 2026-09-18、コミット `6977aef`）。
+
+---
+
+## 0. 1分サマリ
+
+- **コエキット** = 音声認識検証のPWA試作群。素のHTML/CSS/JS・ES Modules・**ビルド工程なし**。GitHub Pages 公開。
+- 収録アプリは2本、どちらも**動作・公開済み**：
+  - **どうぶつめくり**（`doubutsu/`）= 1本目。音声ルーレット（レベル0）＋位置語で当てる本編（レベル1〜5・延長）。
+  - **きおくめくり**（`kioku/`）= 2本目。9枚の絵を記憶→対象を探して位置を当てる。
+- **フェーズ0の関門（要件11.1）は方式C=Voskで実機合格済み**（`docs/field-check-results.md`）。公開版はVoskで確定。
+- 音声入力層は**方式差し替え可能な共通部品**（`src/speech/`）。これがこの案件の技術的な核。
+- **前任のコードを作り直さない。** A区分は即変更可。C区分と確定5〜9は緩めない（`implementation-guide.md` 5節）。
+
+- リポジトリ: https://github.com/gerupon-lgtm/koekit
+- 公開: https://gerupon-lgtm.github.io/koekit/ （`/doubutsu/` `/kioku/`、音デモ `/demo/sounds.html`）
+
+---
+
+## 1. デプロイ手順（重要・毎回これ）
+
+ビルドは無い。デプロイは **stamp → commit → push**。GitHub Pages が自動ビルドする。
+
+```
+node scripts/stamp-cache.cjs   # ← 必須。sw.js の BUILD を更新（キャッシュバスター）
+git add -A && git commit -m "..." && git push
+```
+
+- **`stamp-cache.cjs` を実行し忘れると、アプリ本体のキャッシュが更新されない。** 各デプロイ前に必ず実行。
+- ローカル確認は静的サーバで: `python -m http.server 8000`（または `npx serve .`）。**マイク・SWはHTTPSまたはlocalhostのみ。**
+- 認証は `gh`（`gerupon-lgtm`）が通っている。push はそのまま可。`git` の LF→CRLF 警告は無害。
+
+### キャッシュ方針（`sw.js`）
+- **アプリ本体**（HTML/CSS/JS/フォント/アイコン）= network-first。オンラインなら常に最新。`APP_CACHE` 名に `BUILD` を含み毎デプロイ更新。
+- **大きい静的資産**（`lib/vosk/vosk.js`、`assets/animals/`）= cache-first（`STATIC_CACHE = koekit-static-v1`）。毎デプロイでは再取得しない。**これらを差し替えたら `STATIC_CACHE` の版を上げる**（`sw.js`）。
+- **Voskモデル（R2・別オリジン・約48MB）** = SW非対象。vosk-browser 側がキャッシュ。
+
+---
+
+## 2. テスト
+
+決定的ロジックは Node スクリプトで検証（実装AIに毎回推論させない方針・`implementation-guide.md` 10節）。
+
+```
+node scripts/test-logic.cjs         # 語彙照合/CSV・JST/metrics/区間/判定/フェイント/deal（120項目）
+TZ=UTC node scripts/test-logic.cjs  # JST依存の混入検出
+```
+
+実機・ブラウザ確認が主。**音声の実発話・ルーレットのアニメ・オフライン起動・PWA単独起動は実機（Pixel 6a）でのみ確認**。
+
+---
+
+## 3. アーキテクチャ / 主要ファイル
+
+```
+index.html            コエキット一覧(S-01)。2アプリへ遷移
+styles.css            共有デザイントークン＋共有UIコンポーネントのCSS
+sw.js / sw-register.js  Service Worker（キャッシュバスター）
+version.json          バージョン正典(v0.1.0)
+manifest.json         PWA
+doubutsu/  index.html + app.js   どうぶつめくり（コントローラ）
+kioku/     index.html + app.js   きおくめくり（コントローラ）
+demo/sounds.html      合成音の試聴デモ
+lib/vosk/vosk.js       vosk-browser 自前配置（唯一の依存・約5.8MB）
+assets/animals/        動物画像11枚（差し替え=src/game/animals.js の ANIMAL_FILES）
+assets/fonts/ icons/   M PLUS Rounded 1c サブセット、PWAアイコン
+probe/                 実機判定用の使い捨てページ（field-check.md 手順）
+src/                   共有モジュール（下記）
+scripts/               test-logic.cjs / stamp-cache.cjs
+```
+
+### src/（共有モジュール。両アプリが使う。アプリ専用実装にしない）
+- **音声入力層（核）**：`speech/index.js`（ファクトリ）・`webspeech.js`(方式A/B)・`vosk.js`(方式C)・`config.js`（R2モデルURL）・`vocabulary.js`（同義語表＝データ・照合）・`vosk-worklet.js`。IFは `implementation-guide.md` 6節。
+- **ゲーム**：`game/phase.js`（受け付け区間ステートマシン＝常時認識にしない）・`roulette.js`（ルーレット/フォーカス移動・フェイント）・`judge.js`（成否・回数）・`levels.js`・`positions.js`（位置→グリッド/矢印）・`deal.js`（きおく配置）・`animals.js`（画像マニフェスト）。
+- **ログ**：`log/recorder.js`（メモリのみ）・`csv.js`（全クォート・JST）・`metrics.js`（合格ライン判定・閾値1箇所）。
+- **UI（共有ビュー）**：`ui/board.js`（盤面）・`certificate.js`（認定書）・`levelselect.js`・`micstate.js`。
+- **音**：`audio/sfx.js`（正解/不正解/クリア/GO/カウントダウン/タイムアップ）・`cries.js`（合成鳴き声・乗り物音）。
+- `util/emitter.js`。
+
+各アプリの `app.js` は上記を組み合わせるコントローラ。**盤面描画・図示・2段階確定・認定書・レベル選択・マイク表示は `src/ui/*` に共通化済み**（重複させない）。
+
+---
+
+## 4. 守る設計（緩めない）
+
+`implementation-guide.md` 5節・要件0章C を必読。要点：
+
+- **C-1**：公開版で利用者の音声を外部送信しない（→方式Vosk/端末内。方式A=既定WebSpeechは検証専用）。
+- **C-2**：タッチのみで全機能操作可（マイク未許可でも遊べる）。
+- **C-3**：2段階確定（位置をマーク→確定）を省略しない。タッチはダブルタップ（同じ札の再タップ）で確定できるが、これも2操作。
+- **C-4**：コロガリズム不変更。
+- **確定5〜9**：常時認識にしない（区間ごと開始/停止）／ゲームオーバー廃止しない（5回中3回、易しいレベルは回数を下げるのは可＝B区分）／確定待ちで周囲音を拾う問題に対策を入れない／認識なしはカウントしない／**子ども向けゲーム画面は文字を使わない**（版・©・数字・保護者向けの説明を除く）。
+
+### 実機検証で確定した実装事実（`field-check-results.md`）
+1. Voskモデルは `model/` を一段かませて tar.gz 化（直下配置は KaldiRecognizer 生成失敗）。
+2. クロスオリジン分離は不要（mini-coi・CORS入れない）。
+3. モデルはCache Storageにキャッシュ。更新戦略が要る。
+4. 音声は AudioWorklet → AudioBuffer(16kHz) を acceptWaveform に渡す。
+5. モデルは Cloudflare R2 公開URLから取得（`src/speech/config.js` の `DEFAULT_MODEL_URL` に設定済み。実ブラウザで取得〜Recognizer生成まで確認済み）。
+
+---
+
+## 5. 完了状況
+
+### フェーズ0（関門・T-001〜T-014）
+**方式C=Voskで4指標を全通過し合格**（`field-check-results.md`「フェーズ0 合格ライン計測」）。骨組み・フォント・PWA/SW・入力層・語彙・区間・ルーレット・ログ・CSV・計測パネル(S-07)まで実装・本番確認済み。詳細は `tasks.md` の「フェーズ0 実装状況」。
+
+### フェーズ1（T-015〜T-025）
+盤面・フォーカス移動（フェイント）・図示・2段階確定・成否/回数・レベル遷移・延長・認定書・タッチ・レベル選択まで実装。`tasks.md`「フェーズ1 実装状況」。
+
+### きおくめくり（2本目）
+要件 `docs/requirements-kioku.md`（v1.4）、設計 `docs/kioku-design.md`。記憶提示→対象提示→回答→判定、失敗時の全開示、スタート導入まで実装・本番確認済み。
+
+### 共通UX（A区分・両アプリ）— `tasks.md` に記録
+- 各試行は**スタートで始まる**（どうぶつめくり=スタート/ストップ、きおく=スタートで券面表示＋カウントダウン）。「つぎ」ボタンは無し（スタートが次への合図）。結果は少し見せてスタート待ちへ。
+- 図示は**カード自体をマーク**（矢印は使わない）。タッチは**ダブルタップで直接めくる**。
+- 確定ボタンは**常時表示・選択前は非活性**（レイアウトシフト防止）。コントロール行の高さ固定。
+- **クリア演出**（メダルのポップイン＋後光＋星）。タイトルに**コエキット トップへ戻る導線**。
+- **各レベルの最初に保護者向けの概要**（`LEVEL_INTRO`、子に教える用なので文字あり）。
+- **どうぶつめくりレベル0**：ルーレットを**3回止めたらレベル1へ**自動遷移。
+- 動物画像11枚を実装（`src/game/animals.js`）。**鳴き声はWeb Audioの正解音で代用**（発案者方針）。
+
+---
+
+## 6. 未決事項・次の候補（Codexへの申し送り）
+
+| 項目 | 内容 | 参照 |
+|---|---|---|
+| 実機受入（フェーズ1） | 1-a〜1-i、特に**未就学児の被験者**での確認（T-031）。iPhone XR は副対象で結果記録 | 要件14.2 |
+| 公開版で方式A封じ | 計測パネルは検証用に方式A(既定WebSpeech)を選べる。**公開版では方式Aを選べないようにする**（C-1の実装的担保・T-029） | 要件11.2 / tasks T-029 |
+| オフライン実機 | 機内モードで起動・プレイ（アプリシェル/画像/モデル）の実機確認（T-028） | 要件12 |
+| 正式名称 | どうぶつめくり(R-01)・きおくめくり(KR-01)は仮称。**リポジトリ内パス/画面タイトルを確定する前までに決定**（現在ディレクトリ名 `doubutsu/` `kioku/`） | 要件17 / KR-01 |
+| 公開判断 | どの状態でSIKUMI LABとして公開するか（R-04） | 要件17 |
+| 音の実素材 | 踏切・目覚まし等の実在音は合成で再現困難→**録音サンプル方式**が有力。`assets/sounds/` に置いて `sfx`/`cries` の該当を差し替える下地を作る、が未着手 | 会話ログ |
+| 画像の調整 | 枚数・差し替えは `ANIMAL_FILES` 更新＋`STATIC_CACHE`版上げ。大きさ/余白の実機調整 | — |
+| 秒数など | 記憶/対象提示秒・フォーカス枠の保持時間・クリア回数・フェイント確率はB区分。実機で調整 | requirements-kioku 8.5 等 |
+
+**【想定】の扱い**：`implementation-guide.md` 4節に残る【想定】のうち確定したものは、該当文書へ確定として書き4節から外すこと（モデル配信先は確定済みで削除済み）。
+
+---
+
+## 7. 既知の落とし穴
+
+- **ルーレットのアニメは `requestAnimationFrame` 駆動**。バックグラウンドのタブ/非表示のプレビューでは rAF が止まり回らない（自動テストで回せないことがある）。実機・前面では動く。
+- **vosk-browser は保守が止まっている**（最終公開が古い）。動かない場合は速やかに発案者へ報告（tasks T-008 注意）。
+- **方式A/B/Cはブラウザ機能に依存**。方式B（端末内WebSpeech）は実機で ja-JP 非対応と判明済（将来対応すれば予備）。
+- **静的資産（画像/vosk.js）を差し替えたら `STATIC_CACHE` の版を上げる**（cache-first のため古いものが残る）。
+- 計測パネル(S-07)の合格ライン判定は**レベル0のログ**で行う（`renderPanel` が level '0' でフィルタ）。
+
+---
+
+## 8. 参照文書
+
+| ファイル | 内容 |
+|---|---|
+| `AGENTS.md` | Codex 入口（最初に読む順） |
+| `docs/implementation-guide.md` | 実装指示の正典（技術スタック・**5節=変更禁止**・6節=音声入力層IF・8節=TZ・9節=版・10節=スクリプト・11節=コマンド） |
+| `docs/requirements.md` | どうぶつめくり 要件（**0章A/B/C**・機能ID F-001〜） |
+| `docs/requirements-kioku.md` | きおくめくり 要件（機能ID KM-・KR-要確認・改訂履歴v1.4） |
+| `docs/data-model.md` | LogEntry・CSV・レベル定義・metrics |
+| `docs/screens.md` | 画面・遷移・デザイントークン |
+| `docs/tasks.md` | 実装順・完了条件・**実装状況/検証済みの事実**・トレーサビリティ |
+| `docs/field-check.md` / `field-check-results.md` | 実機判定の手順 / 結果（フェーズ0合格の証跡） |
+| `docs/kioku-design.md` | きおくめくりの薄い設計メモ（共有化・新規モジュール・タスク） |
+| `docs/archive/` | 旧版・上流構想メモ（履歴。公開リポジトリには push していない＝ローカル保管、`.gitignore`） |
