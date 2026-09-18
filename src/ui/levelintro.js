@@ -5,7 +5,7 @@ import { SYNONYMS } from '../speech/vocabulary.js';
 const TITLES = {
   '0': 'こえで、とめてみよう。', '1': 'みぎと、ひだり。',
   '2': 'うえと、した。', '3': 'まんなかも、いっしょに。',
-  '4': 'ななめを、みつけよう。', '5': 'ぜんぶのばしょに、ちょうせん。',
+  '4': 'ななめを、みつけよう。', '5': '9つのばしょに、ちょうせん。',
   extra: 'もっとはやく、できるかな。',
 };
 const spoken = key => key === 'center' ? SYNONYMS.center.find(word => word === 'まんなか') : SYNONYMS[key].find(word => /^[ぁ-ゖー]+$/.test(word));
@@ -16,9 +16,9 @@ export function openLevelIntro(level, game) {
   document.querySelector('#intro-badge').textContent = practice ? 'れんしゅう' : level.id === 'extra' ? 'スピード' : `レベル ${level.id}`;
   document.querySelector('#intro-heading').textContent = TITLES[level.id];
   document.querySelector('#intro-text').textContent = practice
-    ? 'すきなすうじで、とめられるかな？ 3かいとめたら、カードあそびへ。'
-    : game === 'kioku' ? 'どうぶつのばしょをおぼえて、さがすえがどこにあったか、こたえよう。'
-      : 'とまったカードは、どこ？ ばしょをこえでいって、めくってみよう。';
+    ? '3かい とめたら、カードあそびへ。'
+    : game === 'kioku' ? 'どうぶつの ばしょを、おぼえよう。'
+      : 'とまった ばしょを、こえでこたえよう。';
 
   const preview = document.querySelector('#intro-preview');
   preview.replaceChildren();
@@ -51,8 +51,8 @@ export function openLevelIntro(level, game) {
   steps.replaceChildren();
   const items = practice
     ? [['スタート', 'まわす'], ['ストップ', 'とめる']]
-    : [[game === 'kioku' ? 'スタート' : 'スタート → ストップ', game === 'kioku' ? 'みて、おぼえる' : 'まわして、とめる'],
-       ['ばしょをいう', 'カードのしるしをみる'], ['オーケー', 'めくる。「オッケー」でもOK']];
+    : [[game === 'kioku' ? 'スタート' : 'スタート → ストップ', game === 'kioku' ? 'おぼえる' : 'まわす・とめる'],
+       ['ばしょをいう', 'えらぶ'], ['オーケー', 'めくる']];
   for (const [word, hint] of items) {
     const li = document.createElement('li');
     const bubble = document.createElement('strong'); bubble.textContent = word;
@@ -60,8 +60,8 @@ export function openLevelIntro(level, game) {
     li.append(bubble, caption); steps.append(li);
   }
   document.querySelector('#intro-touch').textContent = practice
-    ? 'タッチでも：▶ でまわして、■ でとめられます。'
-    : 'タッチでも：カードをえらび、もう一度タップ。または ✓ でめくれます。';
+    ? 'タッチ：▶ でまわす ／ ■ でとめる'
+    : 'タッチ：カードをえらび、もう一度タップか ✓ でめくる。';
   dialog.showModal();
   dialog.scrollTop = 0;
 }

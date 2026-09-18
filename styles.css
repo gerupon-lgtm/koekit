@@ -284,7 +284,36 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--color-primary);
 .card-reveal-hero { width: min(78%, 330px); max-height: 88%; aspect-ratio: 1; display: grid; place-items: center; padding: 18px; border-radius: 24%; background: #fff; border: 5px solid #ebc270; box-shadow: 0 18px 44px #82612a24, 0 0 0 10px #f7e5bd66; }
 .card-reveal-hero img { width: 100%; height: 100%; min-height: 0; object-fit: contain; }
 
-/* 説明だけをスクロールし、子ども用の大きな開始ボタンは常に見せる。 */
-.intro-card { display: flex; flex-direction: column; max-height: calc(100svh - 32px); }
-.intro-details { overflow-y: auto; min-height: 0; overscroll-behavior: contain; }
-.intro-navigation, .intro-voice-hint { flex-shrink: 0; }
+/* 説明カードと操作を分け、一画面で案内を読み終えられる配置。 */
+#level-intro { width: min(480px, calc(100% - 16px)); max-width: none; max-height: none; border-radius: 0; background: transparent; box-shadow: none; overflow: visible; }
+.intro-card { padding: 0; display: flex; flex-direction: column; gap: 12px; }
+.intro-details { padding: 12px 16px 16px; border-radius: 26px; background: #fff; box-shadow: 0 16px 50px #102d4c30; }
+.intro-top { min-height: 44px; }
+.intro-back { min-height: 44px; }
+#intro-heading { margin: 2px 0 6px; font-size: 20px; line-height: 1.4; }
+.intro-text { font-size: 15px; line-height: 1.6; }
+.intro-preview { margin: 12px auto; gap: 6px; }
+.preview-tile, .preview-empty { min-height: 48px; }
+.preview-number { height: 60px; }
+.intro-steps { gap: 6px; }
+.intro-steps li { grid-template-columns: 14px max-content minmax(0, 1fr); gap: 6px; }
+.intro-steps li::before { grid-row: auto; margin-top: 5px; }
+.intro-steps strong { font-size: 15px; line-height: 1.35; padding: 3px 7px; }
+.intro-steps span { font-size: 14px; padding: 0; line-height: 1.4; }
+.intro-family { margin-top: 10px; padding-top: 8px; font-size: 14px; line-height: 1.5; }
+.intro-family p { margin: 0; }
+.intro-navigation { margin-top: 0; }
+.intro-voice-hint { margin: 0; color: #fff; font-size: 14px; line-height: 1.5; text-shadow: 0 1px 4px #173451; }
+@media (max-height: 650px) {
+  .intro-card { gap: 8px; }
+  .intro-details { padding: 6px 12px 10px; }
+  #intro-heading { font-size: 18px; margin: 0 0 4px; }
+  .intro-text { font-size: 14px; }
+  .intro-preview { margin-block: 8px; gap: 5px; }
+  .preview-tile, .preview-empty { min-height: 42px; }
+  .intro-steps { gap: 4px; }
+  .intro-steps strong { font-size: 14px; }
+  .intro-steps span { font-size: 13px; }
+  .intro-voice-hint { font-size: 13px; line-height: 1.4; }
+  .intro-family { margin-top: 6px; padding-top: 6px; }
+}
