@@ -20,12 +20,16 @@ import { computeMetrics, judge as judgeMetrics, THRESHOLDS } from '../src/log/me
 import * as sfx from '../src/audio/sfx.js';
 import { POS } from '../src/game/positions.js';
 import { openLevelIntro, closeLevelIntro } from '../src/ui/levelintro.js';
+import { LevelNavigation } from '../src/ui/levelnavigation.js';
+import { CardReveal } from '../src/ui/cardreveal.js';
 import { BoardView } from '../src/ui/board.js';
 import { renderCertificate } from '../src/ui/certificate.js';
 import { buildLevelSelect as buildLevelSelectUI } from '../src/ui/levelselect.js';
 import { setMicState as setMicStateUI } from '../src/ui/micstate.js';
 
 const $ = s => document.querySelector(s);
+const reveal = new CardReveal($('#stage'));
+const navigation = new LevelNavigation();
 const METHOD_KEY = 'koekit.method';
 const FAKEOUT_LEVELS = new Set(['3', '4', '5', 'extra']); // フェイント停止を有効にするレベル
 // 停止後にフォーカス枠（止まった位置）を見せる時間(ms)。レベルが上がるほど短く＝記憶要素を強める。
@@ -75,7 +79,10 @@ function resolveInitialMethod() {
 function setMethod(m) { method = m; try { localStorage.setItem(METHOD_KEY, m); } catch {} }
 
 // ---- 受け付け状態（F-003・共有ビュー） ----
-function setMicState(state) { setMicStateUI($('#mic-state'), $('#stage'), state); }
+function setMicState(state) {
+  setMicStateUI($('#mic-state'), $('#stage'), state);
+  document.querySelectorAll('.navigation-mic').forEach(el => setMicStateUI(el, null, state));
+}
 
 // ---- 音声 ----
 function buildAdapter() {
@@ -127,6 +134,9 @@ function updateSpinIcon(spinning) {
 
 // ---- レベル開始 ----
 function startLevel(id) {
+  navigation.cancel();
+  reveal.clear();
+  phase?.to(PHASES.RESULT);
   sfx.primeAudio();
   level = getLevel(id);
   if (!level) return;
@@ -166,17 +176,27 @@ function startLevel(id) {
 }
 
 // ---- レベル紹介（保護者向け） ----
-function showLevelIntro(id) { openLevelIntro(getLevel(id), 'doubutsu'); }
+function showLevelIntro(id) {
+  openLevelIntro(getLevel(id), 'doubutsu');
+  navigation.listen(phase, PHASES.AWAIT_INTRO);
+}
+function beginFromIntro() {
+  if (!$('#level-intro').open) return;
+  navigation.cancel();
+  hideLevelIntro();
+  beginTrial();
+}
 function hideLevelIntro() { closeLevelIntro(); }
 
 function beginTrial() {
+  reveal.clear();
   targetKey = null; selectedKey = null; trialResolved = false; pendingStatus = null; pendingAdvance = false;
   lastPosRaw = ''; lastPosElapsed = 0;
   clearTimeout(focusHideTimer); clearTimeout(advanceTimer);
   $('#next-btn').classList.add('hidden');
   if (mode === 'board') clearBoardMarks();
   updateSpinIcon(false);
-  phase.to(PHASES.AWAIT_START); // マイク許可はこの区間の start で要求される
+  navigation.listen(phase, PHASES.AWAIT_START); // 紹介の確定語からスタート語へ切り替える
 }
 
 // ---- ルーレット イベント ----
@@ -194,9 +214,9 @@ function onRouletteStop(v) {
     rouletteStops++;
     if (rouletteStops >= 3) {
       sfx.playClear(); // 小さなごほうび
-      setTimeout(() => { if (level && level.id === '0') startLevel('1'); }, 1000);
+      advanceTimer = setTimeout(() => { if (level && level.id === '0') startLevel('1'); }, 1000);
     } else {
-      setTimeout(() => { if (phase && level && level.id === '0') phase.to(PHASES.AWAIT_START); }, 700);
+      advanceTimer = setTimeout(() => { if (phase && level && level.id === '0') phase.to(PHASES.AWAIT_START); }, 700);
     }
   } else {
     targetKey = orderedKeys[v];
@@ -214,6 +234,8 @@ function onRouletteStop(v) {
 // ---- 認識マッチ ----
 function onMatch(key, raw, elapsedMs) {
   const ph = phase.phase;
+  if (ph === PHASES.AWAIT_INTRO && key === 'confirm') { beginFromIntro(); return; }
+  if (ph === PHASES.AWAIT_NEXT && key === 'next') { onCertNext(); return; }
   if (ph === PHASES.AWAIT_START && key === 'start') {
     roulette.start(); phase.to(PHASES.AWAIT_STOP);
     return;
@@ -275,6 +297,7 @@ function doConfirm() {
     const file = ANIMAL_FILES[Math.floor(Math.random() * ANIMAL_FILES.length)]; // ランダムな動物
     board.setContent(selectedKey, animalImg(file));
     board.setCorrect(selectedKey, true);
+    reveal.show(board.cards.get(selectedKey)?.el);
     sfx.playCorrect();
   } else { sfx.playBlip(220); }
 
@@ -291,6 +314,7 @@ function doConfirm() {
 }
 
 function afterResult() {
+  reveal.clear();
   if (pendingStatus === 'clear') showCertificate('clear', level.id);
   else if (pendingStatus === 'gameover') showCertificate('gameover', level.id);
   else beginTrial(); // スタート待ちへ。プレイヤーの「スタート」で次の試行が始まる
@@ -298,7 +322,7 @@ function afterResult() {
 
 // ---- タッチ操作（F-016） ----
 function onSpinTouch() {
-  if (!roulette) return;
+  if (!roulette || ![PHASES.AWAIT_START, PHASES.AWAIT_STOP].includes(phase?.phase)) return;
   if (!roulette.spinning) { roulette.start(); phase.to(PHASES.AWAIT_STOP); }
   else if (roulette.state === 'spinning') {
     if (mode === 'roulette') { phase.to(PHASES.RESULT); roulette.stop(); }
@@ -317,6 +341,8 @@ function onCardTap(key) {
 
 // ---- 認定書（S-06 / T-023）文字を使わずメダル＋星 ----
 function showCertificate(kind, levelId) {
+  phase.to(PHASES.RESULT);
+  navigation.afterSound();
   const idx = LEVELS.findIndex(l => l.id === levelId);
   const stars = levelId === 'extra' ? 6 : Math.max(1, idx); // レベル番号ぶんの星（延長は最大）
   if (kind === 'clear') sfx.playClear(); else sfx.playGameover();
@@ -324,8 +350,12 @@ function showCertificate(kind, levelId) {
   $('#cert').dataset.kind = kind;
   $('#cert').dataset.level = levelId;
   show('cert');
+  navigation.listen(phase, PHASES.AWAIT_NEXT);
 }
 function onCertNext() {
+  if (!$('#cert').classList.contains('active')) return;
+  navigation.cancel();
+  phase.to(PHASES.RESULT);
   const kind = $('#cert').dataset.kind, id = $('#cert').dataset.level;
   if (kind === 'gameover') { goTitle(); return; }
   // クリア: 次のレベルへ。5クリアで延長へ自動突入。延長クリアでタイトル（エンディング）
@@ -340,6 +370,8 @@ function onCertNext() {
 
 // ---- 終了/タイトル ----
 function goTitle() {
+  reveal.clear();
+  navigation.cancel();
   clearTimeout(focusHideTimer); clearTimeout(advanceTimer);
   hideLevelIntro();
   try { phase && phase.to(PHASES.RESULT); } catch {}
@@ -390,7 +422,7 @@ $('#spin-btn').addEventListener('click', onSpinTouch);
 $('#confirm-btn').addEventListener('click', doConfirm);
 $('#intro-back').addEventListener('click', goTitle);
 $('#level-intro').addEventListener('cancel', event => { event.preventDefault(); goTitle(); });
-$('#intro-go').addEventListener('click', () => { hideLevelIntro(); beginTrial(); });
+$('#intro-go').addEventListener('click', beginFromIntro);
 $('#to-title').addEventListener('click', goTitle);
 $('#to-panel').addEventListener('click', () => show('panel'));
 $('#panel-back').addEventListener('click', () => show('title'));

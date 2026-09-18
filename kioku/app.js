@@ -15,6 +15,7 @@ import { getLevel, LEVELS } from '../src/game/levels.js';
 import { deal } from '../src/game/deal.js';
 import { ANIMAL_FILES, animalImg } from '../src/game/animals.js';
 import { openLevelIntro, closeLevelIntro } from '../src/ui/levelintro.js';
+import { LevelNavigation } from '../src/ui/levelnavigation.js';
 import { BoardView } from '../src/ui/board.js';
 import { renderCertificate } from '../src/ui/certificate.js';
 import { buildLevelSelect } from '../src/ui/levelselect.js';
@@ -22,6 +23,7 @@ import { setMicState as setMicStateUI } from '../src/ui/micstate.js';
 import * as sfx from '../src/audio/sfx.js';
 
 const $ = s => document.querySelector(s);
+const navigation = new LevelNavigation();
 const METHOD_KEY = 'koekit.method';
 
 // 難易度パラメータ（requirements-kioku 8.5・【想定】B区分）。記憶秒はカウントダウン用に整数。
@@ -59,7 +61,10 @@ function resolveInitialMethod() {
   } catch {}
   return METHODS.VOSK;
 }
-function setMicState(state) { setMicStateUI($('#mic-state'), $('#stage'), state); }
+function setMicState(state) {
+  setMicStateUI($('#mic-state'), $('#stage'), state);
+  document.querySelectorAll('.navigation-mic').forEach(el => setMicStateUI(el, null, state));
+}
 
 // ---- 音声 ----
 function buildAdapter() {
@@ -81,6 +86,8 @@ function stopListening() { if (adapter) adapter.stop(); }
 
 // ---- レベル開始 ----
 function startLevel(id) {
+  navigation.cancel();
+  phase?.to(PHASES.RESULT);
   sfx.primeAudio();
   level = getLevel(id);
   if (!level || id === '0') { level = getLevel('1'); } // レベル0(練習ルーレット)は本アプリに無い
@@ -102,7 +109,16 @@ function startLevel(id) {
 }
 
 // ---- レベル紹介（保護者向け） ----
-function showLevelIntro(id) { openLevelIntro(getLevel(id), 'kioku'); }
+function showLevelIntro(id) {
+  openLevelIntro(getLevel(id), 'kioku');
+  navigation.listen(phase, PHASES.AWAIT_INTRO);
+}
+function beginFromIntro() {
+  if (!$('#level-intro').open) return;
+  navigation.cancel();
+  hideLevelIntro();
+  beginTrial();
+}
 function hideLevelIntro() { closeLevelIntro(); }
 
 function clearTimers() { clearTimeout(cdTimer); clearTimeout(seqTimer); }
@@ -117,7 +133,7 @@ function beginTrial() {
   dealt = deal(level.vocab, { letters: ANIMAL_FILES });
   for (const key of level.vocab) board.setContent(key, animalImg(dealt.map[key]));
 
-  phase.to(PHASES.AWAIT_START); // 「スタート」発話 or ▶ボタンで記憶提示が始まる
+  navigation.listen(phase, PHASES.AWAIT_START); // 「スタート」発話 or ▶ボタンで記憶提示が始まる
 }
 
 // スタート → 記憶提示（券面表示＋カウントダウン）を開始
@@ -175,12 +191,14 @@ function updateControls(ph) {
   // 位置語待ちから確定ボタンを出しておく（レイアウト固定）。選択前は非活性、選択後に活性。
   c.classList.toggle('hidden', !inAnswer);
   c.disabled = (ph !== PHASES.AWAIT_CONFIRM);
-  if (!micDenied) setMicState((ph === PHASES.AWAIT_START || inAnswer) ? 'listening' : 'idle');
+  if (!micDenied) setMicState(ph === PHASES.RESULT ? 'idle' : 'listening');
 }
 
 // ---- 認識マッチ ----
 function onMatch(key, raw, elapsedMs) {
   const ph = phase.phase;
+  if (ph === PHASES.AWAIT_INTRO && key === 'confirm') { beginFromIntro(); return; }
+  if (ph === PHASES.AWAIT_NEXT && key === 'next') { onCertNext(); return; }
   if (ph === PHASES.AWAIT_START && key === 'start') { startReveal(); return; } // スタート発話
   if ((ph === PHASES.AWAIT_POSITION || ph === PHASES.AWAIT_CONFIRM) && level.vocab.includes(key)) {
     selectPosition(key); // 言い直しも含む
@@ -240,6 +258,8 @@ function onCardTap(key) {
 
 // ---- 認定書 ----
 function showCertificate(kind, levelId) {
+  phase.to(PHASES.RESULT);
+  navigation.afterSound();
   clearTimers();
   const idx = LEVELS.findIndex(l => l.id === levelId);
   const stars = levelId === 'extra' ? 6 : Math.max(1, idx);
@@ -248,8 +268,12 @@ function showCertificate(kind, levelId) {
   $('#cert').dataset.kind = kind;
   $('#cert').dataset.level = levelId;
   show('cert');
+  navigation.listen(phase, PHASES.AWAIT_NEXT);
 }
 function onCertNext() {
+  if (!$('#cert').classList.contains('active')) return;
+  navigation.cancel();
+  phase.to(PHASES.RESULT);
   const kind = $('#cert').dataset.kind, id = $('#cert').dataset.level;
   if (kind === 'gameover') { goTitle(); return; }
   if (id === '5') startLevel('extra');
@@ -263,6 +287,7 @@ function onCertNext() {
 
 // ---- 終了/タイトル ----
 function goTitle() {
+  navigation.cancel();
   clearTimers();
   hideLevelIntro();
   try { phase && phase.to(PHASES.RESULT); } catch {}
@@ -281,7 +306,7 @@ $('#confirm-btn').addEventListener('click', doConfirm);
 $('#next-btn').addEventListener('click', startReveal); // ▶ ＝ スタート（記憶提示を始める）
 $('#intro-back').addEventListener('click', goTitle);
 $('#level-intro').addEventListener('cancel', event => { event.preventDefault(); goTitle(); });
-$('#intro-go').addEventListener('click', () => { hideLevelIntro(); beginTrial(); });
+$('#intro-go').addEventListener('click', beginFromIntro);
 $('#to-title').addEventListener('click', goTitle);
 $('#cert-next').addEventListener('click', onCertNext);
 window.addEventListener('pagehide', goTitle);

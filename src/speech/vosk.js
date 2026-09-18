@@ -41,6 +41,9 @@ export class VoskAdapter extends Emitter {
     this._src = null;
     this._stream = null;
     this._listening = false;
+    this._generation = 0;
+    this._disposed = false;
+    this._initPromise = null;
     this._inited = false;
     this._restartCount = 0;
     this._lastPartialAt = 0;
@@ -64,17 +67,26 @@ export class VoskAdapter extends Emitter {
   /** モデル・マイク・音声グラフを1度だけ用意する（重い処理）。 */
   async _init() {
     if (this._inited) return;
+    if (!this._initPromise) this._initPromise = this._initialize().finally(() => { this._initPromise = null; });
+    return this._initPromise;
+  }
+
+  async _initialize() {
     const Vosk = await loadVoskLib();
+    if (this._disposed) return;
     // モデル読込（Cache Storage に載れば2回目以降は高速）
     this._model = await Vosk.createModel(this._modelUrl);
+    if (this._disposed) return;
 
     this._stream = await navigator.mediaDevices.getUserMedia({
       audio: { echoCancellation: true, noiseSuppression: true, channelCount: 1 },
       video: false,
     });
+    if (this._disposed) { this._stream.getTracks().forEach(t => t.stop()); return; }
     this._ac = new AudioContext({ sampleRate: 16000 });
     if (this._ac.state === 'suspended') await this._ac.resume();
     await this._ac.audioWorklet.addModule(WORKLET_URL);
+    if (this._disposed) return;
     this._src = this._ac.createMediaStreamSource(this._stream);
     this._node = new AudioWorkletNode(this._ac, 'vosk-capture');
     this._node.port.onmessage = (ev) => this._onAudio(ev.data);
@@ -107,15 +119,19 @@ export class VoskAdapter extends Emitter {
    * @param {string[]} words この区間で受け付ける表記の配列
    */
   async start(words) {
+    if (this._disposed) return;
+    const generation = ++this._generation;
     this._listening = true;
     try {
       await this._init();
     } catch (e) {
+      if (generation !== this._generation || this._disposed) return;
       this._listening = false;
       // モデル取得やマイクの失敗。フォールバックは呼び出し側（コントローラ）が判断する
       this.emit('error', 'init-failed:' + (e && e.message ? e.message : 'unknown'));
       return;
     }
+    if (!this._listening || this._disposed || generation !== this._generation) return;
     // 語彙を絞った文法つき Recognizer を作り直す
     try {
       const grammar = (words && words.length) ? JSON.stringify(words) : undefined;
@@ -133,6 +149,7 @@ export class VoskAdapter extends Emitter {
       if (p && p !== this._lastPartial) { this._lastPartial = p; this._lastPartialAt = performance.now(); }
     });
     this._rec.on('result', (m) => {
+      if (!this._listening || generation !== this._generation) return;
       const text = m?.result?.text || '';
       if (!text) return;
       // 所要ms: 発話終了の代理として最後に partial が動いた時刻からの経過を使う
@@ -144,6 +161,7 @@ export class VoskAdapter extends Emitter {
 
   /** 認識を停止する（音声グラフ・モデルは保持し、次の start を速くする）。 */
   stop() {
+    this._generation++;
     this._listening = false;
     if (this._rec) {
       try { this._rec.remove?.(); } catch { /* 無視 */ }
@@ -154,6 +172,7 @@ export class VoskAdapter extends Emitter {
 
   /** 完全に破棄する（画面を離れるとき）。 */
   dispose() {
+    this._disposed = true;
     this.stop();
     try { this._node?.disconnect(); this._src?.disconnect(); } catch { /* 無視 */ }
     try { this._stream?.getTracks().forEach(t => t.stop()); } catch { /* 無視 */ }

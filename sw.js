@@ -12,14 +12,14 @@
 // BUILD は scripts/stamp-cache.cjs が各デプロイ前に一意な値へ置換する。
 
 const VERSION = '0.1.0';            // version.json と一致（scripts/check-version 対象）
-const BUILD = 'v0.1.0-20260918132817-a2d3d22';         // ← scripts/stamp-cache.cjs がデプロイ毎に置換
+const BUILD = 'v0.1.0-20260918134552-1793d85';         // ← scripts/stamp-cache.cjs がデプロイ毎に置換
 const APP_CACHE = 'koekit-app-' + BUILD;
 const STATIC_CACHE = 'koekit-static-v1'; // 大きい静的資産（vosk.js等）。中身を変えたときだけ版を上げる
 
 // オフライン初回用に事前キャッシュする最小シェル（すべて小さいアプリ本体）
 const SHELL = [
   './', './index.html', './styles.css', './manifest.json',
-  './src/ui/levelintro.js',
+  './src/ui/levelintro.js', './src/ui/levelnavigation.js', './src/ui/cardreveal.js',
   './assets/brand/koekit-symbol.webp',
   './assets/brand/pitarhythm.svg',
   './assets/brand/memorhythm.svg',

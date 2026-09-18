@@ -202,6 +202,75 @@ function ok(cond, name) { eq(!!cond, true, name); }
     eq(b.fakeouts, 0, 'フェイント無効なら再加速しない');
   }
 
+  // レベル境界でも、指定された語だけを受ける。
+  {
+    const { PHASES: P, PhaseMachine } = phase;
+    let active = [], stopped = 0;
+    const machine = new PhaseMachine({ startListening: k => active = k, stopListening: () => { active = []; stopped++; } });
+    machine.setLevelVocab(['left', 'right']);
+    machine.to(P.AWAIT_INTRO);
+    eq(machine.handleRaw('オーケー'), 'confirm', '紹介を声で閉じる');
+    eq(machine.handleRaw('オッケー'), 'confirm', '紹介でオッケーも受ける');
+    eq(machine.handleRaw('つぎ'), '', '紹介ではつぎを無視');
+    machine.to(P.AWAIT_NEXT);
+    eq(active, ['next'], '認定書は次だけを認識');
+    eq(machine.handleRaw('次'), 'next', '漢字の次を照合');
+    eq(machine.handleRaw('つぎ'), 'next', 'ひらがなのつぎを照合');
+    eq(machine.handleRaw('オーケー'), '', '結果確定の発話で次へ飛ばない');
+    machine.to(P.RESULT);
+    eq(active, [], '演出中は受付停止');
+    eq(machine.handleRaw('つぎ'), '', '効果音中のつぎを無視');
+    machine.to(P.AWAIT_CONFIRM);
+    eq(machine.handleRaw('つぎ'), '', '回答をつぎで飛ばせない');
+    eq(machine.handleRaw('オーケー'), 'confirm', '回答の2段階確定を維持');
+  }
+
+  // Voskの初期化待ち中に区間が変わっても、古い文法で認識を始めない。
+  {
+    const { VoskAdapter } = await import(url('src/speech/vosk.js'));
+    const a = new VoskAdapter();
+    let finish, created = [], handlers = [];
+    a._init = () => new Promise(resolve => { finish = resolve; });
+    a._model = { KaldiRecognizer: class {
+      constructor(rate, grammar) { created.push(JSON.parse(grammar)); }
+      on(type, fn) { if (type === 'result') handlers.push(fn); }
+      remove() {}
+    }};
+    const first = a.start(['オーケー']);
+    a.stop(); finish(); await first;
+    eq(created.length, 0, '停止後に初期化が完了しても認識器を作らない');
+    a._init = async () => {};
+    await a.start(['つぎ']);
+    let results = 0; a.on('result', () => results++);
+    a.stop(); await a.start(['オーケー']);
+    handlers[0]({ result: { text: '次' } });
+    eq(results, 0, '前区間の遅延結果を破棄');
+    handlers[1]({ result: { text: 'オーケー' } });
+    eq(results, 1, '現区間の結果は通知');
+    a.dispose(); await a.start(['つぎ']);
+    eq(created.length, 2, '破棄後は再開しない');
+  }
+
+  // 効果音終了待ちの予約は、移動先で置き換え・取り消しできる。
+  {
+    const { LevelNavigation } = await import(url('src/ui/levelnavigation.js'));
+    const savedSet = global.setTimeout, savedClear = global.clearTimeout;
+    const queue = new Map(); let id = 0, states = [];
+    try {
+      global.setTimeout = fn => { queue.set(++id, fn); return id; };
+      global.clearTimeout = key => queue.delete(key);
+      const nav = new LevelNavigation(), p = { to: state => states.push(state) };
+      nav.afterSound(); nav.listen(p, phase.PHASES.AWAIT_NEXT);
+      eq(states, ['result'], '効果音中に認識を再開しない');
+      nav.listen(p, phase.PHASES.AWAIT_INTRO);
+      eq(queue.size, 1, 'タッチで移動したら旧画面の予約を置換');
+      [...queue.values()][0]();
+      eq(states.at(-1), 'await_intro', '音の終了後は移動先の語彙で再開');
+      nav.cancel();
+      eq(queue.size, 0, 'タイトルへ戻ると予約を解除');
+    } finally { global.setTimeout = savedSet; global.clearTimeout = savedClear; }
+  }
+
   // ---- 結果 ----
   console.log(`\nテスト: ${passed} 通過 / ${failed} 失敗`);
   if (failed) { console.log(fails.join('\n')); process.exit(1); }

@@ -16,6 +16,8 @@
 
 ## 2. 認識ログ（メモリ）
 
+UI遷移用に `await_intro`（確定語）と `await_next`（つぎ）を使用する。両者はゲームの試行・認識計測ログに含めず、既存のログ列は変えない。
+
 ```js
 /** @typedef {Object} LogEntry */
 {
