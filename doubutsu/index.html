@@ -141,6 +141,18 @@
     <textarea id="copy-area" readonly></textarea>
   </section>
 
+  <!-- レベル紹介（保護者向け・各レベルの最初に表示） -->
+  <div id="level-intro" class="hidden">
+    <div class="intro-card">
+      <div class="intro-badge" id="intro-badge"></div>
+      <div class="intro-text" id="intro-text"></div>
+      <button class="btn-round" id="intro-go" aria-label="はじめる">
+        <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+      </button>
+      <div class="intro-hint">保護者のかたへ：このレベルであそぶことばです</div>
+    </div>
+  </div>
+
   <script type="module" src="./app.js"></script>
 </body>
 </html>

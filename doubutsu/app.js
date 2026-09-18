@@ -30,6 +30,17 @@ const FAKEOUT_LEVELS = new Set(['3', '4', '5', 'extra']); // フェイント停�
 // Infinity は消えない。完全停止した瞬間から計測。パッと消す（フェードなし）。救済・下限なし（A区分）。
 const FOCUS_HOLD_MS = { '0': Infinity, '1': Infinity, '2': 1500, '3': 1000, '4': 700, '5': 400, 'extra': 250 };
 
+// 各レベルの最初に出す保護者向けの概要（子に教える用。すべての語は載せない）。
+const LEVEL_INTRO = {
+  '0':     { badge: 'れんしゅう', text: '「スタート」でルーレットをまわして、「ストップ」でとめてみよう！ ねらったすうじでとめられるかな？' },
+  '1':     { badge: 'レベル1', text: '「みぎ」「ひだり」をおぼえよう。とまったカードのいちを声でいって、「けってい」でめくれるよ。' },
+  '2':     { badge: 'レベル2', text: '「うえ」「した」をおぼえよう。とまったカードのいちをいってね。' },
+  '3':     { badge: 'レベル3', text: '「まんなか」がふえるよ。うえ・した・みぎ・ひだり・まんなか の5つ。' },
+  '4':     { badge: 'レベル4', text: 'ななめをおぼえよう。「ひだりうえ」「みぎうえ」「ひだりした」「みぎした」。' },
+  '5':     { badge: 'レベル5', text: '9まい ぜんぶ！ これまでのことばをつかってね。' },
+  'extra': { badge: 'スピード', text: 'スピードアップ！ はやくなるよ。' },
+};
+
 // ---- 状態 ----
 let method = resolveInitialMethod();
 let adapter = null;
@@ -158,8 +169,17 @@ function startLevel(id) {
   else renderBoard();
 
   show('game');
-  beginTrial();
+  showLevelIntro(level.id); // 各レベルの最初に保護者向けの概要を出す→とじたら開始
 }
+
+// ---- レベル紹介（保護者向け） ----
+function showLevelIntro(id) {
+  const info = LEVEL_INTRO[id] || { badge: '', text: '' };
+  $('#intro-badge').textContent = info.badge;
+  $('#intro-text').textContent = info.text;
+  $('#level-intro').classList.remove('hidden');
+}
+function hideLevelIntro() { $('#level-intro').classList.add('hidden'); }
 
 function beginTrial() {
   targetKey = null; selectedKey = null; trialResolved = false; pendingStatus = null; pendingAdvance = false;
@@ -327,6 +347,7 @@ function onCertNext() {
 // ---- 終了/タイトル ----
 function goTitle() {
   clearTimeout(focusHideTimer); clearTimeout(advanceTimer);
+  hideLevelIntro();
   try { phase && phase.to(PHASES.RESULT); } catch {}
   try { adapter && (adapter.dispose ? adapter.dispose() : adapter.stop()); } catch {}
   adapter = null; roulette = null; phase = null; judge = null; level = null;
@@ -373,6 +394,7 @@ buildLevelSelectUI($('#level-select'), LEVELS, startLevel);
 $('#start-play').addEventListener('click', () => startLevel('0')); // はじめる＝練習（レベル0）
 $('#spin-btn').addEventListener('click', onSpinTouch);
 $('#confirm-btn').addEventListener('click', doConfirm);
+$('#intro-go').addEventListener('click', () => { hideLevelIntro(); beginTrial(); });
 $('#to-title').addEventListener('click', goTitle);
 $('#to-panel').addEventListener('click', () => show('panel'));
 $('#panel-back').addEventListener('click', () => show('title'));
