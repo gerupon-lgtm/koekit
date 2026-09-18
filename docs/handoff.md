@@ -8,6 +8,8 @@ Claude Code が着手した部分の到達点と、続きに必要な情報を�
 
 ### CodexでのUI更新（2026-09-18）
 
+- 公開確認：UI変更 `c784cfd` は GitHub Pages [run 35348322274](https://github.com/gerupon-lgtm/koekit/actions/runs/35348322274) で成功。公開URLのHTML・コントローラ・CSS・開始案内・manifest・SWの9ファイルがローカルと一致することを確認済み。端末上の実発話確認は別途。
+
 - 名称：器の「コエキット」は発案者指示で確定。小品2本の正式名称は相談中（シクミラボらしい名前を検討）。
 
 - 一覧・両アプリのタイトル・盤面・操作ボタン・開始案内を共通配色で更新。開始案内を `src/ui/levelintro.js` へ共通化し、各コントローラの `LEVEL_INTRO` は置換済み。
