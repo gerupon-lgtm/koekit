@@ -3,88 +3,38 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#ffb300">
-  <meta name="description" content="音声認識検証のPWA試作群">
+  <meta name="theme-color" content="#f2f6fb">
+  <meta name="description" content="こえとタッチであそぶ、親子の小さなゲーム。">
   <title>コエキット</title>
   <link rel="manifest" href="./manifest.json">
   <link rel="apple-touch-icon" href="./assets/icons/icon-180.png">
   <link rel="icon" href="./assets/icons/icon-192.png">
   <link rel="stylesheet" href="./styles.css">
   <script type="module" src="./sw-register.js"></script>
-  <style>
-    /* S-01 コエキット メインページ（試作アプリの一覧） */
-    .page {
-      max-width: 640px;
-      margin: 0 auto;
-      padding: 24px 16px;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-    }
-    .site-title {
-      font-size: 1.75rem;
-      font-weight: 700;
-      margin: 8px 0 24px;
-    }
-    .app-list {
-      list-style: none;
-      margin: 0;
-      padding: 0;
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-      flex: 1;
-    }
-    .app-card {
-      display: block;
-      padding: 20px;
-      min-height: var(--tap-min);
-      border: 2px solid var(--color-accent);
-      border-radius: 16px;
-      background: #fff;
-      color: var(--color-fg);
-      text-decoration: none;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
-    }
-    .app-card:active {
-      background: #fff8e6;
-    }
-    .app-name {
-      font-size: 1.25rem;
-      font-weight: 700;
-    }
-    .app-desc {
-      font-size: 0.95rem;
-      color: #666;
-      margin-top: 4px;
-    }
-    .site-footer {
-      margin-top: 24px;
-      font-size: 0.8rem;
-      color: #999;
-      text-align: center;
-    }
-  </style>
+
 </head>
 <body>
   <main class="page">
-    <h1 class="site-title">コエキット</h1>
+    <header class="site-header"><span class="voice-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span><h1 class="site-title">コエキット</h1><p class="site-lead">こえが、あそびになる。</p><p class="site-note">いっしょに話して、みつけて、めくろう。</p></header>
 
     <ul class="app-list">
       <li>
-        <a class="app-card" href="./doubutsu/">
+        <a class="app-card" href="./doubutsu/"><div class="app-art" aria-hidden="true"><img src="./assets/animals/Lion.png" alt=""><span class="mini-tile"></span></div><div class="app-info">
           <div class="app-name">どうぶつめくり</div>
-          <div class="app-desc">こえで めくる（音声ルーレット）</div>
+          <div class="app-desc">とめて、こたえて。だれがいるかな？</div>
+          </div><span class="app-open" aria-hidden="true">▶</span>
         </a>
       </li>
       <li>
-        <a class="app-card" href="./kioku/">
+        <a class="app-card memory" href="./kioku/"><div class="app-art" aria-hidden="true"><img src="./assets/animals/panda.png" alt=""><span class="mini-tile"></span></div><div class="app-info">
           <div class="app-name">きおくめくり</div>
-          <div class="app-desc">おぼえて さがす（いちを こえで）</div>
+          <div class="app-desc">よくみて、おぼえて。どこにいたかな？</div>
+          </div><span class="app-open" aria-hidden="true">▶</span>
         </a>
       </li>
     </ul>
 
+    <p class="family-note">こえでも、タッチでも。<br>おうちのかたと、いっしょにどうぞ。</p>
     <footer class="site-footer">© 2026 SIKUMI LAB</footer>
   </main>
 </body>

@@ -14,6 +14,7 @@ import { Judge } from '../src/game/judge.js';
 import { getLevel, LEVELS } from '../src/game/levels.js';
 import { deal } from '../src/game/deal.js';
 import { ANIMAL_FILES, animalImg } from '../src/game/animals.js';
+import { openLevelIntro, closeLevelIntro } from '../src/ui/levelintro.js';
 import { BoardView } from '../src/ui/board.js';
 import { renderCertificate } from '../src/ui/certificate.js';
 import { buildLevelSelect } from '../src/ui/levelselect.js';
@@ -28,15 +29,6 @@ const MEMORY_SEC = { '1': 3, '2': 3, '3': 4, '4': 3, '5': 4, 'extra': 2 };
 const TARGET_MS  = { '1': 1200, '2': 1200, '3': 1000, '4': 1000, '5': 800, 'extra': 500 };
 const CLEAR_HITS = { '1': 1, '2': 1, '3': 2, '4': 2, '5': 3, 'extra': 3 };
 
-// 各レベルの最初に出す保護者向けの概要（子に教える用。すべての語は載せない）。
-const LEVEL_INTRO = {
-  '1':     { badge: 'レベル1', text: '「スタート」でえがでるよ。よくみておぼえて、さがすえが どこにあったかを「みぎ」「ひだり」でこたえよう。' },
-  '2':     { badge: 'レベル2', text: '「うえ」「した」でこたえよう。えのばしょをおぼえてね。' },
-  '3':     { badge: 'レベル3', text: '「まんなか」もふえるよ。5つのばしょ。' },
-  '4':     { badge: 'レベル4', text: 'ななめ4つ（「ひだりうえ」「みぎうえ」「ひだりした」「みぎした」）。' },
-  '5':     { badge: 'レベル5', text: '9まい！ みじかいじかんでおぼえよう。' },
-  'extra': { badge: 'スピード', text: 'きおくのじかんがみじかい！ スピードマスターをめざそう。' },
-};
 
 // ---- 状態 ----
 let method = resolveInitialMethod();
@@ -110,13 +102,8 @@ function startLevel(id) {
 }
 
 // ---- レベル紹介（保護者向け） ----
-function showLevelIntro(id) {
-  const info = LEVEL_INTRO[id] || { badge: '', text: '' };
-  $('#intro-badge').textContent = info.badge;
-  $('#intro-text').textContent = info.text;
-  $('#level-intro').classList.remove('hidden');
-}
-function hideLevelIntro() { $('#level-intro').classList.add('hidden'); }
+function showLevelIntro(id) { openLevelIntro(getLevel(id), 'kioku'); }
+function hideLevelIntro() { closeLevelIntro(); }
 
 function clearTimers() { clearTimeout(cdTimer); clearTimeout(seqTimer); }
 
@@ -292,6 +279,8 @@ buildLevelSelect($('#level-select'), LEVELS.filter(l => l.id !== '0'), startLeve
 $('#start-play').addEventListener('click', () => startLevel('1')); // はじめる＝レベル1
 $('#confirm-btn').addEventListener('click', doConfirm);
 $('#next-btn').addEventListener('click', startReveal); // ▶ ＝ スタート（記憶提示を始める）
+$('#intro-back').addEventListener('click', goTitle);
+$('#level-intro').addEventListener('cancel', event => { event.preventDefault(); goTitle(); });
 $('#intro-go').addEventListener('click', () => { hideLevelIntro(); beginTrial(); });
 $('#to-title').addEventListener('click', goTitle);
 $('#cert-next').addEventListener('click', onCertNext);
