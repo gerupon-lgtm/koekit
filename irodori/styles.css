@@ -184,7 +184,11 @@ button:focus-visible, a:focus-visible { outline: 3px solid #8a5a3c; outline-offs
 .ir-help-readings { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px 10px; font-size: 14px; }
 .ir-help-readings b { display: inline-block; color: #8a5a3c; width: 20px; }
 .ir-help-readings span:nth-child(1), .ir-help-readings span:nth-child(4), .ir-help-readings span:nth-child(8) { background: #f4e5d6; border-radius: 6px; font-weight: 700; }
-#tutorial-status { margin-left: 10px; font-size: 12px; font-weight: 700; color: #8a5a3c; }
+#tutorial-status { flex: 1; min-width: 0; margin: 0 6px; text-align: center; font-size: 12px; line-height: 1.6; color: #8a5a3c; }
+#tutorial-status span, #tutorial-status strong { display: block; }
+#tutorial-status strong { color: var(--ink); }
+.ir-practice-msg { font-size: 12px; min-height: 25.6px; display: flex; align-items: center; justify-content: center; text-align: center; }
+[data-screen="make"] .ir-icon, [data-screen="make"] .ir-micwrap { flex-shrink: 0; }
 .ir-tutorial-dialog #tutorial-progress { flex: 1; font-size: 13px; font-weight: 700; color: #8a5a3c; }
 .ir-tutorial-dialog #tutorial-heading { font-size: 18px; line-height: 1.6; margin: 12px 0; }
 .ir-tutorial-dialog ol { margin: 10px 0; font-size: 16px; line-height: 1.9; }

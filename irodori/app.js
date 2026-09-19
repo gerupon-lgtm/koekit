@@ -10,7 +10,7 @@ import { setMicState } from '../src/ui/micstate.js';
 import { createHelp } from './help.js';
 import { Tutorial, createTutorialGuide } from './tutorial.js';
 
-const APP_VERSION = 'v0.4.1';
+const APP_VERSION = 'v0.4.2';
 const PREF_READ = 'irodori:readAloud';
 const $ = id => document.getElementById(id);
 const q = sel => document.querySelector(sel);
@@ -113,13 +113,25 @@ function openMake(artwork, existingId) {
   show('make');
 }
 
-function setMsg(t) { $('make-msg').textContent = t; }
+function setMsg(t) {
+  $('make-msg').textContent = tutorial && (!t || t === 'こえで いえるよ')
+    ? 'まちがえたら「もどす」で ひとつまえへ' : t;
+}
 
 function draw() {
   renderBoard($('board'), current, { cursor, previewCells, previewColor: pendingColor });
   $('btn-confirm').disabled = !(previewCells.length && pendingColor != null);
   $('tutorial-status').hidden = !tutorial;
-  $('tutorial-status').textContent = tutorial ? `れんしゅう ${tutorial.step + 1} / 4` : '';
+  $('tutorial-status').replaceChildren();
+  $('make-msg').classList.toggle('ir-practice-msg', !!tutorial);
+  if (tutorial) {
+    const goals = [['A1', 'きいろに ぬろう'], ['B2〜D4', 'あおの はんい'], ['A5→E1', 'オレンジの せん'], ['H5', tutorial.undoReady ? 'もどすで とりけす' : 'くろにして もどす']];
+    const [place, goal] = goals[tutorial.step];
+    const position = document.createElement('span');
+    position.textContent = `${tutorial.step + 1}/4　${place}`;
+    const label = document.createElement('strong'); label.textContent = goal;
+    $('tutorial-status').append(position, label);
+  }
   $('btn-save').hidden = !!tutorial;
   if (tutorial) {
     document.querySelectorAll('#board .ir-cell').forEach(cell => {
