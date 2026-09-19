@@ -19,6 +19,7 @@ const assert = require('node:assert/strict');
     await page.locator('[data-level="1"]').click();
     await page.locator('#intro-go').click();
     assert.equal(await page.locator(game === 'doubutsu' ? '#spin-btn' : '#next-btn').isVisible(), true);
+    if (method === 'webspeech-local') assert.equal(await page.locator('#mic-state').evaluate(el => el.classList.contains('denied')), true, 'unsupported local recognition must not appear listening');
     await page.locator('#to-title').click();
     if (game === 'doubutsu') {
       await page.locator('#to-panel').click();
@@ -29,5 +30,19 @@ const assert = require('node:assert/strict');
     assert.deepEqual(errors, []); assert.deepEqual(writes, []);
     await context.close();
   }
-  await browser.close(); console.log('public speech URL/storage/local fallback + touch: passed');
+  const failureContext = await browser.newContext({ serviceWorkers: 'block' });
+  await failureContext.route('**/src/speech/index.js', route => route.fulfill({ contentType: 'application/javascript', body: `
+    export const METHODS={VOSK:'vosk'};
+    export function createSpeechInput(){const h={};return {name:'vosk',on(k,f){h[k]=f},start(){h.error('init-failed:model unavailable')},stop(){},dispose(){}};}
+  ` }));
+  const failurePage = await failureContext.newPage();
+  for (const path of ['doubutsu/', 'kioku/', 'kioku/?mode=sequence']) {
+    await failurePage.goto('http://127.0.0.1:8000/' + path);
+    await failurePage.locator('[data-level="1"]').click(); await failurePage.locator('#intro-go').click();
+    assert.equal(await failurePage.locator('#mic-state').evaluate(el => el.classList.contains('denied')), true);
+    assert.match(await failurePage.locator('#mic-state').getAttribute('aria-label'), /タッチ/);
+    assert.equal(await failurePage.locator(path.startsWith('doubutsu') ? '#spin-btn' : '#next-btn').isVisible(), true);
+  }
+  await failureContext.close();
+  await browser.close(); console.log('public speech URL/storage/local/model-failure + touch: passed');
 })().catch(e => { console.error(e); process.exit(1); });

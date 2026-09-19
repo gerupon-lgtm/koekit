@@ -100,13 +100,13 @@ function buildAdapter() {
   return a;
 }
 function onSpeechError(code) {
-  if (/not-allowed|denied|service-not-allowed|not-supported/i.test(code)) { micDenied = true; setMicState('denied'); }
+  if (/not-allowed|denied|service-not-allowed|not-supported|init-failed|recognizer-failed|language-not-supported/i.test(code)) { micDenied = true; setMicState('denied'); }
   // モデル取得失敗等（方式C）はタッチ継続。方式切替は計測パネルから
 }
 function startListening(keys) {
   if (!adapter || micDenied) return;
-  adapter.start(wordsForKeys(keys));
   setMicState('listening');
+  adapter.start(wordsForKeys(keys));
 }
 function stopListening() { if (adapter) adapter.stop(); }
 

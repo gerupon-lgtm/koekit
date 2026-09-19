@@ -37,7 +37,7 @@ function mic(state) {
 }
 function startListening(keys) {
   if (!adapter || micDenied) return;
-  adapter.start(wordsForKeys(keys)); mic('listening');
+  mic('listening'); adapter.start(wordsForKeys(keys));
 }
 function stopListening() { adapter?.stop(); if (!micDenied) mic('idle'); }
 function refresh() {
@@ -52,7 +52,7 @@ function startLevel(id) {
   if (!adapter) {
     adapter = createSpeechInput(METHODS.VOSK);
     adapter.on('result', (raw, ms) => phase?.handleRaw(raw, ms));
-    adapter.on('error', code => { if (/denied|not-allowed|not-supported/i.test(code)) { micDenied = true; mic('denied'); } });
+    adapter.on('error', code => { if (/denied|not-allowed|not-supported|init-failed|recognizer-failed|language-not-supported/i.test(code)) { micDenied = true; mic('denied'); } });
   }
   phase = new SequencePhase({ startListening, stopListening });
   phase.setLevelVocab(level.vocab); phase.on('match', onMatch); phase.on('enter', controls);
