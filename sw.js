@@ -12,13 +12,13 @@
 // BUILD は scripts/stamp-cache.cjs が各デプロイ前に一意な値へ置換する。
 
 const VERSION = '0.1.0';            // version.json と一致（scripts/check-version 対象）
-const BUILD = 'v0.1.0-20260919225817-3a73a5a';         // ← scripts/stamp-cache.cjs がデプロイ毎に置換
+const BUILD = 'v0.1.0-20260919230628-14a1040';         // ← scripts/stamp-cache.cjs がデプロイ毎に置換
 const APP_CACHE = 'koekit-app-' + BUILD;
 const STATIC_CACHE = 'koekit-static-v2'; // 大きい静的資産（vosk.js等）。中身を変えたときだけ版を上げる
 
 // オフライン初回用に事前キャッシュする最小シェル（すべて小さいアプリ本体）
 const SHELL = [
-  './', './index.html', './styles.css', './manifest.json',
+  './', './index.html', './styles.css', './manifest.json', './sw-register.js',
   './src/game/progress.js', './src/ui/achievement.js', './src/ui/levelselect.js', './src/ui/certificate.js',
   './src/game/levels.js', './src/game/positions.js', './src/game/phase.js', './src/game/judge.js',
   './src/game/deal.js', './src/game/animals.js', './src/game/roulette.js', './src/ui/board.js',
@@ -37,7 +37,7 @@ const SHELL = [
   './irodori/tutorial.js', './irodori/templates.js', './irodori/recipes.js',
   './irodori/vocabulary.js', './irodori/phase.js', './assets/brand/irodorhythm.svg',
   './src/speech/public-method.js', './src/speech/index.js', './src/speech/config.js', './src/speech/vosk.js',
-  './src/speech/webspeech.js', './src/speech/vocabulary.js', './src/util/emitter.js',
+  './src/speech/vosk-worklet.js', './src/speech/webspeech.js', './src/speech/vocabulary.js', './src/util/emitter.js',
   './src/ui/micstate.js', './assets/fonts/MPLUSRounded1c-Regular.subset.woff2',
   './assets/fonts/MPLUSRounded1c-Bold.subset.woff2',
 ];
@@ -49,20 +49,28 @@ function isStatic(url) {
   return url.pathname.includes('/lib/vosk/') || url.pathname.includes('/assets/animals/');
 }
 
-self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(APP_CACHE)
-      // HTTPキャッシュの古い版を避けるため reload で取得して新しい APP_CACHE に入れる
-      .then(cache => Promise.allSettled(SHELL.map(u => cache.add(new Request(u, { cache: 'reload' })))))
-      .then(() => self.skipWaiting())
-  );
+// 初めて選ばれる動物もオフライン表示する。ANIMAL_FILESとの同値はtest-sw.cjsで検証。
+const STATIC_SHELL = [
+  './lib/vosk/vosk.js',
+  ...['Lion.png', 'dog.png', 'elephant.png', 'giraffe.png', 'monaka.png',
+    'monkey.png', 'panda.png', 'pingu.png', 'rabbit.png', 'tabi1.png', 'tabi2.png']
+    .map(file => './assets/animals/' + file),
+];
+self.addEventListener('install', event => {
+  event.waitUntil(Promise.allSettled([
+    caches.open(APP_CACHE).then(cache => Promise.allSettled(
+      SHELL.map(u => cache.add(new Request(u, { cache: 'reload' }))))),
+    caches.open(STATIC_CACHE).then(cache => Promise.allSettled(STATIC_SHELL.map(async u => {
+      if (!await cache.match(u)) await cache.add(new Request(u, { cache: 'reload' }));
+    }))),
+  ]).then(() => self.skipWaiting()));
 });
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys()
       .then(keys => Promise.all(
-        keys.filter(k => k !== APP_CACHE && k !== STATIC_CACHE).map(k => caches.delete(k))
+        keys.filter(k => (k.startsWith('koekit-app-') || k.startsWith('koekit-static-')) && k !== APP_CACHE && k !== STATIC_CACHE).map(k => caches.delete(k))
       ))
       .then(() => self.clients.claim())
   );

@@ -7,12 +7,11 @@ const assert = require('node:assert/strict');
   await page.goto('http://127.0.0.1:8000/kioku/');
   await page.evaluate(()=>navigator.serviceWorker.ready);
   await page.waitForFunction(()=>!!navigator.serviceWorker.controller);
-  // 一度取得済みの画像を使うオフライン再訪を検証。音声モデルは対象外。
-  await page.evaluate(async()=>{
+  // 手動の画像取得なし。SWの事前保存だけで全動物が使えることを確認。
+  assert.equal(await page.evaluate(async()=>{
     const {ANIMAL_FILES,animalUrl}=await import('/src/game/animals.js');
-    await Promise.all(ANIMAL_FILES.map(file=>fetch(animalUrl(file))));
-  });
-  await page.waitForFunction(async()=>!!await caches.match('/assets/animals/tabi2.png'));
+    return (await Promise.all(ANIMAL_FILES.map(file=>caches.match(animalUrl(file))))).every(Boolean);
+  }),true);
   await context.setOffline(true);
   await page.locator('#mode-sequence').click();
   await page.locator('[data-level="1"]').click(); await page.locator('#intro-go').click();

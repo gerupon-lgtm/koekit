@@ -389,3 +389,10 @@
 - [x] 方式Aを計測パネルから除外。A／未知のURLと旧保存設定をVoskへ正規化。共通factoryもAを拒否。
 - [x] 方式BのprocessLocally非対応時は認識を開始しない。外部処理へフォールバックせずタッチを維持。
 - [x] `node scripts/test-speech-policy.mjs` と `node scripts/test-public-speech-browser.cjs`：方式Aのfactory拒否、Bの対応／非対応、両作品のURL・旧保存値・タッチ、テスト中のPOST等なし。モデル取得はテストで中止、実発話は対象外。
+
+## 2026-09-20 T-028 オフライン基盤の補完
+
+- [x] 全動物11枚とVoskライブラリをSTATIC_CACHEへ事前保存。既存静的キャッシュは再取得しない。AudioWorkletとSW登録スクリプトをシェルへ追加。
+- [x] SW更新でVoskモデルや他アプリのキャッシュを削除しない。アプリ自身の旧キャッシュのみ削除。
+- [x] `node scripts/test-sw.cjs`、手動画像取得なしの `node scripts/test-offline-browser.cjs` が通過。
+- [ ] モデル取得済みの実機で、機内モードの音声プレイ・PWA起動を確認（T-028全体は未完了）。

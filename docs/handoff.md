@@ -1,5 +1,14 @@
 # 引き継ぎ（Claude Code → Codex）
 
+## 2026-09-20 オフライン用資産とキャッシュ保持
+
+SWは全動物11枚とVoskライブラリをSTATIC_CACHEへ事前保存（既存資産は再取得しない）。AudioWorkletとSW登録スクリプトもシェルに追加。activateで削除するのはkoekit-app-/koekit-static-の旧版のみとし、Voskモデルや他アプリのCache Storageは保持。
+
+`test-sw.cjs` でキャッシュ所有範囲・動物マニフェストとの一致を検証。`test-offline-browser.cjs` は手動の画像取得を取り除き、SWの事前保存だけで全画像と順番のタッチ回答を確認。実機の機内モードとモデル取得済み音声認識は未検証。
+
+設定画面は必要になった時に実装する方針を維持。将来は点灯時間を通常×0.75でスピードへ連動。未接続の設定試作は `.local-tools/sequence-settings-draft/` に保管（Git／公開対象外）。
+
+
 ## 2026-09-20 T-029 公開ゲームの音声方式制限
 
 方式Aを計測パネルから除外。両作品のURL／旧保存設定のA・未知値はVoskへ正規化し、共有factoryでもAを拒否。方式BはprocessLocallyが存在してtrueを設定できる場合だけ開始し、非対応ならタッチで継続。共通音声層の差し替えインターフェースとVosk実装は維持。検証専用WebSpeechAdapterとprobeは残すが公開ゲームからAへ切り替える入口はない。
