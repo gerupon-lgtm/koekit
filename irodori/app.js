@@ -8,7 +8,7 @@ import { makeGrammar, parse, colIndex } from './vocabulary.js';
 import { VoiceInput } from './phase.js';
 import { setMicState } from '../src/ui/micstate.js';
 
-const APP_VERSION = 'v0.2.3';
+const APP_VERSION = 'v0.2.4';
 const PREF_READ = 'irodori:readAloud';
 const $ = id => document.getElementById(id);
 const q = sel => document.querySelector(sel);
@@ -167,7 +167,7 @@ function applyColor(cellIdxs) {
   if (pendingColor == null || !cellIdxs.length) return;
   cellIdxs.forEach(i => { current.cells[i] = pendingColor; });
   store.saveDraft(current); // 自動下書き
-  if (tool !== 'single') { anchor = null; previewCells = []; setMsg(''); }
+  if (tool !== 'single') { anchor = null; previewCells = []; setMsg(''); setToolVisual('single'); } // 範囲/線は塗ったら1マスへ自動で戻る
   voiceLine = false; awaitingEnd = false;
   draw();
 }
