@@ -55,8 +55,8 @@ body {
   --n: 5;
   --hdr: 18px;
   display: grid;
-  grid-template-columns: var(--hdr) repeat(var(--n), 1fr);
-  grid-template-rows: var(--hdr) repeat(var(--n), 1fr);
+  grid-template-columns: var(--hdr) repeat(var(--n), 1fr) var(--hdr);
+  grid-template-rows: var(--hdr) repeat(var(--n), 1fr) var(--hdr);
   gap: 3px;
   width: min(86vw, 380px);
   aspect-ratio: 1 / 1;

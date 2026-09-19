@@ -52,12 +52,13 @@ export function renderBoard(container, state, opts = {}) {
   const previewSet = new Set(previewCells);
   container.style.setProperty('--n', String(size));
   container.innerHTML = '';
-  // 1行目: 角＋列名（A〜）
+  // 1行目: 角＋列名（A〜）＋右の空き（左右対称にして作画部分を中央に）
   container.appendChild(hdrEl('', 'ir-corner'));
   for (let c = 0; c < size; c++) {
     container.appendChild(hdrEl(colLabel(c), 'ir-hcol' + (cursor && cursor.col === c ? ' is-cur' : '')));
   }
-  // 各行: 行名（1〜）＋セル
+  container.appendChild(hdrEl('', 'ir-corner'));
+  // 各行: 行名（1〜）＋セル＋右の空き
   for (let r = 0; r < size; r++) {
     container.appendChild(hdrEl(String(r + 1), 'ir-hrow' + (cursor && cursor.row === r ? ' is-cur' : '')));
     for (let c = 0; c < size; c++) {
@@ -76,7 +77,10 @@ export function renderBoard(container, state, opts = {}) {
       if (cursor && cursor.row === r && cursor.col === c) cell.classList.add('ir-cursor');
       container.appendChild(cell);
     }
+    container.appendChild(hdrEl('', 'ir-corner')); // 右の空き
   }
+  // 最終行: 下の空き（上下対称でセルを正方形に保つ）
+  for (let k = 0; k < size + 2; k++) container.appendChild(hdrEl('', 'ir-corner'));
 }
 
 // サムネイル（canvas）。セルからドット絵をそのまま拡大（pixelated は CSS 側）
