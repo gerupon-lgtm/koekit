@@ -2,7 +2,7 @@
 
 コエキット3本目「**イロドリズム**」（声＋タッチのドット絵/塗り絵制作PWA）を Claude Code で作成しました。ここから Codex が引き継ぎます。この文書＝入口。まず読む順：この handoff → [基本設計サマリ.md](基本設計サマリ.md) → [implementation-guide.md](implementation-guide.md) → [tasks.md](tasks.md)。要件は [../requirements-irodori.md](../requirements-irodori.md)、音声実測は [../irodori-voice-probe-results.md](../irodori-voice-probe-results.md)。
 
-現在版：**v0.4.9**（`irodori/app.js` の `APP_VERSION`）。本番：`https://gerupon-lgtm.github.io/koekit/irodori/`（＝`https://koekit.sikumilab.com/irodori/`）。
+現在版：**v0.4.10**（`irodori/app.js` の `APP_VERSION`）。本番：`https://gerupon-lgtm.github.io/koekit/irodori/`（＝`https://koekit.sikumilab.com/irodori/`）。
 
 ## 2026-09-19 Codexによる基盤統合
 
@@ -132,3 +132,7 @@ Chrome/WebKitの320×568・360×640・390×844で盤面位置・スクロール�
 ## v0.4.9 Eの候補を追加（2026-09-19）
 
 「イー」の反応が悪いとの報告と発案者の指示により、Eに「いい／イイ」を追加。Eの候補は「いー／イー／いい／イイ」。Vosk文法と解析の両方へ反映。Aは前版の4候補を維持。全候補103語。Eの4表記×行1〜9の36通りの解析、およびAの候補維持を確認。実発話の認識精度は実機確認待ち。
+
+## v0.4.10 Aの長音候補を復帰（2026-09-19）
+
+発案者指示でAに「エー／えー」を追加。Aは「えい／エイ／ええ／エエ／エー／えー」の6候補、Eは「いー／イー／いい／イイ」の4候補を維持。単独「え」は除外のまま。全候補105語。A/E計10表記×行1〜9の90通りの解析テスト通過。実発話の精度は未計測。
