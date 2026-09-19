@@ -31,9 +31,19 @@ body {
 }
 .ir-icon svg { width: 25px; height: 25px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
 .ir-icon.ir-exit { color: var(--brown); }
-.ir-icon.ir-mic { border-radius: 50%; background: #f2e2a8; color: #8a6d1f; }
-.ir-icon.ir-mic.is-off { background: #ece4d6; color: #b3a892; }
-.ir-icon.ir-mic.is-listen { background: #b9e3a6; color: #34691f; }
+/* マイク状態表示（共有 setMicState と同じ作法：listening/denied/restarting）。トグルではなく状態 */
+.ir-micwrap { width: 50px; height: 50px; border-radius: 50%; background: #ece4d6; display: grid; place-items: center; }
+.ir-micwrap .mic { width: 27px; height: 27px; }
+.ir-micwrap .mic .body { fill: #b3a892; }
+.ir-micwrap .mic .slash { stroke: #d33; stroke-width: 2.4; display: none; }
+.ir-micwrap.listening { background: #f2e2a8; }
+.ir-micwrap.listening .mic .body { fill: #8a6d1f; }
+.ir-micwrap.restarting { background: #f2e2a8; }
+.ir-micwrap.restarting .mic .body { fill: #8a6d1f; animation: ir-blink .6s steps(2, end) infinite; }
+.ir-micwrap.denied { background: #f0dcd6; }
+.ir-micwrap.denied .mic .body { fill: #b98f86; }
+.ir-micwrap.denied .mic .slash { display: block; }
+@keyframes ir-blink { 50% { opacity: .3; } }
 
 .ir-logo { text-align: center; font-weight: 800; font-size: 40px; letter-spacing: 1px; margin: 22px 0 6px; }
 .ir-logo .a { color: var(--iro); }

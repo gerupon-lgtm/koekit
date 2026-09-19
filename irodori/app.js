@@ -6,8 +6,9 @@ import { createCells, idx, inRange, rectCells, lineCells, renderBoard, renderThu
 import * as store from './storage.js';
 import { makeGrammar, parse, colIndex } from './vocabulary.js';
 import { VoiceInput } from './phase.js';
+import { setMicState } from '../src/ui/micstate.js';
 
-const APP_VERSION = 'v0.2.1';
+const APP_VERSION = 'v0.2.3';
 const PREF_READ = 'irodori:readAloud';
 const $ = id => document.getElementById(id);
 const q = sel => document.querySelector(sel);
@@ -33,6 +34,7 @@ let awaitingEnd = false; // から/せんの後、終点待ち
 function show(name) {
   qa('.screen').forEach(s => { s.hidden = s.dataset.screen !== name; });
   if (name !== 'make' && voice && voice.active) voice.disable();
+  if (name === 'make') void enableVoice();  // 制作に入ったら自動で受付（音声検証アプリ）
   if (name === 'mode') renderMode();
   if (name === 'list') renderList();
   window.scrollTo(0, 0);
@@ -248,9 +250,8 @@ function init() {
   try { readAloud = localStorage.getItem(PREF_READ) === '1'; } catch { readAloud = false; }
   updateReadBtn();
   $('btn-read').onclick = toggleRead;
-  // ヘッダー：ホーム（コエキットへ）／マイク（音声トグル）
+  // ヘッダー：ホーム（コエキットへ）。マイクは状態表示（トグルではない）
   $('home-btn').onclick = () => { location.href = '../'; };
-  $('mic-btn').onclick = toggleMic;
   // モード選択
   qa('[data-go]').forEach(b => b.onclick = () => {
     const go = b.dataset.go;
@@ -295,24 +296,19 @@ function sfxWrong() {
     o.start(); o.stop(_sfxCtx.currentTime + 0.14);
   } catch { /* 無視 */ }
 }
-function micUI(state) {
-  const b = $('mic-btn'); if (!b) return;
-  b.classList.remove('is-off', 'is-listen');
-  if (state === 'listening') { b.classList.add('is-listen'); b.setAttribute('aria-pressed', 'true'); }
-  else { b.classList.add('is-off'); b.setAttribute('aria-pressed', 'false'); }
+function micState(s) {
+  const el = $('mic-state'); if (el) setMicState(el, null, s);
 }
-async function toggleMic() {
-  if (!voice) { voice = new VoiceInput({ onText: onVoiceText, onStatus: onVoiceStatus }); voice.setGrammar(makeGrammar()); }
-  if (voice.active) { voice.disable(); return; }
-  if (!(await voice.isAvailable())) { setMsg('このブラウザは こえが つかえないよ'); return; }
-  setMsg('こえを じゅんびちゅう…（はじめは じかんが かかるよ）');
-  micUI('loading');
+function onVoiceState(s) {
+  micState(s);
+  if (s === 'listening') setMsg('こえで いえるよ');
+  else if (s === 'denied') setMsg('マイクが つかえないよ（タッチでOK）');
+}
+async function enableVoice() {
+  if (!voice) { voice = new VoiceInput({ onText: onVoiceText, onState: onVoiceState }); voice.setGrammar(makeGrammar()); }
+  if (voice.active) return;
+  if (!(await voice.isAvailable())) { setMsg('このブラウザは こえが つかえないよ（タッチでOK）'); micState('denied'); return; }
   await voice.enable();
-}
-function onVoiceStatus(s) {
-  if (s === 'listening') { micUI('listening'); setMsg('こえで いえるよ'); }
-  else if (s === 'off') { micUI('off'); }
-  else if (s === 'error') { micUI('off'); setMsg('マイクが つかえなかったよ'); }
 }
 function onVoiceText(text) { interpretVoice(parse(text)); }
 
@@ -323,7 +319,7 @@ function interpretVoice(tokens) {
     const t = tokens[i];
     if (t.type === 'kw') {
       if (t.val === 'save') doSave();
-      else if (t.val === 'quit') show('mode');
+      else if (t.val === 'quit') show('mode');   // やめる／おわり
       else if (t.val === 'ok') confirmApply();
       else if (t.val === 'kara') beginTwoPoint();
       else if (t.val === 'sen') { voiceLine = true; setToolVisual('line'); }
