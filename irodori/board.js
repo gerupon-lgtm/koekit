@@ -77,10 +77,15 @@ export function renderBoard(container, state, opts = {}) {
       if (cursor && cursor.row === r && cursor.col === c) cell.classList.add('ir-cursor');
       container.appendChild(cell);
     }
-    container.appendChild(hdrEl('', 'ir-corner')); // 右の空き
+    // 右側にも行名（左右対称・両側に表示）
+    container.appendChild(hdrEl(String(r + 1), 'ir-hrow' + (cursor && cursor.row === r ? ' is-cur' : '')));
   }
-  // 最終行: 下の空き（上下対称でセルを正方形に保つ）
-  for (let k = 0; k < size + 2; k++) container.appendChild(hdrEl('', 'ir-corner'));
+  // 最終行: 角＋列名（A〜）＋角（上下対称・下辺にも列名）
+  container.appendChild(hdrEl('', 'ir-corner'));
+  for (let c = 0; c < size; c++) {
+    container.appendChild(hdrEl(colLabel(c), 'ir-hcol' + (cursor && cursor.col === c ? ' is-cur' : '')));
+  }
+  container.appendChild(hdrEl('', 'ir-corner'));
 }
 
 // サムネイル（canvas）。セルからドット絵をそのまま拡大（pixelated は CSS 側）

@@ -5,7 +5,7 @@ import { COLORS, colorName } from './palette.js';
 import { createCells, idx, inRange, rectCells, lineCells, renderBoard, renderThumb } from './board.js';
 import * as store from './storage.js';
 
-const APP_VERSION = 'v0.1.3';
+const APP_VERSION = 'v0.1.4';
 const PREF_READ = 'irodori:readAloud';
 const $ = id => document.getElementById(id);
 const q = sel => document.querySelector(sel);
