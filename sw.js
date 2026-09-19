@@ -12,9 +12,9 @@
 // BUILD は scripts/stamp-cache.cjs が各デプロイ前に一意な値へ置換する。
 
 const VERSION = '0.1.0';            // version.json と一致（scripts/check-version 対象）
-const BUILD = 'v0.1.0-20260919082245-7ffb54d';         // ← scripts/stamp-cache.cjs がデプロイ毎に置換
+const BUILD = 'v0.1.0-20260919092701-ae277aa';         // ← scripts/stamp-cache.cjs がデプロイ毎に置換
 const APP_CACHE = 'koekit-app-' + BUILD;
-const STATIC_CACHE = 'koekit-static-v1'; // 大きい静的資産（vosk.js等）。中身を変えたときだけ版を上げる
+const STATIC_CACHE = 'koekit-static-v2'; // 大きい静的資産（vosk.js等）。中身を変えたときだけ版を上げる
 
 // オフライン初回用に事前キャッシュする最小シェル（すべて小さいアプリ本体）
 const SHELL = [
@@ -66,7 +66,7 @@ self.addEventListener('fetch', (event) => {
   // 大きい静的資産（vosk.js）は cache-first で保持（毎デプロイで再取得しない）
   if (isStatic(url)) {
     event.respondWith(
-      caches.match(req).then(hit => hit || fetch(req).then(res => {
+      caches.match(req).then(hit => hit || fetch(req, { cache: 'reload' }).then(res => {
         if (res && res.ok && res.type === 'basic') {
           const copy = res.clone();
           caches.open(STATIC_CACHE).then(c => c.put(req, copy)).catch(() => {});
