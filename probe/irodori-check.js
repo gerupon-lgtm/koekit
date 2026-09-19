@@ -12,8 +12,9 @@
 
 import { VoskAdapter } from '../src/speech/vosk.js';
 import { normalize } from '../src/speech/vocabulary.js';
+import { makeGrammar, parse as parseProduction } from '../irodori/vocabulary.js';
 
-const VERSION = 'v7';
+const VERSION = 'v8';
 const $ = id => document.getElementById(id);
 const nowText = () => new Date().toLocaleTimeString('ja-JP');
 const log = t => { const el = $('log'); el.textContent += `${nowText()} ${t}\n`; el.scrollTop = el.scrollHeight; };
@@ -57,7 +58,16 @@ for (const c of ['A', 'B', 'C', 'D']) for (let d = 1; d <= 9; d++) COORD_SWEEP.p
 //   forms  … 完全一致・前方一致で使う（normalize 後に照合）
 //   patterns … regexテーブル。生の認識文字列（漢字・全角も温存）に対して test する。順序＝優先。
 //   ※ 複合語（黄緑/水色）を基本色より前に置き、誤マッチを防ぐ
+const AE_SEQUENCE = [];
+for (const [col, reading] of [['B', 'びー'], ['D', 'でー'], ['E', 'いい']]) {
+  for (const a of ['えー', 'えい']) {
+    AE_SEQUENCE.push({ label: `${col}5：${reading} ご`, row: '5', col });
+    AE_SEQUENCE.push({ label: `A1：${a} いち`, row: '1', col: 'A' });
+  }
+}
+for (const reading of ['いー', 'いい']) AE_SEQUENCE.push({ label: `E1：${reading} いち`, row: '1', col: 'E' });
 const SETS = [
+  { id: 'productionAE', name: '本番候補：A/Eの脱落チェック（14発話）', mode: 'coord', production: true, targetReps: 1, items: AE_SEQUENCE, grammar: makeGrammar() },
   { id: 'color', name: '色（12色）', kind: 'word', targetReps: 3, items: [
     { label: 'あか',     forms: ['あか'],               patterns: [/赤/, /あか/, /レッド/] },
     { label: 'オレンジ', forms: ['おれんじ', 'オレンジ'], patterns: [/オレンジ/, /おれんじ/, /橙/] },
@@ -247,7 +257,7 @@ function renderResult() {
     ? `いま言う語：<b>「${activeSet.items[targetIdx].label}」</b>（${activeSet.items[targetIdx].said}/${activeSet.targetReps}）`
     : '完了';
   const head = `<p class="small">区間：<b>${activeSet.name}</b>／モード：<b>${modeLabel}</b>　${curLabel}
-    <button id="skip">この語をとばす</button><button id="again">やり直す</button></p>`;
+    <button id="skip">この語をとばす</button>${activeSet.production ? '<button id="noresult">無反応として記録</button>' : ''}<button id="again">やり直す</button></p>`;
 
   let table;
   if (activeSet.kind === 'word') {
@@ -281,6 +291,10 @@ function renderResult() {
     table = `<table><thead><tr><th>語</th><th>言った</th><th>正解</th><th>取り違え</th><th>未認識</th></tr></thead><tbody>${rows}</tbody></table>`;
   }
   box.innerHTML = head + table;
+  const noresult = $('noresult'); if (noresult) noresult.onclick = () => {
+    const target = activeSet.items[targetIdx]; if (!target) return;
+    target.said++; target.unknown++; log(`無反応（手動記録）: ${target.label}`); advanceTarget(false);
+  };
   const skip = $('skip'); if (skip) skip.onclick = () => advanceTarget(true);
   const again = $('again'); if (again) again.onclick = () => startSet(activeSet);
 }
@@ -303,12 +317,13 @@ function advanceTarget(force) {
 async function startSet(set) {
   if (!ready || !adapter) return;
   adapter.stop();
+  if (set.production) { recogMode = 'grammar'; renderModes(); }
   resetTally(set);
   activeSet = set;
   targetIdx = set.items.length ? 0 : -1;
   // 文法の決定: モードが自由なら空。制限なら set.grammar か forms を渡す。
   let grammar = [];
-  if (recogMode === 'grammar' && set.kind !== 'free') {
+  if ((set.production || recogMode === 'grammar') && set.kind !== 'free') {
     if (set.grammar) grammar = [...set.grammar];
     else for (const it of set.items) if (it.forms) for (const f of it.forms) grammar.push(f);
   }
@@ -318,7 +333,16 @@ async function startSet(set) {
     ? `「${set.items[0].label}」と${set.targetReps}回言ってください。`
     : '自由に言ってみてください（生の結果がログに出ます）。';
   renderResult();
-  try { await adapter.start(grammar); }
+  const prompt = $('status').textContent;
+  $('status').textContent = '認識器を準備中…まだ話さずにお待ちください。';
+  try {
+    await adapter.start(grammar);
+    if (activeSet === set) {
+      $('status').textContent = '受付開始。' + prompt;
+      log('認識器の開始処理完了。表示された語を1発話ずつ、結果を待って読んでください。');
+      if (set.production) log(`本番文法: ${JSON.stringify(grammar)}`);
+    }
+  }
   catch (e) { log(`区間開始エラー: ${e.message}`); }
 }
 
@@ -329,7 +353,11 @@ function onResult(text) {
   if (!target) return;
 
   if (activeSet.mode === 'coord') {
-    const { row, col } = parseTokens(text);
+    const productionTokens = activeSet.production ? parseProduction(text) : null;
+    const { row, col } = productionTokens
+      ? { row: productionTokens.find(t => t.type === 'digit')?.val ?? null, col: productionTokens.find(t => t.type === 'col')?.val ?? null }
+      : parseTokens(text);
+    if (productionTokens) log(`  本番解析: ${JSON.stringify(productionTokens)} → ${col || '?'}${row || '?'}${!col && row ? '（列なし：本番では直前の列を維持）' : ''}`);
     target.said++;
     if (row === target.row && col === target.col) target.correct++;
     else if (row === null && col === null) { target.unknown++; log(`  → 未認識: 「${text}」`); }
