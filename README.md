@@ -22,6 +22,7 @@
 ```sh
 python -m http.server 8000
 node scripts/test-logic.cjs
+node scripts/check-version.cjs
 ```
 
 GitHub Pagesへの公開は `node scripts/stamp-cache.cjs` → commit → push。端末内音声認識にはVoskを使います。実機での受入確認の残件は `docs/tasks.md` に記録しています。

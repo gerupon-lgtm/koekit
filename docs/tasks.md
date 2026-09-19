@@ -396,3 +396,9 @@
 - [x] SW更新でVoskモデルや他アプリのキャッシュを削除しない。アプリ自身の旧キャッシュのみ削除。
 - [x] `node scripts/test-sw.cjs`、手動画像取得なしの `node scripts/test-offline-browser.cjs` が通過。
 - [ ] モデル取得済みの実機で、機内モードの音声プレイ・PWA起動を確認（T-028全体は未完了）。
+
+## 2026-09-20 T-026 バージョンの同値検証
+
+- [x] `scripts/check-version.cjs` を配置。version.json、manifest、SWのVERSION/BUILD/APP_CACHE、両作品タイトルフッタが一致。
+- [x] `scripts/test-version.cjs`：各反映先を1か所だけ不一致にした場合、BUILDのみ不一致、フッタ欠落、不正JSONを検出。
+- [x] T-027の静的構造：フッタがタイトルに1つだけあり、版と著作権表記が一致。ゲーム・認定書に追加しない。

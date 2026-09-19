@@ -1,5 +1,12 @@
 # 引き継ぎ（Claude Code → Codex）
 
+## 2026-09-20 T-026 バージョン同値検証
+
+未配置だった `scripts/check-version.cjs` を追加。version.json、manifest、SWのVERSION/BUILD/APP_CACHE、両作品のタイトルフッタを比較。タイトル以外にフッタを置かない構造と著作権表記も確認する。独立して版管理されているイロドリズムの版は変更しない。`test-version.cjs` は各反映先の不一致・BUILDのみ不一致・フッタ欠落・壊れたJSONを検出する。
+
+実装と判断待ちの整理は `docs/implementation-audit-2026-09-20.md` を参照。
+
+
 ## 2026-09-20 オフライン用資産とキャッシュ保持
 
 SWは全動物11枚とVoskライブラリをSTATIC_CACHEへ事前保存（既存資産は再取得しない）。AudioWorkletとSW登録スクリプトもシェルに追加。activateで削除するのはkoekit-app-/koekit-static-の旧版のみとし、Voskモデルや他アプリのCache Storageは保持。
