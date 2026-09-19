@@ -6,7 +6,7 @@
 <title>イロドリズム</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700;800&display=swap">
 <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
@@ -14,19 +14,28 @@
 
   <!-- ① モード選択 -->
   <section class="screen" data-screen="mode">
-    <h1 class="ir-title">イロドリズム <span id="ver" class="ir-ver"></span></h1>
+    <header class="ir-hd">
+      <button class="ir-icon" id="home-btn" aria-label="コエキットへ">
+        <svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>
+      </button>
+    </header>
+    <h1 class="ir-logo"><span class="a">イロドリ</span><span class="b">ズム</span></h1>
     <p class="ir-intro">こえと タッチで ドットえを つくろう。</p>
     <div class="ir-menu">
       <button class="ir-big" data-go="free">じゆうに つくる</button>
       <button class="ir-big" data-go="template">おてほんを ぬる</button>
       <button class="ir-big ir-sub" data-go="list">さくひん</button>
     </div>
-    <p class="ir-foot"><a href="../">← コエキット</a>　<span class="ir-cr">© SIKUMI LAB</span></p>
+    <p class="ir-foot"><span id="ver"></span>　© 2026 SIKUMI LAB</p>
   </section>
 
   <!-- ② 盤面サイズ選択 -->
   <section class="screen" data-screen="size" hidden>
-    <button class="ir-back" data-back="mode">← もどる</button>
+    <header class="ir-hd">
+      <button class="ir-icon" data-back="mode" aria-label="もどる">
+        <svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>
+      </button>
+    </header>
     <p class="ir-intro">おおきさを えらんでね。こえで「（れつ）→（すうじ）」でばしょ、いろのなまえでぬって、「オーケー」できまり。</p>
     <div class="ir-menu ir-sizes">
       <button class="ir-big" data-size="3">3 × 3</button>
@@ -38,25 +47,36 @@
 
   <!-- ④ 制作 -->
   <section class="screen" data-screen="make" hidden>
-    <div class="ir-makebar">
-      <button class="ir-back" data-back="mode">← やめる</button>
-      <button class="ir-tool ir-read" id="btn-read" aria-pressed="false">よみあげ:オフ</button>
-      <div class="ir-tools">
+    <header class="ir-hd">
+      <button class="ir-icon ir-exit" data-back="mode" aria-label="やめる">
+        <svg viewBox="0 0 24 24"><path d="M14 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8"/><path d="M11 12h9"/><path d="M17 9l3 3-3 3"/></svg>
+      </button>
+      <button class="ir-icon ir-mic is-off" id="mic-btn" aria-label="マイク" aria-pressed="false">
+        <svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M6 11a6 6 0 0 0 12 0"/><path d="M12 17v4"/></svg>
+      </button>
+    </header>
+    <p class="ir-msg" id="make-msg" role="status"></p>
+    <div class="ir-board" id="board"></div>
+    <button class="ir-confirm" id="btn-confirm" disabled>オーケー（きめる）</button>
+    <div class="ir-toolrow">
+      <div class="ir-seg" id="tools">
         <button class="ir-tool is-active" data-tool="single">1マス</button>
         <button class="ir-tool" data-tool="range">はんい</button>
         <button class="ir-tool" data-tool="line">せん</button>
       </div>
       <button class="ir-save" id="btn-save">ほぞん</button>
     </div>
-    <p class="ir-msg" id="make-msg" role="status"></p>
-    <div class="ir-board" id="board"></div>
-    <button class="ir-confirm" id="btn-confirm" disabled>オーケー（きめる）</button>
+    <div class="ir-palhead"><span class="ir-pl">いろ</span><button class="ir-ytoggle" id="btn-read" aria-pressed="false">よみあげ:オフ</button></div>
     <div class="ir-palette" id="palette"></div>
   </section>
 
   <!-- ⑤ 作品一覧 -->
   <section class="screen" data-screen="list" hidden>
-    <button class="ir-back" data-back="mode">← もどる</button>
+    <header class="ir-hd">
+      <button class="ir-icon" data-back="mode" aria-label="もどる">
+        <svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>
+      </button>
+    </header>
     <h2 class="ir-h2">さくひん</h2>
     <p class="ir-empty-note" id="list-empty" hidden>まだ さくひんが ないよ。</p>
     <div class="ir-gallery" id="gallery"></div>
@@ -64,7 +84,11 @@
 
   <!-- ⑥ 完成プレビュー -->
   <section class="screen" data-screen="preview" hidden>
-    <button class="ir-back" id="preview-back">← もどる</button>
+    <header class="ir-hd">
+      <button class="ir-icon" id="preview-back" aria-label="もどる">
+        <svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>
+      </button>
+    </header>
     <div class="ir-preview-wrap"><canvas id="preview-canvas" class="ir-preview-canvas"></canvas></div>
   </section>
 

@@ -4,8 +4,10 @@
 import { COLORS, colorName } from './palette.js';
 import { createCells, idx, inRange, rectCells, lineCells, renderBoard, renderThumb } from './board.js';
 import * as store from './storage.js';
+import { makeGrammar, parse, colIndex } from './vocabulary.js';
+import { VoiceInput } from './phase.js';
 
-const APP_VERSION = 'v0.1.4';
+const APP_VERSION = 'v0.2.1';
 const PREF_READ = 'irodori:readAloud';
 const $ = id => document.getElementById(id);
 const q = sel => document.querySelector(sel);
@@ -21,10 +23,16 @@ let anchor = null;       // 範囲/線の始点 {row,col}
 let previewCells = [];   // プレビュー中のindex配列
 let previewFrom = 'list';
 let readAloud = false;   // 色名の読み上げ（デフォルトOFF・任意ON）
+// 音声
+let voice = null;        // VoiceInput
+let lastCoord = null;    // 直近に指定した座標（から/せんの始点に使う）
+let voiceLine = false;   // 「せん」が言われた
+let awaitingEnd = false; // から/せんの後、終点待ち
 
 // ---- 画面遷移 ----
 function show(name) {
   qa('.screen').forEach(s => { s.hidden = s.dataset.screen !== name; });
+  if (name !== 'make' && voice && voice.active) voice.disable();
   if (name === 'mode') renderMode();
   if (name === 'list') renderList();
   window.scrollTo(0, 0);
@@ -72,6 +80,7 @@ function openMake(artwork, existingId) {
   tool = 'single';
   anchor = null;
   previewCells = [];
+  lastCoord = null; voiceLine = false; awaitingEnd = false;
   setMsg('');
   qa('.ir-tool').forEach(b => b.classList.toggle('is-active', b.dataset.tool === 'single'));
   renderPalette();
@@ -157,6 +166,7 @@ function applyColor(cellIdxs) {
   cellIdxs.forEach(i => { current.cells[i] = pendingColor; });
   store.saveDraft(current); // 自動下書き
   if (tool !== 'single') { anchor = null; previewCells = []; setMsg(''); }
+  voiceLine = false; awaitingEnd = false;
   draw();
 }
 function confirmApply() { applyColor(previewCells); }
@@ -238,6 +248,9 @@ function init() {
   try { readAloud = localStorage.getItem(PREF_READ) === '1'; } catch { readAloud = false; }
   updateReadBtn();
   $('btn-read').onclick = toggleRead;
+  // ヘッダー：ホーム（コエキットへ）／マイク（音声トグル）
+  $('home-btn').onclick = () => { location.href = '../'; };
+  $('mic-btn').onclick = toggleMic;
   // モード選択
   qa('[data-go]').forEach(b => b.onclick = () => {
     const go = b.dataset.go;
@@ -269,6 +282,104 @@ function setModeNote(t) {
   let n = $('mode-note');
   if (!n) { n = document.createElement('p'); n.id = 'mode-note'; n.className = 'ir-intro'; q('[data-screen="mode"] .ir-menu').after(n); }
   n.textContent = t;
+}
+
+// ---- 音声（制作画面） ----
+let _sfxCtx = null;
+function sfxWrong() {
+  try {
+    _sfxCtx = _sfxCtx || new (window.AudioContext || window.webkitAudioContext)();
+    const o = _sfxCtx.createOscillator(), g = _sfxCtx.createGain();
+    o.type = 'square'; o.frequency.value = 160; g.gain.value = 0.06;
+    o.connect(g); g.connect(_sfxCtx.destination);
+    o.start(); o.stop(_sfxCtx.currentTime + 0.14);
+  } catch { /* 無視 */ }
+}
+function micUI(state) {
+  const b = $('mic-btn'); if (!b) return;
+  b.classList.remove('is-off', 'is-listen');
+  if (state === 'listening') { b.classList.add('is-listen'); b.setAttribute('aria-pressed', 'true'); }
+  else { b.classList.add('is-off'); b.setAttribute('aria-pressed', 'false'); }
+}
+async function toggleMic() {
+  if (!voice) { voice = new VoiceInput({ onText: onVoiceText, onStatus: onVoiceStatus }); voice.setGrammar(makeGrammar()); }
+  if (voice.active) { voice.disable(); return; }
+  if (!(await voice.isAvailable())) { setMsg('このブラウザは こえが つかえないよ'); return; }
+  setMsg('こえを じゅんびちゅう…（はじめは じかんが かかるよ）');
+  micUI('loading');
+  await voice.enable();
+}
+function onVoiceStatus(s) {
+  if (s === 'listening') { micUI('listening'); setMsg('こえで いえるよ'); }
+  else if (s === 'off') { micUI('off'); }
+  else if (s === 'error') { micUI('off'); setMsg('マイクが つかえなかったよ'); }
+}
+function onVoiceText(text) { interpretVoice(parse(text)); }
+
+// トークン列を制作モデルへ反映（全発話・分割発話の両対応）
+function interpretVoice(tokens) {
+  let i = 0;
+  while (i < tokens.length) {
+    const t = tokens[i];
+    if (t.type === 'kw') {
+      if (t.val === 'save') doSave();
+      else if (t.val === 'quit') show('mode');
+      else if (t.val === 'ok') confirmApply();
+      else if (t.val === 'kara') beginTwoPoint();
+      else if (t.val === 'sen') { voiceLine = true; setToolVisual('line'); }
+      // made は接続語（無視）
+      i++;
+    } else if (t.type === 'color') { selectColor(t.val); i++; }
+    else if (t.type === 'dir') {
+      let steps = 1;
+      if (tokens[i + 1] && tokens[i + 1].type === 'digit') { steps = Number(tokens[i + 1].val); i += 2; } else i++;
+      voiceRelMove(t.val, steps);
+    } else if (t.type === 'col' || t.type === 'digit') {
+      let col = null, row = null;
+      while (i < tokens.length && (tokens[i].type === 'col' || tokens[i].type === 'digit')) {
+        if (tokens[i].type === 'col' && col == null) col = tokens[i].val;
+        else if (tokens[i].type === 'digit' && row == null) row = tokens[i].val;
+        else break;
+        i++;
+      }
+      voiceCoord(col, row);
+    } else i++;
+  }
+}
+function setToolVisual(t) {
+  tool = t;
+  qa('.ir-tool').forEach(b => b.classList.toggle('is-active', b.dataset.tool === t));
+}
+function voiceCoord(colLetter, rowDigit) {
+  const size = current.size;
+  let r = cursor ? cursor.row : 0, c = cursor ? cursor.col : 0;
+  if (rowDigit != null) r = Number(rowDigit) - 1;
+  if (colLetter != null) c = colIndex(colLetter);
+  if (!inRange(size, r, c)) { sfxWrong(); return; }        // 範囲外は不正解音・位置維持
+  if (awaitingEnd && anchor) {
+    previewCells = (tool === 'line') ? lineCells(size, anchor, { row: r, col: c }) : rectCells(size, anchor, { row: r, col: c });
+    cursor = { row: r, col: c }; lastCoord = { row: r, col: c }; awaitingEnd = false;
+    setMsg(pendingColor != null ? 'オーケーで きめてね' : 'いろを えらんでね');
+  } else {
+    cursor = { row: r, col: c }; lastCoord = { row: r, col: c };
+    if (tool === 'single' && pendingColor != null) previewCells = [idx(size, r, c)];
+  }
+  draw();
+}
+function voiceRelMove(dir, steps) {
+  const size = current.size; let r = cursor.row, c = cursor.col;
+  if (dir === 'みぎ') c += steps; else if (dir === 'ひだり') c -= steps; else if (dir === 'うえ') r -= steps; else if (dir === 'した') r += steps;
+  if (!inRange(size, r, c)) { sfxWrong(); return; }
+  cursor = { row: r, col: c }; lastCoord = { row: r, col: c };
+  if (tool === 'single' && pendingColor != null) previewCells = [idx(size, r, c)];
+  draw();
+}
+function beginTwoPoint() {
+  setToolVisual(voiceLine ? 'line' : 'range');
+  anchor = lastCoord || cursor;
+  awaitingEnd = true; previewCells = [];
+  setMsg('つぎの ばしょを いってね');
+  draw();
 }
 
 init();
