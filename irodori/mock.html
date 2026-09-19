@@ -36,20 +36,22 @@
   .seg button{flex:1;font:inherit;font-weight:700;font-size:14px;border:0;background:transparent;color:#7a6f5c;padding:9px 0;border-radius:11px;cursor:pointer;}
   .seg button.on{background:#fff;color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.12);}
   .save{font:inherit;font-weight:700;font-size:15px;border:0;border-radius:14px;background:var(--accent);color:#332600;padding:11px 16px;min-height:46px;cursor:pointer;}
-  .pal{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-top:12px;}
+  .palhead{display:flex;justify-content:space-between;align-items:center;margin-top:10px;}
+  .palhead .pl{font-size:12px;font-weight:700;color:#8a7f70;}
+  .ytoggle{font:inherit;font-size:12px;font-weight:700;border:0;border-radius:10px;background:#efe7d8;color:#7a6f5c;padding:6px 10px;cursor:pointer;}
+  .pal{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-top:6px;}
   .sw{aspect-ratio:1;border-radius:9px;border:2px solid rgba(0,0,0,.1);}
   svg{fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;}
 </style>
 </head>
 <body>
-<p class="note"><b>上部コントロールだけ</b>を既存2作品に合わせる案（配色はイロドリズムのまま・確認用モック・実アプリ未変更）。<b>タイトル＝左ホーム／右せってい（ギア）</b>、<b>制作＝左やめる（退出）／右マイク（音声の状態）</b>。ツール・パレット等は用途が違うので合わせません（並びだけ整理）。<b>よみあげは設定へ移動</b>。</p>
+<p class="note"><b>上部コントロールだけ</b>を既存2作品に合わせる案（配色はイロドリズムのまま・確認用モック・実アプリ未変更）。<b>タイトル＝ホームのみ</b>（ギア設定は不要）、<b>制作＝左やめる（退出）／右マイク（音声の状態）</b>。ツール・パレット等は用途が違うので合わせません（並びだけ整理）。<b>よみあげはパレット脇の小さなトグル</b>（既定オフ）。</p>
 <div class="row">
 
   <div>
     <div class="phone">
       <div class="hd">
         <div class="ico" title="ホーム(コエキットへ)"><svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg></div>
-        <div class="ico" title="せってい(よみあげ等)"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/></svg></div>
       </div>
       <div class="logo"><span class="a">イロドリ</span><span class="b">ズム</span></div>
       <div class="menu">
@@ -59,7 +61,7 @@
       </div>
       <p class="foot">v0.2.0　© 2026 SIKUMI LAB</p>
     </div>
-    <p class="cap">① タイトル：左ホーム／右せってい（家族と同じ）</p>
+    <p class="cap">① タイトル：ホームのみ（ギア設定なし）</p>
   </div>
 
   <div>
@@ -81,6 +83,7 @@
         <div class="seg"><button class="on">1マス</button><button>はんい</button><button>せん</button></div>
         <button class="save">ほぞん</button>
       </div>
+      <div class="palhead"><span class="pl">いろ</span><button class="ytoggle">よみあげ オフ</button></div>
       <div class="pal">
         <div class="sw" style="background:#E2413A"></div><div class="sw" style="background:#5CC4E6"></div><div class="sw" style="background:#F5D21F"></div><div class="sw" style="background:#8A5CC4"></div><div class="sw" style="background:#3FA34D"></div><div class="sw" style="background:#F29AC0"></div>
         <div class="sw" style="background:#2F6FD6"></div><div class="sw" style="background:#F08C2E"></div><div class="sw" style="background:#A8D24A"></div><div class="sw" style="background:#9C6B3F"></div><div class="sw" style="background:#FFFFFF"></div><div class="sw" style="background:#2B2B2B"></div>
