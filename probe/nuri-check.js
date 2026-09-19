@@ -13,7 +13,7 @@
 import { VoskAdapter } from '../src/speech/vosk.js';
 import { normalize } from '../src/speech/vocabulary.js';
 
-const VERSION = 'v4';
+const VERSION = 'v5';
 const $ = id => document.getElementById(id);
 const nowText = () => new Date().toLocaleTimeString('ja-JP');
 const log = t => { const el = $('log'); el.textContent += `${nowText()} ${t}\n`; el.scrollTop = el.scrollHeight; };
@@ -64,6 +64,28 @@ const SETS = [
     { label: 'H', forms: ['えいち', 'エイチ', 'えっち'], patterns: [/えいち/, /エイチ/, /えっち/, /エッチ/, /初/, /淳/, /^H$/i, /Ｈ/, /ｈ/] },
     { label: 'I', forms: ['あい', 'アイ'],           patterns: [/あい/, /アイ/, /愛/, /^はい$/, /^い$/, /^I$/i, /Ｉ/] },
   ]},
+  // A の読み比べ。group:'A' はどの読みでも「A として認識」なら正解。E/I は化け先の確認用。
+  // 文法に全英字を入れて E(いー)/I(あい) と競わせる（絞りすぎると化けが見えないため）。
+  { id: 'aread', name: 'A読み比べ（えー/えい/ええ/え）', kind: 'word', targetReps: 3,
+    grammar: ['えー', 'エー', 'えい', 'エイ', 'ええ', 'エエ', 'え', 'いー', 'イー', 'あい', 'アイ', 'びー', 'しー', 'でぃー', 'えふ', 'じー', 'えいち', 'えっち'],
+    items: [
+      { label: 'A＝えー', group: 'A', forms: ['えー', 'エー'], patterns: [/^えー$/, /^エー$/] },
+      { label: 'A＝えい', group: 'A', forms: ['えい', 'エイ'], patterns: [/^えい$/, /^エイ$/] },
+      { label: 'A＝ええ', group: 'A', forms: ['ええ', 'エエ'], patterns: [/^ええ$/, /^エエ$/] },
+      { label: 'A＝え',   group: 'A', forms: ['え'],           patterns: [/^え$/] },
+      { label: '(参考)E＝いー', group: 'E', forms: ['いー', 'イー'], patterns: [/^いー$/, /^イー$/, /^いい$/] },
+      { label: '(参考)I＝あい', group: 'I', forms: ['あい', 'アイ'], patterns: [/^あい$/, /^アイ$/, /^愛$/] },
+    ]},
+  // C の読み比べ。group:'C' はどの読みでも「C として認識」なら正解。G/D は化け先の確認用。
+  { id: 'cread', name: 'C読み比べ（しー/しい/し）', kind: 'word', targetReps: 3,
+    grammar: ['しー', 'シー', 'しい', 'し', 'じー', 'ジー', 'でぃー', 'ディー', 'えー', 'びー', 'いー', 'えふ', 'えいち', 'えっち', 'あい'],
+    items: [
+      { label: 'C＝しー', group: 'C', forms: ['しー', 'シー'], patterns: [/^しー$/, /^シー$/] },
+      { label: 'C＝しい', group: 'C', forms: ['しい'],         patterns: [/^しい$/] },
+      { label: 'C＝し',   group: 'C', forms: ['し'],           patterns: [/^し$/] },
+      { label: '(参考)G＝じー', group: 'G', forms: ['じー', 'ジー'], patterns: [/^じー$/, /^ジー$/, /^時$/] },
+      { label: '(参考)D＝でぃー', group: 'D', forms: ['でぃー', 'ディー'], patterns: [/^でぃー$/, /^ディー$/] },
+    ]},
   { id: 'row', name: '行（1〜9）', kind: 'word', targetReps: 3, items: [
     { label: '1', forms: ['いち'],        patterns: [/^いち/, /^一$/, /^市$/, /^いっ/] },
     { label: '2', forms: ['に'],          patterns: [/^に$/, /^二$/, /^日$/] },
@@ -294,11 +316,13 @@ function onResult(text) {
   }
 
   // 単語区間: 3方式で同時採点
+  // group を持つ item は「同じ group に当たれば正解」（A の読み比べ用。えー/えい/ええ はどれも A）。
+  const same = hit => hit && (target.group ? hit.group === target.group : hit === target);
   target.said++;
   const marks = [];
   for (const m of MATCHERS) {
     const hit = MATCH_FN[m](activeSet, text);
-    if (hit === target) { target.m[m].ok++; marks.push(`${MATCHER_LABEL[m]}:○`); }
+    if (same(hit)) { target.m[m].ok++; marks.push(`${MATCHER_LABEL[m]}:○`); }
     else if (hit) { target.m[m].ng++; target.m[m].conf[hit.label] = (target.m[m].conf[hit.label] || 0) + 1; marks.push(`${MATCHER_LABEL[m]}:×${hit.label}`); }
     else { target.m[m].none++; marks.push(`${MATCHER_LABEL[m]}:無`); }
   }
