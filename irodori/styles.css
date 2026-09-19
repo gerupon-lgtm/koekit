@@ -50,19 +50,26 @@ body {
 .ir-save { background: var(--btn); color: var(--btn-ink); padding: 10px 16px; min-height: 44px; }
 .ir-msg { min-height: 1.4em; font-weight: 700; color: #6b5f52; margin: 8px 2px; }
 
-/* 盤面 */
+/* 盤面（列名A〜・行名1〜 のヘッダー付き。左上角＋ヘッダー＋セルを1グリッドで） */
 .ir-board {
   --n: 5;
+  --hdr: 18px;
   display: grid;
-  grid-template-columns: repeat(var(--n), 1fr);
+  grid-template-columns: var(--hdr) repeat(var(--n), 1fr);
+  grid-template-rows: var(--hdr) repeat(var(--n), 1fr);
   gap: 3px;
-  width: min(92vw, 460px);
+  width: min(86vw, 380px);
   aspect-ratio: 1 / 1;
-  margin: 4px auto 12px;
+  margin: 4px auto 10px;
   background: #cfc4b2;
   padding: 3px;
   border-radius: 12px;
 }
+.ir-hdr {
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; color: #8a7f70; user-select: none;
+}
+.ir-hdr.is-cur { color: #b8862a; }
 .ir-cell {
   border-radius: 4px;
   background: #efe7d8;
@@ -80,24 +87,24 @@ body {
 .ir-cell.ir-cursor { outline: 3px solid var(--accent); outline-offset: -1px; z-index: 1; }
 
 .ir-confirm {
-  display: block; width: min(92vw, 460px); margin: 0 auto 12px;
-  background: var(--accent); color: #332600; padding: 14px; min-height: 56px; font-size: 18px;
+  display: block; width: min(86vw, 380px); margin: 0 auto 10px;
+  background: var(--accent); color: #332600; padding: 11px; min-height: 48px; font-size: 17px;
 }
 .ir-confirm:disabled { opacity: .4; }
 
-/* パレット */
-.ir-palette { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+/* パレット（コンパクト・6列×2段で一画面に収める） */
+.ir-palette { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; max-width: 440px; margin: 0 auto; }
 .ir-swatch {
   font: inherit; border: 0; background: transparent; cursor: pointer;
-  display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 4px;
-  border-radius: 12px;
+  display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 2px;
+  border-radius: 10px;
 }
 .ir-swatch .ir-chip {
-  width: 100%; aspect-ratio: 1 / 1; border-radius: 10px; background: var(--sw);
+  width: 100%; aspect-ratio: 1 / 1; border-radius: 8px; background: var(--sw);
   border: 2px solid rgba(0,0,0,.12);
 }
-.ir-swatch .ir-cname { font-size: 12px; color: var(--ink); }
-.ir-swatch.is-sel { background: #fff5d6; outline: 3px solid var(--accent); }
+.ir-swatch .ir-cname { font-size: 10px; line-height: 1.1; color: var(--ink); }
+.ir-swatch.is-sel { background: #fff5d6; outline: 2px solid var(--accent); }
 .ir-swatch.is-sel .ir-chip { transform: scale(1.06); }
 
 /* 一覧 */

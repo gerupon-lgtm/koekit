@@ -36,14 +36,30 @@ export function lineCells(size, a, b) {
   return out;
 }
 
-// 盤面をDOMグリッドとして描画。opts: {cursor:{row,col}|null, previewCells:[idx], previewColor:index}
+export const colLabel = c => String.fromCharCode(65 + c); // 0→A, 1→B, …
+function hdrEl(text, cls) {
+  const d = document.createElement('div');
+  d.className = 'ir-hdr ' + cls;
+  d.textContent = text;
+  return d;
+}
+
+// 盤面をDOMグリッドとして描画（列名A〜I・行名1〜9のヘッダー付き）。
+// opts: {cursor:{row,col}|null, previewCells:[idx], previewColor:index}
 export function renderBoard(container, state, opts = {}) {
   const { size, cells } = state;
   const { cursor = null, previewCells = [], previewColor = null } = opts;
   const previewSet = new Set(previewCells);
   container.style.setProperty('--n', String(size));
   container.innerHTML = '';
+  // 1行目: 角＋列名（A〜）
+  container.appendChild(hdrEl('', 'ir-corner'));
+  for (let c = 0; c < size; c++) {
+    container.appendChild(hdrEl(colLabel(c), 'ir-hcol' + (cursor && cursor.col === c ? ' is-cur' : '')));
+  }
+  // 各行: 行名（1〜）＋セル
   for (let r = 0; r < size; r++) {
+    container.appendChild(hdrEl(String(r + 1), 'ir-hrow' + (cursor && cursor.row === r ? ' is-cur' : '')));
     for (let c = 0; c < size; c++) {
       const i = idx(size, r, c);
       const cell = document.createElement('div');
