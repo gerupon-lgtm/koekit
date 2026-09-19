@@ -184,13 +184,12 @@ button:focus-visible, a:focus-visible { outline: 3px solid #8a5a3c; outline-offs
 .ir-help-readings { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px 10px; font-size: 14px; }
 .ir-help-readings b { display: inline-block; color: #8a5a3c; width: 20px; }
 .ir-help-readings span:nth-child(1), .ir-help-readings span:nth-child(4), .ir-help-readings span:nth-child(8) { background: #f4e5d6; border-radius: 6px; font-weight: 700; }
-#tutorial-status { flex: 1; min-width: 0; margin: 0 6px; text-align: center; font-size: 12px; line-height: 1.6; color: #8a5a3c; }
+#tutorial-status { flex: 1; min-width: 0; margin: 0 6px; text-align: center; font-size: 14px; line-height: 17px; font-weight: 700; color: #8a5a3c; }
 #tutorial-status span, #tutorial-status strong { display: block; }
-#tutorial-status strong { color: var(--ink); }
+#tutorial-status span:nth-child(2) { font-size: 16px; color: #704b34; }
 /* 練習の目標は既存メッセージ欄の高さを利用。状態通知は読み上げ用に保持。 */
 #tutorial-goal { margin: 6px 2px; min-height: 25.6px; font-size: 16px; line-height: 25.6px; font-weight: 700; text-align: center; color: #704b34; background: #f1e4d4; border-radius: 8px; }
 .ir-practice-msg { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-#tutorial-status { font-size: 11px; line-height: 16px; }
 [data-screen="make"] .ir-icon, [data-screen="make"] .ir-micwrap { flex-shrink: 0; }
 .ir-tutorial-dialog #tutorial-progress { flex: 1; font-size: 13px; font-weight: 700; color: #8a5a3c; }
 .ir-tutorial-dialog #tutorial-heading { font-size: 18px; line-height: 1.6; margin: 12px 0; }
