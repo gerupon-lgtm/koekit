@@ -17,9 +17,11 @@ export const COLORS = [
   { name: 'くろ',     hex: '#2B2B2B' }, // 11
 ];
 
+export const ERASE = -1;   // 消しゴム（未着色 null に戻す）。色indexとは別の特別値
 export function colorHex(index) {
-  return index == null ? null : (COLORS[index]?.hex ?? null);
+  return (index == null || index === ERASE) ? null : (COLORS[index]?.hex ?? null);
 }
 export function colorName(index) {
+  if (index === ERASE) return 'けす';
   return index == null ? '' : (COLORS[index]?.name ?? '');
 }

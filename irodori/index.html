@@ -74,7 +74,21 @@
       </div>
       <button class="ir-save" id="btn-save">ほぞん</button>
     </div>
-    <div class="ir-palhead"><span class="ir-pl">いろ</span><button class="ir-ytoggle" id="btn-read" aria-pressed="false">よみあげ:オフ</button></div>
+    <div class="ir-palhead">
+      <span class="ir-pl">いろ</span>
+      <div class="ir-palctrls">
+        <button class="ir-pc" id="btn-erase" aria-label="けす（むしょくに もどす）">
+          <svg viewBox="0 0 24 24"><path d="M4 15l6-6 8 8-3 3H7z"/><path d="M9 20h11"/></svg><span>けす</span>
+        </button>
+        <button class="ir-pc" id="btn-undo" aria-label="もどす">
+          <svg viewBox="0 0 24 24"><path d="M9 7L4 12l5 5"/><path d="M4 12h11a5 5 0 0 1 0 10h-1"/></svg>
+        </button>
+        <button class="ir-pc" id="btn-redo" aria-label="やりなおし">
+          <svg viewBox="0 0 24 24"><path d="M15 7l5 5-5 5"/><path d="M20 12H9a5 5 0 0 0 0 10h1"/></svg>
+        </button>
+        <button class="ir-ytoggle" id="btn-read" aria-pressed="false">よみあげ:オフ</button>
+      </div>
+    </div>
     <div class="ir-palette" id="palette"></div>
   </section>
 

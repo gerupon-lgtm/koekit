@@ -1,6 +1,6 @@
 // イロドリズム 盤面ロジックと描画 — docs/irodori/screens.md / data-model.md
 // 座標は 0-based（row, col）。音声の「行1-9・列A-I」は app.js 側で 0-based に変換する。
-import { colorHex } from './palette.js';
+import { colorHex, ERASE } from './palette.js';
 
 export function createCells(size) {
   return new Array(size * size).fill(null);
@@ -71,8 +71,8 @@ export function renderBoard(container, state, opts = {}) {
       if (base) cell.style.background = base;
       else cell.classList.add('ir-empty');
       if (previewSet.has(i) && previewColor != null) {
-        cell.classList.add('ir-preview');
-        cell.style.setProperty('--preview', colorHex(previewColor));
+        if (previewColor === ERASE) cell.classList.add('ir-preview-erase'); // 消しゴムのプレビュー
+        else { cell.classList.add('ir-preview'); cell.style.setProperty('--preview', colorHex(previewColor)); }
       }
       if (cursor && cursor.row === r && cursor.col === c) cell.classList.add('ir-cursor');
       container.appendChild(cell);

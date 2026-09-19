@@ -1,14 +1,14 @@
 // イロドリズム メインコントローラ（タッチ中核スライス）
 // 画面: モード選択→サイズ選択→制作→一覧→完成プレビュー。音声(phase.js)・見本は次段で追加。
 // 既存2作品には影響しない（irodori/ 単独 + 共通部品の import のみ）。
-import { COLORS, colorName } from './palette.js';
+import { COLORS, colorName, ERASE } from './palette.js';
 import { createCells, idx, inRange, rectCells, lineCells, renderBoard, renderThumb } from './board.js';
 import * as store from './storage.js';
 import { makeGrammar, parse, colIndex } from './vocabulary.js';
 import { VoiceInput } from './phase.js';
 import { setMicState } from '../src/ui/micstate.js';
 
-const APP_VERSION = 'v0.2.5';
+const APP_VERSION = 'v0.2.6';
 const PREF_READ = 'irodori:readAloud';
 const $ = id => document.getElementById(id);
 const q = sel => document.querySelector(sel);
@@ -28,8 +28,11 @@ let readAloud = false;   // 色名の読み上げ（デフォルトOFF・任意O
 let voice = null;        // VoiceInput
 // 音声の範囲/線オペ：素の座標＝訂正（カーソル移動）、「から」＝始点、「まで」＝終点、「せん」＝線
 let vStart = null;       // 始点 {row,col}（「から」で確定）
-let vEnd = null;         // 終点 {row,col}（「まで」で確定）
+let vEnd = null;         // 終点 {row,col}（「まで」または から以降の座標で確定）
 let vLine = false;       // 「せん」が言われた（線）
+// 履歴（undo/redo・1確定=1手）
+let history = [];        // cells スナップショットの配列
+let histIndex = -1;      // 現在位置
 
 // ---- 画面遷移 ----
 function show(name) {
@@ -84,9 +87,11 @@ function openMake(artwork, existingId) {
   anchor = null;
   previewCells = [];
   vStart = null; vEnd = null; vLine = false;
+  history = [current.cells.slice()]; histIndex = 0; updateUndoRedo();
   setMsg('');
   qa('.ir-tool').forEach(b => b.classList.toggle('is-active', b.dataset.tool === 'single'));
   renderPalette();
+  highlightPaint(null);
   draw();
   show('make');
 }
@@ -113,11 +118,15 @@ function renderPalette() {
 }
 function selectColor(i) {
   pendingColor = i;
-  speak(colorName(i));
-  qa('.ir-swatch').forEach((b, j) => b.classList.toggle('is-sel', j === i));
+  if (i !== ERASE) speak(colorName(i));
+  highlightPaint(i);
   // 単マスで既にカーソルがあればプレビュー
   if (tool === 'single' && cursor) previewCells = [idx(current.size, cursor.row, cursor.col)];
   draw();
+}
+function highlightPaint(i) {
+  qa('.ir-swatch').forEach((b, j) => b.classList.toggle('is-sel', j === i));
+  const e = $('btn-erase'); if (e) e.classList.toggle('is-sel', i === ERASE);
 }
 
 // ---- ツール切替 ----
@@ -158,21 +167,57 @@ function onCellTap(row, col) {
   }
 }
 function onCellDbl(row, col) {
-  // ダブルタップ＝いま選んだ色で直接塗る（色未選択なら無視）
+  // ダブルタップ＝いま選んだ色で直接塗る（色/消しゴム未選択なら無視）
   if (tool !== 'single' || pendingColor == null) return;
-  current.cells[idx(current.size, row, col)] = pendingColor;
-  store.saveDraft(current);
+  paintCells([idx(current.size, row, col)]);
   draw();
 }
 
-// ---- 着色確定（2段階確定 C-3）。プレビュー中のマスを着色し、1マスへ自動で戻る（ワンショット）----
+// マスを着色（消しゴム=null）し、下書き保存＋履歴に1手積む
+function paintCells(cellIdxs) {
+  const v = (pendingColor === ERASE) ? null : pendingColor;
+  cellIdxs.forEach(i => { current.cells[i] = v; });
+  store.saveDraft(current);
+  pushHistory();
+}
+
+// ---- 着色確定（2段階確定 C-3）。プレビュー中のマスを確定し、1マスへ自動で戻る（ワンショット）----
 function confirmApply() {
   if (pendingColor == null || !previewCells.length) return;
-  previewCells.forEach(i => { current.cells[i] = pendingColor; });
-  store.saveDraft(current); // 自動下書き
+  paintCells(previewCells);
   anchor = null; vStart = null; vEnd = null; vLine = false; previewCells = [];
   setMsg(''); setToolVisual('single');
   draw();
+}
+
+// ---- 履歴（undo/redo・1確定=1手） ----
+function pushHistory() {
+  history = history.slice(0, histIndex + 1);
+  history.push(current.cells.slice());
+  if (history.length > 40) history.shift();
+  histIndex = history.length - 1;
+  updateUndoRedo();
+}
+function undo() {
+  if (histIndex <= 0) return;
+  histIndex--;
+  current.cells = history[histIndex].slice();
+  store.saveDraft(current);
+  previewCells = []; setMsg('もどした');
+  updateUndoRedo(); draw();
+}
+function redo() {
+  if (histIndex >= history.length - 1) return;
+  histIndex++;
+  current.cells = history[histIndex].slice();
+  store.saveDraft(current);
+  previewCells = []; setMsg('やりなおした');
+  updateUndoRedo(); draw();
+}
+function updateUndoRedo() {
+  const u = $('btn-undo'), r = $('btn-redo');
+  if (u) u.disabled = histIndex <= 0;
+  if (r) r.disabled = histIndex >= history.length - 1;
 }
 
 // ---- 保存 ----
@@ -254,6 +299,10 @@ function init() {
   $('btn-read').onclick = toggleRead;
   // ヘッダー：ホーム（コエキットへ）。マイクは状態表示（トグルではない）
   $('home-btn').onclick = () => { location.href = '../'; };
+  // パレット付近：けす（消しゴム）・もどす・やりなおし（音声にも対応・C-2）
+  $('btn-erase').onclick = () => selectColor(ERASE);
+  $('btn-undo').onclick = undo;
+  $('btn-redo').onclick = redo;
   // モード選択
   qa('[data-go]').forEach(b => b.onclick = () => {
     const go = b.dataset.go;
@@ -325,8 +374,11 @@ function interpretVoice(tokens) {
       if (t.val === 'save') doSave();
       else if (t.val === 'quit') show('mode');                                   // やめる／おわり
       else if (t.val === 'ok') confirmApply();
-      else if (t.val === 'kara') { vStart = { row: cursor.row, col: cursor.col }; voicePreview(); } // 始点＝いま言った座標
-      else if (t.val === 'made') { vEnd = { row: cursor.row, col: cursor.col }; voicePreview(); }    // 終点＝いま言った座標
+      else if (t.val === 'undo') undo();
+      else if (t.val === 'redo') redo();
+      else if (t.val === 'erase') voiceColor(ERASE);                             // けす（消しゴム）
+      else if (t.val === 'kara') { vStart = { row: cursor.row, col: cursor.col }; voicePreview(); } // 始点＝いま言った座標（範囲モードに入る）
+      else if (t.val === 'made') { vEnd = { row: cursor.row, col: cursor.col }; voicePreview(); }    // 終点（省略可）
       else if (t.val === 'sen') { vLine = true; voicePreview(); }
       i++;
     } else if (t.type === 'color') { voiceColor(t.val); i++; }
@@ -358,6 +410,7 @@ function voiceSetCoord(colLetter, rowDigit) {
   if (colLetter != null) c = colIndex(colLetter);
   if (!inRange(size, r, c)) { sfxWrong(); return; }   // 範囲外は不正解音・位置維持
   cursor = { row: r, col: c };
+  if (vStart) vEnd = { row: r, col: c };              // 「から」の後の座標は終点（まで省略可・言い直しは最後が有効）
   voicePreview();
 }
 function voiceMove(dir, steps) {
@@ -369,8 +422,8 @@ function voiceMove(dir, steps) {
 }
 function voiceColor(i) {
   pendingColor = i;
-  speak(colorName(i));
-  qa('.ir-swatch').forEach((b, j) => b.classList.toggle('is-sel', j === i));
+  if (i !== ERASE) speak(colorName(i));
+  highlightPaint(i);
   voicePreview();
 }
 // 始点＋終点が揃えば範囲/線、揃わなければ現在マスの1マス（せん/からの退化＝キャンセル）
