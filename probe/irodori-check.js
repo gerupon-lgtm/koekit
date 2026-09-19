@@ -1,4 +1,4 @@
-// ヌリリズム 聞き分けプローブ（実験台 / NR-04）
+// イロドリズム 聞き分けプローブ（実験台 / NR-04）
 //
 // 目的: 認識モード（制限文法 / 自由）× 照合方式（完全一致 / 前方一致 / regexテーブル）を
 //       同じ発話で測り比べ、区間ごとに最適な組み合わせを数字で絞る。
@@ -371,7 +371,7 @@ window.addEventListener('unhandledrejection', e => log(`非同期エラー: ${e.
 
 $('copy').onclick = async () => {
   const lines = [];
-  lines.push(`ヌリリズム 聞き分けチェック結果 ${VERSION}  ${new Date().toLocaleString('ja-JP')}`);
+  lines.push(`イロドリズム 聞き分けチェック結果 ${VERSION}  ${new Date().toLocaleString('ja-JP')}`);
   lines.push(navigator.userAgent);
   for (const set of SETS) {
     if (!set.items.some(it => it.said)) continue;
