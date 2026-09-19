@@ -12,7 +12,7 @@ import { Tutorial, createTutorialGuide } from './tutorial.js';
 import { TEMPLATES, CATEGORIES, findTemplate, matchesTemplate } from './templates.js';
 import { HEART_RECIPE } from './recipes.js';
 
-const APP_VERSION = 'v0.5.4';
+const APP_VERSION = 'v0.5.5';
 const PREF_READ = 'irodori:readAloud';
 const $ = id => document.getElementById(id);
 const q = sel => document.querySelector(sel);
@@ -141,6 +141,7 @@ function showTemplateReference() {
   renderTemplateReference();
   updateTemplateToggle();
   $('template-dialog').showModal();
+  if (heartExplanationOpen()) void enableVoice();
 }
 
 function renderTemplateReference() {
@@ -158,7 +159,7 @@ function renderTemplateReference() {
   renderThumb($('template-canvas'), step ? {size:5,cells:step.snapshot} : template);
   $('template-canvas').setAttribute('aria-label', step ? `はーとの ${recipePage+1}てめを ぬった おてほん` : template.name+'の いろつき おてほん');
   $('template-caption').textContent = step ? 'この てじゅんで ぬった あとの かたち' : `${template.size} × ${template.size} の おてほん`;
-  $('template-done').textContent = step ? 'やってみる' : 'ぬる';
+  $('template-done').textContent = step ? 'オッケーで はじめる' : 'ぬる';
   if (step) {
     $('recipe-title').textContent = step.title;
     $('recipe-words').replaceChildren(...step.words.map(word=>{const span=document.createElement('span');span.textContent=word;return span;}));
@@ -501,7 +502,7 @@ function init() {
   $('recipe-prev').onclick = () => { recipePage = Math.max(0,recipePage-1); renderTemplateReference(); };
   $('recipe-next').onclick = () => { recipePage = Math.min(HEART_RECIPE.length-1,recipePage+1); renderTemplateReference(); };
   $('template-close').onclick = $('template-done').onclick = () => $('template-dialog').close();
-  $('template-dialog').addEventListener('close', () => { if (activeScreen === 'make') void enableVoice(); });
+  $('template-dialog').addEventListener('close', () => { voice?.disable(); if (activeScreen === 'make') void enableVoice(); });
   $('template-guide-toggle').onclick = () => {
     templateGuideVisible = !templateGuideVisible;
     updateTemplateToggle(); draw();
@@ -569,18 +570,25 @@ function onVoiceState(s) {
   if (s === 'listening') setMsg('こえで いえるよ');
   else if (s === 'denied') setMsg('マイクが つかえないよ（タッチでOK）');
 }
+function heartExplanationOpen() {
+  return $('template-dialog').open && current?.templateId === 'heart-5';
+}
 async function enableVoice() {
   const request = ++voiceRequest;
-  if (activeScreen !== 'make' || help.open || $('template-dialog').open) return;
+  if (activeScreen !== 'make' || help.open || ($('template-dialog').open && !heartExplanationOpen())) return;
   if (!voice) { voice = new VoiceInput({ onText: onVoiceText, onState: onVoiceState }); voice.setGrammar(makeGrammar()); }
   if (voice.active) return;
-  voice.setGrammar(tutorialGuide.open ? ['オーケー', 'オッケー', 'つぎ', '次', 'やめる', 'おわり'] : tutorial ? [...makeGrammar(), 'つぎ', '次'] : makeGrammar());
+  voice.setGrammar(heartExplanationOpen() ? ['オッケー','オーケー','おっけー','おーけー'] : tutorialGuide.open ? ['オーケー', 'オッケー', 'つぎ', '次', 'やめる', 'おわり'] : tutorial ? [...makeGrammar(), 'つぎ', '次'] : makeGrammar());
   if (!(await voice.isAvailable())) { setMsg('このブラウザは こえが つかえないよ（タッチでOK）'); micState('denied'); return; }
-  if (request !== voiceRequest || activeScreen !== 'make' || help.open || $('template-dialog').open) return;
+  if (request !== voiceRequest || activeScreen !== 'make' || help.open || ($('template-dialog').open && !heartExplanationOpen())) return;
   await voice.enable();
 }
 function onVoiceText(text) {
-  if (activeScreen !== 'make' || help.open || $('template-dialog').open) return;
+  if (activeScreen !== 'make' || help.open || ($('template-dialog').open && !heartExplanationOpen())) return;
+  if ($('template-dialog').open) {
+    if (heartExplanationOpen() && /^(オーケー|オッケー|おーけー|おっけー)$/.test(text.replace(/\s/g,''))) $('template-dialog').close();
+    return;
+  }
   if (tutorialGuide.open) {
     if (/^(やめる|おわり|終わり)$/.test(text.trim())) show('mode');
     else if (/^(つぎ|次|オーケー|オッケー|おーけー|おっけー)$/.test(text.trim())) tutorialGuide.primary();
