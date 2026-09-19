@@ -29,8 +29,8 @@ export function buildLevelSelect(wrapEl, levels, onPick, progress) {
   }
 }
 
-// メモリズムは通常／スピードを切り替え、内容だけを大きく表示する。
-export function buildMemoryLevelSelect(wrapEl, levels, onPick, progress) {
+// 通常／スピードを切り替え、内容だけを大きく表示する共通メニュー。
+export function buildGroupedLevelSelect(wrapEl, levels, onPick, progress) {
   const isSpeedLevel = level => level.speed === true || level.id === 'extra';
   const sequence = levels.some(level => level.steps);
   const names = { '1': 'ひだり・みぎ', '2': 'うえ・した', '3': 'まんなか', '4': 'ななめ', '5': '9つのばしょ', extra: '9つのばしょ' };

@@ -14,8 +14,15 @@ const assert = require('node:assert/strict');
   const advance = ms => page.clock.runFor(ms);
   for (const game of ['kioku','doubutsu']) {
     await page.goto('http://127.0.0.1:8000/'+game+'/');
-    assert.equal(await page.locator(game==='kioku' ? 'button[data-speed="true"]' : '[data-level="extra"]').isDisabled(),true);
+    assert.equal(await page.locator('button[data-speed="true"]').isDisabled(),true);
     assert.match(await page.locator('#highest-title').innerText(),/これから/);
+    if (game === 'doubutsu') {
+      await page.locator('#start-play').click();
+      assert.equal(await page.locator('#level-intro').evaluate(e => e.open), true);
+      await page.locator('#intro-go').click();
+      assert.equal(await page.locator('#roulette-num').isVisible(), true);
+      await page.locator('#to-title').click();
+    }
     await page.locator('[data-level="1"]').click(); await page.locator('#intro-go').click();
     for(let n=0;n<(game==='kioku'?1:3);n++) {
       if(game==='kioku') {
@@ -42,10 +49,16 @@ const assert = require('node:assert/strict');
     assert.equal(await page.locator('[data-level="1"]').evaluate(e=>e.classList.contains('completed')),true);
     const key='koekit.progress.v1.'+(game==='kioku'?'kioku-place':'doubutsu');
     await page.evaluate(key=>localStorage.setItem(key,JSON.stringify(['5'])),key); await page.reload(); await page.locator('#highest-title strong').waitFor();
-    assert.equal(await page.locator(game==='kioku' ? 'button[data-speed="true"]' : '[data-level="extra"]').isDisabled(),true);
+    assert.equal(await page.locator('button[data-speed="true"]').isDisabled(),true);
     await page.evaluate(key=>localStorage.setItem(key,JSON.stringify(['1','2','3','4','5','extra'])),key); await page.reload(); await page.locator('#highest-title strong').waitFor();
-    assert.equal(await page.locator(game==='kioku' ? 'button[data-speed="true"]' : '[data-level="extra"]').isDisabled(),false);
+    assert.equal(await page.locator('button[data-speed="true"]').isDisabled(),false);
     assert.match(await page.locator('#highest-title').innerText(),/スピードマスター/);
+    await page.locator('button[data-speed="true"]').click();
+    await page.locator('[data-level="extra"]').click();
+    assert.equal(await page.locator('#level-intro').evaluate(e => e.open), true);
+    await page.locator('#intro-back').click();
+    assert.equal(await page.locator('button[data-speed="true"]').getAttribute('aria-pressed'), 'true');
+    await page.locator('button[data-speed="false"]').click();
     for(const [width,height] of [[320,568],[390,844],[768,1024]]) {
       await page.setViewportSize({width,height});
       assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);

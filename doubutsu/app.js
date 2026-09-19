@@ -28,7 +28,7 @@ import { LevelNavigation } from '../src/ui/levelnavigation.js';
 import { CardReveal } from '../src/ui/cardreveal.js';
 import { BoardView } from '../src/ui/board.js';
 import { renderCertificate } from '../src/ui/certificate.js';
-import { buildLevelSelect as buildLevelSelectUI } from '../src/ui/levelselect.js';
+import { buildGroupedLevelSelect as buildLevelSelectUI } from '../src/ui/levelselect.js';
 import { setMicState as setMicStateUI } from '../src/ui/micstate.js';
 
 const $ = s => document.querySelector(s);
@@ -456,7 +456,7 @@ function flash(sel, text) { const b = $(sel), old = b.textContent; b.textContent
 
 // ---- 配線 ----
 function refreshProgress() {
-  buildLevelSelectUI($('#level-select'), LEVELS, startLevel, progress);
+  buildLevelSelectUI($('#level-select'), LEVELS.filter(l => l.id !== '0'), startLevel, progress);
   renderHighest($('#highest-title'), progress);
 }
 refreshProgress();
