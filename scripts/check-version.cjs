@@ -19,7 +19,7 @@ function checkVersions(read = name => fs.readFileSync(path.join(root, name), 'ut
       const html = read(name);
       const footers = [...html.matchAll(/<footer\b[^>]*class="title-footer"[^>]*>([\s\S]*?)<\/footer>/g)];
       const title = html.match(/<section\b[^>]*id="title"[^>]*>([\s\S]*?)<\/section>/)?.[1] || '';
-      check(footers.length === 1 && footers[0][1].match(/\bv(\d+\.\d+\.\d+)\b/)?.[1] === version, `${name}: フッタの版が不一致／欠落／重複`);
+      check(footers.length === 1 && footers[0][1].match(/\bv([^\s<&]+)/)?.[1] === version, `${name}: フッタの版が不一致／欠落／重複`);
       check(footers.length === 1 && title.includes(footers[0][0]), `${name}: フッタがタイトル画面内にない`);
       check(footers.length === 1 && footers[0][1].includes('© 2026 SIKUMI LAB'), `${name}: 著作権表記が不一致`);
     }
