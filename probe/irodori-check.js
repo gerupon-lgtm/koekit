@@ -14,7 +14,7 @@ import { VoskAdapter } from '../src/speech/vosk.js';
 import { normalize } from '../src/speech/vocabulary.js';
 import { makeGrammar, parse as parseProduction } from '../irodori/vocabulary.js';
 
-const VERSION = 'v11';
+const VERSION = 'v12';
 const $ = id => document.getElementById(id);
 const nowText = () => new Date().toLocaleTimeString('ja-JP');
 const log = t => { const el = $('log'); el.textContent += `${nowText()} ${t}\n`; el.scrollTop = el.scrollHeight; };
@@ -358,7 +358,7 @@ function onResult(text) {
     const { row, col } = productionTokens
       ? { row: productionTokens.find(t => t.type === 'digit')?.val ?? null, col: productionTokens.find(t => t.type === 'col')?.val ?? null }
       : parseTokens(text);
-    if (productionTokens) log(`  本番解析: ${JSON.stringify(productionTokens)} → ${col || '?'}${row || '?'}${productionTokens.some(t => t.type === 'dir') ? '（方向語あり：本番では相対移動として処理）' : !col && row && productionTokens.every(t => t.type === 'digit') ? '（列なし：本番では直前の列を維持）' : ''}`);
+    if (productionTokens) log(`  本番解析: ${JSON.stringify(productionTokens)} → ${col || '?'}${row || '?'}${productionTokens.some(t => t.type === 'dir') ? '（方向語あり：本番では相対移動として処理）' : !col && row && productionTokens.every(t => t.type === 'digit') ? '（数字のみ：本番では移動しない）' : ''}`);
     target.said++;
     if (row === target.row && col === target.col) target.correct++;
     else if (row === null && col === null) { target.unknown++; log(`  → 未認識: 「${text}」`); }

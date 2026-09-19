@@ -10,7 +10,7 @@ import { setMicState } from '../src/ui/micstate.js';
 import { createHelp } from './help.js';
 import { Tutorial, createTutorialGuide } from './tutorial.js';
 
-const APP_VERSION = 'v0.4.11';
+const APP_VERSION = 'v0.4.12';
 const PREF_READ = 'irodori:readAloud';
 const $ = id => document.getElementById(id);
 const q = sel => document.querySelector(sel);
@@ -510,8 +510,9 @@ function setToolVisual(t) {
   tool = t;
   qa('.ir-tool').forEach(b => b.classList.toggle('is-active', b.dataset.tool === t));
 }
-// 素の座標＝カーソル移動（列だけ/行だけの指定は他方を保持＝訂正しやすい）
+// 数字だけの絶対座標は無視。列指定を伴う言い直し・列だけの訂正は維持。
 function voiceSetCoord(colLetter, rowDigit) {
+  if (colLetter == null) return; // 列の認識脱落で現在列の別の行へ動くのを防ぐ
   const size = current.size;
   let r = cursor.row, c = cursor.col;
   if (rowDigit != null) r = Number(rowDigit) - 1;
