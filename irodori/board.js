@@ -48,7 +48,7 @@ function hdrEl(text, cls) {
 // opts: {cursor:{row,col}|null, previewCells:[idx], previewColor:index}
 export function renderBoard(container, state, opts = {}) {
   const { size, cells } = state;
-  const { cursor = null, previewCells = [], previewColor = null } = opts;
+  const { cursor = null, previewCells = [], previewColor = null, template = null } = opts;
   const previewSet = new Set(previewCells);
   container.style.setProperty('--n', String(size));
   container.innerHTML = '';
@@ -73,6 +73,15 @@ export function renderBoard(container, state, opts = {}) {
       if (previewSet.has(i) && previewColor != null) {
         if (previewColor === ERASE) cell.classList.add('ir-preview-erase'); // 消しゴムのプレビュー
         else { cell.classList.add('ir-preview'); cell.style.setProperty('--preview', colorHex(previewColor)); }
+      }
+      if (template && template.cells[i] != null) {
+        cell.classList.add('ir-template-cell');
+        if (!base) {
+          const ghost = document.createElement('span');
+          ghost.className = 'ir-template-ghost'; ghost.setAttribute('aria-hidden', 'true');
+          ghost.style.background = colorHex(template.cells[i]);
+          cell.append(ghost);
+        }
       }
       if (cursor && cursor.row === r && cursor.col === c) cell.classList.add('ir-cursor');
       container.appendChild(cell);

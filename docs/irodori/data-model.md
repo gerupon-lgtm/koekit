@@ -43,3 +43,7 @@
 - 読み込み時 JSON パース失敗 → その作品はスキップし壊れたデータで全消ししない。`try/catch` で握る。
 - `localStorage` が使えない/満杯（QuotaExceeded）→ 保存失敗を明示（「ほぞんできなかったよ」）、既存データは保持。
 - スキーマ版が想定外 → 破壊的変換をせず、読めるものだけ読む。
+
+## テンプレート参照（v0.5.0）
+
+`irodori/templates.js` の `{id,name,category,size,cells}` を原本とする。3カテゴリ12点、cellsは既存色index/null。各IDは保存作品から参照されるため変更・再利用しない。Artworkスキーマは1のまま、mode=template/templateIdを利用する。Artwork.cellsはユーザーが塗ったデータだけ（下絵は含めない）。完全一致は全セル比較で、白と未着色は区別する。ID不明またはsize不一致は参照なしとして下絵を省略し、既存の着色・編集・保存を保持する。

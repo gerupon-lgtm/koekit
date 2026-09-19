@@ -27,7 +27,7 @@
     <div class="ir-menu">
       <button class="ir-big" data-go="free">じゆうに つくる</button>
       <button class="ir-big ir-sub" data-go="tutorial">こえと タッチの れんしゅう <small>9 × 9で、4つの おためし</small></button>
-      <button class="ir-big" data-go="template" disabled>おてほんを ぬる <small>じゅんびちゅう</small></button>
+      <button class="ir-big" data-go="template">おてほんを ぬる <small>かたちを えらんで、いろあそび</small></button>
       <button class="ir-big ir-sub" data-go="list">さくひん</button>
     </div>
     <p class="ir-foot"><span id="ver"></span>　© 2026 SIKUMI LAB</p>
@@ -48,6 +48,15 @@
       <button class="ir-big" data-size="7">7 × 7</button>
       <button class="ir-big" data-size="9">9 × 9</button>
     </div>
+  </section>
+
+  <section class="screen" data-screen="templates" hidden>
+    <header class="ir-hd"><button class="ir-icon" data-back="mode" aria-label="もどる">←</button><h2 class="ir-h2">おてほん</h2><button class="ir-icon ir-help-open" aria-label="つかいかた">？</button></header>
+    <p class="ir-intro">すきな かたちを えらぼう。いろは かえても いいよ。</p>
+    <div id="template-sizes" class="ir-template-filters" aria-label="おおきさ"></div>
+    <div id="template-categories" class="ir-template-filters" aria-label="しゅるい"></div>
+    <div id="template-gallery" class="ir-template-gallery"></div>
+    <p id="template-empty" class="ir-intro" hidden>この おおきさには まだ ないよ。ほかも みてね。</p>
   </section>
 
   <!-- ④ 制作 -->
@@ -71,6 +80,7 @@
       <button class="ir-icon ir-help-open" aria-label="つかいかた" title="つかいかた">？</button>
     </header>
     <p id="tutorial-goal" hidden></p>
+    <button id="template-reference" hidden></button>
     <p class="ir-msg" id="make-msg" role="status"></p>
     <div class="ir-board" id="board"></div>
     <button class="ir-confirm" id="btn-confirm" disabled>オーケー（きめる）</button>
@@ -125,6 +135,14 @@
   </section>
 
 </main>
+<dialog id="template-dialog" class="ir-help ir-template-dialog" aria-labelledby="template-title">
+  <div class="ir-help-head"><h2 id="template-title"></h2><button id="template-close" class="ir-help-close" aria-label="とじる">×</button></div>
+  <canvas id="template-canvas" class="ir-template-picture" role="img"></canvas>
+  <p id="template-caption"></p>
+  <p>おなじ いろでも、すきな いろでも。</p>
+  <button id="template-guide-toggle" class="ir-mini" aria-pressed="true">したえ：オン</button>
+  <button id="template-done" class="ir-help-done">ぬる</button>
+</dialog>
 <script type="module" src="./app.js"></script>
 </body>
 </html>

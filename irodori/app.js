@@ -1,5 +1,5 @@
 // イロドリズム メインコントローラ（タッチ中核スライス）
-// 画面: モード選択→サイズ選択→制作→一覧→完成プレビュー。音声(phase.js)・見本は次段で追加。
+// 画面: モード選択→サイズ/見本選択→制作→一覧→完成プレビュー。
 // 既存2作品には影響しない（irodori/ 単独 + 共通部品の import のみ）。
 import { COLORS, colorName, ERASE } from './palette.js';
 import { createCells, idx, inRange, rectCells, lineCells, renderBoard, renderThumb } from './board.js';
@@ -9,8 +9,9 @@ import { VoiceInput } from './phase.js';
 import { setMicState } from '../src/ui/micstate.js';
 import { createHelp } from './help.js';
 import { Tutorial, createTutorialGuide } from './tutorial.js';
+import { TEMPLATES, CATEGORIES, findTemplate, matchesTemplate } from './templates.js';
 
-const APP_VERSION = 'v0.4.12';
+const APP_VERSION = 'v0.5.0';
 const PREF_READ = 'irodori:readAloud';
 const $ = id => document.getElementById(id);
 const q = sel => document.querySelector(sel);
@@ -40,6 +41,7 @@ let help;
 let tutorial = null;
 let tutorialGuide, tutorialTimer, undoAnnounced = false;
 let voiceRequest = 0;
+let templateSize = 'all', templateCategory = 'all', templateGuideVisible = true;
 
 // ---- 画面遷移 ----
 function show(name) {
@@ -50,6 +52,7 @@ function show(name) {
     tutorial = null;
     clearTimeout(tutorialTimer);
     tutorialGuide?.close();
+    $('template-dialog').close();
   }
   if (name === 'make') {
     if (!tutorial && !help.seen) help.show(name);
@@ -57,6 +60,7 @@ function show(name) {
   }
   if (name === 'mode') renderMode();
   if (name === 'list') renderList();
+  if (name === 'templates') renderTemplates();
   window.scrollTo(0, 0);
 }
 
@@ -89,6 +93,51 @@ function renderMode() {
   }
 }
 
+// ---- 見本選択・参照（既存の保存データにはIDだけを持つ） ----
+function renderTemplates() {
+  function filters(id, choices, selected, onSelect) {
+    const host = $(id); host.replaceChildren();
+    for (const [value, label] of choices) {
+      const button = mkBtn(label, () => { onSelect(value); renderTemplates(); });
+      button.setAttribute('aria-pressed', String(value === selected)); host.append(button);
+    }
+  }
+  filters('template-sizes', [['all', 'ぜんぶ'], ...[3,5,7,9].map(n => [String(n), `${n} × ${n}`])], templateSize, value => { templateSize = value; });
+  filters('template-categories', [['all', 'ぜんぶ'], ...Object.entries(CATEGORIES)], templateCategory, value => { templateCategory = value; });
+  const gallery = $('template-gallery'); gallery.replaceChildren();
+  const items = TEMPLATES.filter(t => (templateSize === 'all' || t.size === Number(templateSize)) && (templateCategory === 'all' || t.category === templateCategory));
+  $('template-empty').hidden = items.length > 0;
+  for (const t of items) {
+    const button = document.createElement('button'); button.className = 'ir-template-choice'; button.dataset.template = t.id;
+    button.setAttribute('aria-label', `${t.name} ${t.size}かける${t.size}`);
+    const canvas = document.createElement('canvas'); canvas.className = 'ir-template-picture'; canvas.setAttribute('aria-hidden', 'true'); renderThumb(canvas, t);
+    const name = document.createElement('strong'); name.textContent = t.name;
+    const size = document.createElement('span'); size.textContent = `${t.size} × ${t.size}`;
+    button.append(canvas, name, size);
+    button.onclick = () => {
+      tutorial = null;
+      openMake({ id: store.newId(), size: t.size, cells: createCells(t.size), mode: 'template', templateId: t.id, createdAt: null }, null);
+    };
+    gallery.append(button);
+  }
+}
+function updateTemplateToggle() {
+  $('template-guide-toggle').textContent = 'したえ：' + (templateGuideVisible ? 'オン' : 'オフ');
+  $('template-guide-toggle').setAttribute('aria-pressed', String(templateGuideVisible));
+}
+function showTemplateReference() {
+  const template = findTemplate(current?.templateId, current?.size);
+  if (!template) return;
+  voice?.disable();
+  try { speechSynthesis.cancel(); } catch {}
+  $('template-title').textContent = template.name;
+  $('template-caption').textContent = `${template.size} × ${template.size} の おてほん`;
+  $('template-canvas').setAttribute('aria-label', template.name + 'の いろつき おてほん');
+  renderThumb($('template-canvas'), template);
+  updateTemplateToggle();
+  $('template-dialog').showModal();
+}
+
 // ---- 制作開始 ----
 function startNew(size, mode) {
   tutorial = null;
@@ -98,6 +147,7 @@ function startNew(size, mode) {
 function openMake(artwork, existingId) {
   current = { ...artwork, cells: artwork.cells.slice() };
   savedId = existingId;
+  templateGuideVisible = true;
   cursor = { row: 0, col: 0 };
   pendingColor = null;
   tool = 'single';
@@ -119,7 +169,11 @@ function setMsg(t) {
 }
 
 function draw() {
-  renderBoard($('board'), current, { cursor, previewCells, previewColor: pendingColor });
+  const template = current.mode === 'template' ? findTemplate(current.templateId, current.size) : null;
+  renderBoard($('board'), current, { cursor, previewCells, previewColor: pendingColor, template: templateGuideVisible ? template : null });
+  $('template-reference').hidden = !template;
+  if (template) $('template-reference').textContent = matchesTemplate(current.cells, template)
+    ? 'おてほんと おなじに できた！　みる ↗' : `${template.name}　おてほんを みる ↗`;
   $('btn-confirm').disabled = !(previewCells.length && pendingColor != null);
   $('tutorial-status').hidden = false;
   $('tutorial-status').replaceChildren();
@@ -382,6 +436,13 @@ function init() {
     else if (tutorial) tutorialGuide.show(tutorial.undoReady ? 'undo' : 'lesson', tutorial);
     else help.show(activeScreen);
   }; });
+  $('template-reference').onclick = showTemplateReference;
+  $('template-close').onclick = $('template-done').onclick = () => $('template-dialog').close();
+  $('template-dialog').addEventListener('close', () => { if (activeScreen === 'make') void enableVoice(); });
+  $('template-guide-toggle').onclick = () => {
+    templateGuideVisible = !templateGuideVisible;
+    updateTemplateToggle(); draw();
+  };
   $('ver').textContent = APP_VERSION;
   try { readAloud = localStorage.getItem(PREF_READ) === '1'; } catch { readAloud = false; }
   updateReadBtn();
@@ -398,7 +459,7 @@ function init() {
     if (go === 'free') show('size');
     else if (go === 'tutorial') startTutorial();
     else if (go === 'list') show('list');
-    else if (go === 'template') setModeNote('おてほんは じゅんびちゅう（つぎの だんかい）');
+    else if (go === 'template') show('templates');
   });
   // サイズ選択
   qa('[data-size]').forEach(b => b.onclick = () => startNew(Number(b.dataset.size), 'free'));
@@ -447,16 +508,16 @@ function onVoiceState(s) {
 }
 async function enableVoice() {
   const request = ++voiceRequest;
-  if (activeScreen !== 'make' || help.open) return;
+  if (activeScreen !== 'make' || help.open || $('template-dialog').open) return;
   if (!voice) { voice = new VoiceInput({ onText: onVoiceText, onState: onVoiceState }); voice.setGrammar(makeGrammar()); }
   if (voice.active) return;
   voice.setGrammar(tutorialGuide.open ? ['オーケー', 'オッケー', 'つぎ', '次', 'やめる', 'おわり'] : tutorial ? [...makeGrammar(), 'つぎ', '次'] : makeGrammar());
   if (!(await voice.isAvailable())) { setMsg('このブラウザは こえが つかえないよ（タッチでOK）'); micState('denied'); return; }
-  if (request !== voiceRequest || activeScreen !== 'make' || help.open) return;
+  if (request !== voiceRequest || activeScreen !== 'make' || help.open || $('template-dialog').open) return;
   await voice.enable();
 }
 function onVoiceText(text) {
-  if (activeScreen !== 'make' || help.open) return;
+  if (activeScreen !== 'make' || help.open || $('template-dialog').open) return;
   if (tutorialGuide.open) {
     if (/^(やめる|おわり|終わり)$/.test(text.trim())) show('mode');
     else if (/^(つぎ|次|オーケー|オッケー|おーけー|おっけー)$/.test(text.trim())) tutorialGuide.primary();
