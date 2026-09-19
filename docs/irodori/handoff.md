@@ -2,7 +2,7 @@
 
 コエキット3本目「**イロドリズム**」（声＋タッチのドット絵/塗り絵制作PWA）を Claude Code で作成しました。ここから Codex が引き継ぎます。この文書＝入口。まず読む順：この handoff → [基本設計サマリ.md](基本設計サマリ.md) → [implementation-guide.md](implementation-guide.md) → [tasks.md](tasks.md)。要件は [../requirements-irodori.md](../requirements-irodori.md)、音声実測は [../irodori-voice-probe-results.md](../irodori-voice-probe-results.md)。
 
-現在版：**v0.5.5**（`irodori/app.js` の `APP_VERSION`）。本番：`https://gerupon-lgtm.github.io/koekit/irodori/`（＝`https://koekit.sikumilab.com/irodori/`）。
+現在版：**v0.5.6**（`irodori/app.js` の `APP_VERSION`）。本番：`https://gerupon-lgtm.github.io/koekit/irodori/`（＝`https://koekit.sikumilab.com/irodori/`）。
 
 ## 2026-09-19 Codexによる基盤統合
 
@@ -188,3 +188,6 @@ H1/H5/H9各3回の確認済み。座標8/9、H自体は9/9。失敗は「えっ�
 
 ## v0.5.5 ハートの説明を音声で閉じる
 ハートのお手本・手順ダイアログは「オッケー」「オーケー」で閉じて制作へ戻れる。説明中は確定語のみの専用文法を使用し、座標・色・着色処理へ発話を渡さない。閉じる際に制作文法へ切り替える。ほかのお手本は従来どおり説明中の音声停止。タッチで閉じる操作も維持。
+
+## v0.5.6 メニュー順
+発案者指定の順序へ変更：かきかけをつづける（下書きありの場合）→こえとタッチのれんしゅう→おてほんをぬる→じゆうにつくる→さくひん。表示名と各機能は維持。

@@ -12,7 +12,7 @@ import { Tutorial, createTutorialGuide } from './tutorial.js';
 import { TEMPLATES, CATEGORIES, findTemplate, matchesTemplate } from './templates.js';
 import { HEART_RECIPE } from './recipes.js';
 
-const APP_VERSION = 'v0.5.5';
+const APP_VERSION = 'v0.5.6';
 const PREF_READ = 'irodori:readAloud';
 const $ = id => document.getElementById(id);
 const q = sel => document.querySelector(sel);
