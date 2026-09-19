@@ -2,7 +2,7 @@
 
 コエキット3本目「**イロドリズム**」（声＋タッチのドット絵/塗り絵制作PWA）を Claude Code で作成しました。ここから Codex が引き継ぎます。この文書＝入口。まず読む順：この handoff → [基本設計サマリ.md](基本設計サマリ.md) → [implementation-guide.md](implementation-guide.md) → [tasks.md](tasks.md)。要件は [../requirements-irodori.md](../requirements-irodori.md)、音声実測は [../irodori-voice-probe-results.md](../irodori-voice-probe-results.md)。
 
-現在版：**v0.5.3**（`irodori/app.js` の `APP_VERSION`）。本番：`https://gerupon-lgtm.github.io/koekit/irodori/`（＝`https://koekit.sikumilab.com/irodori/`）。
+現在版：**v0.5.4**（`irodori/app.js` の `APP_VERSION`）。本番：`https://gerupon-lgtm.github.io/koekit/irodori/`（＝`https://koekit.sikumilab.com/irodori/`）。
 
 ## 2026-09-19 Codexによる基盤統合
 
@@ -182,3 +182,6 @@ H1/H5/H9各3回の確認済み。座標8/9、H自体は9/9。失敗は「えっ�
 
 ## v0.5.3 フレアのお手本（2026-09-19）
 利用者の添付図を参考に、青い左右の翼・黄色い胴と尾・オレンジの頭を9×9へアレンジした「ほしの とり フレア」（`flare-9`）を追加。「キャラクター」カテゴリを新設し、見本は計13種。背景は未着色として扱い、色変更・下絵・保存・再編集は共通のお手本機能を使う。添付写真そのものは配信しない。
+
+## v0.5.4 フレアの配色変更
+発案者の指示で `flare-9` の頭をオレンジから赤へ変更。既存の保存作品の着色は変更せず、お手本・下絵へ反映。
