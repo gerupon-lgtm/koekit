@@ -7,9 +7,12 @@
 body{font-family:system-ui,sans-serif;background:#faf5ed;color:#493f36;margin:0;padding:24px;line-height:1.7}
 main{max-width:680px;margin:auto}
 h1{font-size:22px}
+h1 #ver{font-size:13px;color:#a08bbf;font-weight:normal}
 h2{font-size:17px;margin:20px 0 6px}
 button{font:inherit;font-weight:bold;padding:12px 16px;border:0;border-radius:16px;background:#dce9d5;color:#30462e;margin:6px 6px 6px 0;min-height:52px}
 button.set{background:#e7ddef;color:#3d2f4a}
+button.mode{background:#f0e6d2;color:#5a4a2e}
+button.mode.active{background:#c9a84c;color:#332600}
 button:disabled{opacity:.45}
 #status{font-weight:bold}
 table{border-collapse:collapse;width:100%;font-size:14px;margin-top:8px}
@@ -21,7 +24,7 @@ a{color:inherit}
 .small{font-size:13px;color:#7a6f62}
 </style>
 <main>
-<h1>ヌリリズム 聞き分けチェック</h1>
+<h1>ヌリリズム 聞き分けチェック <span id="ver"></span></h1>
 <p class="small">保護者向けの確認ページです。ヌリリズムで使う語（座標・色・移動など）を Vosk が聞き分けられるかを、区間ごとに確かめます。音声は端末内で処理し、外部へ送信しません。初回は約50MBのモデルを読み込みます。<b>既存アプリには影響しません（音声入力層を読み込むだけの独立ページです）。</b></p>
 
 <h2>1. 準備</h2>
@@ -29,11 +32,15 @@ a{color:inherit}
 <button id="stop" disabled>停止</button>
 <p id="status" role="status">確認プログラムを読み込んでいます…</p>
 
-<h2>2. 区間を選ぶ</h2>
-<p class="small">ボタンを押すと、その区間で受け付ける語だけを認識対象にします。表の語を上から順に、はっきり2〜3回ずつ読み上げてください。</p>
+<h2>2. 認識モード</h2>
+<p class="small">同じ語を、制限文法（候補を絞る）と自由（絞らない）で測り比べます。区間を押す前に選んでください。単語区間（色・列・行・範囲・確定）では、認識結果を「完全一致／前方一致／regexテーブル」の3方式で同時に採点します。</p>
+<div id="modes"></div>
+
+<h2>3. 区間を選ぶ</h2>
+<p class="small">ボタンを押すと計測開始。表の語を上から順に、はっきり2〜3回ずつ読み上げてください。</p>
 <div id="sets"></div>
 
-<h2>3. 結果</h2>
+<h2>4. 結果</h2>
 <p class="small">「言った回数」に対して「正しく認識」と「取り違え（別の語に化けた）」を数えます。取り違えが多い語が、実装前に語彙・色数を調整すべき候補です。</p>
 <div id="result"></div>
 
