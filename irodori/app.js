@@ -9,7 +9,7 @@ import { VoiceInput } from './phase.js';
 import { setMicState } from '../src/ui/micstate.js';
 import { createHelp } from './help.js';
 
-const APP_VERSION = 'v0.3.0';
+const APP_VERSION = 'v0.3.1';
 const PREF_READ = 'irodori:readAloud';
 const $ = id => document.getElementById(id);
 const q = sel => document.querySelector(sel);

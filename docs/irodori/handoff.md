@@ -2,7 +2,7 @@
 
 コエキット3本目「**イロドリズム**」（声＋タッチのドット絵/塗り絵制作PWA）を Claude Code で作成しました。ここから Codex が引き継ぎます。この文書＝入口。まず読む順：この handoff → [基本設計サマリ.md](基本設計サマリ.md) → [implementation-guide.md](implementation-guide.md) → [tasks.md](tasks.md)。要件は [../requirements-irodori.md](../requirements-irodori.md)、音声実測は [../irodori-voice-probe-results.md](../irodori-voice-probe-results.md)。
 
-現在版：**v0.3.0**（`irodori/app.js` の `APP_VERSION`）。本番：`https://gerupon-lgtm.github.io/koekit/irodori/`（＝`https://koekit.sikumilab.com/irodori/`）。
+現在版：**v0.3.1**（`irodori/app.js` の `APP_VERSION`）。本番：`https://gerupon-lgtm.github.io/koekit/irodori/`（＝`https://koekit.sikumilab.com/irodori/`）。
 
 ## 2026-09-19 Codexによる基盤統合
 
@@ -71,3 +71,8 @@ C-1 音声外部送信なし（Vosk・端末内）／C-2 タッチで全機能�
 ## 引き継ぎのために維持する原則（発案者の方針）
 - **実装の判断は `docs/` に書く**（会話に残さない）。`tasks.md` に完了印・実測値。
 - **確定した設計（音声モデル・読み・から/まで・ワンショット等）は勝手に緩めない。** 変更は発案者と合意してから。
+
+## v0.3.1 案内の読みやすさ（2026-09-19）
+
+トップのイロドリズムだけの枠色指定を削除し、3作品を同じ枠線に統一。制作ガイドの表示文はひらがな中心・漢字なしに短縮。「話し方」タブは「こえ」に変更。A/D/Hの推奨読みは表で強調し、言い直し、範囲と線、保存先・上限・データ削除の注意を短文で維持。
+Chrome・WebKitの320×568／360×640／390×844で4面ともスクロール不要、表示文に漢字なし、3カードの枠線が一致することを確認。

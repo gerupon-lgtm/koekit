@@ -338,7 +338,6 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--color-primary);
 .app-list { gap: 12px; }
 .app-card { min-height: 130px; padding: 12px 22px 18px; }
 .app-card .wordmark { height: 68px; }
-.app-card.art { border-color: #eed5c8; }
 .app-card.art .app-open { color: #b87562; }
 .family-note { margin: 18px 0 8px; }
 .site-footer { padding-top: 12px; }

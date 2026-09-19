@@ -9,33 +9,33 @@ export function createHelp({ onOpen, onClose }) {
   dialog.innerHTML = `
     <div class="ir-help-head"><h2 id="ir-help-heading">イロドリズムの つかいかた</h2><button class="ir-help-close" aria-label="説明を閉じる">×</button></div>
     <div class="ir-help-tabs" aria-label="説明の種類">
-      <button data-help-tab="paint" aria-pressed="true">ぬりかた</button><button data-help-tab="voice" aria-pressed="false">話し方</button><button data-help-tab="range" aria-pressed="false">まとめて</button><button data-help-tab="save" aria-pressed="false">ほぞん</button>
+      <button data-help-tab="paint" aria-pressed="true">ぬりかた</button><button data-help-tab="voice" aria-pressed="false">こえ</button><button data-help-tab="range" aria-pressed="false">まとめて</button><button data-help-tab="save" aria-pressed="false">ほぞん</button>
     </div>
     <section data-help-panel="paint">
       <div class="ir-help-pixels" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
       <h3>ひとマスから、つくってみよう。</h3>
       <ol><li><strong>ばしょ</strong>を タッチ</li><li><strong>いろ</strong>を えらぶ</li><li><strong>オーケー</strong>で ぬる</li></ol>
-      <p>声でつくるときは <b>「話し方」</b>へ。<br>説明は、いつでも <b>「？」</b>で見返せます。</p>
+      <p>こえの コツは <b>「こえ」</b>へ。<br>いつでも <b>「？」</b>で みられるよ。</p>
     </section>
     <section data-help-panel="voice" hidden>
-      <h3>英字 → 数字。区切って、ひとつずつ。</h3>
+      <h3>A → 1 の じゅんに、ゆっくり。</h3>
       <div class="ir-help-phrase"><strong>えい いち</strong><span> → </span><strong>あか</strong><span> → </span><strong>オーケー</strong></div>
-      <p>場所が動くのを見てから、色を言う。<br>塗る場所と色を見てから、<b>「オーケー」</b>。</p>
+      <p>ばしょが うごいたら、いろを いう。<br>ばしょと いろが あっていたら <b>「オーケー」</b>。</p>
       <div class="ir-help-readings"><span><b>A</b> えい</span><span><b>B</b> びー</span><span><b>C</b> しー</span><span><b>D</b> でー</span><span><b>E</b> いー</span><span><b>F</b> えふ</span><span><b>G</b> じー</span><span><b>H</b> えっち</span><span><b>I</b> あい</span></div>
-      <p><b>Aは「えい」、Dは「でー」、Hは「えっち」</b>がおすすめ。違う場所なら、確定する前に言い直せます。</p>
-      <p class="ir-help-note">初回はマイクの許可と準備が必要です。うまく届かないときは「みぎ」「した に」やタッチでも移動できます。</p>
+      <p><b>A・D・H</b> は、この よみかたが コツ。<br>ちがったら、ぬるまえに いいなおそう。</p>
+      <p class="ir-help-note">「みぎ」「した に」でも うごくよ。<br>タッチでも だいじょうぶ。</p>
     </section>
     <section data-help-panel="range" hidden>
-      <h3>はんいや線も、少しずつ話せます。</h3>
-      <div class="ir-help-sequence"><strong>えい いち から</strong><span>A1を はじめに</span><strong>しー さん</strong><span>C3を おわりに</span><strong>あか → オーケー</strong><span>四角い はんいを ぬる</span></div>
-      <p>線にしたいときは、確定する前に <b>「せん」</b>。<br>「まで」は、言っても言わなくても大丈夫。</p>
-      <p class="ir-help-note">タッチなら「はんい」か「せん」を選び、はじめとおわりの2マスをタッチ。ぬった後は1マスに戻ります。</p>
+      <h3>まとめて ぬろう。せんも ひけるよ。</h3>
+      <div class="ir-help-sequence"><strong>えい いち から</strong><span>A1を はじめに</span><strong>しー さん</strong><span>C3を おわりに</span><strong>あか → オーケー</strong><span>しかくく ぬる</span></div>
+      <p>せんに するときは、ぬるまえに <b>「せん」</b>。<br>「まで」は、いわなくても だいじょうぶ。</p>
+      <p class="ir-help-note">タッチなら「はんい」「せん」を えらんで、<br>はじめと おわりの マスを おそう。</p>
     </section>
     <section data-help-panel="save" hidden>
-      <h3>つくった絵を、またつづきから。</h3>
-      <div class="ir-help-words"><strong>ほぞん</strong><span>作品を のこす</span><strong>さくひん</strong><span>ひらいて またつくる</span><strong>もどす</strong><span>ひとつ前に もどる</span></div>
-      <p>声でも <b>「ほぞん」「もどす」</b>。<br>終わるときは <b>「やめる」「おわり」</b>。</p>
-      <p class="ir-help-note">作品はこの端末・ブラウザに12件まで保存できます。制作途中は「かきかけを つづける」から戻れます。サイトのデータを消すと作品も消えます。</p>
+      <h3>つくった えを、また つづきから。</h3>
+      <div class="ir-help-words"><strong>ほぞん</strong><span>えを のこす</span><strong>さくひん</strong><span>ひらいて またつくる</span><strong>もどす</strong><span>ひとつ もどる</span></div>
+      <p>こえでも <b>「ほぞん」「もどす」</b>。<br>おしまいは <b>「やめる」「おわり」</b>。</p>
+      <p class="ir-help-note">この ブラウザに <b>12こ</b>まで のこせるよ。<br>とちゅうの えは「かきかけを つづける」へ。<br>※ サイトの データを けすと、えも きえるよ。</p>
     </section>
     <button class="ir-help-done">つくりはじめる</button>`;
   document.body.append(dialog);

@@ -182,6 +182,7 @@ button:focus-visible, a:focus-visible { outline: 3px solid #8a5a3c; outline-offs
 .ir-help-phrase { text-align: center; padding: 12px 6px; background: #f4ece2; border-radius: 14px; font-size: 15px; }
 .ir-help-readings { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px 10px; font-size: 14px; }
 .ir-help-readings b { display: inline-block; color: #8a5a3c; width: 20px; }
+.ir-help-readings span:nth-child(1), .ir-help-readings span:nth-child(4), .ir-help-readings span:nth-child(8) { background: #f4e5d6; border-radius: 6px; font-weight: 700; }
 .ir-help .ir-help-note { color: #766958; font-size: 13px; }
 .ir-help-done { display: block; width: 100%; min-height: 58px; border: 0; border-radius: 18px; font: inherit; font-weight: 700; color: #30462e; background: #dce9d5; margin-top: 16px; }
 @media (max-height: 680px), (max-width: 350px) {
