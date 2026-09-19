@@ -26,6 +26,7 @@
     <p class="ir-intro">こえと タッチで ドットえを つくろう。</p>
     <div class="ir-menu">
       <button class="ir-big" data-go="free">じゆうに つくる</button>
+      <button class="ir-big ir-sub" data-go="tutorial">こえと タッチの れんしゅう <small>9 × 9で、4つの おためし</small></button>
       <button class="ir-big" data-go="template" disabled>おてほんを ぬる <small>じゅんびちゅう</small></button>
       <button class="ir-big ir-sub" data-go="list">さくひん</button>
     </div>
@@ -68,6 +69,8 @@
       </span>
       <button class="ir-icon ir-help-open" aria-label="つかいかた" title="つかいかた">？</button>
     </header>
+    <section id="tutorial-guide" class="ir-tutorial" aria-live="polite" hidden></section>
+    <div id="tutorial-controls" class="ir-tutorial-controls" hidden><button id="tutorial-retry" class="ir-mini">この れんしゅうを やりなおす</button><button id="tutorial-next" class="ir-mini" hidden>つぎへ</button></div>
     <p class="ir-msg" id="make-msg" role="status"></p>
     <div class="ir-board" id="board"></div>
     <button class="ir-confirm" id="btn-confirm" disabled>オーケー（きめる）</button>

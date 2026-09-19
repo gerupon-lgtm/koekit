@@ -2,7 +2,7 @@
 
 コエキット3本目「**イロドリズム**」（声＋タッチのドット絵/塗り絵制作PWA）を Claude Code で作成しました。ここから Codex が引き継ぎます。この文書＝入口。まず読む順：この handoff → [基本設計サマリ.md](基本設計サマリ.md) → [implementation-guide.md](implementation-guide.md) → [tasks.md](tasks.md)。要件は [../requirements-irodori.md](../requirements-irodori.md)、音声実測は [../irodori-voice-probe-results.md](../irodori-voice-probe-results.md)。
 
-現在版：**v0.3.1**（`irodori/app.js` の `APP_VERSION`）。本番：`https://gerupon-lgtm.github.io/koekit/irodori/`（＝`https://koekit.sikumilab.com/irodori/`）。
+現在版：**v0.4.0**（`irodori/app.js` の `APP_VERSION`）。本番：`https://gerupon-lgtm.github.io/koekit/irodori/`（＝`https://koekit.sikumilab.com/irodori/`）。
 
 ## 2026-09-19 Codexによる基盤統合
 
@@ -76,3 +76,13 @@ C-1 音声外部送信なし（Vosk・端末内）／C-2 タッチで全機能�
 
 トップのイロドリズムだけの枠色指定を削除し、3作品を同じ枠線に統一。制作ガイドの表示文はひらがな中心・漢字なしに短縮。「話し方」タブは「こえ」に変更。A/D/Hの推奨読みは表で強調し、言い直し、範囲と線、保存先・上限・データ削除の注意を短文で維持。
 Chrome・WebKitの320×568／360×640／390×844で4面ともスクロール不要、表示文に漢字なし、3カードの枠線が一致することを確認。
+
+## v0.4.0 実操作チュートリアル（2026-09-19）
+
+「こえと タッチの れんしゅう」を追加。同じ9×9盤面で4課題を順に実施。A1=黄、B2〜D4=青の範囲、A5〜E1=オレンジの斜め線、H5=黒→Undo。A=えい・B=びー・D=でー・E=いー・H=えっちと、から/せん/オーケーの使い方を課題ごとに表示。
+
+`irodori/tutorial.js` が期待盤面と操作種別を判定。範囲はrange、線はlineを使う。最後は黒塗りの後にundoで戻す（消しゴムは代用不可）。達成後は「つぎ／オーケー／オッケー」またはボタンで次へ。最後はタイトルへ。課題やり直しボタンはその課題の開始盤面へ戻す。
+
+練習中は保存・自動下書きへ書かない。既存作品と描きかけは保持。通常制作の文法は変更せず、練習中だけ「つぎ／次」を追加。途中終了・ヘルプも利用可。
+
+検証：`node scripts/test-tutorial.mjs`（誤色・余分な塗り・操作種別・途中Undo・消しゴム・やり直し）、既存171件。Chrome/WebKitで模擬音声とマイク利用不可のタッチ操作の両方で全4課題を完走、元の作品・下書きのバイト一致、通常編集への復帰と保存ボタン復帰を確認。実発話の精度は端末での確認が必要。

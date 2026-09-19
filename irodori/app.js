@@ -8,8 +8,9 @@ import { makeGrammar, parse, colIndex } from './vocabulary.js';
 import { VoiceInput } from './phase.js';
 import { setMicState } from '../src/ui/micstate.js';
 import { createHelp } from './help.js';
+import { Tutorial, renderTutorial } from './tutorial.js';
 
-const APP_VERSION = 'v0.3.1';
+const APP_VERSION = 'v0.4.0';
 const PREF_READ = 'irodori:readAloud';
 const $ = id => document.getElementById(id);
 const q = sel => document.querySelector(sel);
@@ -36,14 +37,16 @@ let history = [];        // cells スナップショットの配列
 let histIndex = -1;      // 現在位置
 let activeScreen = 'mode';
 let help;
+let tutorial = null;
 
 // ---- 画面遷移 ----
 function show(name) {
   activeScreen = name;
   qa('.screen').forEach(s => { s.hidden = s.dataset.screen !== name; });
   if (name !== 'make' && voice && voice.active) voice.disable();
+  if (name !== 'make') tutorial = null;
   if (name === 'make') {
-    if (!help.seen) help.show(name);
+    if (!tutorial && !help.seen) help.show(name);
     else void enableVoice();
   }
   if (name === 'mode') renderMode();
@@ -82,6 +85,7 @@ function renderMode() {
 
 // ---- 制作開始 ----
 function startNew(size, mode) {
+  tutorial = null;
   const cells = createCells(size);
   openMake({ id: store.newId(), size, cells, mode, templateId: null, createdAt: null }, null);
 }
@@ -108,6 +112,33 @@ function setMsg(t) { $('make-msg').textContent = t; }
 function draw() {
   renderBoard($('board'), current, { cursor, previewCells, previewColor: pendingColor });
   $('btn-confirm').disabled = !(previewCells.length && pendingColor != null);
+  renderTutorial($('tutorial-guide'), tutorial);
+  $('tutorial-controls').hidden = !tutorial;
+  $('tutorial-next').hidden = !tutorial?.passed;
+  $('tutorial-next').textContent = tutorial?.step === 3 ? 'おしまい' : 'つぎへ';
+  $('btn-save').hidden = !!tutorial;
+  if (tutorial) {
+    document.querySelectorAll('#board .ir-cell').forEach(cell => {
+      const i = idx(current.size, Number(cell.dataset.row), Number(cell.dataset.col));
+      cell.classList.toggle('ir-tutorial-target', !tutorial.passed && tutorial.lesson.cells.includes(i));
+    });
+    $('btn-confirm').disabled ||= tutorial.passed;
+  }
+}
+
+function startTutorial() {
+  tutorial = new Tutorial();
+  openMake({ id: 'practice', size: 9, cells: tutorial.base.slice(), mode: 'free', templateId: null, createdAt: null }, null);
+}
+function retryTutorial() {
+  if (!tutorial) return;
+  const cells = tutorial.retry();
+  openMake({ ...current, size: tutorial.lesson.size, cells }, null);
+}
+function nextTutorial() {
+  if (!tutorial?.passed) return;
+  if (tutorial.next()) retryTutorial();
+  else show('mode');
 }
 
 // ---- パレット ----
@@ -174,6 +205,7 @@ function onCellTap(row, col) {
   }
 }
 function onCellDbl(row, col) {
+  if (tutorial?.passed) return;
   // ダブルタップ＝いま選んだ色で直接塗る（色/消しゴム未選択なら無視）
   if (tool !== 'single' || pendingColor == null) return;
   paintCells([idx(current.size, row, col)]);
@@ -184,12 +216,14 @@ function onCellDbl(row, col) {
 function paintCells(cellIdxs) {
   const v = (pendingColor === ERASE) ? null : pendingColor;
   cellIdxs.forEach(i => { current.cells[i] = v; });
-  store.saveDraft(current);
+  if (!tutorial) store.saveDraft(current);
   pushHistory();
+  tutorial?.record({ type: 'paint', tool, color: v, cells: cellIdxs }, current.cells);
 }
 
 // ---- 着色確定（2段階確定 C-3）。プレビュー中のマスを確定し、1マスへ自動で戻る（ワンショット）----
 function confirmApply() {
+  if (tutorial?.passed) return;
   if (pendingColor == null || !previewCells.length) return;
   paintCells(previewCells);
   anchor = null; vStart = null; vEnd = null; vLine = false; previewCells = [];
@@ -206,18 +240,21 @@ function pushHistory() {
   updateUndoRedo();
 }
 function undo() {
+  if (tutorial?.passed) return;
   if (histIndex <= 0) return;
   histIndex--;
   current.cells = history[histIndex].slice();
-  store.saveDraft(current);
+  if (!tutorial) store.saveDraft(current);
+  tutorial?.record({ type: 'undo' }, current.cells);
   previewCells = []; setMsg('もどした');
   updateUndoRedo(); draw();
 }
 function redo() {
+  if (tutorial?.passed) return;
   if (histIndex >= history.length - 1) return;
   histIndex++;
   current.cells = history[histIndex].slice();
-  store.saveDraft(current);
+  if (!tutorial) store.saveDraft(current);
   previewCells = []; setMsg('やりなおした');
   updateUndoRedo(); draw();
 }
@@ -229,6 +266,7 @@ function updateUndoRedo() {
 
 // ---- 保存 ----
 function doSave() {
+  if (tutorial) { setMsg('れんしゅうは ほぞんしないよ'); return; }
   const artwork = { ...current, id: savedId || current.id };
   const res = store.saveArtwork(artwork);
   if (res.ok) {
@@ -309,6 +347,8 @@ function init() {
   try { readAloud = localStorage.getItem(PREF_READ) === '1'; } catch { readAloud = false; }
   updateReadBtn();
   $('btn-read').onclick = toggleRead;
+  $('tutorial-retry').onclick = retryTutorial;
+  $('tutorial-next').onclick = nextTutorial;
   // ヘッダー：ホーム（コエキットへ）。マイクは状態表示（トグルではない）
   $('home-btn').onclick = () => { location.href = '../'; };
   // パレット付近：けす（消しゴム）・もどす・やりなおし（音声にも対応・C-2）
@@ -319,6 +359,7 @@ function init() {
   qa('[data-go]').forEach(b => b.onclick = () => {
     const go = b.dataset.go;
     if (go === 'free') show('size');
+    else if (go === 'tutorial') startTutorial();
     else if (go === 'list') show('list');
     else if (go === 'template') setModeNote('おてほんは じゅんびちゅう（つぎの だんかい）');
   });
@@ -371,11 +412,20 @@ async function enableVoice() {
   if (activeScreen !== 'make' || help.open) return;
   if (!voice) { voice = new VoiceInput({ onText: onVoiceText, onState: onVoiceState }); voice.setGrammar(makeGrammar()); }
   if (voice.active) return;
+  voice.setGrammar(tutorial ? [...makeGrammar(), 'つぎ', '次'] : makeGrammar());
   if (!(await voice.isAvailable())) { setMsg('このブラウザは こえが つかえないよ（タッチでOK）'); micState('denied'); return; }
   if (activeScreen !== 'make' || help.open) return;
   await voice.enable();
 }
-function onVoiceText(text) { if (activeScreen === 'make' && !help.open) interpretVoice(parse(text)); }
+function onVoiceText(text) {
+  if (activeScreen !== 'make' || help.open) return;
+  if (tutorial?.passed) {
+    if (parse(text).some(t => t.type === 'kw' && t.val === 'quit')) show('mode');
+    else if (/^(つぎ|次|オーケー|オッケー|おーけー|おっけー)$/.test(text.trim())) nextTutorial();
+    return;
+  }
+  interpretVoice(parse(text));
+}
 
 // トークン列を制作モデルへ反映（全発話・分割発話の両対応）
 // 合意モデル：素の座標＝カーソル移動（＝言い直し・最後が有効）／「から」＝始点／「まで」＝終点／
@@ -383,6 +433,7 @@ function onVoiceText(text) { if (activeScreen === 'make' && !help.open) interpre
 function interpretVoice(tokens) {
   let i = 0;
   while (i < tokens.length) {
+    if (activeScreen !== 'make' || tutorial?.passed) break;
     const t = tokens[i];
     if (t.type === 'kw') {
       if (t.val === 'save') doSave();
