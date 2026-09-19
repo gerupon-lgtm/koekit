@@ -49,9 +49,10 @@ export class BoardView {
   setSelected(key) { this.cards.forEach((c, k) => c.el.classList.toggle('selected', k === key)); }
   setFlipped(key, faceUp) { const c = this.cards.get(key); if (c) c.el.classList.toggle('flipped', !!faceUp); }
   setCorrect(key, b) { const c = this.cards.get(key); if (c) c.el.classList.toggle('correct', !!b); }
+  setWrong(key, b) { const c = this.cards.get(key); if (c) c.el.classList.toggle('wrong', !!b); }
   flipAll(faceUp) { this.cards.forEach(c => c.el.classList.toggle('flipped', !!faceUp)); }
   clearMarks() {
-    this.cards.forEach(c => c.el.classList.remove('focus', 'selected', 'flipped', 'correct'));
+    this.cards.forEach(c => c.el.classList.remove('focus', 'selected', 'flipped', 'correct', 'wrong'));
     this.showFigure(null);
   }
 

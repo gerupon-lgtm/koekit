@@ -233,6 +233,7 @@ function doConfirm() {
   board.showFigure(null);  // 矢印トーストを消す
 
   const correct = (selectedKey === dealt.targetKey);
+  board.setSelected(null); // 選択中のチェックを消し、結果の正誤だけを表示する。
   board.setFlipped(selectedKey, true); // めくって中身（文字）を見せる
   let wait = 3000;
   if (correct) {
@@ -243,6 +244,7 @@ function doConfirm() {
     sfx.playBlip(220);
     // 失敗時は全カードを表に戻して正解位置を見せる（KM-007）。少し長めに見せる。
     board.flipAll(true);
+    board.setWrong(selectedKey, true);
     board.setCorrect(dealt.targetKey, true);
     wait = 2800;
   }
