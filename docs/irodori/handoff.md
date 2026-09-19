@@ -2,7 +2,7 @@
 
 コエキット3本目「**イロドリズム**」（声＋タッチのドット絵/塗り絵制作PWA）を Claude Code で作成しました。ここから Codex が引き継ぎます。この文書＝入口。まず読む順：この handoff → [基本設計サマリ.md](基本設計サマリ.md) → [implementation-guide.md](implementation-guide.md) → [tasks.md](tasks.md)。要件は [../requirements-irodori.md](../requirements-irodori.md)、音声実測は [../irodori-voice-probe-results.md](../irodori-voice-probe-results.md)。
 
-現在版：**v0.4.5**（`irodori/app.js` の `APP_VERSION`）。本番：`https://gerupon-lgtm.github.io/koekit/irodori/`（＝`https://koekit.sikumilab.com/irodori/`）。
+現在版：**v0.4.6**（`irodori/app.js` の `APP_VERSION`）。本番：`https://gerupon-lgtm.github.io/koekit/irodori/`（＝`https://koekit.sikumilab.com/irodori/`）。
 
 ## 2026-09-19 Codexによる基盤統合
 
@@ -114,3 +114,7 @@ Chrome/WebKitの320×568・360×640・390×844で盤面位置・スクロール�
 ## v0.4.5 Undoヒントの拡大・常設（2026-09-19）
 
 上部のUndoヒントを11pxから14px太字へ拡大し、中央の「もどす」でを16pxで強調。練習だけでなく通常制作・保存作品の再編集でも常時表示。3行51pxで既存52pxヘッダー内に収める。320×568・390×844で文字のはみ出しや追加スクロールなしを確認。Chrome/WebKitの320×568で全課題のヘッダー寸法とタッチ完走を確認。
+
+## v0.4.6 Undoヒントを2行に整理（2026-09-19）
+
+常設ヒントを「『もどす』で／ひとつまえへ」の2行へ短縮。先頭16px、2行目14pxの太字を維持し、行間21pxで配置。Chromeの320×568・390×844で横はみ出し・盤面押し下げ・追加スクロールなしを確認。
