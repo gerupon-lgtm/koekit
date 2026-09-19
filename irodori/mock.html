@@ -3,21 +3,23 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>イロドリズム コントロール案</title>
+<title>イロドリズム 上部コントロール案</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700;800&display=swap">
 <style>
-  :root{ --bg:#faf5ed; --ink:#493f36; --muted:#9a8f80; --accent:#c9a84c; --accent-d:#a8842a;
+  :root{ --bg:#faf5ed; --ink:#493f36; --muted:#9a8f80; --accent:#c9a84c;
          --green:#dce9d5; --green-ink:#30462e; --purple:#e7ddef; --purple-ink:#3d2f4a; --brown:#8a5a3c; --iro:#6f57c0; }
   *{box-sizing:border-box;}
   body{font-family:"M PLUS Rounded 1c",system-ui,sans-serif; margin:0; background:#e7ddc9; color:var(--ink); padding:16px;}
-  .note{max-width:820px;margin:0 auto 14px;color:#5a4f40;font-size:14px;}
+  .note{max-width:840px;margin:0 auto 14px;color:#5a4f40;font-size:14px;}
   .row{display:flex;gap:18px;justify-content:center;flex-wrap:wrap;}
   .phone{width:330px;background:var(--bg);border-radius:26px;padding:16px;box-shadow:0 6px 20px rgba(0,0,0,.18);}
   .cap{text-align:center;font-size:13px;color:#5a4f40;margin:8px 0 0;}
   .hd{display:flex;justify-content:space-between;align-items:center;}
   .ico{width:50px;height:50px;border-radius:15px;background:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 2px rgba(0,0,0,.1);color:#8a7f70;}
+  .ico.exit{color:var(--brown);}
+  .ico.mic{border-radius:50%;background:#f2e2a8;color:#8a6d1f;}
   .ico svg{width:25px;height:25px;}
   .logo{text-align:center;font-weight:800;font-size:42px;letter-spacing:1px;margin:26px 0 22px;}
   .logo .a{color:var(--iro);} .logo .b{color:var(--brown);}
@@ -40,7 +42,7 @@
 </style>
 </head>
 <body>
-<p class="note">イロドリズム コントロール案（確認用モック・実アプリ未変更）。<b>配色はイロドリズムのまま</b>。既存2作品に合わせるのは<b>コントロール周り</b>＝白い角丸アイコンのヘッダー（左=ホーム／右=せってい）、戻る導線、ツールの並び、保存・フッター。</p>
+<p class="note"><b>上部コントロールだけ</b>を既存2作品に合わせる案（配色はイロドリズムのまま・確認用モック・実アプリ未変更）。<b>タイトル＝左ホーム／右せってい（ギア）</b>、<b>制作＝左やめる（退出）／右マイク（音声の状態）</b>。ツール・パレット等は用途が違うので合わせません（並びだけ整理）。<b>よみあげは設定へ移動</b>。</p>
 <div class="row">
 
   <div>
@@ -57,14 +59,14 @@
       </div>
       <p class="foot">v0.2.0　© 2026 SIKUMI LAB</p>
     </div>
-    <p class="cap">① タイトル（アイコンヘッダー＋フッター）</p>
+    <p class="cap">① タイトル：左ホーム／右せってい（家族と同じ）</p>
   </div>
 
   <div>
     <div class="phone">
       <div class="hd">
-        <div class="ico" title="やめる/ホーム"><svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg></div>
-        <div class="ico" title="せってい(よみあげ)"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/></svg></div>
+        <div class="ico exit" title="やめる"><svg viewBox="0 0 24 24"><path d="M14 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8"/><path d="M11 12h9"/><path d="M17 9l3 3-3 3"/></svg></div>
+        <div class="ico mic" title="マイク(音声の状態)"><svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M6 11a6 6 0 0 0 12 0"/><path d="M12 17v4"/></svg></div>
       </div>
       <div class="board">
         <div class="h"></div><div class="h">A</div><div class="h">B</div><div class="h">C</div><div class="h">D</div><div class="h">E</div><div class="h">F</div><div class="h"></div>
@@ -84,7 +86,7 @@
         <div class="sw" style="background:#2F6FD6"></div><div class="sw" style="background:#F08C2E"></div><div class="sw" style="background:#A8D24A"></div><div class="sw" style="background:#9C6B3F"></div><div class="sw" style="background:#FFFFFF"></div><div class="sw" style="background:#2B2B2B"></div>
       </div>
     </div>
-    <p class="cap">② 制作（アイコンヘッダー＋ツールをまとめる＋保存）</p>
+    <p class="cap">② 制作：左やめる／右マイク（家族と同じ）。ツール・保存は用途別で整理のみ</p>
   </div>
 
 </div>
