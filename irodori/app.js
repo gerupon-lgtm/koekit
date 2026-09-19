@@ -10,7 +10,7 @@ import { setMicState } from '../src/ui/micstate.js';
 import { createHelp } from './help.js';
 import { Tutorial, createTutorialGuide } from './tutorial.js';
 
-const APP_VERSION = 'v0.4.7';
+const APP_VERSION = 'v0.4.8';
 const PREF_READ = 'irodori:readAloud';
 const $ = id => document.getElementById(id);
 const q = sel => document.querySelector(sel);
