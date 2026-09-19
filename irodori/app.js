@@ -8,7 +8,7 @@ import { makeGrammar, parse, colIndex } from './vocabulary.js';
 import { VoiceInput } from './phase.js';
 import { setMicState } from '../src/ui/micstate.js';
 
-const APP_VERSION = 'v0.2.4';
+const APP_VERSION = 'v0.2.5';
 const PREF_READ = 'irodori:readAloud';
 const $ = id => document.getElementById(id);
 const q = sel => document.querySelector(sel);
@@ -26,9 +26,10 @@ let previewFrom = 'list';
 let readAloud = false;   // 色名の読み上げ（デフォルトOFF・任意ON）
 // 音声
 let voice = null;        // VoiceInput
-let lastCoord = null;    // 直近に指定した座標（から/せんの始点に使う）
-let voiceLine = false;   // 「せん」が言われた
-let awaitingEnd = false; // から/せんの後、終点待ち
+// 音声の範囲/線オペ：素の座標＝訂正（カーソル移動）、「から」＝始点、「まで」＝終点、「せん」＝線
+let vStart = null;       // 始点 {row,col}（「から」で確定）
+let vEnd = null;         // 終点 {row,col}（「まで」で確定）
+let vLine = false;       // 「せん」が言われた（線）
 
 // ---- 画面遷移 ----
 function show(name) {
@@ -82,7 +83,7 @@ function openMake(artwork, existingId) {
   tool = 'single';
   anchor = null;
   previewCells = [];
-  lastCoord = null; voiceLine = false; awaitingEnd = false;
+  vStart = null; vEnd = null; vLine = false;
   setMsg('');
   qa('.ir-tool').forEach(b => b.classList.toggle('is-active', b.dataset.tool === 'single'));
   renderPalette();
@@ -159,19 +160,20 @@ function onCellTap(row, col) {
 function onCellDbl(row, col) {
   // ダブルタップ＝いま選んだ色で直接塗る（色未選択なら無視）
   if (tool !== 'single' || pendingColor == null) return;
-  applyColor([idx(current.size, row, col)]);
-}
-
-// ---- 着色確定（2段階確定 C-3）----
-function applyColor(cellIdxs) {
-  if (pendingColor == null || !cellIdxs.length) return;
-  cellIdxs.forEach(i => { current.cells[i] = pendingColor; });
-  store.saveDraft(current); // 自動下書き
-  if (tool !== 'single') { anchor = null; previewCells = []; setMsg(''); setToolVisual('single'); } // 範囲/線は塗ったら1マスへ自動で戻る
-  voiceLine = false; awaitingEnd = false;
+  current.cells[idx(current.size, row, col)] = pendingColor;
+  store.saveDraft(current);
   draw();
 }
-function confirmApply() { applyColor(previewCells); }
+
+// ---- 着色確定（2段階確定 C-3）。プレビュー中のマスを着色し、1マスへ自動で戻る（ワンショット）----
+function confirmApply() {
+  if (pendingColor == null || !previewCells.length) return;
+  previewCells.forEach(i => { current.cells[i] = pendingColor; });
+  store.saveDraft(current); // 自動下書き
+  anchor = null; vStart = null; vEnd = null; vLine = false; previewCells = [];
+  setMsg(''); setToolVisual('single');
+  draw();
+}
 
 // ---- 保存 ----
 function doSave() {
@@ -313,23 +315,25 @@ async function enableVoice() {
 function onVoiceText(text) { interpretVoice(parse(text)); }
 
 // トークン列を制作モデルへ反映（全発話・分割発話の両対応）
+// 合意モデル：素の座標＝カーソル移動（＝言い直し・最後が有効）／「から」＝始点／「まで」＝終点／
+// 「せん」＝線。始点+終点が揃えば範囲/線プレビュー、揃わなければ現在マスの1マスに退化。オッケーで確定。
 function interpretVoice(tokens) {
   let i = 0;
   while (i < tokens.length) {
     const t = tokens[i];
     if (t.type === 'kw') {
       if (t.val === 'save') doSave();
-      else if (t.val === 'quit') show('mode');   // やめる／おわり
+      else if (t.val === 'quit') show('mode');                                   // やめる／おわり
       else if (t.val === 'ok') confirmApply();
-      else if (t.val === 'kara') beginTwoPoint();
-      else if (t.val === 'sen') { voiceLine = true; setToolVisual('line'); }
-      // made は接続語（無視）
+      else if (t.val === 'kara') { vStart = { row: cursor.row, col: cursor.col }; voicePreview(); } // 始点＝いま言った座標
+      else if (t.val === 'made') { vEnd = { row: cursor.row, col: cursor.col }; voicePreview(); }    // 終点＝いま言った座標
+      else if (t.val === 'sen') { vLine = true; voicePreview(); }
       i++;
-    } else if (t.type === 'color') { selectColor(t.val); i++; }
+    } else if (t.type === 'color') { voiceColor(t.val); i++; }
     else if (t.type === 'dir') {
       let steps = 1;
       if (tokens[i + 1] && tokens[i + 1].type === 'digit') { steps = Number(tokens[i + 1].val); i += 2; } else i++;
-      voiceRelMove(t.val, steps);
+      voiceMove(t.val, steps);
     } else if (t.type === 'col' || t.type === 'digit') {
       let col = null, row = null;
       while (i < tokens.length && (tokens[i].type === 'col' || tokens[i].type === 'digit')) {
@@ -338,7 +342,7 @@ function interpretVoice(tokens) {
         else break;
         i++;
       }
-      voiceCoord(col, row);
+      voiceSetCoord(col, row);
     } else i++;
   }
 }
@@ -346,35 +350,42 @@ function setToolVisual(t) {
   tool = t;
   qa('.ir-tool').forEach(b => b.classList.toggle('is-active', b.dataset.tool === t));
 }
-function voiceCoord(colLetter, rowDigit) {
+// 素の座標＝カーソル移動（列だけ/行だけの指定は他方を保持＝訂正しやすい）
+function voiceSetCoord(colLetter, rowDigit) {
   const size = current.size;
-  let r = cursor ? cursor.row : 0, c = cursor ? cursor.col : 0;
+  let r = cursor.row, c = cursor.col;
   if (rowDigit != null) r = Number(rowDigit) - 1;
   if (colLetter != null) c = colIndex(colLetter);
-  if (!inRange(size, r, c)) { sfxWrong(); return; }        // 範囲外は不正解音・位置維持
-  if (awaitingEnd && anchor) {
-    previewCells = (tool === 'line') ? lineCells(size, anchor, { row: r, col: c }) : rectCells(size, anchor, { row: r, col: c });
-    cursor = { row: r, col: c }; lastCoord = { row: r, col: c }; awaitingEnd = false;
-    setMsg(pendingColor != null ? 'オーケーで きめてね' : 'いろを えらんでね');
-  } else {
-    cursor = { row: r, col: c }; lastCoord = { row: r, col: c };
-    if (tool === 'single' && pendingColor != null) previewCells = [idx(size, r, c)];
-  }
-  draw();
+  if (!inRange(size, r, c)) { sfxWrong(); return; }   // 範囲外は不正解音・位置維持
+  cursor = { row: r, col: c };
+  voicePreview();
 }
-function voiceRelMove(dir, steps) {
+function voiceMove(dir, steps) {
   const size = current.size; let r = cursor.row, c = cursor.col;
   if (dir === 'みぎ') c += steps; else if (dir === 'ひだり') c -= steps; else if (dir === 'うえ') r -= steps; else if (dir === 'した') r += steps;
   if (!inRange(size, r, c)) { sfxWrong(); return; }
-  cursor = { row: r, col: c }; lastCoord = { row: r, col: c };
-  if (tool === 'single' && pendingColor != null) previewCells = [idx(size, r, c)];
-  draw();
+  cursor = { row: r, col: c };
+  voicePreview();
 }
-function beginTwoPoint() {
-  setToolVisual(voiceLine ? 'line' : 'range');
-  anchor = lastCoord || cursor;
-  awaitingEnd = true; previewCells = [];
-  setMsg('つぎの ばしょを いってね');
+function voiceColor(i) {
+  pendingColor = i;
+  speak(colorName(i));
+  qa('.ir-swatch').forEach((b, j) => b.classList.toggle('is-sel', j === i));
+  voicePreview();
+}
+// 始点＋終点が揃えば範囲/線、揃わなければ現在マスの1マス（せん/からの退化＝キャンセル）
+function voicePreview() {
+  const size = current.size;
+  if (vStart && vEnd) {
+    previewCells = vLine ? lineCells(size, vStart, vEnd) : rectCells(size, vStart, vEnd);
+    setToolVisual(vLine ? 'line' : 'range');
+    setMsg(pendingColor != null ? 'オーケーで きめてね' : 'いろを えらんでね');
+  } else {
+    previewCells = (pendingColor != null) ? [idx(size, cursor.row, cursor.col)] : [];
+    setToolVisual('single');
+    if (vStart) setMsg('おわりの ばしょ、または いろ');
+    else setMsg(pendingColor != null ? 'オーケーで きめてね' : '');
+  }
   draw();
 }
 
