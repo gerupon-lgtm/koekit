@@ -10,7 +10,7 @@ import { setMicState } from '../src/ui/micstate.js';
 import { createHelp } from './help.js';
 import { Tutorial, createTutorialGuide } from './tutorial.js';
 
-const APP_VERSION = 'v0.4.3';
+const APP_VERSION = 'v0.4.4';
 const PREF_READ = 'irodori:readAloud';
 const $ = id => document.getElementById(id);
 const q = sel => document.querySelector(sel);
@@ -124,13 +124,15 @@ function draw() {
   $('tutorial-status').hidden = !tutorial;
   $('tutorial-status').replaceChildren();
   $('make-msg').classList.toggle('ir-practice-msg', !!tutorial);
+  $('tutorial-goal').hidden = !tutorial;
   if (tutorial) {
     const goals = [['A1を', 'きいろに ぬろう'], ['B2〜D4を', 'あおに ぬろう'], ['A5〜E1に', 'オレンジの せん'], ['H5を', tutorial.undoReady ? 'もどすで とりけす' : 'くろにして もどす']];
     const [place, goal] = goals[tutorial.step];
-    const position = document.createElement('span');
-    position.textContent = `${tutorial.step + 1}/4　${place}`;
-    const label = document.createElement('strong'); label.textContent = goal;
-    $('tutorial-status').append(position, label);
+    $('tutorial-goal').textContent = `${tutorial.step + 1}/4　${place} ${goal}`;
+    for (const text of ['まちがえたら', '「もどす」で', 'ひとつまえへ']) {
+      const line = document.createElement('span'); line.textContent = text;
+      $('tutorial-status').append(line);
+    }
   }
   $('btn-save').hidden = !!tutorial;
   if (tutorial) {
