@@ -2,7 +2,7 @@
 
 コエキット3本目「**イロドリズム**」（声＋タッチのドット絵/塗り絵制作PWA）を Claude Code で作成しました。ここから Codex が引き継ぎます。この文書＝入口。まず読む順：この handoff → [基本設計サマリ.md](基本設計サマリ.md) → [implementation-guide.md](implementation-guide.md) → [tasks.md](tasks.md)。要件は [../requirements-irodori.md](../requirements-irodori.md)、音声実測は [../irodori-voice-probe-results.md](../irodori-voice-probe-results.md)。
 
-現在版：**v0.5.0**（`irodori/app.js` の `APP_VERSION`）。本番：`https://gerupon-lgtm.github.io/koekit/irodori/`（＝`https://koekit.sikumilab.com/irodori/`）。
+現在版：**v0.5.1**（`irodori/app.js` の `APP_VERSION`）。本番：`https://gerupon-lgtm.github.io/koekit/irodori/`（＝`https://koekit.sikumilab.com/irodori/`）。
 
 ## 2026-09-19 Codexによる基盤統合
 
@@ -162,3 +162,11 @@ H1/H5/H9各3回の確認済み。座標8/9、H自体は9/9。失敗は「えっ�
 保存は既存Artworkのmode=templateとtemplateIdを使用（スキーマ変更なし）。作品・下書きにはユーザーの着色だけを保持。再編集・複製・下書き復元時に参照を復元する。見本ID欠損/サイズ不一致時は下絵なしで編集を続け、保存データを消さない。テンプレートのIDと色indexは安定させる。自由制作・チュートリアルのルールは変更していない。
 
 検証：templates純粋ロジックテスト、tutorial判定、既存171件通過。Chrome/WebKitで一覧・絞込・薄い下絵・見本表示時の音声停止/再開・2段階確定・Undo/Redo・声で保存・再編集・下書き復元・一致表示・不明見本のフォールバックを確認。390×844で制作1画面内、320×568の見本dialogに内部スクロールなし。Chromeの新規ブラウザでトップ訪問後オフライン→見本選択/着色/保存を確認。実音声の認識精度は別途実測記録参照。
+
+## v0.5.1 ハートの5手作例（2026-09-19）
+- 新規選択の3×3「すうじの 1」を「しんごう」に変更。保存済み `one-3` は従来の下絵で再編集できる。
+- ハートの制作画面 →「おてほん」→「5てで つくる」で、途中の形・発話例・コツを確認できる。手動で前後をめくる読み物型の作例。ページ操作は作品を変更せず、自動進行のチュートリアルとは別。
+- 5手：①B1からB4せんあかオッケー ②D1からD4せんオッケー ③A2からE3オッケー ④C4オッケー ⑤したオッケー。
+- ①以降は赤を保持。線は確定ごとに1マスへ戻り、③は「から」で範囲になる。⑤はC4からC5への相対移動。Aは「えい」、Dは「でー」と案内。
+- `irodori/recipes.js` に作例と途中の盤面を定義し、SWにも登録。新規・再編集で表示ページを初期化し、同じ制作中の再表示では保持する。
+- Chrome/WebKitの320×568で5ページすべて内部スクロールなし。模擬音声による5手と途中形・完成形一致、保存、Undo/Redo、案内中の作品非変更を確認。実機の発話認識精度は別途確認が必要。

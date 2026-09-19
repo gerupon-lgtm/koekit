@@ -3,7 +3,7 @@ export const CATEGORIES = { everyday: 'みぢかなもの', shapes: 'かたち',
 const definitions = [
  ['flower-3', 'ちいさな はな', 'everyday', ['.5.','525','.4.']],
  ['plus-3', 'ぷらす', 'shapes', ['.6.','666','.6.']],
- ['one-3', 'すうじの 1', 'letters', ['.2.','.2.','222']],
+ ['signal-3', 'しんごう', 'everyday', ['B0B','B2B','B4B']],
  ['heart-5', 'はーと', 'shapes', ['.0.0.','00000','00000','.000.','..0..']],
  ['tree-5', 'き', 'everyday', ['..4..','.444.','44444','..9..','..9..']],
  ['letter-a-5', 'もじの A', 'letters', ['.666.','6...6','66666','6...6','6...6']],
@@ -19,5 +19,7 @@ export const TEMPLATES = Object.freeze(definitions.map(([id, name, category, row
  if (![3,5,7,9].includes(size) || rows.some(r => r.length !== size || /[^.0-9AB]/.test(r))) throw Error('Invalid template: '+id);
  return Object.freeze({ id, name, category, size, cells: Object.freeze(rows.join('').split('').map(c => c === '.' ? null : parseInt(c, 12))) });
 }));
-export function findTemplate(id, size) { return TEMPLATES.find(t => t.id === id && t.size === size) || null; }
+// 旧「1」は新規選択から除外するが、保存済み作品の下絵参照は維持する。
+const LEGACY_ONE=Object.freeze({id:'one-3',name:'すうじの 1',category:'letters',size:3,cells:Object.freeze([null,2,null,null,2,null,2,2,2])});
+export function findTemplate(id, size) { return TEMPLATES.find(t => t.id === id && t.size === size) || (id === LEGACY_ONE.id && size === 3 ? LEGACY_ONE : null); }
 export function matchesTemplate(cells, template) { return !!template && cells.length === template.cells.length && cells.every((c,i) => c === template.cells[i]); }

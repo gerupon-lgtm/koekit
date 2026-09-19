@@ -137,9 +137,11 @@
 </main>
 <dialog id="template-dialog" class="ir-help ir-template-dialog" aria-labelledby="template-title">
   <div class="ir-help-head"><h2 id="template-title"></h2><button id="template-close" class="ir-help-close" aria-label="とじる">×</button></div>
+  <div id="recipe-tabs" class="ir-recipe-tabs" hidden><button id="recipe-overview" aria-pressed="true">おてほん</button><button id="recipe-open" aria-pressed="false">5てで つくる</button></div>
   <canvas id="template-canvas" class="ir-template-picture" role="img"></canvas>
   <p id="template-caption"></p>
-  <p>おなじ いろでも、すきな いろでも。</p>
+  <div id="recipe-content" hidden><h3 id="recipe-title"></h3><div id="recipe-words" class="ir-tutorial-words"></div><p id="recipe-tip"></p><div class="ir-recipe-nav"><button id="recipe-prev" class="ir-mini">まえ</button><span id="recipe-progress"></span><button id="recipe-next" class="ir-mini">つぎ</button></div></div>
+  <p id="template-freedom">おなじ いろでも、すきな いろでも。</p>
   <button id="template-guide-toggle" class="ir-mini" aria-pressed="true">したえ：オン</button>
   <button id="template-done" class="ir-help-done">ぬる</button>
 </dialog>

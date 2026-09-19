@@ -241,3 +241,15 @@ button:focus-visible, a:focus-visible { outline: 3px solid #8a5a3c; outline-offs
 .ir-template-cell { outline: 1px solid #9b8266; outline-offset: -1px; }
 .ir-template-ghost { position: absolute; inset: 3px; border-radius: 2px; opacity: .32; pointer-events: none; }
 .ir-cell.ir-preview .ir-template-ghost, .ir-cell.ir-preview-erase .ir-template-ghost { display: none; }
+
+.ir-recipe-tabs { display: flex; gap: 8px; margin: 10px 0; }
+.ir-recipe-tabs button { flex: 1; min-height: 44px; border: 0; border-radius: 12px; font: inherit; font-weight: 700; background: #f1e4d4; color: #704b34; }
+.ir-recipe-tabs [aria-pressed="true"] { background: #dce9d5; color: #30462e; }
+.ir-recipe-nav { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.ir-recipe-nav button { min-height: 44px; min-width: 64px; }
+.ir-recipe-dialog .ir-template-picture { width: min(28vw, 110px); margin: 6px auto; }
+.ir-recipe-dialog #template-caption { font-size: 11px; margin: 4px 0; }
+.ir-recipe-dialog #recipe-title { font-size: 16px; line-height: 1.5; margin: 8px 0; }
+.ir-recipe-dialog #recipe-tip { font-size: 13px; line-height: 1.5; margin: 8px 0; }
+.ir-recipe-dialog .ir-tutorial-words { justify-content: center; }
+.ir-recipe-dialog .ir-tutorial-words span { font-size: 13px; padding: 3px 6px; }

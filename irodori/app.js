@@ -10,8 +10,9 @@ import { setMicState } from '../src/ui/micstate.js';
 import { createHelp } from './help.js';
 import { Tutorial, createTutorialGuide } from './tutorial.js';
 import { TEMPLATES, CATEGORIES, findTemplate, matchesTemplate } from './templates.js';
+import { HEART_RECIPE } from './recipes.js';
 
-const APP_VERSION = 'v0.5.0';
+const APP_VERSION = 'v0.5.1';
 const PREF_READ = 'irodori:readAloud';
 const $ = id => document.getElementById(id);
 const q = sel => document.querySelector(sel);
@@ -42,6 +43,7 @@ let tutorial = null;
 let tutorialGuide, tutorialTimer, undoAnnounced = false;
 let voiceRequest = 0;
 let templateSize = 'all', templateCategory = 'all', templateGuideVisible = true;
+let recipePage = -1;
 
 // ---- 画面遷移 ----
 function show(name) {
@@ -133,9 +135,35 @@ function showTemplateReference() {
   $('template-title').textContent = template.name;
   $('template-caption').textContent = `${template.size} × ${template.size} の おてほん`;
   $('template-canvas').setAttribute('aria-label', template.name + 'の いろつき おてほん');
-  renderThumb($('template-canvas'), template);
+  renderTemplateReference();
   updateTemplateToggle();
   $('template-dialog').showModal();
+}
+
+function renderTemplateReference() {
+  const template = findTemplate(current?.templateId, current?.size);
+  if (!template) return;
+  const hasRecipe = template.id === 'heart-5';
+  const step = hasRecipe && recipePage >= 0 ? HEART_RECIPE[recipePage] : null;
+  $('recipe-tabs').hidden = !hasRecipe;
+  $('recipe-content').hidden = !step;
+  $('template-freedom').hidden = !!step;
+  $('template-guide-toggle').hidden = !!step;
+  $('template-dialog').classList.toggle('ir-recipe-dialog', !!step);
+  $('recipe-overview').setAttribute('aria-pressed', String(!step));
+  $('recipe-open').setAttribute('aria-pressed', String(!!step));
+  renderThumb($('template-canvas'), step ? {size:5,cells:step.snapshot} : template);
+  $('template-canvas').setAttribute('aria-label', step ? `はーとの ${recipePage+1}てめを ぬった おてほん` : template.name+'の いろつき おてほん');
+  $('template-caption').textContent = step ? 'この てじゅんで ぬった あとの かたち' : `${template.size} × ${template.size} の おてほん`;
+  $('template-done').textContent = step ? 'やってみる' : 'ぬる';
+  if (step) {
+    $('recipe-title').textContent = step.title;
+    $('recipe-words').replaceChildren(...step.words.map(word=>{const span=document.createElement('span');span.textContent=word;return span;}));
+    $('recipe-tip').textContent = step.tip;
+    $('recipe-progress').textContent = `${recipePage+1} / ${HEART_RECIPE.length}`;
+    $('recipe-prev').disabled = recipePage === 0;
+    $('recipe-next').disabled = recipePage === HEART_RECIPE.length-1;
+  }
 }
 
 // ---- 制作開始 ----
@@ -147,7 +175,7 @@ function startNew(size, mode) {
 function openMake(artwork, existingId) {
   current = { ...artwork, cells: artwork.cells.slice() };
   savedId = existingId;
-  templateGuideVisible = true;
+  templateGuideVisible = true; recipePage = -1;
   cursor = { row: 0, col: 0 };
   pendingColor = null;
   tool = 'single';
@@ -437,6 +465,10 @@ function init() {
     else help.show(activeScreen);
   }; });
   $('template-reference').onclick = showTemplateReference;
+  $('recipe-overview').onclick = () => { recipePage = -1; renderTemplateReference(); };
+  $('recipe-open').onclick = () => { recipePage = Math.max(0,recipePage); renderTemplateReference(); };
+  $('recipe-prev').onclick = () => { recipePage = Math.max(0,recipePage-1); renderTemplateReference(); };
+  $('recipe-next').onclick = () => { recipePage = Math.min(HEART_RECIPE.length-1,recipePage+1); renderTemplateReference(); };
   $('template-close').onclick = $('template-done').onclick = () => $('template-dialog').close();
   $('template-dialog').addEventListener('close', () => { if (activeScreen === 'make') void enableVoice(); });
   $('template-guide-toggle').onclick = () => {
