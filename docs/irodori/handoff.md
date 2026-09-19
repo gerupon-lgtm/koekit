@@ -2,7 +2,7 @@
 
 コエキット3本目「**イロドリズム**」（声＋タッチのドット絵/塗り絵制作PWA）を Claude Code で作成しました。ここから Codex が引き継ぎます。この文書＝入口。まず読む順：この handoff → [基本設計サマリ.md](基本設計サマリ.md) → [implementation-guide.md](implementation-guide.md) → [tasks.md](tasks.md)。要件は [../requirements-irodori.md](../requirements-irodori.md)、音声実測は [../irodori-voice-probe-results.md](../irodori-voice-probe-results.md)。
 
-現在版：**v0.4.2**（`irodori/app.js` の `APP_VERSION`）。本番：`https://gerupon-lgtm.github.io/koekit/irodori/`（＝`https://koekit.sikumilab.com/irodori/`）。
+現在版：**v0.4.3**（`irodori/app.js` の `APP_VERSION`）。本番：`https://gerupon-lgtm.github.io/koekit/irodori/`（＝`https://koekit.sikumilab.com/irodori/`）。
 
 ## 2026-09-19 Codexによる基盤統合
 
@@ -100,3 +100,7 @@ Chrome・WebKitの320×568／360×640／390×844で4面ともスクロール不�
 既存ヘッダーの進捗表示を「1/4 A1」「きいろに ぬろう」の2行にし、課題ごとの対象と目標を常設。既存メッセージ欄の空欄／音声待機時は「まちがえたら『もどす』で ひとつまえへ」を表示する。操作案内・エラー・マイク利用不可のメッセージは優先して表示する。通常制作の表示は維持。
 
 Chrome/WebKitの320×568・360×640・390×844で通常制作と練習の盤面位置・寸法、スクロール量が同じであることを確認。390×844では全体が1画面内。320×568で全課題の目標が既存52pxヘッダー内に収まり、タッチ完走。模擬音声による全課題、やり直し、保存保護も再確認。
+
+## v0.4.3 目標の対象を明記（2026-09-19）
+
+ヘッダーの目標を「A1を／きいろに ぬろう」「B2〜D4を／あおに ぬろう」など、座標と動作をつなげて読める表現に変更。Chrome/WebKitの320×568で全課題が既存ヘッダーの高さに収まることを確認。
