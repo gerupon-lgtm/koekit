@@ -12,7 +12,7 @@
 // BUILD は scripts/stamp-cache.cjs が各デプロイ前に一意な値へ置換する。
 
 const VERSION = '0.1.0';            // version.json と一致（scripts/check-version 対象）
-const BUILD = 'v0.1.0-20260919092701-ae277aa';         // ← scripts/stamp-cache.cjs がデプロイ毎に置換
+const BUILD = 'v0.1.0-20260919094021-ff1aa0b';         // ← scripts/stamp-cache.cjs がデプロイ毎に置換
 const APP_CACHE = 'koekit-app-' + BUILD;
 const STATIC_CACHE = 'koekit-static-v2'; // 大きい静的資産（vosk.js等）。中身を変えたときだけ版を上げる
 
@@ -27,6 +27,13 @@ const SHELL = [
   './assets/icons/koekit-512.png', './assets/icons/koekit-maskable-512.png',
   './doubutsu/', './doubutsu/index.html', './doubutsu/app.js',
   './kioku/', './kioku/index.html', './kioku/app.js',
+  './irodori/', './irodori/index.html', './irodori/styles.css', './irodori/app.js',
+  './irodori/help.js', './irodori/board.js', './irodori/palette.js', './irodori/storage.js',
+  './irodori/vocabulary.js', './irodori/phase.js', './assets/brand/irodorhythm.svg',
+  './src/speech/index.js', './src/speech/config.js', './src/speech/vosk.js',
+  './src/speech/webspeech.js', './src/speech/vocabulary.js', './src/util/emitter.js',
+  './src/ui/micstate.js', './assets/fonts/MPLUSRounded1c-Regular.subset.woff2',
+  './assets/fonts/MPLUSRounded1c-Bold.subset.woff2',
 ];
 
 // cache-first にする大きい静的資産（同一オリジン）。ここに載るものは毎デプロイでは再取得しない。

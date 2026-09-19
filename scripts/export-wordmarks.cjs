@@ -29,3 +29,16 @@ for (const [file, label, key, prefixHeight] of [
   fs.writeFileSync(path.join(dir, file), svg);
   console.log(file, width + 'x' + height);
 }
+
+// 4文字の「イロドリ」は丸い筆画のベクター。末尾は既存2作と同じ部品・倍率。
+const irodoriSlot = 520;
+const irodoriPrefix = `<g fill="none" stroke="#cb8c79" stroke-width="27" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M110 39 Q80 78 35 95 M83 72 V157"/>
+  <path d="M158 53 H242 V151 H158 Z"/>
+  <path d="M294 43 V157 M295 84 Q328 92 350 112"/>
+  <path d="M339 35 L348 48 M364 28 L373 41" stroke-width="15"/>
+  <path d="M419 44 V99 M490 44 V95 Q490 135 452 158"/>
+</g><rect x="190" y="86" width="22" height="22" rx="5" fill="#e4bd91"/>`;
+const irodoriWidth = Math.ceil(margin * 2 + irodoriSlot + gap + suffixWidth);
+fs.writeFileSync(path.join(dir, 'irodorhythm.svg'), `<svg xmlns="http://www.w3.org/2000/svg" width="${irodoriWidth}" height="${height}" viewBox="0 0 ${irodoriWidth} ${height}" role="img" aria-label="イロドリズム"><title>イロドリズム</title>${irodoriPrefix}${component(parts.zum, margin + irodoriSlot + gap, suffixHeight, suffixWidthFactor)}</svg>\n`);
+console.log('irodorhythm.svg', irodoriWidth + 'x' + height);

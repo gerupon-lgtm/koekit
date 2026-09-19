@@ -4,9 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>イロドリズム</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700;800&display=swap">
+<meta name="theme-color" content="#faf5ed">
+<link rel="manifest" href="../manifest.json">
+<link rel="apple-touch-icon" href="../assets/icons/koekit-180.png">
+<link rel="icon" href="../assets/icons/koekit-192.png">
+<script type="module" src="../sw-register.js"></script>
 <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
@@ -18,12 +20,13 @@
       <button class="ir-icon" id="home-btn" aria-label="コエキットへ">
         <svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>
       </button>
+      <button class="ir-icon ir-help-open" aria-label="つかいかた" title="つかいかた">？</button>
     </header>
-    <h1 class="ir-logo"><span class="a">イロドリ</span><span class="b">ズム</span></h1>
+    <h1 class="ir-logo"><img src="../assets/brand/irodorhythm.svg" alt="イロドリズム" width="838" height="196"></h1>
     <p class="ir-intro">こえと タッチで ドットえを つくろう。</p>
     <div class="ir-menu">
       <button class="ir-big" data-go="free">じゆうに つくる</button>
-      <button class="ir-big" data-go="template">おてほんを ぬる</button>
+      <button class="ir-big" data-go="template" disabled>おてほんを ぬる <small>じゅんびちゅう</small></button>
       <button class="ir-big ir-sub" data-go="list">さくひん</button>
     </div>
     <p class="ir-foot"><span id="ver"></span>　© 2026 SIKUMI LAB</p>
@@ -35,8 +38,9 @@
       <button class="ir-icon" data-back="mode" aria-label="もどる">
         <svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>
       </button>
+      <button class="ir-icon ir-help-open" aria-label="つかいかた" title="つかいかた">？</button>
     </header>
-    <p class="ir-intro">おおきさを えらんでね。こえで「（れつ）→（すうじ）」でばしょ、いろのなまえでぬって、「オーケー」できまり。</p>
+    <p class="ir-intro">おおきさを えらんでね。はじめてなら 3 × 3。</p>
     <div class="ir-menu ir-sizes">
       <button class="ir-big" data-size="3">3 × 3</button>
       <button class="ir-big" data-size="5">5 × 5</button>
@@ -62,6 +66,7 @@
           <line class="slash" x1="4" y1="4" x2="20" y2="20"/>
         </svg>
       </span>
+      <button class="ir-icon ir-help-open" aria-label="つかいかた" title="つかいかた">？</button>
     </header>
     <p class="ir-msg" id="make-msg" role="status"></p>
     <div class="ir-board" id="board"></div>
@@ -98,6 +103,7 @@
       <button class="ir-icon" data-back="mode" aria-label="もどる">
         <svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>
       </button>
+      <button class="ir-icon ir-help-open" aria-label="つかいかた" title="つかいかた">？</button>
     </header>
     <h2 class="ir-h2">さくひん</h2>
     <p class="ir-empty-note" id="list-empty" hidden>まだ さくひんが ないよ。</p>
@@ -110,6 +116,7 @@
       <button class="ir-icon" id="preview-back" aria-label="もどる">
         <svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>
       </button>
+      <button class="ir-icon ir-help-open" aria-label="つかいかた" title="つかいかた">？</button>
     </header>
     <div class="ir-preview-wrap"><canvas id="preview-canvas" class="ir-preview-canvas"></canvas></div>
   </section>

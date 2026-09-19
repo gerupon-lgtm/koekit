@@ -2,7 +2,15 @@
 
 コエキット3本目「**イロドリズム**」（声＋タッチのドット絵/塗り絵制作PWA）を Claude Code で作成しました。ここから Codex が引き継ぎます。この文書＝入口。まず読む順：この handoff → [基本設計サマリ.md](基本設計サマリ.md) → [implementation-guide.md](implementation-guide.md) → [tasks.md](tasks.md)。要件は [../requirements-irodori.md](../requirements-irodori.md)、音声実測は [../irodori-voice-probe-results.md](../irodori-voice-probe-results.md)。
 
-現在版：**v0.2.6**（`irodori/app.js` の `APP_VERSION`）。本番：`https://gerupon-lgtm.github.io/koekit/irodori/`（＝`https://koekit.sikumilab.com/irodori/`）。
+現在版：**v0.3.0**（`irodori/app.js` の `APP_VERSION`）。本番：`https://gerupon-lgtm.github.io/koekit/irodori/`（＝`https://koekit.sikumilab.com/irodori/`）。
+
+## 2026-09-19 Codexによる基盤統合
+
+発案者の依頼でT-I16の共有ファイル変更を実施済み。トップから `/irodori/` へ遷移、共通「ズム」の文字ロゴ、自前フォント・manifest・SWを登録。制作・保存の既存ロジックは維持。
+
+T-I13は「初回制作だけ自動案内＋全画面の？」へ変更済み。声の読み方・分割発話・画面を見て確定するコツを含む4面。案内中の音声停止と復帰を実装。詳しい検証結果は tasks.md の先頭。
+
+残る作業は見本(T-I11)、ヒント(T-I12)、実機受入(T-I17)。以下の旧スナップショットで「未登録」「T-I13/T-I16未実装」とある記述は本節で更新する。
 
 ## 触ってはいけない（重要）
 - **既存2作品 `doubutsu/`（ピタリズム）・`kioku/`（メモリズム）のコードを変更しない。** Codex が別途実装中。

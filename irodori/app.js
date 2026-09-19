@@ -7,8 +7,9 @@ import * as store from './storage.js';
 import { makeGrammar, parse, colIndex } from './vocabulary.js';
 import { VoiceInput } from './phase.js';
 import { setMicState } from '../src/ui/micstate.js';
+import { createHelp } from './help.js';
 
-const APP_VERSION = 'v0.2.6';
+const APP_VERSION = 'v0.3.0';
 const PREF_READ = 'irodori:readAloud';
 const $ = id => document.getElementById(id);
 const q = sel => document.querySelector(sel);
@@ -33,12 +34,18 @@ let vLine = false;       // 「せん」が言われた（線）
 // 履歴（undo/redo・1確定=1手）
 let history = [];        // cells スナップショットの配列
 let histIndex = -1;      // 現在位置
+let activeScreen = 'mode';
+let help;
 
 // ---- 画面遷移 ----
 function show(name) {
+  activeScreen = name;
   qa('.screen').forEach(s => { s.hidden = s.dataset.screen !== name; });
   if (name !== 'make' && voice && voice.active) voice.disable();
-  if (name === 'make') void enableVoice();  // 制作に入ったら自動で受付（音声検証アプリ）
+  if (name === 'make') {
+    if (!help.seen) help.show(name);
+    else void enableVoice();
+  }
   if (name === 'mode') renderMode();
   if (name === 'list') renderList();
   window.scrollTo(0, 0);
@@ -293,6 +300,11 @@ function toggleRead() {
 }
 
 function init() {
+  help = createHelp({
+    onOpen: () => { voice?.disable(); try { speechSynthesis.cancel(); } catch {} },
+    onClose: () => { if (activeScreen === 'make') void enableVoice(); },
+  });
+  qa('.ir-help-open').forEach(b => { b.onclick = () => help.show(activeScreen); });
   $('ver').textContent = APP_VERSION;
   try { readAloud = localStorage.getItem(PREF_READ) === '1'; } catch { readAloud = false; }
   updateReadBtn();
@@ -356,12 +368,14 @@ function onVoiceState(s) {
   else if (s === 'denied') setMsg('マイクが つかえないよ（タッチでOK）');
 }
 async function enableVoice() {
+  if (activeScreen !== 'make' || help.open) return;
   if (!voice) { voice = new VoiceInput({ onText: onVoiceText, onState: onVoiceState }); voice.setGrammar(makeGrammar()); }
   if (voice.active) return;
   if (!(await voice.isAvailable())) { setMsg('このブラウザは こえが つかえないよ（タッチでOK）'); micState('denied'); return; }
+  if (activeScreen !== 'make' || help.open) return;
   await voice.enable();
 }
-function onVoiceText(text) { interpretVoice(parse(text)); }
+function onVoiceText(text) { if (activeScreen === 'make' && !help.open) interpretVoice(parse(text)); }
 
 // トークン列を制作モデルへ反映（全発話・分割発話の両対応）
 // 合意モデル：素の座標＝カーソル移動（＝言い直し・最後が有効）／「から」＝始点／「まで」＝終点／
