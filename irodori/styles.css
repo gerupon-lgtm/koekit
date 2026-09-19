@@ -76,6 +76,9 @@ body {
   background: var(--btn); color: var(--btn-ink); min-height: 64px; cursor: pointer;
 }
 .ir-big.ir-sub { background: var(--sub); color: var(--sub-ink); }
+.ir-big[data-go="free"] { background: #f5b18b; color: #542d20; }
+.ir-big[data-go="free"]:hover { background: #efa078; }
+.ir-big[data-go="free"]:active { background: #e9956b; }
 .ir-continue { background: var(--accent); color: #332600; }
 
 .ir-msg { min-height: 1.4em; font-weight: 700; color: #6b5f52; margin: 6px 2px; }
