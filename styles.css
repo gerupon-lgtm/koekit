@@ -398,8 +398,24 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--color-primary);
   .play-app #cert .medal { width: 115px; }
   .play-app #cert .medal .award-medal { width: 100px; }
   .play-app .cert-award { padding: 12px 18px; }
-  .sequence-mode #title { gap: 9px; }
   .sequence-mode .intro-preview { margin-block: 6px; }
   .sequence-mode .preview-tile { min-height: 36px; padding: 5px; }
   .sequence-mode .intro-card { gap: 6px; }
 }
+
+/* メモリズムのロゴは内容量によらず同じ上端に置く。 */
+.kioku #title { justify-content: flex-start; background: #faf5ed; --color-fg: #493f36; --color-muted: #746d62; }
+.kioku .mode-picker { width: min(420px, 100%); flex-shrink: 0; }
+.kioku .mode-picker a { flex: 1; min-width: 0; font-size: 22px; font-weight: 700; }
+.kioku #level-select { display: flex; flex-direction: column; gap: 12px; }
+.memory-speed-picker { display: flex; gap: 6px; padding: 5px; border-radius: 20px; background: #e5ece7; }
+.memory-speed-picker button { flex: 1; min-width: 0; min-height: 54px; border: 0; border-radius: 16px; padding: 8px 6px; font: inherit; font-size: 20px; font-weight: 700; color: var(--color-fg); background: transparent; cursor: pointer; }
+.memory-speed-picker button[aria-pressed="true"] { background: #fff; box-shadow: 0 3px 9px #32472e18; }
+.memory-speed-picker button:disabled { color: #69736b; cursor: default; }
+.kioku .level-picker .memory-menu-prompt { margin: 0; font-size: 22px; font-weight: 700; color: var(--color-fg); }
+.memory-level-list { display: grid; grid-auto-rows: 64px; align-content: start; gap: 10px; min-height: 360px; }
+.kioku #level-select .lv-btn { position: relative; width: 100%; min-height: 64px; border-radius: 20px; padding: 10px 48px; font-size: 24px; font-weight: 700; background: #e5ece7; }
+.kioku #level-select .lv-btn.completed { background: #dce9d5; }
+.memory-clear-mark { position: absolute; right: 20px; top: 50%; transform: translateY(-50%); }
+.kioku .level-picker .unlock-hint { margin: 0; font-size: 14px; }
+.kioku #highest-title { width: min(420px, 100%); }

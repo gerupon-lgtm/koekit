@@ -12,7 +12,7 @@ import { openLevelIntro, closeLevelIntro } from '../src/ui/levelintro.js';
 import { LevelNavigation } from '../src/ui/levelnavigation.js';
 import { ScreenAwake } from '../src/ui/screenawake.js';
 import { renderCertificate } from '../src/ui/certificate.js';
-import { buildLevelSelect } from '../src/ui/levelselect.js';
+import { buildMemoryLevelSelect } from '../src/ui/levelselect.js';
 import { renderHighest, renderAward, medalMarkup } from '../src/ui/achievement.js';
 import { setMicState } from '../src/ui/micstate.js';
 import { showSequenceNumbers, configureSequenceIntro } from '../src/ui/sequenceview.js';
@@ -41,7 +41,7 @@ function startListening(keys) {
 }
 function stopListening() { adapter?.stop(); if (!micDenied) mic('idle'); }
 function refresh() {
-  buildLevelSelect($('#level-select'), levels, startLevel, progress);
+  buildMemoryLevelSelect($('#level-select'), levels, startLevel, progress);
   renderHighest($('#highest-title'), progress);
 }
 function startLevel(id) {
@@ -186,7 +186,6 @@ function goTitle() {
   closeLevelIntro(); board.clearFocus(); awake.setActive(false); mic('idle');
   refresh(); show('title');
 }
-$('#start-play').addEventListener('click', () => startLevel('1'));
 $('#intro-go').addEventListener('click', fromIntro);
 $('#intro-back').addEventListener('click', goTitle);
 $('#level-intro').addEventListener('cancel', e => { e.preventDefault(); goTitle(); });

@@ -23,7 +23,7 @@ import { LevelNavigation } from '../src/ui/levelnavigation.js';
 import { CardReveal } from '../src/ui/cardreveal.js';
 import { BoardView } from '../src/ui/board.js';
 import { renderCertificate } from '../src/ui/certificate.js';
-import { buildLevelSelect } from '../src/ui/levelselect.js';
+import { buildMemoryLevelSelect } from '../src/ui/levelselect.js';
 import { setMicState as setMicStateUI } from '../src/ui/micstate.js';
 import * as sfx from '../src/audio/sfx.js';
 
@@ -338,11 +338,10 @@ function goTitle() {
 
 // ---- 配線 ----
 function refreshProgress() {
-  buildLevelSelect($('#level-select'), LEVELS.filter(l => l.id !== '0'), startLevel, progress);
+  buildMemoryLevelSelect($('#level-select'), LEVELS.filter(l => l.id !== '0'), startLevel, progress);
   renderHighest($('#highest-title'), progress);
 }
 refreshProgress(); // レベル0は無し
-$('#start-play').addEventListener('click', () => startLevel('1')); // はじめる＝レベル1
 $('#confirm-btn').addEventListener('click', doConfirm);
 $('#next-btn').addEventListener('click', () => { if (phase?.phase === PHASES.AWAIT_RESULT_NEXT) afterResult(); else startReveal(); }); // ▶ ＝ スタート（記憶提示を始める）
 $('#intro-back').addEventListener('click', goTitle);
