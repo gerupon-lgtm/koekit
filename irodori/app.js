@@ -5,7 +5,8 @@ import { COLORS, colorName } from './palette.js';
 import { createCells, idx, inRange, rectCells, lineCells, renderBoard, renderThumb } from './board.js';
 import * as store from './storage.js';
 
-const APP_VERSION = 'v0.1.0';
+const APP_VERSION = 'v0.1.1';
+const PREF_READ = 'irodori:readAloud';
 const $ = id => document.getElementById(id);
 const q = sel => document.querySelector(sel);
 const qa = sel => [...document.querySelectorAll(sel)];
@@ -19,6 +20,7 @@ let tool = 'single';     // single | range | line
 let anchor = null;       // 範囲/線の始点 {row,col}
 let previewCells = [];   // プレビュー中のindex配列
 let previewFrom = 'list';
+let readAloud = false;   // 色名の読み上げ（デフォルトOFF・任意ON）
 
 // ---- 画面遷移 ----
 function show(name) {
@@ -31,6 +33,7 @@ function show(name) {
 // ---- 読み上げ（NR-07 #2。TTS出力でありユーザー音声は送らない=C-1に抵触しない）----
 function speak(text) {
   try {
+    if (!readAloud) return;
     if (!('speechSynthesis' in window)) return;
     const u = new SpeechSynthesisUtterance(text);
     u.lang = 'ja-JP';
@@ -216,8 +219,25 @@ function openPreview(artwork, from) {
 }
 
 // ---- 起動・イベント ----
+function updateReadBtn() {
+  const b = $('btn-read');
+  if (!b) return;
+  b.setAttribute('aria-pressed', String(readAloud));
+  b.classList.toggle('is-active', readAloud);
+  b.textContent = 'よみあげ:' + (readAloud ? 'オン' : 'オフ');
+}
+function toggleRead() {
+  readAloud = !readAloud;
+  try { localStorage.setItem(PREF_READ, readAloud ? '1' : '0'); } catch { /* 無視 */ }
+  updateReadBtn();
+  if (readAloud && pendingColor != null) speak(colorName(pendingColor));
+}
+
 function init() {
   $('ver').textContent = APP_VERSION;
+  try { readAloud = localStorage.getItem(PREF_READ) === '1'; } catch { readAloud = false; }
+  updateReadBtn();
+  $('btn-read').onclick = toggleRead;
   // モード選択
   qa('[data-go]').forEach(b => b.onclick = () => {
     const go = b.dataset.go;
