@@ -12,13 +12,17 @@
 // BUILD は scripts/stamp-cache.cjs が各デプロイ前に一意な値へ置換する。
 
 const VERSION = '0.1.0';            // version.json と一致（scripts/check-version 対象）
-const BUILD = 'v0.1.0-20260919152057-c296bde';         // ← scripts/stamp-cache.cjs がデプロイ毎に置換
+const BUILD = 'v0.1.0-20260919223631-c669f44';         // ← scripts/stamp-cache.cjs がデプロイ毎に置換
 const APP_CACHE = 'koekit-app-' + BUILD;
 const STATIC_CACHE = 'koekit-static-v2'; // 大きい静的資産（vosk.js等）。中身を変えたときだけ版を上げる
 
 // オフライン初回用に事前キャッシュする最小シェル（すべて小さいアプリ本体）
 const SHELL = [
   './', './index.html', './styles.css', './manifest.json',
+  './src/game/progress.js', './src/ui/achievement.js', './src/ui/levelselect.js', './src/ui/certificate.js',
+  './src/game/levels.js', './src/game/positions.js', './src/game/phase.js', './src/game/judge.js',
+  './src/game/deal.js', './src/game/animals.js', './src/game/roulette.js', './src/ui/board.js',
+  './src/audio/sfx.js', './src/log/recorder.js', './src/log/csv.js', './src/log/metrics.js',
   './src/ui/levelintro.js', './src/ui/levelnavigation.js', './src/ui/cardreveal.js', './src/ui/screenawake.js',
   './assets/brand/koekit-symbol.webp',
   './assets/brand/pitarhythm.svg',

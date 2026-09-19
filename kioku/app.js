@@ -1,3 +1,5 @@
+import { Progress } from '../src/game/progress.js';
+import { renderHighest, renderAward, medalMarkup } from '../src/ui/achievement.js';
 // メモリズム コントローラ（コエキット2本目）
 //
 // フロー（1試行）: 記憶提示(全札を表・カウントダウン) → 一斉裏返し(タイムアップSE) →
@@ -25,6 +27,7 @@ import { setMicState as setMicStateUI } from '../src/ui/micstate.js';
 import * as sfx from '../src/audio/sfx.js';
 
 const $ = s => document.querySelector(s);
+const progress = new Progress('kioku-place');
 const reveal = new CardReveal($('#stage'));
 const navigation = new LevelNavigation();
 const screenAwake = new ScreenAwake();
@@ -91,6 +94,9 @@ function stopListening() { if (adapter) adapter.stop(); }
 
 // ---- レベル開始 ----
 function startLevel(id) {
+  if (id === 'extra' && !progress.unlocked()) return;
+  $('#level-status').textContent = id === 'extra' ? '⚡' : id;
+  $('#level-status').setAttribute('aria-label', id === 'extra' ? 'スピード' : 'レベル ' + id);
   reveal.clear();
   navigation.cancel();
   phase?.to(PHASES.RESULT);
@@ -289,6 +295,9 @@ function showCertificate(kind, levelId) {
   const stars = levelId === 'extra' ? 6 : Math.max(1, idx);
   if (kind === 'clear') sfx.playClear(); else sfx.playGameover();
   renderCertificate($('#medal'), $('#cert-stars'), { kind, stars });
+  const award = renderAward($('#cert-award'), progress, kind, levelId);
+  $('#medal').innerHTML = kind === 'clear' ? medalMarkup(award?.medal || 'diamond') : '↻';
+  $('#cert-next').setAttribute('aria-label', kind === 'gameover' ? '同じレベルに再挑戦（声でも「つぎ」）' : 'つぎへ');
   $('#cert').dataset.kind = kind;
   $('#cert').dataset.level = levelId;
   show('cert');
@@ -299,14 +308,11 @@ function onCertNext() {
   navigation.cancel();
   phase.to(PHASES.RESULT);
   const kind = $('#cert').dataset.kind, id = $('#cert').dataset.level;
-  if (kind === 'gameover') { goTitle(); return; }
-  if (id === '5') startLevel('extra');
-  else if (id === 'extra') goTitle();
-  else {
-    const idx = LEVELS.findIndex(l => l.id === id);
-    const next = LEVELS[idx + 1];
-    startLevel(next ? next.id : '1');
-  }
+  if (kind === 'gameover') { startLevel(id); return; }
+  if (id === '5') {
+    if (progress.unlocked()) startLevel('extra'); else goTitle();
+  } else if (id === 'extra') goTitle();
+  else startLevel(String(Number(id) + 1));
 }
 
 // ---- 終了/タイトル ----
@@ -324,11 +330,16 @@ function goTitle() {
   $('#countdown').classList.add('hidden'); $('#target-prompt').classList.add('hidden');
   $('#next-btn').classList.add('hidden'); $('#confirm-btn').classList.add('hidden');
   setMicState('idle');
+  refreshProgress();
   show('title');
 }
 
 // ---- 配線 ----
-buildLevelSelect($('#level-select'), LEVELS.filter(l => l.id !== '0'), startLevel); // レベル0は無し
+function refreshProgress() {
+  buildLevelSelect($('#level-select'), LEVELS.filter(l => l.id !== '0'), startLevel, progress);
+  renderHighest($('#highest-title'), progress);
+}
+refreshProgress(); // レベル0は無し
 $('#start-play').addEventListener('click', () => startLevel('1')); // はじめる＝レベル1
 $('#confirm-btn').addEventListener('click', doConfirm);
 $('#next-btn').addEventListener('click', () => { if (phase?.phase === PHASES.AWAIT_RESULT_NEXT) afterResult(); else startReveal(); }); // ▶ ＝ スタート（記憶提示を始める）

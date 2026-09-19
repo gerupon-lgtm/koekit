@@ -1,3 +1,5 @@
+import { Progress } from '../src/game/progress.js';
+import { renderHighest, renderAward, medalMarkup } from '../src/ui/achievement.js';
 // ピタリズム コントローラ（フェーズ0：レベル0 計測／フェーズ1：レベル1〜5・延長）
 //
 // 守っている設計:
@@ -29,6 +31,7 @@ import { buildLevelSelect as buildLevelSelectUI } from '../src/ui/levelselect.js
 import { setMicState as setMicStateUI } from '../src/ui/micstate.js';
 
 const $ = s => document.querySelector(s);
+const progress = new Progress('doubutsu');
 const reveal = new CardReveal($('#stage'));
 const navigation = new LevelNavigation();
 const screenAwake = new ScreenAwake();
@@ -138,6 +141,9 @@ function updateSpinIcon(spinning) {
 
 // ---- レベル開始 ----
 function startLevel(id) {
+  if (id === 'extra' && !progress.unlocked()) return;
+  $('#level-status').textContent = id === 'extra' ? '⚡' : id;
+  $('#level-status').setAttribute('aria-label', id === 'extra' ? 'スピード' : 'レベル ' + id);
   navigation.cancel();
   reveal.clear();
   phase?.to(PHASES.RESULT);
@@ -374,6 +380,9 @@ function showCertificate(kind, levelId) {
   const stars = levelId === 'extra' ? 6 : Math.max(1, idx); // レベル番号ぶんの星（延長は最大）
   if (kind === 'clear') sfx.playClear(); else sfx.playGameover();
   renderCertificate($('#medal'), $('#cert-stars'), { kind, stars });
+  const award = renderAward($('#cert-award'), progress, kind, levelId);
+  $('#medal').innerHTML = kind === 'clear' ? medalMarkup(award?.medal || 'diamond') : '↻';
+  $('#cert-next').setAttribute('aria-label', kind === 'gameover' ? '同じレベルに再挑戦（声でも「つぎ」）' : 'つぎへ');
   $('#cert').dataset.kind = kind;
   $('#cert').dataset.level = levelId;
   show('cert');
@@ -384,15 +393,11 @@ function onCertNext() {
   navigation.cancel();
   phase.to(PHASES.RESULT);
   const kind = $('#cert').dataset.kind, id = $('#cert').dataset.level;
-  if (kind === 'gameover') { goTitle(); return; }
-  // クリア: 次のレベルへ。5クリアで延長へ自動突入。延長クリアでタイトル（エンディング）
-  if (id === '5') startLevel('extra');
-  else if (id === 'extra') goTitle();
-  else {
-    const idx = LEVELS.findIndex(l => l.id === id);
-    const next = LEVELS[idx + 1];
-    startLevel(next ? next.id : '1');
-  }
+  if (kind === 'gameover') { startLevel(id); return; }
+  if (id === '5') {
+    if (progress.unlocked()) startLevel('extra'); else goTitle();
+  } else if (id === 'extra') goTitle();
+  else startLevel(String(Number(id) + 1));
 }
 
 // ---- 終了/タイトル ----
@@ -409,6 +414,7 @@ function goTitle() {
   try { adapter && (adapter.dispose ? adapter.dispose() : adapter.stop()); } catch {}
   adapter = null; roulette = null; phase = null; judge = null; level = null;
   setMicState('idle');
+  refreshProgress();
   show('title');
 }
 
@@ -447,7 +453,11 @@ async function copyCSV() {
 function flash(sel, text) { const b = $(sel), old = b.textContent; b.textContent = text; setTimeout(() => { b.textContent = old; }, 1200); }
 
 // ---- 配線 ----
-buildLevelSelectUI($('#level-select'), LEVELS, startLevel);
+function refreshProgress() {
+  buildLevelSelectUI($('#level-select'), LEVELS, startLevel, progress);
+  renderHighest($('#highest-title'), progress);
+}
+refreshProgress();
 $('#start-play').addEventListener('click', () => startLevel('0')); // はじめる＝練習（レベル0）
 $('#next-btn').addEventListener('click', () => { if (phase?.phase === PHASES.AWAIT_RESULT_NEXT) afterResult(); });
 $('#spin-btn').addEventListener('click', onSpinTouch);

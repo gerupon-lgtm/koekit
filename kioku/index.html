@@ -39,6 +39,7 @@
     <button class="btn-round" id="start-play" aria-label="はじめる">
       <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
     </button>
+    <div id="highest-title" class="highest-title" aria-live="polite"></div>
     <div class="level-picker"><p>レベルをえらぶ</p><div id="level-select"></div></div>
     <footer class="title-footer">v0.1.0 &nbsp; © 2026 SIKUMI LAB</footer>
   </section>
@@ -46,6 +47,7 @@
   <!-- ============ S-04 ゲーム ============ -->
   <section class="screen" id="game" data-screen="game">
     <div class="topbar">
+      <span id="level-status" class="level-status"></span>
       <button class="icon-btn quit-btn" id="to-title" aria-label="やめてタイトルへ（声でも「やめる」「おわり」）" title="やめる"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 4H4v16h6M9 12h12m-5-5 5 5-5 5"/></svg></button>
       <span class="mic-state" id="mic-state">
         <svg class="mic" viewBox="0 0 24 24">
@@ -87,6 +89,7 @@
     <div class="medal" id="medal">
       <svg id="medal-icon" viewBox="0 0 24 24" fill="#fff"><path d="M12 2l3 6 6 .5-4.5 4 1.5 6-6-3.5L6 18.5 7.5 12.5 3 8.5 9 8z"/></svg>
     </div>
+    <div id="cert-award" class="cert-award" role="status"></div>
     <div id="cert-stars"></div>
     <span class="mic-state navigation-mic" aria-label="音声受付状態"><svg class="mic" viewBox="0 0 24 24" aria-hidden="true"><rect class="body" x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10v2a7 7 0 0 0 14 0v-2M12 19v3M8 22h8" fill="none" stroke="currentColor" stroke-width="2"/><path class="slash" d="M3 3l18 18" stroke="currentColor" stroke-width="2"/></svg></span>
     <button class="btn-round level-next" id="cert-next" aria-label="つぎへ（声でも「つぎ」）">

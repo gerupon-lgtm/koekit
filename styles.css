@@ -349,3 +349,35 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--color-primary);
   .app-card { min-height: 112px; padding-block: 8px 12px; }
   .app-card .wordmark { height: 56px; }
 }
+/* 記録・称号：保護者も読める選択画面と、絵で伝わるメダル。 */
+.play-app #title { height: auto; min-height: 100svh; gap: 14px; padding: 60px 20px 26px; overflow-y: auto; }
+.play-app #title .app-title { margin: 0; width: min(290px, 78vw); }
+.play-app #title #start-play { width: 76px; height: 76px; flex-shrink: 0; }
+.play-app .level-picker { width: min(420px, 100%); }
+.play-app #level-select { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; }
+.play-app #level-select .lv-btn { width: auto; height: auto; min-height: 52px; border-radius: 16px; padding: 10px 6px; font: inherit; font-size: 13px; }
+.play-app .lv-btn.completed { border-color: #589e80; background: #edf8f0; }
+.play-app .lv-btn:disabled { opacity: .65; cursor: default; }
+.unlock-hint { grid-column: 1 / -1; font-size: 11px; color: var(--color-muted); margin: 2px 0; }
+.highest-title { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 10px; min-height: 58px; padding: 8px 18px; border-radius: 20px; background: #ffffffa8; }
+.highest-title strong, .highest-title small, .cert-award strong, .cert-award small { display: block; }
+.highest-title strong { font-size: 15px; }
+.highest-title small, .cert-award small { font-size: 11px; color: var(--color-muted); }
+.award-medal { display: inline-flex; width: 48px; color: #b57848; filter: drop-shadow(0 4px 3px #64472425); }
+.award-medal svg { display: block; width: 100%; height: auto; overflow: visible; fill: currentColor; }
+.award-medal .ribbon { fill: #728f9e; }
+.award-medal .medal-ring { fill: none; stroke: #fff9; stroke-width: 1.4; }
+.award-medal .medal-star { fill: #fff8df; }
+.award-medal.silver { color: #99a9b6; }
+.award-medal.gold { color: #deb049; }
+.award-medal.platinum { color: #83b9b0; }
+.award-medal.diamond { color: #85c8e5; }
+.award-medal.rainbow { color: #b395e3; }
+.award-medal.rainbow svg { background: conic-gradient(#efabab, #f3d991, #a9d8b4, #9dcfea, #c6adee, #efabab); border-radius: 45%; }
+.play-app #cert .medal { background: transparent; box-shadow: none; }
+.play-app #cert .medal .award-medal { width: 135px; }
+.play-app #cert .medal .award-medal svg { width: 100%; height: auto; }
+.cert-award { text-align: center; z-index: 2; padding: 18px 25px; border-radius: 24px; background: #fff9ed; box-shadow: 0 10px 35px #b68b3120; }
+.cert-award strong { margin-top: 7px; font-size: clamp(19px, 5vw, 28px); }
+.award-pop { animation: introIn .45s ease-out; }
+.level-status { font-size: 20px; font-weight: 700; color: var(--color-muted); }
