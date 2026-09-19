@@ -113,7 +113,7 @@ function renderBoard() {
   board.render(level.vocab);
 }
 function setFocus(key) { board.setFocus(key); }
-function clearBoardMarks() { board.clearMarks(); }
+function clearBoardMarks() { board.clearMarks(); board.clearContent(); }
 function showFigure(key) { board.showFigure(key); }
 
 // ---- コントロール表示（区間で出し分け） ----
@@ -297,6 +297,9 @@ function doConfirm() {
   trialResolved = true;
   phase.to(PHASES.RESULT); // 認識停止（結果表示中）
 
+  clearTimeout(focusHideTimer);
+  board.clearFocus();
+  board.setSelected(null);
   const correct = (selectedKey === targetKey);
   board.setFlipped(selectedKey, true);
   if (correct) {
@@ -305,7 +308,17 @@ function doConfirm() {
     board.setCorrect(selectedKey, true);
     reveal.show(board.cards.get(selectedKey)?.el);
     sfx.playCorrect();
-  } else { sfx.playBlip(220); }
+  } else {
+    const remaining = [...ANIMAL_FILES];
+    for (const key of board.keys()) {
+      const [file] = remaining.splice(Math.floor(Math.random() * remaining.length), 1);
+      board.setContent(key, animalImg(file));
+    }
+    board.flipAll(true);
+    board.setWrong(selectedKey, true);
+    board.setCorrect(targetKey, true);
+    sfx.playBlip(220);
+  }
 
   recorder.add({ method: adapter.name, level: level.id, phase: PHASES.AWAIT_CONFIRM,
     expected: targetKey, rawText: lastPosRaw, matchedKey: selectedKey,
@@ -321,7 +334,7 @@ function doConfirm() {
   board.showFigure(null);
   // 結果を少し見せてから、クリア/ゲームオーバーは認定書、続くなら次の抽選（スタート待ち）へ戻す。
   // 正解は声・次へボタンで表示を短縮できる。次の抽選自体はスタートで始める。
-  advanceTimer = setTimeout(afterResult, correct ? 3000 : 1800);
+  advanceTimer = setTimeout(afterResult, correct ? 3000 : 2800);
 }
 
 function afterResult() {
