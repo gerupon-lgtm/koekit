@@ -13,7 +13,7 @@
 import { VoskAdapter } from '../src/speech/vosk.js';
 import { normalize } from '../src/speech/vocabulary.js';
 
-const VERSION = 'v6';
+const VERSION = 'v7';
 const $ = id => document.getElementById(id);
 const nowText = () => new Date().toLocaleTimeString('ja-JP');
 const log = t => { const el = $('log'); el.textContent += `${nowText()} ${t}\n`; el.scrollTop = el.scrollHeight; };
@@ -48,6 +48,9 @@ const COORD_RC = PAIRS.map(([d, c]) => ({ label: `${d}${c}`, row: String(d), col
 const COORD_CR = PAIRS.map(([d, c]) => ({ label: `${c}${d}`, row: String(d), col: c }));
 const MOVE_NUM = [['した', 5], ['した', 2], ['みぎ', 3], ['ひだり', 4], ['うえ', 1], ['みぎ', 6]]
   .map(([dir, n]) => ({ label: `${dir}${n}`, dir, num: String(n) }));
+// 座標スイープ（列→行順の安定検証）。混同しやすい列 A/B/C/D × 行1〜9。読みは D=でー・H=えっち等の複数読みで受ける。
+const COORD_SWEEP = [];
+for (const c of ['A', 'B', 'C', 'D']) for (let d = 1; d <= 9; d++) COORD_SWEEP.push({ label: `${c}${d}`, row: String(d), col: c });
 
 // ---- 区間定義 --------------------------------------------------------------
 // 単語区間の item: { label, forms:[読み], patterns:[/regex/] }
@@ -129,6 +132,7 @@ const SETS = [
   { id: 'coordRC', name: '座標 行→列（1A＝いち えー と2語で）', mode: 'coord', targetReps: 3, items: COORD_RC, grammar: [...ROW_SURFACES, ...COL_SURFACES] },
   { id: 'coordCR', name: '座標 列→行（A1＝えー いち と2語で）', mode: 'coord', targetReps: 3, items: COORD_CR, grammar: [...ROW_SURFACES, ...COL_SURFACES] },
   { id: 'moveNum', name: '移動＋数（した5＝した ご と2語で）', mode: 'move', targetReps: 3, items: MOVE_NUM, grammar: [...DIR_SURFACES, ...ROW_SURFACES] },
+  { id: 'coordSweep', name: '座標スイープ（列→行, A/B/C/D×1〜9・各1回）', mode: 'coord', targetReps: 1, items: COORD_SWEEP, grammar: [...ROW_SURFACES, ...COL_SURFACES] },
   { id: 'range', name: '範囲・線（から/まで/せん）', kind: 'word', targetReps: 3, items: [
     { label: 'から', forms: ['から'], patterns: [/から/] },
     { label: 'まで', forms: ['まで'], patterns: [/まで/] },
