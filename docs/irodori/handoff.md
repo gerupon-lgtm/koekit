@@ -2,7 +2,7 @@
 
 コエキット3本目「**イロドリズム**」（声＋タッチのドット絵/塗り絵制作PWA）を Claude Code で作成しました。ここから Codex が引き継ぎます。この文書＝入口。まず読む順：この handoff → [基本設計サマリ.md](基本設計サマリ.md) → [implementation-guide.md](implementation-guide.md) → [tasks.md](tasks.md)。要件は [../requirements-irodori.md](../requirements-irodori.md)、音声実測は [../irodori-voice-probe-results.md](../irodori-voice-probe-results.md)。
 
-現在版：**v0.4.0**（`irodori/app.js` の `APP_VERSION`）。本番：`https://gerupon-lgtm.github.io/koekit/irodori/`（＝`https://koekit.sikumilab.com/irodori/`）。
+現在版：**v0.4.1**（`irodori/app.js` の `APP_VERSION`）。本番：`https://gerupon-lgtm.github.io/koekit/irodori/`（＝`https://koekit.sikumilab.com/irodori/`）。
 
 ## 2026-09-19 Codexによる基盤統合
 
@@ -86,3 +86,11 @@ Chrome・WebKitの320×568／360×640／390×844で4面ともスクロール不�
 練習中は保存・自動下書きへ書かない。既存作品と描きかけは保持。通常制作の文法は変更せず、練習中だけ「つぎ／次」を追加。途中終了・ヘルプも利用可。
 
 検証：`node scripts/test-tutorial.mjs`（誤色・余分な塗り・操作種別・途中Undo・消しゴム・やり直し）、既存171件。Chrome/WebKitで模擬音声とマイク利用不可のタッチ操作の両方で全4課題を完走、元の作品・下書きのバイト一致、通常編集への復帰と保存ボタン復帰を確認。実発話の精度は端末での確認が必要。
+
+## v0.4.1 練習案内のポップアップ化（2026-09-19）
+
+盤面上部に積んでいた説明・次へボタンを撤去。最初に全体の目的と4課題を表示し、各課題の説明はdialogで1つずつ案内する。閉じると通常制作と同じ盤面・パレット配置で操作できる。ヘッダーには進捗のみ表示し、「？」で現在の課題を再表示。
+
+達成から600ms後に次の課題を自動表示。最後の黒塗りの後はUndoの説明を別表示する。各説明に「ここから やりなおす」「さいしょから」を用意。後者は練習全体を初期化して目的説明へ戻る。案内中の声はオーケー／オッケー／つぎと終了だけを受け付け、着色しない。通常制作・既存作品・下書きは変更しない。
+
+検証：Chrome/WebKitで320×568・360×640・390×844の通常制作と練習の盤面位置・寸法が一致。390×844は画面スクロールなし。320×568でも全課題の説明は内部スクロールなし、マイク利用不可で全課題をタッチ完走。模擬音声で自動遷移・Undo・終了・再開・課題やり直し、保存済み作品と下書きの保持を確認。判定テストと既存171件も通過。実機の音声認識精度は未検証。

@@ -8,9 +8,9 @@ import { makeGrammar, parse, colIndex } from './vocabulary.js';
 import { VoiceInput } from './phase.js';
 import { setMicState } from '../src/ui/micstate.js';
 import { createHelp } from './help.js';
-import { Tutorial, renderTutorial } from './tutorial.js';
+import { Tutorial, createTutorialGuide } from './tutorial.js';
 
-const APP_VERSION = 'v0.4.0';
+const APP_VERSION = 'v0.4.1';
 const PREF_READ = 'irodori:readAloud';
 const $ = id => document.getElementById(id);
 const q = sel => document.querySelector(sel);
@@ -38,13 +38,19 @@ let histIndex = -1;      // 現在位置
 let activeScreen = 'mode';
 let help;
 let tutorial = null;
+let tutorialGuide, tutorialTimer, undoAnnounced = false;
+let voiceRequest = 0;
 
 // ---- 画面遷移 ----
 function show(name) {
   activeScreen = name;
   qa('.screen').forEach(s => { s.hidden = s.dataset.screen !== name; });
   if (name !== 'make' && voice && voice.active) voice.disable();
-  if (name !== 'make') tutorial = null;
+  if (name !== 'make') {
+    tutorial = null;
+    clearTimeout(tutorialTimer);
+    tutorialGuide?.close();
+  }
   if (name === 'make') {
     if (!tutorial && !help.seen) help.show(name);
     else void enableVoice();
@@ -112,10 +118,8 @@ function setMsg(t) { $('make-msg').textContent = t; }
 function draw() {
   renderBoard($('board'), current, { cursor, previewCells, previewColor: pendingColor });
   $('btn-confirm').disabled = !(previewCells.length && pendingColor != null);
-  renderTutorial($('tutorial-guide'), tutorial);
-  $('tutorial-controls').hidden = !tutorial;
-  $('tutorial-next').hidden = !tutorial?.passed;
-  $('tutorial-next').textContent = tutorial?.step === 3 ? 'おしまい' : 'つぎへ';
+  $('tutorial-status').hidden = !tutorial;
+  $('tutorial-status').textContent = tutorial ? `れんしゅう ${tutorial.step + 1} / 4` : '';
   $('btn-save').hidden = !!tutorial;
   if (tutorial) {
     document.querySelectorAll('#board .ir-cell').forEach(cell => {
@@ -123,22 +127,34 @@ function draw() {
       cell.classList.toggle('ir-tutorial-target', !tutorial.passed && tutorial.lesson.cells.includes(i));
     });
     $('btn-confirm').disabled ||= tutorial.passed;
+    if (tutorial.passed && !tutorialTimer && !tutorialGuide.open) {
+      setMsg('できたね！');
+      tutorialTimer = setTimeout(nextTutorial, 600);
+    } else if (tutorial.undoReady && !tutorial.passed && !undoAnnounced) {
+      undoAnnounced = true;
+      tutorialGuide.show('undo', tutorial);
+    } else if (tutorial.feedback) setMsg(tutorial.feedback);
   }
 }
 
 function startTutorial() {
+  clearTimeout(tutorialTimer); tutorialTimer = null; undoAnnounced = false;
   tutorial = new Tutorial();
   openMake({ id: 'practice', size: 9, cells: tutorial.base.slice(), mode: 'free', templateId: null, createdAt: null }, null);
+  tutorialGuide.show('overview', tutorial);
 }
 function retryTutorial() {
   if (!tutorial) return;
+  clearTimeout(tutorialTimer); tutorialTimer = null; undoAnnounced = false;
   const cells = tutorial.retry();
   openMake({ ...current, size: tutorial.lesson.size, cells }, null);
+  tutorialGuide.show('lesson', tutorial);
 }
 function nextTutorial() {
+  clearTimeout(tutorialTimer); tutorialTimer = null;
   if (!tutorial?.passed) return;
   if (tutorial.next()) retryTutorial();
-  else show('mode');
+  else tutorialGuide.show('complete', tutorial);
 }
 
 // ---- パレット ----
@@ -338,17 +354,24 @@ function toggleRead() {
 }
 
 function init() {
+  tutorialGuide = createTutorialGuide({
+    onOpen: () => { voice?.disable(); void enableVoice(); },
+    onClose: () => { if (activeScreen === 'make') { voice?.disable(); void enableVoice(); } },
+    onRestart: startTutorial, onRetry: retryTutorial, onFinish: () => show('mode'),
+  });
   help = createHelp({
     onOpen: () => { voice?.disable(); try { speechSynthesis.cancel(); } catch {} },
     onClose: () => { if (activeScreen === 'make') void enableVoice(); },
   });
-  qa('.ir-help-open').forEach(b => { b.onclick = () => help.show(activeScreen); });
+  qa('.ir-help-open').forEach(b => { b.onclick = () => {
+    if (tutorial?.passed) nextTutorial();
+    else if (tutorial) tutorialGuide.show(tutorial.undoReady ? 'undo' : 'lesson', tutorial);
+    else help.show(activeScreen);
+  }; });
   $('ver').textContent = APP_VERSION;
   try { readAloud = localStorage.getItem(PREF_READ) === '1'; } catch { readAloud = false; }
   updateReadBtn();
   $('btn-read').onclick = toggleRead;
-  $('tutorial-retry').onclick = retryTutorial;
-  $('tutorial-next').onclick = nextTutorial;
   // ヘッダー：ホーム（コエキットへ）。マイクは状態表示（トグルではない）
   $('home-btn').onclick = () => { location.href = '../'; };
   // パレット付近：けす（消しゴム）・もどす・やりなおし（音声にも対応・C-2）
@@ -409,16 +432,22 @@ function onVoiceState(s) {
   else if (s === 'denied') setMsg('マイクが つかえないよ（タッチでOK）');
 }
 async function enableVoice() {
+  const request = ++voiceRequest;
   if (activeScreen !== 'make' || help.open) return;
   if (!voice) { voice = new VoiceInput({ onText: onVoiceText, onState: onVoiceState }); voice.setGrammar(makeGrammar()); }
   if (voice.active) return;
-  voice.setGrammar(tutorial ? [...makeGrammar(), 'つぎ', '次'] : makeGrammar());
+  voice.setGrammar(tutorialGuide.open ? ['オーケー', 'オッケー', 'つぎ', '次', 'やめる', 'おわり'] : tutorial ? [...makeGrammar(), 'つぎ', '次'] : makeGrammar());
   if (!(await voice.isAvailable())) { setMsg('このブラウザは こえが つかえないよ（タッチでOK）'); micState('denied'); return; }
-  if (activeScreen !== 'make' || help.open) return;
+  if (request !== voiceRequest || activeScreen !== 'make' || help.open) return;
   await voice.enable();
 }
 function onVoiceText(text) {
   if (activeScreen !== 'make' || help.open) return;
+  if (tutorialGuide.open) {
+    if (/^(やめる|おわり|終わり)$/.test(text.trim())) show('mode');
+    else if (/^(つぎ|次|オーケー|オッケー|おーけー|おっけー)$/.test(text.trim())) tutorialGuide.primary();
+    return;
+  }
   if (tutorial?.passed) {
     if (parse(text).some(t => t.type === 'kw' && t.val === 'quit')) show('mode');
     else if (/^(つぎ|次|オーケー|オッケー|おーけー|おっけー)$/.test(text.trim())) nextTutorial();
@@ -433,7 +462,7 @@ function onVoiceText(text) {
 function interpretVoice(tokens) {
   let i = 0;
   while (i < tokens.length) {
-    if (activeScreen !== 'make' || tutorial?.passed) break;
+    if (activeScreen !== 'make' || tutorial?.passed || tutorialGuide.open) break;
     const t = tokens[i];
     if (t.type === 'kw') {
       if (t.val === 'save') doSave();

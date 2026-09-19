@@ -56,6 +56,7 @@
       <button class="ir-icon ir-exit" data-back="mode" aria-label="やめる">
         <svg viewBox="0 0 24 24"><path d="M14 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8"/><path d="M11 12h9"/><path d="M17 9l3 3-3 3"/></svg>
       </button>
+      <span id="tutorial-status" hidden></span>
       <span class="ir-micwrap" id="mic-state" aria-label="こえの じょうたい" role="status">
         <svg class="mic" viewBox="0 0 24 24" aria-hidden="true">
           <g class="body">
@@ -69,8 +70,6 @@
       </span>
       <button class="ir-icon ir-help-open" aria-label="つかいかた" title="つかいかた">？</button>
     </header>
-    <section id="tutorial-guide" class="ir-tutorial" aria-live="polite" hidden></section>
-    <div id="tutorial-controls" class="ir-tutorial-controls" hidden><button id="tutorial-retry" class="ir-mini">この れんしゅうを やりなおす</button><button id="tutorial-next" class="ir-mini" hidden>つぎへ</button></div>
     <p class="ir-msg" id="make-msg" role="status"></p>
     <div class="ir-board" id="board"></div>
     <button class="ir-confirm" id="btn-confirm" disabled>オーケー（きめる）</button>
