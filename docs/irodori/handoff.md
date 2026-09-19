@@ -2,7 +2,7 @@
 
 コエキット3本目「**イロドリズム**」（声＋タッチのドット絵/塗り絵制作PWA）を Claude Code で作成しました。ここから Codex が引き継ぎます。この文書＝入口。まず読む順：この handoff → [基本設計サマリ.md](基本設計サマリ.md) → [implementation-guide.md](implementation-guide.md) → [tasks.md](tasks.md)。要件は [../requirements-irodori.md](../requirements-irodori.md)、音声実測は [../irodori-voice-probe-results.md](../irodori-voice-probe-results.md)。
 
-現在版：**v0.4.8**（`irodori/app.js` の `APP_VERSION`）。本番：`https://gerupon-lgtm.github.io/koekit/irodori/`（＝`https://koekit.sikumilab.com/irodori/`）。
+現在版：**v0.4.9**（`irodori/app.js` の `APP_VERSION`）。本番：`https://gerupon-lgtm.github.io/koekit/irodori/`（＝`https://koekit.sikumilab.com/irodori/`）。
 
 ## 2026-09-19 Codexによる基盤統合
 
@@ -128,3 +128,7 @@ Chrome/WebKitの320×568・360×640・390×844で盤面位置・スクロール�
 実機でE1がA1に誤認されやすいとの報告と発案者の提案に基づき、Aの候補を「えい／エイ／ええ／エエ」の4表記に限定。「えー／エー／え」を除外した。Eは「いー／イー」のまま。Voskに渡す文法と認識結果の座標変換は同じCOL定義を参照するため、両方へ反映。共有認識器や他作品は変更していない。
 
 候補の含有・除外、各候補＋いちのA1/E1変換、チュートリアル判定テストは通過。全候補は101語。実発話でのE→A誤認減少は未検証。A1「えい いち」とE1「いー いち」を同じ端末・条件で繰り返し比較し、Aの認識低下がないかも確認する。過去の音声実測は旧候補の結果として保持する。
+
+## v0.4.9 Eの候補を追加（2026-09-19）
+
+「イー」の反応が悪いとの報告と発案者の指示により、Eに「いい／イイ」を追加。Eの候補は「いー／イー／いい／イイ」。Vosk文法と解析の両方へ反映。Aは前版の4候補を維持。全候補103語。Eの4表記×行1〜9の36通りの解析、およびAの候補維持を確認。実発話の認識精度は実機確認待ち。
