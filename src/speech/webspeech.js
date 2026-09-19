@@ -63,7 +63,17 @@ export class WebSpeechAdapter extends Emitter {
     rec.continuous = false;
     rec.interimResults = false;
     if (this._local) {
-      try { rec.processLocally = true; } catch { /* 未対応プロパティは無視 */ }
+      // 未対応オブジェクトへ同名プロパティを追加しても端末内処理にはならない。
+      // 要求できないときは開始せず、タッチ操作へ戻す（C-1）。
+      try {
+        if (!('processLocally' in rec)) throw new Error('unsupported');
+        rec.processLocally = true;
+        if (rec.processLocally !== true) throw new Error('unsupported');
+      } catch {
+        this._active = false;
+        this.emit('error', 'not-supported');
+        return;
+      }
     }
     this._startAt = performance.now();
     this._speechEndAt = 0;

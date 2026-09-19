@@ -24,7 +24,7 @@ export { METHODS } from './config.js';
  */
 export function createSpeechInput(method, opts = {}) {
   switch (method) {
-    case METHODS.WEBSPEECH:       return new WebSpeechAdapter({ local: false });
+    case METHODS.WEBSPEECH:       throw new Error('公開ゲームでは方式Aを使用できません');
     case METHODS.WEBSPEECH_LOCAL: return new WebSpeechAdapter({ local: true });
     case METHODS.VOSK:            return new VoskAdapter(opts);
     default:

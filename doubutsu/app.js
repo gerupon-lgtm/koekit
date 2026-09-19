@@ -1,3 +1,4 @@
+import { publicMethod } from '../src/speech/public-method.js';
 import { Progress } from '../src/game/progress.js';
 import { renderHighest, renderAward, medalMarkup } from '../src/ui/achievement.js';
 // ピタリズム コントローラ（フェーズ0：レベル0 計測／フェーズ1：レベル1〜5・延長）
@@ -76,13 +77,13 @@ function show(name) {
 function resolveInitialMethod() {
   try {
     const q = new URLSearchParams(location.search).get('method');
-    if (q) return q;
+    if (q) return publicMethod(q);
     const saved = localStorage.getItem(METHOD_KEY);
-    if (saved) return saved;
+    if (saved) return publicMethod(saved);
   } catch {}
   return METHODS.VOSK;
 }
-function setMethod(m) { method = m; try { localStorage.setItem(METHOD_KEY, m); } catch {} }
+function setMethod(m) { method = publicMethod(m); try { localStorage.setItem(METHOD_KEY, method); } catch {} }
 
 // ---- 受け付け状態（F-003・共有ビュー） ----
 function setMicState(state) {
@@ -422,9 +423,9 @@ function goTitle() {
 // ---- 計測パネル（S-07・レベル0のログで判定） ----
 function renderPanel() {
   document.querySelectorAll('input[name="method"]').forEach(r => { r.checked = (r.value === method); });
-  $('#method-note').textContent = method === METHODS.WEBSPEECH
-    ? '※方式Aは検証専用。公開版では使わない（要件C-1）'
-    : (method === METHODS.WEBSPEECH_LOCAL ? '※端末内WebSpeech。実機検証では ja-JP 非対応だった' : '');
+  $('#method-note').textContent = method === METHODS.WEBSPEECH_LOCAL
+    ? '端末内WebSpeech非対応の場合も、タッチで遊べます。外部処理には切り替えません。'
+    : '音声は端末内で認識します。';
 
   const all = recorder.getAll();
   const entries = all.filter(e => e.level === '0'); // 合格ラインはレベル0の計測で判定

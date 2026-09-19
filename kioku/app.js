@@ -1,3 +1,4 @@
+import { publicMethod } from '../src/speech/public-method.js';
 import { Progress } from '../src/game/progress.js';
 import { renderHighest, renderAward, medalMarkup } from '../src/ui/achievement.js';
 // メモリズム コントローラ（コエキット2本目）
@@ -63,9 +64,9 @@ function show(name) {
 function resolveInitialMethod() {
   try {
     const q = new URLSearchParams(location.search).get('method');
-    if (q) return q;
+    if (q) return publicMethod(q);
     const saved = localStorage.getItem(METHOD_KEY);
-    if (saved) return saved;
+    if (saved) return publicMethod(saved);
   } catch {}
   return METHODS.VOSK;
 }
