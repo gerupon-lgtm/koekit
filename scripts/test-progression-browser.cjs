@@ -35,14 +35,15 @@ const assert = require('node:assert/strict');
     }
     assert.match(await page.locator('#cert-award').innerText(),/ひだりみぎマスター/);
     await advance(1200);
+    await page.evaluate(()=>document.getAnimations().forEach(a=>a.finish()));
     await page.screenshot({path:`.local-tools/${game}-award.png`});
-    await page.locator('#cert-quit').click(); await page.reload();
+    await page.locator('#cert-quit').click(); await page.reload(); await page.locator('#highest-title strong').waitFor();
     assert.match(await page.locator('#highest-title').innerText(),/ひだりみぎマスター/);
     assert.equal(await page.locator('[data-level="1"]').evaluate(e=>e.classList.contains('completed')),true);
     const key='koekit.progress.v1.'+(game==='kioku'?'kioku-place':'doubutsu');
-    await page.evaluate(key=>localStorage.setItem(key,JSON.stringify(['5'])),key); await page.reload();
+    await page.evaluate(key=>localStorage.setItem(key,JSON.stringify(['5'])),key); await page.reload(); await page.locator('#highest-title strong').waitFor();
     assert.equal(await page.locator('[data-level="extra"]').isDisabled(),true);
-    await page.evaluate(key=>localStorage.setItem(key,JSON.stringify(['1','2','3','4','5','extra'])),key); await page.reload();
+    await page.evaluate(key=>localStorage.setItem(key,JSON.stringify(['1','2','3','4','5','extra'])),key); await page.reload(); await page.locator('#highest-title strong').waitFor();
     assert.equal(await page.locator('[data-level="extra"]').isDisabled(),false);
     assert.match(await page.locator('#highest-title').innerText(),/スピードマスター/);
     for(const [width,height] of [[320,568],[390,844],[768,1024]]) {

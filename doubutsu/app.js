@@ -329,6 +329,7 @@ function doConfirm() {
     elapsedMs: lastPosElapsed, outcome: correct ? 'correct' : 'wrong', sessionRestart });
 
   pendingStatus = judge.record(correct ? 'correct' : 'wrong');
+  if (pendingStatus === 'clear') progress.clear(level.id);
   pendingAdvance = true;
   if (correct) {
     navigation.afterSound(500); // 正解音は約440ms。鳴り終わってから先送りを受け付ける。

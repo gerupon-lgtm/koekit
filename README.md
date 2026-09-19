@@ -9,7 +9,7 @@
 | アプリ | あそび | 公開パス |
 |---|---|---|
 | ピタリズム | まわして、とめて。止まったカードの位置を当てる | [あそぶ](https://gerupon-lgtm.github.io/koekit/doubutsu/) |
-| メモリズム | よくみて、おぼえて。動物がいた位置を思い出す | [あそぶ](https://gerupon-lgtm.github.io/koekit/kioku/) |
+| メモリズム | 場所：動物の位置を思い出す／順番：光った位置を順番にこたえる | [あそぶ](https://gerupon-lgtm.github.io/koekit/kioku/) |
 
 3つの名称は2026-09-18に確定。旧仮称は「どうぶつめくり」「きおくめくり」で、公開済みのURLはそのまま使います。
 
@@ -32,6 +32,7 @@ GitHub Pagesへの公開は `node scripts/stamp-cache.cjs` → commit → push�
 - [実装ガイド](docs/implementation-guide.md)
 - [ピタリズムの要件](docs/requirements.md)
 - [メモリズムの要件](docs/requirements-kioku.md)
+- [順番モード・記録・検証手順](docs/sequence-mode.md)
 - [画面設計](docs/screens.md)
 - [実装タスク](docs/tasks.md)
 

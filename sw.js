@@ -12,7 +12,7 @@
 // BUILD は scripts/stamp-cache.cjs が各デプロイ前に一意な値へ置換する。
 
 const VERSION = '0.1.0';            // version.json と一致（scripts/check-version 対象）
-const BUILD = 'v0.1.0-20260919223631-c669f44';         // ← scripts/stamp-cache.cjs がデプロイ毎に置換
+const BUILD = 'v0.1.0-20260919225150-3567347';         // ← scripts/stamp-cache.cjs がデプロイ毎に置換
 const APP_CACHE = 'koekit-app-' + BUILD;
 const STATIC_CACHE = 'koekit-static-v2'; // 大きい静的資産（vosk.js等）。中身を変えたときだけ版を上げる
 
@@ -30,7 +30,8 @@ const SHELL = [
   './assets/icons/koekit-180.png', './assets/icons/koekit-192.png',
   './assets/icons/koekit-512.png', './assets/icons/koekit-maskable-512.png',
   './doubutsu/', './doubutsu/index.html', './doubutsu/app.js',
-  './kioku/', './kioku/index.html', './kioku/app.js',
+  './kioku/entry.js', './kioku/sequence.js', './src/game/sequence.js', './src/game/sequence-phase.js', './src/ui/sequenceview.js',
+  './kioku/', './kioku/?mode=sequence', './kioku/index.html', './kioku/app.js',
   './irodori/', './irodori/index.html', './irodori/styles.css', './irodori/app.js',
   './irodori/help.js', './irodori/board.js', './irodori/palette.js', './irodori/storage.js',
   './irodori/tutorial.js', './irodori/templates.js', './irodori/recipes.js',

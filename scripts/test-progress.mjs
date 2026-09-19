@@ -28,4 +28,8 @@ assert.equal(seq.highest().name, '6てマスター');
 seq.clear('s5'); assert.equal(seq.highest().rank, 5);
 for (let i=1;i<=4;i++) seq.clear('s'+i);
 assert.equal(seq.highest().rank, 100);
+const expanded = new Progress('kioku-sequence', { storage, maxLevel: 8, speedIds: ['s1','s2','s3','s4','s5','s6','s7','s8'] });
+assert.equal(expanded.highest().rank, 100, 'earned title survives future upper-limit expansion');
+assert.equal(expanded.unlocked(), false, 'new normal levels must be cleared');
+assert.equal(expanded.speedCleared(), false);
 console.log('progress: passed');

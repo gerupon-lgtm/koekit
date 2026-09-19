@@ -36,6 +36,7 @@
       <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3l9 8h-2.5v9h-5.5v-6h-2v6H5.5v-9H3z"/></svg>
     </a>
     <h1 class="app-title"><img class="wordmark" src="../assets/brand/memorhythm.svg" alt="メモリズム" width="718" height="196"></h1>
+    <nav class="mode-picker" aria-label="遊び方"><a id="mode-place" href="./">場所</a><a id="mode-sequence" href="./?mode=sequence">順番</a></nav>
     <button class="btn-round" id="start-play" aria-label="はじめる">
       <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
     </button>
@@ -62,6 +63,7 @@
       </span>
       <svg class="finger" id="touch-hint" viewBox="0 0 24 24" fill="#888"><path d="M9 11V5a1.5 1.5 0 013 0v6h1V6.5a1.5 1.5 0 013 0V13a6 6 0 01-6 6h-1a5 5 0 01-4-2l-3-4 1.2-1.1a2 2 0 012.6-.1L9 13z"/></svg>
     </div>
+    <div id="sequence-status" class="sequence-status" role="status"></div>
     <div id="stage">
       <div id="board"></div>
       <div id="figure">
@@ -74,6 +76,8 @@
       <div id="target-prompt" class="hidden"><div class="tp-letter"></div></div>
     </div>
     <div class="controls">
+      <button class="icon-btn answer-edit hidden" id="undo-answer" aria-label="もどす：最後の1つを取り消す">↶</button>
+      <button class="icon-btn answer-edit hidden" id="clear-answer" aria-label="やりなおし：こたえを全部けす">↺</button>
       <button class="btn-round confirm hidden" id="confirm-btn" aria-label="オーケー、カードをめくる">
         <svg viewBox="0 0 24 24"><path d="M9 16.2l-3.5-3.5L4 14.2 9 19l11-11-1.4-1.4z"/></svg>
       </button>
@@ -112,6 +116,6 @@
     </div>
   </dialog>
 
-  <script type="module" src="./app.js"></script>
+  <script type="module" src="./entry.js"></script>
 </body>
 </html>

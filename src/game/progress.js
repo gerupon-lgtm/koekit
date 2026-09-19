@@ -16,7 +16,7 @@ export class Progress {
       if (!this.storage) throw Error('storage unavailable');
       const saved = JSON.parse(this.storage.getItem(this.key) || '[]');
       if (Array.isArray(saved)) for (const id of saved) {
-        if (/^[1-8]$/.test(id) || id === 'extra' || /^s[1-8]$/.test(id)) this.ids.add(id);
+        if (typeof id === 'string' && (/^[1-8]$/.test(id) || id === 'extra' || /^s[1-8]$/.test(id) || /^@speed:[1-8]$/.test(id))) this.ids.add(id);
       }
     } catch { /* 壊れた記録でも起動する。書き込み失敗は保存時に通知。 */ }
   }
@@ -33,11 +33,12 @@ export class Progress {
     if (!this.normalIds.includes(id) && !this.speedIds.includes(id)) return null;
     if (this.speedIds.includes(id) && !this.unlocked()) return null;
     this.ids.add(id);
+    if (this.speedCleared()) this.ids.add('@speed:' + this.normalIds.length);
     try {
       // 他タブで獲得した記録も保つ。
       const saved = JSON.parse(this.storage.getItem(this.key) || '[]');
       if (Array.isArray(saved)) for (const old of saved) {
-        if (this.normalIds.includes(old) || this.speedIds.includes(old)) this.ids.add(old);
+        if (this.normalIds.includes(old) || this.speedIds.includes(old) || (typeof old === 'string' && /^@speed:[1-8]$/.test(old))) this.ids.add(old);
       }
     } catch {}
     try { this.storage.setItem(this.key, JSON.stringify([...this.ids])); this.persistent = true; }
@@ -45,7 +46,7 @@ export class Progress {
     return this.title(id);
   }
   highest() {
-    if (this.speedCleared()) return this.title(this.speedIds[0]);
+    if (this.speedCleared() || [...this.ids].some(id => /^@speed:[1-8]$/.test(id))) return { rank: 100, name: 'スピードマスター', medal: 'rainbow' };
     const id = [...this.normalIds].reverse().find(id => this.completed(id));
     return id ? this.title(id) : null;
   }
