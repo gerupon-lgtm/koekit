@@ -14,7 +14,7 @@ import { VoskAdapter } from '../src/speech/vosk.js';
 import { normalize } from '../src/speech/vocabulary.js';
 import { makeGrammar, parse as parseProduction } from '../irodori/vocabulary.js';
 
-const VERSION = 'v8';
+const VERSION = 'v9';
 const $ = id => document.getElementById(id);
 const nowText = () => new Date().toLocaleTimeString('ja-JP');
 const log = t => { const el = $('log'); el.textContent += `${nowText()} ${t}\n`; el.scrollTop = el.scrollHeight; };
@@ -68,6 +68,7 @@ for (const [col, reading] of [['B', 'びー'], ['D', 'でー'], ['E', 'いい']]
 for (const reading of ['いー', 'いい']) AE_SEQUENCE.push({ label: `E1：${reading} いち`, row: '1', col: 'E' });
 const SETS = [
   { id: 'productionAE', name: '本番候補：A/Eの脱落チェック（14発話）', mode: 'coord', production: true, targetReps: 1, items: AE_SEQUENCE, grammar: makeGrammar() },
+  { id: 'restrictedH', name: '比較：Hはえっちだけ（同じ14発話）', mode: 'coord', production: true, targetReps: 1, items: AE_SEQUENCE.map(item => ({ ...item })), grammar: makeGrammar().filter(word => !['えいち', 'エイチ'].includes(word)) },
   { id: 'color', name: '色（12色）', kind: 'word', targetReps: 3, items: [
     { label: 'あか',     forms: ['あか'],               patterns: [/赤/, /あか/, /レッド/] },
     { label: 'オレンジ', forms: ['おれんじ', 'オレンジ'], patterns: [/オレンジ/, /おれんじ/, /橙/] },
@@ -340,7 +341,7 @@ async function startSet(set) {
     if (activeSet === set) {
       $('status').textContent = '受付開始。' + prompt;
       log('認識器の開始処理完了。表示された語を1発話ずつ、結果を待って読んでください。');
-      if (set.production) log(`本番文法: ${JSON.stringify(grammar)}`);
+      if (set.production) log(`使用文法: ${JSON.stringify(grammar)}`);
     }
   }
   catch (e) { log(`区間開始エラー: ${e.message}`); }
