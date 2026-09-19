@@ -309,11 +309,9 @@ function doConfirm() {
     reveal.show(board.cards.get(selectedKey)?.el);
     sfx.playCorrect();
   } else {
-    const remaining = [...ANIMAL_FILES];
-    for (const key of board.keys()) {
-      const [file] = remaining.splice(Math.floor(Math.random() * remaining.length), 1);
-      board.setContent(key, animalImg(file));
-    }
+    board.clearContent(); // 動物は正解位置の1枚だけ。他の札は空白。
+    const file = ANIMAL_FILES[Math.floor(Math.random() * ANIMAL_FILES.length)];
+    board.setContent(targetKey, animalImg(file));
     board.flipAll(true);
     board.setWrong(selectedKey, true);
     board.setCorrect(targetKey, true);
