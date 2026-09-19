@@ -3,7 +3,7 @@ export const CATEGORIES = { everyday: 'みぢかなもの', shapes: 'かたち',
 const definitions = [
  ['flower-3', 'ちいさな はな', 'everyday', ['.5.','525','.4.']],
  ['plus-3', 'ぷらす', 'shapes', ['.6.','666','.6.']],
- ['signal-3', 'しんごう', 'everyday', ['B0B','B2B','B4B']],
+ ['signal-3', 'しんごう', 'everyday', ['BBB','420','BBB']],
  ['heart-5', 'はーと', 'shapes', ['.0.0.','00000','00000','.000.','..0..']],
  ['tree-5', 'き', 'everyday', ['..4..','.444.','44444','..9..','..9..']],
  ['letter-a-5', 'もじの A', 'letters', ['.666.','6...6','66666','6...6','6...6']],

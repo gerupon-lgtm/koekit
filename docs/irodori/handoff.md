@@ -2,7 +2,7 @@
 
 コエキット3本目「**イロドリズム**」（声＋タッチのドット絵/塗り絵制作PWA）を Claude Code で作成しました。ここから Codex が引き継ぎます。この文書＝入口。まず読む順：この handoff → [基本設計サマリ.md](基本設計サマリ.md) → [implementation-guide.md](implementation-guide.md) → [tasks.md](tasks.md)。要件は [../requirements-irodori.md](../requirements-irodori.md)、音声実測は [../irodori-voice-probe-results.md](../irodori-voice-probe-results.md)。
 
-現在版：**v0.5.1**（`irodori/app.js` の `APP_VERSION`）。本番：`https://gerupon-lgtm.github.io/koekit/irodori/`（＝`https://koekit.sikumilab.com/irodori/`）。
+現在版：**v0.5.2**（`irodori/app.js` の `APP_VERSION`）。本番：`https://gerupon-lgtm.github.io/koekit/irodori/`（＝`https://koekit.sikumilab.com/irodori/`）。
 
 ## 2026-09-19 Codexによる基盤統合
 
@@ -170,3 +170,12 @@ H1/H5/H9各3回の確認済み。座標8/9、H自体は9/9。失敗は「えっ�
 - ①以降は赤を保持。線は確定ごとに1マスへ戻り、③は「から」で範囲になる。⑤はC4からC5への相対移動。Aは「えい」、Dは「でー」と案内。
 - `irodori/recipes.js` に作例と途中の盤面を定義し、SWにも登録。新規・再編集で表示ページを初期化し、同じ制作中の再表示では保持する。
 - Chrome/WebKitの320×568で5ページすべて内部スクロールなし。模擬音声による5手と途中形・完成形一致、保存、Undo/Redo、案内中の作品非変更を確認。実機の発話認識精度は別途確認が必要。
+
+## v0.5.2 お手本の実践チュートリアル（2026-09-19）
+- しんごうを横置き（左から緑・黄・赤）へ修正。
+- お手本一覧のフィルターより上に独立した「はーとを つくろう」を配置。絞り込みに関係なく先頭に表示。
+- 専用入口から開始すると最初の手順を自動表示。盤面上の「現在の目標／てじゅん」から現在の手順を1タップで再表示できる。
+- 各手の途中形に盤面全体が一致したら、600ms後に次の説明を表示。間違いは直して一致すれば進める。Undoで以前の途中形に戻れば手順も戻る。完成後はそのまま保存・編集可能。
+- 通常のハート選択は自由に塗る従来モードを維持。専用入口の進行状態はセッション内のみで、保存済み作品は普通のお手本作品として再編集する。
+- v0.5.1の手動参照のみという仕様を専用入口で拡張。通常のハートからは引き続き手動参照できる。既存9×9練習とは別。
+- Chrome/WebKitで開始時表示、5手の模擬音声と次手順の自動表示、1タップ再表示、320×568の説明表示、保存・Undo/Redoを確認。

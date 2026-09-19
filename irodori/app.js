@@ -12,7 +12,7 @@ import { Tutorial, createTutorialGuide } from './tutorial.js';
 import { TEMPLATES, CATEGORIES, findTemplate, matchesTemplate } from './templates.js';
 import { HEART_RECIPE } from './recipes.js';
 
-const APP_VERSION = 'v0.5.1';
+const APP_VERSION = 'v0.5.2';
 const PREF_READ = 'irodori:readAloud';
 const $ = id => document.getElementById(id);
 const q = sel => document.querySelector(sel);
@@ -44,6 +44,7 @@ let tutorialGuide, tutorialTimer, undoAnnounced = false;
 let voiceRequest = 0;
 let templateSize = 'all', templateCategory = 'all', templateGuideVisible = true;
 let recipePage = -1;
+let recipePractice = false, recipeStep = 0, recipeTimer;
 
 // ---- 画面遷移 ----
 function show(name) {
@@ -51,13 +52,14 @@ function show(name) {
   qa('.screen').forEach(s => { s.hidden = s.dataset.screen !== name; });
   if (name !== 'make' && voice && voice.active) voice.disable();
   if (name !== 'make') {
+    clearTimeout(recipeTimer);
     tutorial = null;
     clearTimeout(tutorialTimer);
     tutorialGuide?.close();
     $('template-dialog').close();
   }
   if (name === 'make') {
-    if (!tutorial && !help.seen) help.show(name);
+    if (!tutorial && !recipePractice && !help.seen) help.show(name);
     else void enableVoice();
   }
   if (name === 'mode') renderMode();
@@ -97,6 +99,7 @@ function renderMode() {
 
 // ---- 見本選択・参照（既存の保存データにはIDだけを持つ） ----
 function renderTemplates() {
+  renderThumb($('heart-practice-picture'), findTemplate('heart-5',5));
   function filters(id, choices, selected, onSelect) {
     const host = $(id); host.replaceChildren();
     for (const [value, label] of choices) {
@@ -166,13 +169,29 @@ function renderTemplateReference() {
   }
 }
 
+// 完全一致した途中形で進行する。誤って塗った場合は、直して一致すれば続けられる。
+function syncRecipeProgress() {
+  const match = HEART_RECIPE.findIndex(step => step.snapshot.every((c,i)=>c===current.cells[i]));
+  const next = match >= 0 ? match+1 : current.cells.every(c=>c===null) ? 0 : recipeStep;
+  if (next === recipeStep) return;
+  const forward = next > recipeStep;
+  recipeStep = next;
+  recipePage = Math.min(next,4);
+  clearTimeout(recipeTimer);
+  if (forward && next < 5) recipeTimer = setTimeout(() => {
+    if (activeScreen === 'make' && recipePractice && !help.open && !$('template-dialog').open) showTemplateReference();
+  }, 600);
+}
+
 // ---- 制作開始 ----
 function startNew(size, mode) {
   tutorial = null;
   const cells = createCells(size);
   openMake({ id: store.newId(), size, cells, mode, templateId: null, createdAt: null }, null);
 }
-function openMake(artwork, existingId) {
+function openMake(artwork, existingId, practice = false) {
+  clearTimeout(recipeTimer);
+  recipePractice = practice; recipeStep = 0;
   current = { ...artwork, cells: artwork.cells.slice() };
   savedId = existingId;
   templateGuideVisible = true; recipePage = -1;
@@ -189,6 +208,7 @@ function openMake(artwork, existingId) {
   highlightPaint(null);
   draw();
   show('make');
+  if (recipePractice) { recipePage = 0; showTemplateReference(); }
 }
 
 function setMsg(t) {
@@ -200,8 +220,12 @@ function draw() {
   const template = current.mode === 'template' ? findTemplate(current.templateId, current.size) : null;
   renderBoard($('board'), current, { cursor, previewCells, previewColor: pendingColor, template: templateGuideVisible ? template : null });
   $('template-reference').hidden = !template;
+  if (recipePractice) syncRecipeProgress();
   if (template) $('template-reference').textContent = matchesTemplate(current.cells, template)
     ? 'おてほんと おなじに できた！　みる ↗' : `${template.name}　おてほんを みる ↗`;
+  if (recipePractice) $('template-reference').textContent = recipeStep < 5
+    ? `${recipeStep+1}/5　${HEART_RECIPE[recipeStep].title}　てじゅん ↗`
+    : 'はーとが できた！　てじゅんを みる ↗';
   $('btn-confirm').disabled = !(previewCells.length && pendingColor != null);
   $('tutorial-status').hidden = false;
   $('tutorial-status').replaceChildren();
@@ -464,7 +488,14 @@ function init() {
     else if (tutorial) tutorialGuide.show(tutorial.undoReady ? 'undo' : 'lesson', tutorial);
     else help.show(activeScreen);
   }; });
-  $('template-reference').onclick = showTemplateReference;
+  $('heart-practice').onclick = () => {
+    tutorial = null;
+    openMake({id:store.newId(),size:5,cells:createCells(5),mode:'template',templateId:'heart-5',createdAt:null},null,true);
+  };
+  $('template-reference').onclick = () => {
+    if (recipePractice) recipePage = Math.min(recipeStep,4);
+    showTemplateReference();
+  };
   $('recipe-overview').onclick = () => { recipePage = -1; renderTemplateReference(); };
   $('recipe-open').onclick = () => { recipePage = Math.max(0,recipePage); renderTemplateReference(); };
   $('recipe-prev').onclick = () => { recipePage = Math.max(0,recipePage-1); renderTemplateReference(); };

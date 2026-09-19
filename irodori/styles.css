@@ -253,3 +253,9 @@ button:focus-visible, a:focus-visible { outline: 3px solid #8a5a3c; outline-offs
 .ir-recipe-dialog #recipe-tip { font-size: 13px; line-height: 1.5; margin: 8px 0; }
 .ir-recipe-dialog .ir-tutorial-words { justify-content: center; }
 .ir-recipe-dialog .ir-tutorial-words span { font-size: 13px; padding: 3px 6px; }
+
+.ir-heart-practice { display:flex; align-items:center; gap:16px; width:100%; margin:12px 0 20px; padding:16px; border:2px solid #dcb19b; border-radius:20px; background:#fff0e3; color:#69442f; text-align:left; font:inherit; }
+.ir-heart-practice canvas { width:76px; height:76px; flex:none; image-rendering:pixelated; }
+.ir-heart-practice span { display:grid; gap:6px; }
+.ir-heart-practice strong { font-size:20px; }
+.ir-heart-practice small,.ir-heart-practice span span { font-size:13px; line-height:1.5; }

@@ -20,3 +20,5 @@ for(const step of HEART_RECIPE){
 }
 assert.deepEqual(painted,findTemplate('heart-5',5).cells);
 console.log('PASS legacy saved template compatibility and five-step heart recipe');
+
+assert.deepEqual(findTemplate('signal-3',3).cells,[11,11,11,4,2,0,11,11,11]);
