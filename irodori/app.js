@@ -10,7 +10,7 @@ import { setMicState } from '../src/ui/micstate.js';
 import { createHelp } from './help.js';
 import { Tutorial, createTutorialGuide } from './tutorial.js';
 
-const APP_VERSION = 'v0.4.6';
+const APP_VERSION = 'v0.4.7';
 const PREF_READ = 'irodori:readAloud';
 const $ = id => document.getElementById(id);
 const q = sel => document.querySelector(sel);
@@ -130,7 +130,7 @@ function draw() {
     const [place, goal] = goals[tutorial.step];
     $('tutorial-goal').textContent = `${tutorial.step + 1}/4　${place} ${goal}`;
   }
-  for (const text of ['「もどす」で', 'ひとつまえへ']) {
+  for (const text of ['まちがえたら「もどす」で', 'ひとつまえに もどれるよ']) {
     const line = document.createElement('span'); line.textContent = text;
     $('tutorial-status').append(line);
   }

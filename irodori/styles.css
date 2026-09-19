@@ -186,7 +186,12 @@ button:focus-visible, a:focus-visible { outline: 3px solid #8a5a3c; outline-offs
 .ir-help-readings span:nth-child(1), .ir-help-readings span:nth-child(4), .ir-help-readings span:nth-child(8) { background: #f4e5d6; border-radius: 6px; font-weight: 700; }
 #tutorial-status { flex: 1; min-width: 0; margin: 0 6px; text-align: center; font-size: 14px; line-height: 21px; font-weight: 700; color: #8a5a3c; }
 #tutorial-status span, #tutorial-status strong { display: block; }
-#tutorial-status span:first-child { font-size: 16px; color: #704b34; }
+#tutorial-status span:first-child { color: #704b34; }
+@media (max-width: 375px) {
+  #tutorial-status { margin: 0 2px; }
+  [data-screen="make"] .ir-icon { width: 44px; height: 44px; }
+  [data-screen="make"] .ir-micwrap { width: 28px; height: 34px; }
+}
 /* 練習の目標は既存メッセージ欄の高さを利用。状態通知は読み上げ用に保持。 */
 #tutorial-goal { margin: 6px 2px; min-height: 25.6px; font-size: 16px; line-height: 25.6px; font-weight: 700; text-align: center; color: #704b34; background: #f1e4d4; border-radius: 8px; }
 .ir-practice-msg { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }

@@ -2,7 +2,7 @@
 
 コエキット3本目「**イロドリズム**」（声＋タッチのドット絵/塗り絵制作PWA）を Claude Code で作成しました。ここから Codex が引き継ぎます。この文書＝入口。まず読む順：この handoff → [基本設計サマリ.md](基本設計サマリ.md) → [implementation-guide.md](implementation-guide.md) → [tasks.md](tasks.md)。要件は [../requirements-irodori.md](../requirements-irodori.md)、音声実測は [../irodori-voice-probe-results.md](../irodori-voice-probe-results.md)。
 
-現在版：**v0.4.6**（`irodori/app.js` の `APP_VERSION`）。本番：`https://gerupon-lgtm.github.io/koekit/irodori/`（＝`https://koekit.sikumilab.com/irodori/`）。
+現在版：**v0.4.7**（`irodori/app.js` の `APP_VERSION`）。本番：`https://gerupon-lgtm.github.io/koekit/irodori/`（＝`https://koekit.sikumilab.com/irodori/`）。
 
 ## 2026-09-19 Codexによる基盤統合
 
@@ -118,3 +118,7 @@ Chrome/WebKitの320×568・360×640・390×844で盤面位置・スクロール�
 ## v0.4.6 Undoヒントを2行に整理（2026-09-19）
 
 常設ヒントを「『もどす』で／ひとつまえへ」の2行へ短縮。先頭16px、2行目14pxの太字を維持し、行間21pxで配置。Chromeの320×568・390×844で横はみ出し・盤面押し下げ・追加スクロールなしを確認。
+
+## v0.4.7 ヒントを自然な2行の文章へ（2026-09-19）
+
+短すぎる行が不自然との指摘に対応し「まちがえたら『もどす』で／ひとつまえに もどれるよ」の2行に変更。14px太字。375px以下では上部アイコンと余白を調整し、タッチボタン44pxを保って説明の横幅を確保。Chromeの320×568・360×640・390×844で2行のまま収まり、追加スクロールなしを確認。
