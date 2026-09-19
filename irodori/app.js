@@ -12,7 +12,7 @@ import { Tutorial, createTutorialGuide } from './tutorial.js';
 import { TEMPLATES, CATEGORIES, findTemplate, matchesTemplate } from './templates.js';
 import { HEART_RECIPE } from './recipes.js';
 
-const APP_VERSION = 'v0.5.7';
+const APP_VERSION = 'v0.5.8';
 const PREF_READ = 'irodori:readAloud';
 const $ = id => document.getElementById(id);
 const q = sel => document.querySelector(sel);
@@ -112,8 +112,10 @@ function renderTemplates() {
   const gallery = $('template-gallery'); gallery.replaceChildren();
   const items = TEMPLATES.filter(t => (templateSize === 'all' || t.size === Number(templateSize)) && (templateCategory === 'all' || t.category === templateCategory));
   $('template-empty').hidden = items.length > 0;
+  const pairVisible = items.some(t=>t.id==='letter-s-7') && items.some(t=>t.id==='flag-9');
   for (const t of items) {
     const button = document.createElement('button'); button.className = 'ir-template-choice'; button.dataset.template = t.id;
+    if (pairVisible && t.id === 'letter-s-7') button.style.gridColumn = '1';
     button.setAttribute('aria-label', `${t.name} ${t.size}かける${t.size}`);
     const canvas = document.createElement('canvas'); canvas.className = 'ir-template-picture'; canvas.setAttribute('aria-hidden', 'true'); renderThumb(canvas, t);
     const name = document.createElement('strong'); name.textContent = t.name;

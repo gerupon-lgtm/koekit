@@ -22,3 +22,8 @@ assert.deepEqual(painted,findTemplate('heart-5',5).cells);
 console.log('PASS legacy saved template compatibility and five-step heart recipe');
 
 assert.deepEqual(findTemplate('signal-3',3).cells,[11,11,11,4,2,0,11,11,11]);
+
+assert(!TEMPLATES.some(t=>t.id==='eight-9'));
+assert.equal(findTemplate('eight-9',9).cells.length,81);
+assert.equal(findTemplate('eight-9',7),null);
+assert.equal(TEMPLATES[TEMPLATES.findIndex(t=>t.id==='letter-s-7')+1].id,'flag-9');

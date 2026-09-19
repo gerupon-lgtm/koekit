@@ -2,7 +2,7 @@
 
 コエキット3本目「**イロドリズム**」（声＋タッチのドット絵/塗り絵制作PWA）を Claude Code で作成しました。ここから Codex が引き継ぎます。この文書＝入口。まず読む順：この handoff → [基本設計サマリ.md](基本設計サマリ.md) → [implementation-guide.md](implementation-guide.md) → [tasks.md](tasks.md)。要件は [../requirements-irodori.md](../requirements-irodori.md)、音声実測は [../irodori-voice-probe-results.md](../irodori-voice-probe-results.md)。
 
-現在版：**v0.5.7**（`irodori/app.js` の `APP_VERSION`）。本番：`https://gerupon-lgtm.github.io/koekit/irodori/`（＝`https://koekit.sikumilab.com/irodori/`）。
+現在版：**v0.5.8**（`irodori/app.js` の `APP_VERSION`）。本番：`https://gerupon-lgtm.github.io/koekit/irodori/`（＝`https://koekit.sikumilab.com/irodori/`）。
 
 ## 2026-09-19 Codexによる基盤統合
 
@@ -194,3 +194,6 @@ H1/H5/H9各3回の確認済み。座標8/9、H自体は9/9。失敗は「えっ�
 
 ## v0.5.7 Sのお手本
 添付図の7段の形に合わせ、赤い「もじの S」（`letter-s-7`、7×7）を「もじ・すうじ」に追加。背景は未着色。見本は計14種。
+
+## v0.5.8 黄色い旗・一覧の組み合わせ
+数字8を新規一覧から除き、黄色い旗（`flag-9`、9×9、かたち）を追加。添付図の右向き三角旗と台座をアレンジし、背景は未着色。Sの直後に旗を置き、両方表示される場合はSを左列に固定して同じ段の右に旗を表示する。サイズ・カテゴリの絞り込み条件は維持する。保存済み `eight-9` は旧定義で引き続き参照できる。
