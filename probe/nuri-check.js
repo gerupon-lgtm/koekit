@@ -13,17 +13,33 @@
 import { VoskAdapter } from '../src/speech/vosk.js';
 import { normalize } from '../src/speech/vocabulary.js';
 
-const VERSION = 'v5';
+const VERSION = 'v6';
 const $ = id => document.getElementById(id);
 const nowText = () => new Date().toLocaleTimeString('ja-JP');
 const log = t => { const el = $('log'); el.textContent += `${nowText()} ${t}\n`; el.scrollTop = el.scrollHeight; };
 
 // ---- 座標・移動用の代表読み（2トークン方式） ---------------------------------
 const ROW_SURFACES = ['いち', 'に', 'さん', 'よん', 'し', 'ご', 'ろく', 'なな', 'しち', 'はち', 'きゅう', 'く'];
-const COL_SURFACES = ['えー', 'びー', 'しー', 'でぃー', 'いー', 'えふ', 'じー', 'えいち', 'えっち', 'あい'];
+// 英字の受け付け読みを拡張（A/B/C/D は読み比べ検証で複数読みが有効と判明）。
+// ※ C は座標では「しー/しい」のみ（単独「し」は数字4=しと衝突するため除外）
+const COL_SURFACES = [
+  'えー', 'エー', 'えい', 'エイ', 'ええ', 'エエ', 'え',      // A
+  'びー', 'ビー', 'びい', 'びぃー', 'ビィー', 'びぃ',        // B
+  'しー', 'シー', 'しい',                                    // C（単独「し」は座標では入れない）
+  'でぃー', 'ディー', 'でー', 'で', 'でぃ', 'ディ',          // D
+  'いー', 'えふ', 'じー', 'えいち', 'えっち', 'あい',        // E F G H I
+];
 const DIR_SURFACES = ['みぎ', 'ひだり', 'うえ', 'した'];
 const ROW_SYM = { 'いち': '1', 'に': '2', 'さん': '3', 'よん': '4', 'し': '4', 'ご': '5', 'ろく': '6', 'なな': '7', 'しち': '7', 'はち': '8', 'きゅう': '9', 'く': '9' };
-const COL_SYM = { 'えー': 'A', 'びー': 'B', 'しー': 'C', 'でぃー': 'D', 'いー': 'E', 'えふ': 'F', 'じー': 'G', 'えいち': 'H', 'えっち': 'H', 'あい': 'I' };
+// COL_SYM のキーは normalize 前提の表記（カナは normalize でひらがな化されるため、ひらがなキーで持つ）。
+// ROW_SYM と重複するキー（「し」など）は入れない＝1トークンが行と列を同時に埋めないようにする。
+const COL_SYM = {
+  'えー': 'A', 'えい': 'A', 'ええ': 'A', 'え': 'A',
+  'びー': 'B', 'びい': 'B', 'びぃー': 'B', 'びぃ': 'B',
+  'しー': 'C', 'しい': 'C',
+  'でぃー': 'D', 'でー': 'D', 'で': 'D', 'でぃ': 'D',
+  'いー': 'E', 'えふ': 'F', 'じー': 'G', 'えいち': 'H', 'えっち': 'H', 'あい': 'I',
+};
 const ROW_SYM_N = Object.fromEntries(Object.entries(ROW_SYM).map(([k, v]) => [normalize(k), v]));
 const COL_SYM_N = Object.fromEntries(Object.entries(COL_SYM).map(([k, v]) => [normalize(k), v]));
 const DIR_SET_N = new Set(DIR_SURFACES.map(normalize));
@@ -85,6 +101,19 @@ const SETS = [
       { label: 'C＝し',   group: 'C', forms: ['し'],           patterns: [/^し$/] },
       { label: '(参考)G＝じー', group: 'G', forms: ['じー', 'ジー'], patterns: [/^じー$/, /^ジー$/, /^時$/] },
       { label: '(参考)D＝でぃー', group: 'D', forms: ['でぃー', 'ディー'], patterns: [/^でぃー$/, /^ディー$/] },
+    ]},
+  // D・B の読み比べ。D↔B 混同の解消が狙い。両方を group で採点し、互いに化けないかを見る。
+  { id: 'dbread', name: 'D/B読み比べ（でぃー/でー/で・びー/びい/びぃー）', kind: 'word', targetReps: 3,
+    grammar: ['でぃー', 'ディー', 'でー', 'で', 'でぃ', 'ディ', 'びー', 'ビー', 'びい', 'ビイ', 'びぃー', 'ビィー', 'びぃ', 'えー', 'しー', 'いー', 'じー'],
+    items: [
+      { label: 'D＝でぃー/ディー', group: 'D', forms: ['でぃー', 'ディー'], patterns: [/^でぃー$/, /^ディー$/] },
+      { label: 'D＝でー',        group: 'D', forms: ['でー'],           patterns: [/^でー$/] },
+      { label: 'D＝で',          group: 'D', forms: ['で'],             patterns: [/^で$/] },
+      { label: 'D＝でぃ/ディ',   group: 'D', forms: ['でぃ', 'ディ'],   patterns: [/^でぃ$/, /^ディ$/] },
+      { label: 'B＝びー/ビー',   group: 'B', forms: ['びー', 'ビー'],   patterns: [/^びー$/, /^ビー$/] },
+      { label: 'B＝びい',        group: 'B', forms: ['びい', 'ビイ'],   patterns: [/^びい$/, /^ビイ$/] },
+      { label: 'B＝びぃー/ビィー',group: 'B', forms: ['びぃー', 'ビィー'], patterns: [/^びぃー$/, /^ビィー$/] },
+      { label: 'B＝びぃ',        group: 'B', forms: ['びぃ'],           patterns: [/^びぃ$/] },
     ]},
   { id: 'row', name: '行（1〜9）', kind: 'word', targetReps: 3, items: [
     { label: '1', forms: ['いち'],        patterns: [/^いち/, /^一$/, /^市$/, /^いっ/] },
