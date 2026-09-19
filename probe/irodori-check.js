@@ -14,7 +14,7 @@ import { VoskAdapter } from '../src/speech/vosk.js';
 import { normalize } from '../src/speech/vocabulary.js';
 import { makeGrammar, parse as parseProduction } from '../irodori/vocabulary.js';
 
-const VERSION = 'v9';
+const VERSION = 'v10';
 const $ = id => document.getElementById(id);
 const nowText = () => new Date().toLocaleTimeString('ja-JP');
 const log = t => { const el = $('log'); el.textContent += `${nowText()} ${t}\n`; el.scrollTop = el.scrollHeight; };
@@ -68,7 +68,7 @@ for (const [col, reading] of [['B', 'びー'], ['D', 'でー'], ['E', 'いい']]
 for (const reading of ['いー', 'いい']) AE_SEQUENCE.push({ label: `E1：${reading} いち`, row: '1', col: 'E' });
 const SETS = [
   { id: 'productionAE', name: '本番候補：A/Eの脱落チェック（14発話）', mode: 'coord', production: true, targetReps: 1, items: AE_SEQUENCE, grammar: makeGrammar() },
-  { id: 'restrictedH', name: '比較：Hはえっちだけ（同じ14発話）', mode: 'coord', production: true, targetReps: 1, items: AE_SEQUENCE.map(item => ({ ...item })), grammar: makeGrammar().filter(word => !['えいち', 'エイチ'].includes(word)) },
+  { id: 'productionH', name: '本番候補：Hの確認（えっち・9発話）', mode: 'coord', production: true, targetReps: 3, items: [['1', 'いち'], ['5', 'ご'], ['9', 'きゅう']].map(([row, reading]) => ({ label: `H${row}：えっち ${reading}`, row, col: 'H' })), grammar: makeGrammar() },
   { id: 'color', name: '色（12色）', kind: 'word', targetReps: 3, items: [
     { label: 'あか',     forms: ['あか'],               patterns: [/赤/, /あか/, /レッド/] },
     { label: 'オレンジ', forms: ['おれんじ', 'オレンジ'], patterns: [/オレンジ/, /おれんじ/, /橙/] },
