@@ -22,7 +22,10 @@ const speech = new SpeechSession({
     const command = parseCommand(raw, context.phase, run?.match?.size || 8, availableItems());
     if (command) void dispatch(command);
   },
-  onState: state => setMicState($('mic-state'), null, state),
+  onState: state => {
+    setMicState($('mic-state'), null, state);
+    $('mic-state').setAttribute('aria-label', ({listening:'こえをきいているよ',idle:'こえはおやすみちゅう',denied:'こえをつかえません。タッチであそべるよ',restarting:'こえのじゅんびちゅう'})[state] || 'こえはおやすみちゅう');
+  },
 });
 function emptyPending(item = 'basic') { return { item, cell: null, analysis: null, directionId: null }; }
 function availableItems() {
@@ -50,13 +53,13 @@ function save() {
   try { store.save(run, lease); status(); }
   catch (error) {
     if (error.code === 'SAVE_CONFLICT' || error.code === 'STALE_ACTION') { showConflict(); return; }
-    status('この端末に保存できません。対戦は続けられます。次の確定時に再試行します。');
+    status('きろくできません。あそべますが、とちゅうできえることがあります。');
   }
 }
 function showConflict() {
   stopWork(); conflict = true;
-  openDialog('conflict', '別の画面で更新されました', 'この画面の操作を止めました。最新の保存を読み直してください。', [
-    ['最新の保存を読み直す', async () => { await store.close(); location.reload(); }],
+  openDialog('conflict', 'ほかのがめんで あそんでいるよ', 'こちらは とめています。あたらしいきろくを よみなおしてね。', [
+    ['よみなおす', async () => { await store.close(); location.reload(); }],
   ]);
 }
 function screen(id) {
@@ -72,7 +75,7 @@ function render() {
   if (modal || conflict || document.hidden) return;
   if (!run) {
     screen('title'); const saved = store.load(options); renderMenu(options, saved);
-    if (saved.error) status(saved.error === 'SAVE_INVALID' ? '保存を読み込めません。新しくはじめられます。' : 'この端末に保存できません。');
+    if (saved.error) status(saved.error === 'SAVE_INVALID' ? 'きろくをよめません。はじめから あそべるよ。' : 'このききには きろくできません。');
     return;
   }
   if (run.phase === 'setup') { screen('setup'); renderSetup(run, selected, selectedSide); listen('setup'); }
@@ -95,7 +98,7 @@ async function begin(resume) {
     if (error.code === 'SAVE_CONFLICT') { starting = false; showConflict(); return; }
     if (error.code === 'STALE_ACTION') { starting = false; return; }
     loaded = store.load(options); memoryOnly = true;
-    status('この端末に保存できません。この画面を閉じるまで対戦できます。');
+    status('きろくできません。このがめんを とじるまで あそべるよ。');
   }
   if (token !== generation) { await store.close(); starting = false; return; }
   if (resume && (loaded.error || !loaded.record.active)) { starting = false; await store.close(); render(); return; }
@@ -107,14 +110,20 @@ async function begin(resume) {
 function startDice() {
   $('stop-dice').disabled = false; $('dice-result').textContent = '「ストップ」でとめよう';
   const token = generation;
-  roulette = new Roulette({ faces: 6 });
-  roulette.on('tick', value => { if (token === generation) $('dice-face').textContent = value + 1; });
+  roulette = new Roulette(CONFIG.dice);
+  roulette.on('tick', (value, interval) => {
+    if (token !== generation) return;
+    $('dice-face').textContent = value + 1;
+    // Quiet ticks intentionally accompany the stop-word interval, as requested.
+    sfx.playDiceTick(interval, roulette.state === 'stopping');
+  });
   roulette.start();
 }
 function stopDice() {
   if (run?.phase !== 'dice' || busy) return;
   // Draw and save immediately: hiding during the stopping animation never rerolls.
   speech.close(); busy = true; $('stop-dice').disabled = true;
+  $('dice-result').textContent = 'ころころ… どちらからかな？';
   const value = Math.floor(Math.random() * 6) + 1;
   run = rollRun(run, value); save();
   if (conflict) return;
@@ -131,10 +140,17 @@ function stopDice() {
 function startCPU() {
   busy = true;
   const token = generation;
+  const started = performance.now();
+  let settled = false;
   const accept = move => {
-    if (token !== generation || !run || modal || document.hidden) return;
+    if (settled || token !== generation || !run || modal || document.hidden) return;
+    settled = true;
     worker?.terminate(); worker = null;
-    commit(move?.cell ?? listLegalMoves(run.match)[0], move?.item || 'basic', move?.directionId ?? null);
+    clearTimeout(timer);
+    timer = setTimeout(() => {
+      if (token !== generation || !run || modal || document.hidden) return;
+      commit(move?.cell ?? listLegalMoves(run.match)[0], move?.item || 'basic', move?.directionId ?? null);
+    }, Math.max(0, CONFIG.timing.cpuThink - (performance.now() - started)));
   };
   try {
     worker = new Worker(new URL('./cpu-worker.js', import.meta.url), { type: 'module' });
@@ -149,11 +165,11 @@ function commit(cell, item, directionId) {
   const previousCells = run.match.cells;
   stopWork();
   try { run = playMove(run, cell, item, directionId); }
-  catch { notify('この手は確定できません。場所を選び直してください。'); pending = emptyPending(); render(); return; }
+  catch { notify('ここにはおけないよ。ばしょをえらびなおしてね。'); pending = emptyPending(); render(); return; }
   pending = emptyPending(); save(); if (conflict) return;
   busy = true; screen('game'); renderGame(run, pending, true);
   const passed = run.match.turnInfo.passedSides;
-  if (passed.length) notify(passed.map(side => `${sideName(run, side)} は置ける場所がないためパス`).join('。'));
+    if (passed.length) notify(passed.map(side => `${sideName(run, side)}\nおけるばしょがないのでパス`).join('\n'));
   const flipped = run.match.cells.filter((owner,index) => index !== cell && owner !== previousCells[index]).length;
   const outcome = run.phase === 'seriesResult' ? run.series.outcome : run.match.outcome;
   const result = outcome === null ? null : outcome === 0 ? 'draw' : run.mode.opponent === 'cpu' && outcome === 2 ? 'loss' : 'win';
@@ -167,7 +183,7 @@ function openDialog(kind, title, body, buttons) {
   if (kind === 'help') {
     const example = document.createElement('div');
     example.className = 'help-example';
-    example.setAttribute('aria-label', '自分、相手、自分とはさむと、3つとも自分の色になります');
+    example.setAttribute('aria-label', 'じぶん、あいて、じぶんとはさむと、3つともじぶんのいろになるよ');
     example.textContent = '① ② ①　→　① ① ①';
     $('dialog-body').prepend(example);
   }
@@ -188,7 +204,7 @@ async function finish() {
   catch (error) {
     finishing = false;
     if (['SAVE_CONFLICT', 'STALE_ACTION'].includes(error.code)) { showConflict(); return; }
-    openDialog('saveError', '終了を保存できません', '途中保存を消せていません。もう一度お試しください。', [['もう一度終了する', finish], ['対戦にもどる', closeDialog]]); return;
+    openDialog('saveError', 'まだ おわれません', 'とちゅうのきろくを けせません。もういちど ためしてね。', [['もういちど おわる', finish], ['ゲームにもどる', closeDialog]]); return;
   }
   await store.close(); run = null; lease = null; pending = emptyPending();
   finishing = false;
@@ -196,7 +212,7 @@ async function finish() {
 }
 function quit() {
   if (!run) return;
-  openDialog('exit', '対戦を終了しますか？', 'この対戦の途中保存を消して、メニューにもどります。最高記録は残ります。', [['終了する', finish], ['つづける', closeDialog]]);
+  openDialog('exit', 'ゲームをおわるしますか？', 'とちゅうのきろくをけして メニューにもどるよ。さいこうきろくは のこるよ。', [['おわる', finish], ['つづける', closeDialog]]);
 }
 async function dispatch(command) {
   const { type } = command;
@@ -207,13 +223,13 @@ async function dispatch(command) {
     else if (modal === 'help' && type === 'quit') quit();
     return;
   }
-  if (type === 'help') { openDialog('help', 'あそびかた', '相手の色をはさむと、自分の色になります。場所を「えい いち」などと指定し、プレビューを見て「オッケー」。タッチでも遊べます。\n\n6×6・8×8では「きょうか」「さいきょう」を場所より先に選べます。きょうかは上下左右にも効果。さいきょうは自分の色を飛び越え、最多の1方向だけに効果。同数なら①②…を選んでからオッケー。「もどす」で選択を取り消せます。\n\n置けなければ自動でパス。両方とも置けなくなったら、多く取った方の勝ちです。', [['とじる', closeDialog]]); return; }
+  if (type === 'help') { openDialog('help', 'あそびかた', 'あいてのいろを はさむと、じぶんのいろになるよ。\n「えい いち」で ばしょをえらび、マスをみて「オッケー」。タッチでも あそべるよ。\n\n6×6・8×8では、ばしょのまえに「きょうか」「さいきょう」をえらべるよ。\nきょうか：うえ・した・ひだり・みぎの あいてのいろも とれるよ。ななめは ふえないよ。\nさいきょう：じぶんのいろを とびこえて、いちばんたくさんとれる ひとつのむきに つかうよ。おなじかずなら ①②…をえらんで「オッケー」。\n「もどす」で えらびなおせるよ。\n\nおけるばしょが なければパス。ふたりとも おけなくなったら、おおくとったほうの かち！', [['とじる', closeDialog]]); return; }
   if (type === 'quit') { quit(); return; }
   if (type === 'new' || type === 'resume') { await begin(type === 'resume'); return; }
   if (!run || busy) return;
   if (run.phase === 'setup') {
     if (type === 'color') {
-      if (selected[1 - selectedSide] === command.color) { notify('あいてとちがう色をえらんでね'); return; }
+      if (selected[1 - selectedSide] === command.color) { notify('あいてとちがういろをえらんでね'); return; }
       selected[selectedSide] = command.color; render();
     } else if (['confirm', 'confirmColor'].includes(type) && selected[0] !== null && run.mode.opponent === 'human' && selectedSide === 0) {
       selectedSide = 1; render();
@@ -224,7 +240,7 @@ async function dispatch(command) {
     else if (type === 'item' && availableItems().includes(command.item)) pending = emptyPending(command.item);
     else if (type === 'cell') pending = { ...emptyPending(pending.item), cell: command.cell, analysis: analyzeMove(run.match, command.cell, pending.item) };
     else if (type === 'invalidCell') {
-      pending = emptyPending(pending.item); notify('盤面の中の場所を指定してね');
+      pending = emptyPending(pending.item); notify('マスのなかをえらんでね');
       stopWork(); renderGame(run, pending, false); const duration = sfx.playInvalidSound();
       const token = generation;
       timer = setTimeout(() => { if (token === generation) render(); }, Math.max(duration, CONFIG.timing.invalid));

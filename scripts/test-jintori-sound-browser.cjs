@@ -34,7 +34,7 @@ const assert=require('node:assert/strict');
  await c.route('**/src/speech/index.js',r=>r.fulfill({contentType:'application/javascript',body:`export function createSpeechInput(){const h={};return {on(k,f){h[k]=f},off(k){delete h[k]},start(){const t=window.outputContext?.currentTime??0;window.audioOverlap ||= window.audioRanges.some(r=>r.start<=t&&r.end>t+.003)},stop(){}}}`}));
  const p=await c.newPage();await p.goto('http://127.0.0.1:8000/jintori/');
  await p.getByRole('button',{name:'ふたり',exact:true}).click();await p.getByRole('button',{name:'6 × 6',exact:true}).click();
- await p.getByRole('button',{name:'新しくはじめる',exact:true}).click();await p.getByRole('button',{name:'スタート',exact:true}).click();await p.getByRole('button',{name:'ストップ',exact:true}).click();
+ await p.getByRole('button',{name:'はじめから',exact:true}).click();await p.getByRole('button',{name:'スタート',exact:true}).click();await p.getByRole('button',{name:'ストップ',exact:true}).click();
  await p.waitForFunction(()=>document.querySelector('[data-cell]')&&!document.querySelector('#board').hasAttribute('aria-busy'));
  await p.locator('#enhanced').click();await p.locator('[data-cell].legal').first().click();await p.locator('#confirm-move').click();
  await p.waitForFunction(()=>!document.querySelector('#board').hasAttribute('aria-busy'));

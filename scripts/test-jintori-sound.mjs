@@ -19,3 +19,10 @@ test('no audio support still yields the correct pause and cancellation is safe',
  assert.equal(player.play('win'),scoreDuration(scoreFor('win')));
  player.stopAll();player.primeAudio();
 });
+
+test('dice ticks slow down in pitch and stay quieter during stop-word listening',()=>{
+ const fast=scoreFor('diceTick',{interval:55}),slow=scoreFor('diceTick',{interval:420});
+ assert.ok(fast[0].frequency>slow[0].frequency);
+ assert.ok(scoreDuration(fast)<=55);
+ assert.ok(scoreFor('diceTick',{interval:120,stopping:true})[0].gain>scoreFor('diceTick',{interval:120})[0].gain);
+});

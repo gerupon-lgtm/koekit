@@ -10,16 +10,16 @@ const mockSpeech = `export function createSpeechInput(){const h={};window.say=s=
   await context.route('**/src/speech/index.js',r=>r.fulfill({contentType:'application/javascript',body:mockSpeech}));
   const page=await context.newPage(), errors=[];page.on('pageerror',e=>errors.push(e.message));
   await page.goto(base+'/jintori/');
-  assert.equal(await page.getByRole('button',{name:'毎局補充',exact:true}).isDisabled(),true);
-  assert.equal(await page.getByRole('button',{name:'持ち越し',exact:true}).isDisabled(),true);
+  assert.equal(await page.getByRole('button',{name:'まいかいほじゅう',exact:true}).isDisabled(),true);
+  assert.equal(await page.getByRole('button',{name:'もちこし',exact:true}).isDisabled(),true);
   await page.getByRole('button',{name:'6 × 6',exact:true}).click();
-  assert.equal(await page.getByRole('button',{name:'毎局補充',exact:true}).isEnabled(),true);
-  await page.getByRole('button',{name:'持ち越し',exact:true}).click();
+  assert.equal(await page.getByRole('button',{name:'まいかいほじゅう',exact:true}).isEnabled(),true);
+  await page.getByRole('button',{name:'もちこし',exact:true}).click();
   await page.getByRole('button',{name:'4 × 4',exact:true}).click();
-  assert.equal(await page.getByRole('button',{name:'持ち越し',exact:true}).isDisabled(),true);
-  assert.equal(await page.getByRole('button',{name:'持ち越し',exact:true}).getAttribute('aria-pressed'),'true');
+  assert.equal(await page.getByRole('button',{name:'もちこし',exact:true}).isDisabled(),true);
+  assert.equal(await page.getByRole('button',{name:'もちこし',exact:true}).getAttribute('aria-pressed'),'true');
   await page.getByRole('button',{name:'6 × 6',exact:true}).click();
-  await page.getByRole('button',{name:'毎局補充',exact:true}).click();
+  await page.getByRole('button',{name:'まいかいほじゅう',exact:true}).click();
   await page.getByRole('button',{name:'4 × 4',exact:true}).click();
   await page.screenshot({path:'.local-tools/jintori-title-320.png'});
   assert.equal(await page.evaluate(()=>document.documentElement.scrollHeight<=innerHeight),true,'menu fits small screen');
@@ -33,19 +33,19 @@ const mockSpeech = `export function createSpeechInput(){const h={};window.say=s=
   await seed({size:8,difficultyId:'hard'});
   await page.getByRole('button',{name:'むずかしい',exact:true}).click();
   assert.equal(await page.evaluate(()=>document.documentElement.scrollHeight<=innerHeight),true,'menu with resume fits small screen');
-  await page.getByRole('button',{name:'続きから',exact:true}).click();
+  await page.getByRole('button',{name:'つづきから',exact:true}).click();
   await page.waitForFunction(()=>document.querySelector('#board [data-cell]')&&!document.querySelector('#board').hasAttribute('aria-busy'));
   const active=()=>page.evaluate(()=>Object.keys(localStorage).filter(k=>k.startsWith('koekit.jintori')).map(k=>JSON.parse(localStorage.getItem(k))).find(r=>r.active?.mode.difficultyId==='hard').active);
   assert.equal((await active()).match.moveNumber,1,'CPU Worker committed exactly one move');
   // A second tab must not begin a replacement game while this tab owns the slot.
   const other=await context.newPage();await other.goto(base+'/jintori/');
   await other.getByRole('button',{name:'むずかしい',exact:true}).click();
-  await other.getByRole('button',{name:'新しくはじめる',exact:true}).click();
-  await other.getByText('別の画面で更新されました',{exact:true}).waitFor();
+  await other.getByRole('button',{name:'はじめから',exact:true}).click();
+  await other.getByText('ほかのがめんで あそんでいるよ',{exact:true}).waitFor();
   assert.equal((await active()).match.moveNumber,1);
   await other.close();
-  await page.getByRole('button',{name:'対戦を終了',exact:true}).click();
-  await page.getByRole('button',{name:'終了する',exact:true}).click();
+  await page.getByRole('button',{name:'ゲームをおわる',exact:true}).click();
+  await page.getByRole('button',{name:'おわる',exact:true}).click();
   await page.locator('#title').waitFor({state:'visible'});
   // Find a reachable tied strongest preview using actual moves, not an impossible board.
   await page.evaluate(async()=>{
@@ -61,7 +61,7 @@ const mockSpeech = `export function createSpeechInput(){const h={};window.say=s=
    if(found===undefined)throw Error('tie fixture unavailable');
    window.tieCell=found;const store=new SlotStore();const s=await store.begin(run.mode);store.save(run,s.lease);await store.close();
   });
-  await page.getByRole('button',{name:'ふたり',exact:true}).click();await page.getByRole('button',{name:'続きから',exact:true}).click();
+  await page.getByRole('button',{name:'ふたり',exact:true}).click();await page.getByRole('button',{name:'つづきから',exact:true}).click();
   await page.locator('#strongest').click();const cell=await page.evaluate(()=>window.tieCell);
   await page.locator(`[data-cell="${cell}"]`).click();
   assert.equal(await page.locator('#confirm-move').isDisabled(),true);
@@ -80,7 +80,7 @@ const mockSpeech = `export function createSpeechInput(){const h={};window.say=s=
   await p.evaluate(()=>navigator.serviceWorker.ready);
   await p.waitForFunction(()=>!!navigator.serviceWorker.controller);
   await offline.setOffline(true);await p.reload();
-  await p.getByRole('button',{name:'新しくはじめる',exact:true}).click();
+  await p.getByRole('button',{name:'はじめから',exact:true}).click();
   await p.getByRole('button',{name:'スタート',exact:true}).click();
   await p.getByRole('button',{name:'ストップ',exact:true}).click();
   await p.waitForFunction(()=>document.querySelector('#board [data-cell]')&&!document.querySelector('#board').hasAttribute('aria-busy'));

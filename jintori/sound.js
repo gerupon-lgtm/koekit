@@ -2,7 +2,11 @@
 // Synthesized locally: no downloaded audio, microphone input or runtime dependency.
 const note = (frequency, at, duration = .15, gain = .12, type = 'sine') => ({frequency,at,duration,gain,type});
 const air = (at, duration, gain, frequency) => ({type:'noise',at,duration,gain,frequency});
-export function scoreFor(event, {flipped = 1} = {}) {
+export function scoreFor(event, {flipped = 1, interval = 120, stopping = false} = {}) {
+  if (event === 'diceTick') {
+    const progress = Math.max(0,Math.min(1,(interval-55)/(440-55)));
+    return [note(900-progress*520,0,.025,stopping ? .085 : .035,'triangle'),air(0,.016,stopping ? .045 : .018,1400)];
+  }
   if (event === 'dice') return [air(0,.07,.18,1800),note(660,.06,.16),note(880,.15,.22),note(1320,.15,.18,.045)];
   if (event === 'invalid') return [note(210,0,.08,.08,'triangle'),note(175,.08,.09,.07,'triangle')];
   if (event === 'pass') return [note(440,0,.10,.09),note(587,.13,.17,.09)];
@@ -63,6 +67,7 @@ const player=new SoundPlayer();
 export const primeAudio=()=>player.primeAudio();
 export const stopAll=()=>player.stopAll();
 export const playDiceSound=()=>player.play('dice');
+export const playDiceTick=(interval,stopping=false)=>player.play('diceTick',{interval,stopping});
 export const playInvalidSound=()=>player.play('invalid');
 export function playMoveSound({item='basic',flipped=1,result=null,passed=false}={}) {
   const move=player.play(item,{flipped});

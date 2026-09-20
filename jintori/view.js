@@ -31,7 +31,7 @@ export function renderScores(host, run, counts = { 1: '', 2: '' }, activeSide = 
     paint(chip, run.colorsBySide?.[side] ?? (side === 1 ? 10 : 11));
     const label = node('div'); label.append(node('div', 'score-name', sideName(run, side)));
     const inv = run.inventoryBySide[side];
-    if (run.match?.size >= 6) label.append(node('div', 'stock', `強化 ${inv.enhanced} · 最強 ${inv.strongest}`));
+    if (run.match?.size >= 6) label.append(node('div', 'stock', `きょうか ${inv.enhanced}\nさいきょう ${inv.strongest}`));
     score.append(chip, label, node('span', 'score-count', counts[side])); host.append(score);
   }
 }
@@ -46,14 +46,14 @@ export function renderMenu(options, saved) {
   $('series-options').hidden = options.structure === 'streak';
   $('difficulty-options').hidden = options.opponent === 'human';
   $('mode-note').textContent = options.structure === 'streak'
-    ? '4 × 4 → 6 × 6 → 8 × 8。勝ってステップアップ。'
-    : options.size === 4 ? '4 × 4 は、ふつうの色だけで対戦。' : options.supplyPolicy === 'refill'
-      ? '毎局、きょうか1回・さいきょう1回。' : '対戦全体で、きょうか3回・さいきょう1回。';
+    ? '4 × 4 → 6 × 6 → 8 × 8。かってステップアップ。'
+    : options.size === 4 ? '4 × 4 は、ふつうのいろだけであそぶよ。' : options.supplyPolicy === 'refill'
+      ? 'まいかい、きょうか1・さいきょう1。' : 'ぜんぶで、きょうか3・さいきょう1。';
   $('resume').hidden = !saved.record.active || Boolean(saved.error);
-  $('record').textContent = options.structure === 'streak' ? `最高 ${saved.record.bestStreak} 連勝` : '';
+  $('record').textContent = options.structure === 'streak' ? `さいこう ${saved.record.bestStreak} れんしょう` : '';
 }
 export function renderSetup(run, selected, selectedSide) {
-  $('color-turn').textContent = `${sideName(run, selectedSide + 1)} の色`;
+  $('color-turn').textContent = `${sideName(run, selectedSide + 1)} のいろ`;
   const colorsBySide = { 1: selected[0] ?? 10, 2: selected[1] ?? 11 };
   renderScores($('color-players'), { ...run, colorsBySide }, { 1: '', 2: '' }, selectedSide + 1);
   $('palette').replaceChildren();
@@ -73,10 +73,10 @@ export function renderGame(run, pending, blocked) {
   const state = run.match, side = state.sideToMove;
   renderScores($('scores'), run, countCells(state), side);
   $('round-info').textContent = run.series
-    ? run.series.extensionActive ? '延長戦' : `${run.series.completedMatches + 1} / ${run.series.plannedMatches} 局`
-    : `${run.currentStreak} 連勝 · ${state.size} × ${state.size}`;
-  $('score-info').textContent = run.series ? `${run.series.winsBySide[1]} 勝 / ${run.series.winsBySide[2]} 勝` : `最高 ${run.bestStreak} 連勝`;
-  $('turn-status').textContent = blocked ? (run.mode.opponent === 'cpu' && side === 2 ? 'コンピュータが考えています' : '色がかわります') : `${sideName(run, side)} の番`;
+    ? run.series.extensionActive ? 'えんちょう' : `${run.series.completedMatches + 1} / ${run.series.plannedMatches} かい`
+    : `${run.currentStreak} れんしょう · ${state.size} × ${state.size}`;
+  $('score-info').textContent = run.series ? `${run.series.winsBySide[1]}かち / ${run.series.winsBySide[2]}かち` : `さいこう ${run.bestStreak} れんしょう`;
+  $('turn-status').textContent = blocked ? (run.mode.opponent === 'cpu' && side === 2 ? 'コンピュータがかんがえちゅう' : 'いろがかわるよ') : `${sideName(run, side)} のばん`;
   const analysis = pending.analysis;
   const chosen = analysis?.directions.find(d => d.id === pending.directionId);
   const preview = new Set(analysis?.legal ? analysis.normal : []);
@@ -99,7 +99,7 @@ export function renderGame(run, pending, blocked) {
       const button = node('button', 'cell' + (!owner ? ' empty' : '') + (legal.has(i) ? ' legal' : '') +
         (preview.has(i) ? ' preview' : '') + (extras.has(i) ? ' extra' : '') + (pending.cell === i ? ' selected' : ''));
       button.dataset.cell = i; button.disabled = blocked;
-      button.setAttribute('aria-label', `${colLabel(col)}${row + 1} ${owner ? sideName(run, owner) : '空き'}${preview.has(i) || extras.has(i) ? ' 反転予定' : ''}`);
+      button.setAttribute('aria-label', `${colLabel(col)}${row + 1} ${owner ? sideName(run, owner) : 'あき'}${preview.has(i) || extras.has(i) ? ' いろがかわるマス' : ''}`);
       const shownOwner = preview.has(i) || extras.has(i) || analysis?.legal && pending.cell === i ? side : owner;
       if (shownOwner) { paint(button, run.colorsBySide[shownOwner]); button.append(node('span', '', sideMark(run, shownOwner))); }
       if (candidateBadges.has(i)) button.append(node('span', 'choice-badge', candidateBadges.get(i)));
@@ -117,7 +117,7 @@ export function renderGame(run, pending, blocked) {
   });
   const coord = pending.cell === null ? '' : `${colLabel(pending.cell % state.size)}${Math.floor(pending.cell / state.size) + 1}`;
   $('selection-status').textContent = blocked ? '' : analysis?.needsDirection && !pending.directionId ? '① ②… からえらんでね' :
-    pending.cell !== null && !analysis?.legal ? 'ここには置けません' : `${ITEM_NAMES[pending.item]}${coord ? ` · ${coord}` : ' · 場所をえらんでね'}`;
+    pending.cell !== null && !analysis?.legal ? 'ここにはおけないよ' : `${ITEM_NAMES[pending.item]}${coord ? ` · ${coord}` : ' · ばしょをえらんでね'}`;
   for (const item of ['enhanced', 'strongest']) {
     const button = $(item); button.textContent = `${ITEM_NAMES[item]} ${run.inventoryBySide[side][item]}`;
     button.disabled = blocked || state.size === 4 || !run.inventoryBySide[side][item];
@@ -128,13 +128,13 @@ export function renderGame(run, pending, blocked) {
 }
 export function renderResult(run) {
   const total = run.phase === 'seriesResult', outcome = total ? run.series.outcome : run.match.outcome;
-  $('result-heading').textContent = outcome === 0 ? 'ひきわけ' : `${sideName(run, outcome)} の勝ち！`;
-  $('result-detail').textContent = total ? `対戦終了 · ${run.series.completedMatches}局\n${run.series.winsBySide[1]}勝 対 ${run.series.winsBySide[2]}勝（${run.series.draws}引き分け）` :
-    run.series ? `${run.series.completedMatches} / ${run.series.plannedMatches} 局 終了` : `${run.currentStreak} 連勝`;
+  $('result-heading').textContent = outcome === 0 ? 'ひきわけ' : `${sideName(run, outcome)} のかち！`;
+  $('result-detail').textContent = total ? `ゲームおわり · ${run.series.completedMatches}かい\n${run.series.winsBySide[1]}かち と ${run.series.winsBySide[2]}かち（${run.series.draws}ひきわけ）` :
+    run.series ? `${run.series.completedMatches} / ${run.series.plannedMatches} かい おわり` : `${run.currentStreak} れんしょう`;
   renderScores($('result-scores'), run, countCells(run.match));
-  $('result-record').textContent = run.series ? 'さいごの盤面のマス数' : `最高 ${run.bestStreak} 連勝`;
+  $('result-record').textContent = run.series ? 'さいごのマスのかず' : `さいこう ${run.bestStreak} れんしょう`;
   $('next-match').hidden = total;
-  $('next-match').textContent = run.mode.structure === 'streak' && run.match.outcome !== 1 ? 'もう一戦' : 'つぎの対戦';
+  $('next-match').textContent = run.mode.structure === 'streak' && run.match.outcome !== 1 ? 'もういちど' : 'つぎのゲーム';
   $('extend').hidden = !total || outcome !== 0;
-  $('end-result').textContent = total && outcome === 0 ? '引き分けで終了' : '終了する';
+  $('end-result').textContent = total && outcome === 0 ? 'ひきわけで おわる' : 'おわる';
 }

@@ -7,7 +7,7 @@ const assert=require('node:assert/strict');
   await ctx.route('**/src/speech/index.js',r=>r.fulfill({contentType:'application/javascript',body:`export function createSpeechInput(){const h={};return {on(k,f){h[k]=f},off(k){delete h[k]},start(){h.error?.('denied')},stop(){}}}`}));
   const p=await ctx.newPage();await p.goto('http://127.0.0.1:8000/jintori/');
   await p.getByRole('button',{name:'ふたり',exact:true}).click();
-  await p.getByRole('button',{name:'新しくはじめる',exact:true}).click();
+  await p.getByRole('button',{name:'はじめから',exact:true}).click();
   await p.waitForFunction(()=>document.querySelector('#mic-state').classList.contains('denied'));
   assert.match(await p.locator('#mic-state').getAttribute('aria-label'),/タッチ/);
   await p.getByRole('button',{name:'スタート',exact:true}).click();
@@ -18,11 +18,11 @@ const assert=require('node:assert/strict');
   await p.locator('#confirm-move').click();await p.waitForTimeout(750);
   // A storage quota failure must keep the old save, expose retry, then really delete it on retry.
   await p.evaluate(()=>{window.originalSet=Storage.prototype.setItem;Storage.prototype.setItem=function(){throw new DOMException('Quota','QuotaExceededError')}});
-  await p.getByRole('button',{name:'対戦を終了',exact:true}).click();await p.getByRole('button',{name:'終了する',exact:true}).click();
-  await p.getByText('終了を保存できません',{exact:true}).waitFor();
+  await p.getByRole('button',{name:'ゲームをおわる',exact:true}).click();await p.getByRole('button',{name:'おわる',exact:true}).click();
+  await p.getByText('まだ おわれません',{exact:true}).waitFor();
   assert.equal(await p.evaluate(()=>Object.keys(localStorage).some(k=>k.startsWith('koekit.jintori')&&JSON.parse(localStorage.getItem(k)).active)),true);
   await p.evaluate(()=>{Storage.prototype.setItem=window.originalSet});
-  await p.getByRole('button',{name:'もう一度終了する',exact:true}).click();
+  await p.getByRole('button',{name:'もういちど おわる',exact:true}).click();
   await p.locator('#title').waitFor({state:'visible'});
   assert.equal(await p.evaluate(()=>Object.keys(localStorage).some(k=>k.startsWith('koekit.jintori')&&JSON.parse(localStorage.getItem(k)).active)),false);
   // Restore a real, reachable one-game draw and choose extension through the actual UI.
@@ -37,12 +37,12 @@ const assert=require('node:assert/strict');
    }
    if(!found)throw Error('draw not found');const store=new SlotStore();const session=await store.begin(found.mode);store.save(found,session.lease);await store.close();
   });
-  await p.reload();await p.getByRole('button',{name:'ふたり',exact:true}).click();await p.getByRole('button',{name:'続きから',exact:true}).click();
+  await p.reload();await p.getByRole('button',{name:'ふたり',exact:true}).click();await p.getByRole('button',{name:'つづきから',exact:true}).click();
   await p.locator('#extend').click();
   const game=await p.evaluate(()=>Object.keys(localStorage).filter(k=>k.startsWith('koekit.jintori')).map(k=>JSON.parse(localStorage.getItem(k)).active).find(Boolean));
   assert.equal(game.series.extensionActive,true);assert.equal(game.match.firstSide,2);assert.equal(game.series.completedMatches,1);
-  await p.getByRole('button',{name:'対戦を終了',exact:true}).click();
-  await p.getByRole('button',{name:'終了する',exact:true}).evaluate(button=>{button.click();button.click()});
+  await p.getByRole('button',{name:'ゲームをおわる',exact:true}).click();
+  await p.getByRole('button',{name:'おわる',exact:true}).evaluate(button=>{button.click();button.click()});
   await p.locator('#title').waitFor({state:'visible'});assert.equal(await p.locator('#dialog').isVisible(),false);
   await ctx.close();console.log('jintori fault paths: mic denial, keyboard, quota retry, draw extension, double exit passed');
  }finally{await browser.close()}

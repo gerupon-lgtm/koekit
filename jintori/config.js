@@ -5,7 +5,8 @@ export const CONFIG = Object.freeze({
   sizes: Object.freeze([4, 6, 8]),
   specialItemSizes: Object.freeze([6, 8]),
   supplies: Object.freeze({ refill, carry }),
-  timing: Object.freeze({ toast: 2200, diceResult: 700, move: 650, pass: 1200, invalid: 180, workerTimeout: 2500 }),
+  timing: Object.freeze({ toast: 3200, diceResult: 700, move: 650, pass: 1200, invalid: 180, cpuThink: 600, workerTimeout: 2500 }),
+  dice: Object.freeze({ faces: 6, startInterval: 120, minInterval: 55, accel: .94, decel: 1.22, stopInterval: 440 }),
 });
 
 export const CPU_SETTINGS = Object.freeze({
