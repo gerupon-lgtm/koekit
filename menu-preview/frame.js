@@ -16,10 +16,10 @@ let config = null, effective = null;
 function layout() {
   if (!config) return;
   const hint = document.querySelector('.unlock-hint');
-  if (hint && record !== 'complete') hint.textContent = config.proposal || (config.original && mode === 'doubutsu') ? '🔒 通常を ぜんぶクリアで スピードが ひらく' : '通常を ぜんぶクリアで ひらく';
+  if (hint && record !== 'complete') hint.textContent = '🔒 通常を ぜんぶクリアで スピードが ひらく';
   style.textContent = config.original ? '' : layoutCSS(config.settings);
   effective = config.proposal && !config.original ? fitProposal(style, config.settings) : null;
-  if (config.original && mode === 'doubutsu') effective = fitProposal(style, RECEIVED);
+  if (config.original) effective = fitProposal(style, RECEIVED);
 }
 const send = payload => parent.postMessage(payload, origin);
 function measure() {

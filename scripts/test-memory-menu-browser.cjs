@@ -55,8 +55,7 @@ const assert = require('node:assert/strict');
         assert.equal(await page.locator('[data-level]').count(), sequence ? 5 : 1);
         assert.equal(await page.locator('[data-level]').first().getAttribute('data-level'), sequence ? 's1' : 'extra');
         const switched = await Promise.all(['.app-title', pitarhythm ? '#start-play' : '.mode-picker', '.memory-speed-picker', '#highest-title'].map(top));
-        if (!pitarhythm) assert.deepEqual(switched, initial, 'unchanged memory layout stays in place');
-        else {
+        {
           const speedRecordTop = await top('#highest-title');
           await page.locator('button[data-speed="false"]').click();
           assert.equal(await top('#highest-title'), speedRecordTop, 'normal and speed keep the same record position');

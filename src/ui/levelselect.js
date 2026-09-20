@@ -45,7 +45,7 @@ export function buildGroupedLevelSelect(wrapEl, levels, onPick, progress) {
   const hint = document.createElement('p');
   hint.className = 'unlock-hint';
   hint.id = 'memory-unlock-hint';
-  hint.textContent = progress.unlocked() ? 'スピードにも チャレンジできるよ' : '通常を ぜんぶクリアで ひらく';
+  hint.textContent = progress.unlocked() ? 'スピードにも チャレンジできるよ' : '🔒 通常を ぜんぶクリアで スピードが ひらく';
   const buttons = [false, true].map(isSpeed => {
     const button = document.createElement('button');
     button.type = 'button';

@@ -24,6 +24,7 @@ import { CardReveal } from '../src/ui/cardreveal.js';
 import { BoardView } from '../src/ui/board.js';
 import { renderCertificate } from '../src/ui/certificate.js';
 import { buildGroupedLevelSelect } from '../src/ui/levelselect.js';
+import { installMenuLayout } from '../src/ui/menu-fit.js';
 import { setMicState as setMicStateUI } from '../src/ui/micstate.js';
 import * as sfx from '../src/audio/sfx.js';
 
@@ -342,6 +343,7 @@ function refreshProgress() {
   renderHighest($('#highest-title'), progress);
 }
 refreshProgress(); // レベル0は無し
+installMenuLayout();
 $('#confirm-btn').addEventListener('click', doConfirm);
 $('#next-btn').addEventListener('click', () => { if (phase?.phase === PHASES.AWAIT_RESULT_NEXT) afterResult(); else startReveal(); }); // ▶ ＝ スタート（記憶提示を始める）
 $('#intro-back').addEventListener('click', goTitle);
