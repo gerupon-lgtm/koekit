@@ -14,6 +14,10 @@ Edit this メモリズム logo asset. Keep ONLY its first three glyphs メモリ
 
 Production Japanese educational toy brand LOGO COMPONENT. Crisp flat opaque colors on truly transparent background. Absolutely NO glow, haze, shadow, gradient, texture, shading, or lighting. Use softly rounded chunky geometric katakana, reassuring and warm, clearly legible with airy counters. Consistent stroke thickness and a level optical baseline. Tight landscape canvas, 5% empty margin. No separate icons, no extra text, no English. The attached reference is style guidance ONLY; do not reproduce its full text. Render EXACTLY ズム (two glyphs). Only ズム, no リ. These two letters are the COMMON SUFFIX across ピタリズム and メモリズム and future games. Both glyphs and dakuten marks uniformly warm cocoa brown #88644f. Reuse the rounded reassuring visual language of the reference. Fully opaque flat interiors, sharp clean antialiased edges.
 
+## イロドリズム・ジントリズムの接頭部
+
+2026-09-20。既存のベクター接頭部を調整。ピタリズム・メモリズムを参考に、共通「ズム」と釣り合う38pxの筆画（濁点20px）へ統一。「リ」を12px左に寄せ、接頭部と「ズム」の間は12px。色と共通部品は維持。再書き出しは `node scripts/export-wordmarks.cjs`。
+
 ## コエキットのアイコン
 
 Icon only; a navy rounded speech bubble assembled from interlocking toy-kit pieces and voice-wave bars, with one sunny-yellow piece. Deep blue #284f85, yellow #f4c64e. Simple silhouette, no letters or separate text. Centered composition within the central 64 percent, suitable for PWA maskable icons. The generated source has a transparent background; deployment PNGs use #f2f6fb beneath the unchanged mark.
