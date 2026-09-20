@@ -4,7 +4,7 @@ const { checkVersions } = require('./check-version.cjs');
 const read = name => fs.readFileSync(name, 'utf8');
 const version = JSON.parse(read('version.json')).version;
 assert.deepEqual(checkVersions(read), []);
-for (const name of ['manifest.json', 'sw.js', 'doubutsu/index.html', 'kioku/index.html']) {
+for (const name of ['manifest.json', 'sw.js', 'doubutsu/index.html', 'kioku/index.html', 'jintori/index.html']) {
   const changed = file => file === name ? read(file).replaceAll(version, version + '-mismatch') : read(file);
   assert.ok(checkVersions(changed).length, name + ': version mismatch must fail');
 }

@@ -42,3 +42,14 @@ const irodoriPrefix = `<g fill="none" stroke="#cb8c79" stroke-width="27" stroke-
 const irodoriWidth = Math.ceil(margin * 2 + irodoriSlot + gap + suffixWidth);
 fs.writeFileSync(path.join(dir, 'irodorhythm.svg'), `<svg xmlns="http://www.w3.org/2000/svg" width="${irodoriWidth}" height="${height}" viewBox="0 0 ${irodoriWidth} ${height}" role="img" aria-label="イロドリズム"><title>イロドリズム</title>${irodoriPrefix}${component(parts.zum, margin + irodoriSlot + gap, suffixHeight, suffixWidthFactor)}</svg>\n`);
 console.log('irodorhythm.svg', irodoriWidth + 'x' + height);
+
+// ジントリの丸い筆画にも、同じズム部品を接続する。
+const jintoriPrefix = `<g fill="none" stroke="#869773" stroke-width="27" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M35 66 L57 76 M31 105 L53 115 M37 157 Q88 147 113 80"/>
+  <path d="M97 34 L104 45 M121 28 L129 39" stroke-width="14"/>
+  <path d="M161 57 L187 76 M158 157 Q218 147 248 77"/>
+  <path d="M296 43 V157 M297 84 Q330 92 352 112"/>
+  <path d="M419 44 V99 M490 44 V95 Q490 135 452 158"/>
+</g>`;
+fs.writeFileSync(path.join(dir, 'jintorhythm.svg'), `<svg xmlns="http://www.w3.org/2000/svg" width="${irodoriWidth}" height="${height}" viewBox="0 0 ${irodoriWidth} ${height}" role="img" aria-label="ジントリズム"><title>ジントリズム</title>${jintoriPrefix}${component(parts.zum, margin + irodoriSlot + gap, suffixHeight, suffixWidthFactor)}</svg>\n`);
+console.log('jintorhythm.svg', irodoriWidth + 'x' + height);

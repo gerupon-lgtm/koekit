@@ -15,7 +15,7 @@ function checkVersions(read = name => fs.readFileSync(path.join(root, name), 'ut
     const build = sw.match(/^const BUILD = '([^']+)';/m)?.[1] || '';
     check(build.startsWith(`v${version}-`) && /^v\d+\.\d+\.\d+-\d{14}(?:-[\da-f]+)?$/.test(build), 'sw.js BUILD: 正典と不一致または未刻印');
     check(/^const APP_CACHE = 'koekit-app-' \+ BUILD;/m.test(sw), 'sw.js APP_CACHE: BUILDを参照していない');
-    for (const name of ['doubutsu/index.html', 'kioku/index.html']) {
+    for (const name of ['doubutsu/index.html', 'kioku/index.html', 'jintori/index.html']) {
       const html = read(name);
       const footers = [...html.matchAll(/<footer\b[^>]*class="title-footer"[^>]*>([\s\S]*?)<\/footer>/g)];
       const title = html.match(/<section\b[^>]*id="title"[^>]*>([\s\S]*?)<\/section>/)?.[1] || '';

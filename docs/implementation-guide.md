@@ -221,6 +221,8 @@ node scripts/stamp-cache.cjs # デプロイ前: キャッシュバスターを�
 
 ## 12. 参照
 
+- `docs/jintorhythm-design.md` — ジントリズムの基本設計。ローカル実装・検証済み。実装記録で公開状況と実機受入の残件を確認する。共通制約は本書を継承する。
+
 - `docs/requirements.md` — 要件定義書（機能ID・A/B/C区分の正典）
 - `docs/screens.md` — 画面・遷移・デザイントークン
 - `docs/data-model.md` — データ構造・ログ形式
