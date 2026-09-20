@@ -10,6 +10,7 @@
 <link rel="icon" href="../assets/icons/koekit-192.png">
 <script type="module" src="../sw-register.js"></script>
 <link rel="stylesheet" href="./styles.css">
+  <link rel="stylesheet" href="../src/ui/menu-controls.css">
 </head>
 <body>
 <main id="app">
@@ -17,10 +18,9 @@
   <!-- ① モード選択 -->
   <section class="screen" data-screen="mode">
     <header class="ir-hd">
-      <button class="ir-icon" id="home-btn" aria-label="コエキットへ">
-        <svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>
+      <button class="ir-icon menu-home" id="home-btn" aria-label="コエキットへ"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3l9 8h-2.5v9h-5.5v-6h-2v6H5.5v-9H3z"/></svg>
       </button>
-      <button class="ir-icon ir-help-open" aria-label="つかいかた" title="つかいかた">？</button>
+      <button class="ir-icon ir-help-open menu-help" aria-label="つかいかた" title="つかいかた">？</button>
     </header>
     <h1 class="ir-logo"><img src="../assets/brand/irodorhythm.svg" alt="イロドリズム" width="838" height="196"></h1>
     <p class="ir-intro">こえと タッチで ドットえを つくろう。</p>
@@ -39,7 +39,7 @@
       <button class="ir-icon" data-back="mode" aria-label="もどる">
         <svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>
       </button>
-      <button class="ir-icon ir-help-open" aria-label="つかいかた" title="つかいかた">？</button>
+      <button class="ir-icon ir-help-open menu-help" aria-label="つかいかた" title="つかいかた">？</button>
     </header>
     <p class="ir-intro">おおきさを えらんでね。はじめてなら 3 × 3。</p>
     <div class="ir-menu ir-sizes">
@@ -51,7 +51,7 @@
   </section>
 
   <section class="screen" data-screen="templates" hidden>
-    <header class="ir-hd"><button class="ir-icon" data-back="mode" aria-label="もどる">←</button><h2 class="ir-h2">おてほん</h2><button class="ir-icon ir-help-open" aria-label="つかいかた">？</button></header>
+    <header class="ir-hd"><button class="ir-icon" data-back="mode" aria-label="もどる">←</button><h2 class="ir-h2">おてほん</h2><button class="ir-icon ir-help-open menu-help" aria-label="つかいかた">？</button></header>
     <p class="ir-intro">すきな かたちを えらぼう。いろは かえても いいよ。</p>
     <button id="heart-practice" class="ir-heart-practice"><canvas id="heart-practice-picture" aria-hidden="true"></canvas><span><small>まずは ここから · 5 × 5</small><strong>はーとを つくろう</strong><span>5つの てじゅんで おてほんの れんしゅう →</span></span></button>
     <div id="template-sizes" class="ir-template-filters" aria-label="おおきさ"></div>
@@ -78,7 +78,7 @@
           <line class="slash" x1="4" y1="4" x2="20" y2="20"/>
         </svg>
       </span>
-      <button class="ir-icon ir-help-open" aria-label="つかいかた" title="つかいかた">？</button>
+      <button class="ir-icon ir-help-open menu-help" aria-label="つかいかた" title="つかいかた">？</button>
     </header>
     <p id="tutorial-goal" hidden></p>
     <button id="template-reference" hidden></button>
@@ -117,7 +117,7 @@
       <button class="ir-icon" data-back="mode" aria-label="もどる">
         <svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>
       </button>
-      <button class="ir-icon ir-help-open" aria-label="つかいかた" title="つかいかた">？</button>
+      <button class="ir-icon ir-help-open menu-help" aria-label="つかいかた" title="つかいかた">？</button>
     </header>
     <h2 class="ir-h2">さくひん</h2>
     <p class="ir-empty-note" id="list-empty" hidden>まだ さくひんが ないよ。</p>
@@ -130,7 +130,7 @@
       <button class="ir-icon" id="preview-back" aria-label="もどる">
         <svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>
       </button>
-      <button class="ir-icon ir-help-open" aria-label="つかいかた" title="つかいかた">？</button>
+      <button class="ir-icon ir-help-open menu-help" aria-label="つかいかた" title="つかいかた">？</button>
     </header>
     <div class="ir-preview-wrap"><canvas id="preview-canvas" class="ir-preview-canvas"></canvas></div>
   </section>

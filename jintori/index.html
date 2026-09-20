@@ -11,14 +11,15 @@
   <link rel="stylesheet" href="./styles.css">
   <script type="module" src="../sw-register.js"></script>
   <script type="module" src="./app.js"></script>
+  <link rel="stylesheet" href="../src/ui/menu-controls.css">
 </head>
 <body>
 <main id="app">
   <header class="toolbar">
-    <a id="home" class="icon" href="../" aria-label="コエキット トップへ"><svg viewBox="0 0 24 24"><path d="m3 11 9-8 9 8M6 10v11h5v-7h3v7h4V10"/></svg></a>
+    <a id="home" class="icon menu-home" href="../" aria-label="コエキット トップへ"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3l9 8h-2.5v9h-5.5v-6h-2v6H5.5v-9H3z"/></svg></a>
     <button id="quit" class="icon" data-action="quit" aria-label="ゲームをおわる" hidden><svg viewBox="0 0 24 24"><path d="M10 4H4v16h6m0-8h11m-5-5 5 5-5 5"/></svg></button>
     <span class="toolbar-caption" id="toolbar-caption">こえで、じんとり。</span>
-    <button class="icon" data-action="help" aria-label="あそびかた"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9 8a3 3 0 0 1 6 1c0 2-3 2-3 5m0 3v.1"/></svg></button>
+    <button class="icon menu-help" data-action="help" aria-label="つかいかた">？</button>
     <span id="mic-state" class="mic-state" role="img" aria-label="こえはおやすみちゅう"><svg class="mic" viewBox="0 0 24 24"><g class="body"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M6 11a6 6 0 0 0 12 0M12 17v4M8 21h8" fill="none" stroke="currentColor" stroke-width="2"/></g><path class="slash" d="m3 3 18 18"/></svg></span>
   </header>
   <p id="save-status" class="save-status" role="status" hidden></p>

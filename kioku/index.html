@@ -28,11 +28,13 @@
     #target-prompt .tp-letter { font-family: var(--font-family); font-weight: 700; font-size: 40vw; color: var(--color-fg); }
     #target-prompt .tp-letter img { width: min(60vw, 60vh, 340px); height: auto; }
   </style>
+  <link rel="stylesheet" href="../src/ui/menu-controls.css">
+  <script type="module" src="../src/ui/menu-help.js"></script>
 </head>
 <body class="play-app kioku">
   <!-- ============ S-02 タイトル ============ -->
   <section class="screen active" id="title" data-screen="title">
-    <a class="icon-btn home" href="../" aria-label="コエキット トップへ">
+    <a class="icon-btn home menu-home" href="../" aria-label="コエキット トップへ">
       <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3l9 8h-2.5v9h-5.5v-6h-2v6H5.5v-9H3z"/></svg>
     </a>
     <h1 class="app-title"><img class="wordmark" src="../assets/brand/memorhythm.svg" alt="メモリズム" width="718" height="196"></h1>
