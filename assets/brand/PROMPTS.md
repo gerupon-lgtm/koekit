@@ -20,6 +20,8 @@ Production Japanese educational toy brand LOGO COMPONENT. Crisp flat opaque colo
 
 同日の追加指示で、ジントリの接頭部はオセロの2色の石をイメージした交互配色へ変更。「ジ・ト」は鮮やかな青 `#1969bc`、「ン・リ」は明るいオレンジ `#f2b544`。共通「ズム」は既存の茶色を維持。
 
+イロドリも楽しい配色へ変更。「イ」は青 `#2585c5`、「ロ」はコーラル `#ec7862`、「ド」（濁点を含む）は紫 `#9d6fc4`、「リ」は緑 `#4ca38b`。「ロ」内の四角は黄色 `#f2b544`。共通「ズム」は維持。
+
 ## コエキットのアイコン
 
 Icon only; a navy rounded speech bubble assembled from interlocking toy-kit pieces and voice-wave bars, with one sunny-yellow piece. Deep blue #284f85, yellow #f4c64e. Simple silhouette, no letters or separate text. Centered composition within the central 64 percent, suitable for PWA maskable icons. The generated source has a transparent background; deployment PNGs use #f2f6fb beneath the unchanged mark.
