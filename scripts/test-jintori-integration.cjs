@@ -75,7 +75,7 @@ const mockSpeech = `export function createSpeechInput(){const h={};window.say=s=
   assert.deepEqual(errors,[]);await context.close();
   // Fresh service worker pre-caches all game modules and assets, then touch + CPU works offline.
   const offline=await browser.newContext({viewport:{width:390,height:844}});
-  await offline.route('https://**/*',r=>r.abort());
+  await offline.route('https://**/*',r=>new URL(r.request().url()).origin===new URL(base).origin?r.continue():r.abort());
   const p=await offline.newPage();await p.goto(base+'/jintori/');
   await p.evaluate(()=>navigator.serviceWorker.ready);
   await p.waitForFunction(()=>!!navigator.serviceWorker.controller);
