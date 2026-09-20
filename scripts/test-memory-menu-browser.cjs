@@ -26,6 +26,17 @@ const assert = require('node:assert/strict');
         if (sequence) assert.deepEqual(await page.locator('[data-level]').allTextContents(), ['2て', '3て', '4て', '5て', '6て']);
         assert.equal(await page.locator('[data-level]').evaluateAll(es => es.every(e => e.clientWidth >= e.scrollWidth && e.getBoundingClientRect().height >= 44)), true);
         assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth && document.documentElement.scrollHeight <= innerHeight), true);
+        if (pitarhythm) {
+          const geometry = await page.locator('[data-level]').evaluateAll(es => es.map(e => { const r = e.getBoundingClientRect(); return { top: r.top, bottom: r.bottom, height: r.height }; }));
+          for (let i = 1; i < geometry.length; i++) {
+            assert(Math.abs(geometry[i].height - geometry[0].height) < .1, 'equal button heights');
+            assert(Math.abs(geometry[i].top - geometry[i - 1].bottom - 12) < .1, '12px clear gaps');
+          }
+          assert(geometry[0].height <= 64, 'buttons do not stretch too tall');
+          for (const selector of ['#start-play', '.memory-speed-picker']) {
+            assert.equal(await page.locator(selector).evaluate(e => e.getBoundingClientRect().height), 36);
+          }
+        }
         const initial = await Promise.all(['.app-title', pitarhythm ? '#start-play' : '.mode-picker', '.memory-speed-picker', '#highest-title'].map(top));
         positions.push(initial);
         await page.screenshot({ path: `.local-tools/menu-${mode}-${width}-${height}.png`, fullPage: true });
@@ -47,7 +58,6 @@ const assert = require('node:assert/strict');
         assert.equal(await page.locator('[data-level="1"]').getAttribute('aria-label'), sequence ? '通常 2て クリアずみ' : '通常 ひだり・みぎ クリアずみ');
       }
       assert.deepEqual(positions[0], positions[1], 'place and sequence share logo, menu and record positions');
-      assert.deepEqual(positions[0], positions[2], 'Pitarhythm shares logo, menu and record positions');
     }
     assert.deepEqual(errors, []);
     console.log('PASS shared menus: labels, locks, keyboard switching, clear marks and aligned layout without scrolling at five viewport sizes');

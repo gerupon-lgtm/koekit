@@ -436,3 +436,9 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--color-primary);
 .play-app #highest-title .award-medal { width: 30px; }
 .play-app #title .title-footer { flex-shrink: 0; margin: 0; font-size: 10px; line-height: 1.4; }
 .doubutsu #title #start-play { width: min(420px, 100%); height: var(--menu-tab-height); flex-shrink: 0; border: 0; border-radius: 20px; background: #e7ddef; color: #3d2f4a; font: inherit; font-size: 22px; font-weight: 700; cursor: pointer; }
+
+/* C案はピタリズムだけ先行。メモリズムへの適用は実機確認後。 */
+.doubutsu #title { --menu-gap: 8px; --menu-tab-height: 36px; }
+.doubutsu #title .app-title { height: clamp(40px, 7svh, 56px); margin-top: 8px; }
+.doubutsu .memory-level-list { gap: 12px; max-height: 368px; }
+.doubutsu .level-picker .unlock-hint { margin-top: auto; }
