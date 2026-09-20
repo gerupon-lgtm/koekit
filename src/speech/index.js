@@ -14,6 +14,7 @@
 import { METHODS } from './config.js';
 import { WebSpeechAdapter } from './webspeech.js';
 import { VoskAdapter } from './vosk.js';
+import { SwitchableSpeech } from './switchable.js';
 
 export { METHODS } from './config.js';
 
@@ -25,8 +26,8 @@ export { METHODS } from './config.js';
 export function createSpeechInput(method, opts = {}) {
   switch (method) {
     case METHODS.WEBSPEECH:       throw new Error('公開ゲームでは方式Aを使用できません');
-    case METHODS.WEBSPEECH_LOCAL: return new WebSpeechAdapter({ local: true });
-    case METHODS.VOSK:            return new VoskAdapter(opts);
+    case METHODS.WEBSPEECH_LOCAL: return new SwitchableSpeech(method, () => new WebSpeechAdapter({ local: true }));
+    case METHODS.VOSK:            return new SwitchableSpeech(method, () => new VoskAdapter(opts));
     default:
       throw new Error('未知の音声認識方式: ' + method);
   }

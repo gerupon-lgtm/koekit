@@ -1,6 +1,6 @@
 // イロドリズム 音声入力（制作画面のみ）。既存2作品と同じ作法：
 // createSpeechInput ファクトリで方式C(Vosk)を生成し、on('result'|'restart'|'error') を配線。
-// マイクは「状態表示」（トグルではない）。音声ON中は ScreenAwake でスリープ回避。
+// マイクは共通設定でON/OFF切替可能。受付区間は従来どおり制作画面に限定。
 import { createSpeechInput, METHODS } from '../src/speech/index.js';
 import { ScreenAwake } from '../src/ui/screenawake.js';
 

@@ -11,6 +11,8 @@
 <script type="module" src="../sw-register.js"></script>
 <link rel="stylesheet" href="./styles.css">
   <link rel="stylesheet" href="../src/ui/menu-controls.css">
+<link rel="stylesheet" href="../src/ui/mic-toggle.css">
+<script type="module" src="../src/ui/mic-toggle.js"></script>
 </head>
 <body>
 <main id="app">
@@ -67,7 +69,7 @@
         <svg viewBox="0 0 24 24"><path d="M14 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8"/><path d="M11 12h9"/><path d="M17 9l3 3-3 3"/></svg>
       </button>
       <span id="tutorial-status" hidden></span>
-      <span class="ir-micwrap" id="mic-state" aria-label="こえの じょうたい" role="status">
+      <button type="button" class="ir-micwrap mic-state" id="mic-state" aria-label="こえの じょうたい">
         <svg class="mic" viewBox="0 0 24 24" aria-hidden="true">
           <g class="body">
             <rect x="9" y="2.5" width="6" height="11" rx="3"/>
@@ -77,7 +79,7 @@
           </g>
           <line class="slash" x1="4" y1="4" x2="20" y2="20"/>
         </svg>
-      </span>
+      </button>
       <button class="ir-icon ir-help-open menu-help" aria-label="つかいかた" title="つかいかた">？</button>
     </header>
     <p id="tutorial-goal" hidden></p>

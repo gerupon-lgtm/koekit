@@ -1,0 +1,6 @@
+/* 全作品共通：アイコンをそのままタップできる。受付休止と手動OFFを区別する。 */
+button.mic-state {border:0;padding:5px;min-width:44px;min-height:44px;flex-shrink:0;display:inline-grid;place-items:center;border-radius:50%;background:#ece4d6;color:#918671;cursor:pointer;touch-action:manipulation;}
+button.mic-state.muted {background:#e2e2e2;}
+button.mic-state.muted .mic .body {fill:#969696;}
+button.mic-state.muted .mic .slash {display:block;stroke:#a34c43;}
+button.mic-state:focus-visible {outline:3px solid #8a5a3c;outline-offset:3px;}

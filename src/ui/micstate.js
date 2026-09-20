@@ -1,12 +1,18 @@
-// 受け付け状態の表示（両アプリ共通・F-003）。文字を使わずマイクの発光・斜線・点滅で示す。
+// 音声受付区間と利用者のON/OFF設定を合わせて表示する。
+import { microphoneEnabled } from '../speech/microphone.js';
 /**
  * @param {HTMLElement} stateEl マイク図形のラッパ（.mic-state）
  * @param {HTMLElement|null} stageEl 受け付け中に枠を光らせるステージ（任意）
  * @param {'listening'|'idle'|'denied'|'restarting'} state
  */
 export function setMicState(stateEl, stageEl, state) {
+  stateEl.dataset.micState = state;
+  const enabled = microphoneEnabled();
   const labels = { listening: '音声受付中', idle: '音声受付は休止中', denied: '音声を使えません。タッチで操作できます', restarting: '音声認識を再開中' };
-  stateEl.setAttribute('aria-label', labels[state] || labels.idle);
+  stateEl.setAttribute('aria-label', enabled ? `マイク：オン。${labels[state] || labels.idle}。タップでオフ` : 'マイク：オフ。タップでオン');
+  stateEl.setAttribute('aria-pressed', String(enabled));
+  stateEl.classList.toggle('muted', !enabled);
+  if (!enabled) state = 'idle';
   stateEl.classList.remove('listening', 'denied', 'restarting');
   if (stageEl) stageEl.classList.remove('listening', 'restarting');
   if (state === 'listening') { stateEl.classList.add('listening'); if (stageEl) stageEl.classList.add('listening'); }

@@ -24,7 +24,6 @@ const speech = new SpeechSession({
   },
   onState: state => {
     setMicState($('mic-state'), null, state);
-    $('mic-state').setAttribute('aria-label', ({listening:'こえをきいているよ',idle:'こえはおやすみちゅう',denied:'こえをつかえません。タッチであそべるよ',restarting:'こえのじゅんびちゅう'})[state] || 'こえはおやすみちゅう');
   },
 });
 function emptyPending(item = 'basic') { return { item, cell: null, analysis: null, directionId: null }; }

@@ -22,6 +22,7 @@ const assert = require('node:assert/strict');
     if (method === 'webspeech-local') assert.equal(await page.locator('#mic-state').evaluate(el => el.classList.contains('denied')), true, 'unsupported local recognition must not appear listening');
     await page.locator('#to-title').click();
     if (game === 'doubutsu') {
+      await page.locator('#title .menu-help').click();
       await page.locator('#to-panel').click();
       assert.equal(await page.locator('input[value="webspeech"]').count(), 0);
       assert.equal(await page.locator(`input[value="${method === 'webspeech-local' ? method : 'vosk'}"]`).isChecked(), true);
