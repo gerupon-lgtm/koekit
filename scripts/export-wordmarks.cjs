@@ -33,9 +33,9 @@ for (const [file, label, key, prefixHeight] of [
 // 4文字の「イロドリ」は丸い筆画のベクター。末尾は既存2作と同じ部品・倍率。
 // 共通ズムの約38pxの筆画に揃え、リの右端からズまでを既存2作と同じ12pxにする。
 const irodoriSlot = 481;
-const irodoriPrefix = `<g fill="none" stroke="#9d6fc4" stroke-width="38" stroke-linecap="round" stroke-linejoin="round">
-  <path d="M110 39 Q80 78 35 95 M83 72 V157" stroke="#2585c5"/>
-  <path d="M158 53 H242 V151 H158 Z" stroke="#ec7862"/>
+const irodoriPrefix = `<g fill="none" stroke="#2585c5" stroke-width="38" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M110 39 Q80 78 35 95 M83 72 V157" stroke="#ec7862"/>
+  <path d="M158 53 H242 V151 H158 Z" stroke="#9d6fc4"/>
   <path d="M294 43 V157 M295 84 Q328 92 350 112"/>
   <path d="M339 35 L348 48 M364 28 L373 41" stroke-width="20"/>
   <path d="M419 44 V99 M490 44 V95 Q490 135 452 158" transform="translate(-12 0)" stroke="#4ca38b"/>
