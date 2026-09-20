@@ -1,19 +1,44 @@
 import { FIELDS, DEFAULTS, normalize } from './layout.js';
+import { RECEIVED } from './fit-proposal.js';
 
 const $ = id => document.getElementById(id);
 const KEY = 'koekit.menu-preview.v1';
 const MODES = ['doubutsu', 'kioku-place', 'kioku-sequence'];
+const SCREENS = ['device', '390x664', '390x844', '360x640', '320x568'];
 let stored = {};
 try { stored = JSON.parse(location.hash.slice(1) ? decodeURIComponent(location.hash.slice(1)) : localStorage.getItem(KEY) || '{}'); } catch {}
 if (!stored || typeof stored !== 'object') stored = {};
 let settings = normalize(stored.settings);
+const proposal = new URLSearchParams(location.search).get('proposal') === 'fit-v1';
+if (proposal) settings = { ...RECEIVED };
 let mode = MODES.includes(stored.mode) ? stored.mode : 'doubutsu';
 let record = ['empty','partial','complete'].includes(stored.record) ? stored.record : 'partial';
+let screen = SCREENS.includes(stored.screen) ? stored.screen : innerWidth >= 800 ? '390x664' : 'device';
 let ready = false, loadId = 0, metrics = null;
 $('game').value = mode;
 $('record').value = record;
+$('screen-size').value = screen;
 
-function savedState() { return { version: 1, settings, mode, record }; }
+function savedState() { return { version: 1, settings, mode, record, screen, proposal: proposal ? 'fit-v1' : null }; }
+function resizePreview() {
+  const fixed = screen !== 'device';
+  document.body.classList.toggle('fixed-screen', fixed);
+  $('screen-caption').hidden = !fixed;
+  const stage = $('preview-stage'), frame = $('preview');
+  if (!fixed) {
+    stage.removeAttribute('style'); frame.removeAttribute('style');
+  } else {
+    const [width, height] = screen.split('x').map(Number);
+    // iframeの内部寸法は固定。小さいPC窓では外側の見え方だけ縮小する。
+    const areaWidth = innerWidth - (innerWidth >= 1000 ? 420 : 0);
+    const scale = Math.min(1, Math.max(1, areaWidth - 24) / width, Math.max(1, innerHeight - 72) / height);
+    Object.assign(stage.style, { width: `${width * scale}px`, height: `${height * scale}px`, top: '48px', left: `${(areaWidth - width * scale) / 2}px` });
+    Object.assign(frame.style, { width: `${width}px`, height: `${height}px`, transform: `scale(${scale})` });
+    $('screen-caption').textContent = `スマホの表示領域 ${width} × ${height}px · 表示倍率 ${Math.round(scale * 100)}%\n枠の中が一画面です（ボタンなどの設定値は変更しません）`;
+  }
+}
+resizePreview();
+addEventListener('resize', resizePreview);
 function persist() {
   try { localStorage.setItem(KEY, JSON.stringify(savedState())); }
   catch { $('message').textContent = 'この端末では保存できません。「この設定をコピー」で残してください。'; }
@@ -23,7 +48,7 @@ function apply() {
   if (!ready) return;
   metrics = null; $('copy').disabled = true;
   $('copy-fallback').hidden = true;
-  $('preview').contentWindow.postMessage({ type: 'menu-config', settings, record, original: $('original').checked }, location.origin);
+  $('preview').contentWindow.postMessage({ type: 'menu-config', settings, record, original: $('original').checked, proposal }, location.origin);
 }
 function syncInputs() {
   for (const f of FIELDS) {
@@ -76,7 +101,8 @@ addEventListener('message', event => {
   if (data?.type === 'menu-measure') {
     metrics = data;
     $('copy').disabled = $('original').checked;
-    $('fit').textContent = `${data.width} × ${data.height}px · ` + (data.overflow ? `下に${data.overflow}pxはみ出しています。高さや間隔を小さくしてください。` : '一画面に収まっています');
+    const deviceNote = screen === 'device' && data.width >= 800 ? 'PCの表示領域です。スマホの確認ではありません。 ' : '';
+    $('fit').textContent = deviceNote + `${data.width} × ${data.height}px · ` + (data.overflow ? `下に${data.overflow}pxはみ出しています。この設定はこの画面の一画面に収まりません。` : 'この画面の一画面に収まっています');
     $('fit').classList.toggle('overflow', data.overflow > 0);
   }
   if (data?.type === 'menu-mode' && MODES.includes(data.mode)) {
@@ -93,6 +119,7 @@ $('open-settings').onclick = () => panel(true);
 $('close-settings').onclick = () => panel(false);
 addEventListener('keydown', event => { if (event.key === 'Escape') panel(false); });
 $('game').onchange = () => { mode = $('game').value; persist(); load(); };
+$('screen-size').onchange = () => { screen = $('screen-size').value; metrics = null; $('copy').disabled = true; $('fit').textContent = '確認する画面を変更中…'; resizePreview(); persist(); apply(); };
 $('record').onchange = () => { record = $('record').value; persist(); apply(); };
 $('original').onchange = () => { $('sliders').disabled = $('original').checked; $('copy').disabled = $('original').checked; apply(); };
 $('reset').onclick = () => { settings = { ...DEFAULTS }; $('original').checked = false; $('sliders').disabled = false; $('copy').disabled = false; syncInputs(); persist(); apply(); };
@@ -105,3 +132,4 @@ $('copy').onclick = async () => {
   catch { $('copy-fallback').value = text; $('copy-fallback').hidden = false; $('copy-fallback').focus(); $('copy-fallback').select(); $('message').textContent = '下の設定を選択してコピーしてください。'; }
 };
 load();
+if (innerWidth >= 1000) panel(true);

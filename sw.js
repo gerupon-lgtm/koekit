@@ -12,7 +12,7 @@
 // BUILD は scripts/stamp-cache.cjs が各デプロイ前に一意な値へ置換する。
 
 const VERSION = '0.1.0';            // version.json と一致（scripts/check-version 対象）
-const BUILD = 'v0.1.0-20260920011248-c4e707c';         // ← scripts/stamp-cache.cjs がデプロイ毎に置換
+const BUILD = 'v0.1.0-20260920014059-0b1afe9';         // ← scripts/stamp-cache.cjs がデプロイ毎に置換
 const APP_CACHE = 'koekit-app-' + BUILD;
 const STATIC_CACHE = 'koekit-static-v2'; // 大きい静的資産（vosk.js等）。中身を変えたときだけ版を上げる
 
@@ -20,6 +20,7 @@ const STATIC_CACHE = 'koekit-static-v2'; // 大きい静的資産（vosk.js等�
 const SHELL = [
   './', './index.html', './styles.css', './manifest.json', './sw-register.js',
   './src/game/progress.js', './src/ui/achievement.js', './src/ui/levelselect.js', './src/ui/certificate.js',
+  './src/ui/menu-layout.js', './src/ui/menu-fit.js',
   './src/game/levels.js', './src/game/positions.js', './src/game/phase.js', './src/game/judge.js',
   './src/game/deal.js', './src/game/animals.js', './src/game/roulette.js', './src/ui/board.js',
   './src/audio/sfx.js', './src/log/recorder.js', './src/log/csv.js', './src/log/metrics.js',

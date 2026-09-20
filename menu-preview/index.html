@@ -8,12 +8,23 @@
   <link rel="stylesheet" href="./preview.css">
 </head>
 <body>
-  <iframe id="preview" title="実際のメニューの表示確認" allow="microphone 'none'; camera 'none'"></iframe>
+  <p id="screen-caption" hidden></p>
+  <div id="preview-stage"><iframe id="preview" title="実際のメニューの表示確認" allow="microphone 'none'; camera 'none'"></iframe></div>
   <p id="load-error" role="alert" hidden></p>
   <button id="open-settings" aria-controls="settings" aria-expanded="false">調整</button>
   <section id="settings" aria-label="メニュー調整" hidden>
     <header><strong>メニュー調整</strong><button id="close-settings">画面だけ見る</button></header>
     <div class="settings-body">
+      <label class="select-row">確認する画面
+        <select id="screen-size">
+          <option value="device">この端末の表示領域</option>
+          <option value="390x664">スマホ 390 × 664</option>
+          <option value="390x844">スマホ 390 × 844</option>
+          <option value="360x640">スマホ 360 × 640</option>
+          <option value="320x568">スマホ 320 × 568</option>
+        </select>
+      </label>
+      <p class="note">スマホの画面内のサイズです。機種・ブラウザのバーで表示領域は変わります。設定値は画面を切り替えても変えません。</p>
       <label class="select-row">作品
         <select id="game"><option value="doubutsu">ピタリズム</option><option value="kioku-place">メモリズム・場所</option><option value="kioku-sequence">メモリズム・順番</option></select>
       </label>

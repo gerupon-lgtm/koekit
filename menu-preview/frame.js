@@ -4,6 +4,7 @@ import { LEVELS } from '../src/game/levels.js';
 import { sequenceLevels } from '../src/game/sequence.js';
 import { Progress } from '../src/game/progress.js';
 import { layoutCSS } from './layout.js';
+import { fitProposal, RECEIVED } from './fit-proposal.js';
 
 const mode = document.body.dataset.previewMode;
 const origin = new URL(document.baseURI).origin;
@@ -11,6 +12,15 @@ const style = document.createElement('style');
 document.head.append(style);
 let record = null;
 let timer;
+let config = null, effective = null;
+function layout() {
+  if (!config) return;
+  const hint = document.querySelector('.unlock-hint');
+  if (hint && record !== 'complete') hint.textContent = config.proposal || (config.original && mode === 'doubutsu') ? '🔒 通常を ぜんぶクリアで スピードが ひらく' : '通常を ぜんぶクリアで ひらく';
+  style.textContent = config.original ? '' : layoutCSS(config.settings);
+  effective = config.proposal && !config.original ? fitProposal(style, config.settings) : null;
+  if (config.original && mode === 'doubutsu') effective = fitProposal(style, RECEIVED);
+}
 const send = payload => parent.postMessage(payload, origin);
 function measure() {
   clearTimeout(timer);
@@ -23,6 +33,7 @@ function measure() {
     });
     const logo = title.querySelector('.app-title').getBoundingClientRect();
     send({ type: 'menu-measure', width: innerWidth, height: innerHeight,
+      effective,
       overflow: Math.max(0, Math.ceil(footer.bottom + scrollY - innerHeight)),
       logoTop: logo.top + scrollY, logoWidth: logo.width, buttons });
   }, 60);
@@ -38,6 +49,7 @@ function renderRecord(value) {
     send({ type: 'menu-note', text: 'ここは表示確認用です。ゲームは開始しません。' });
   }, progress);
   renderHighest(document.querySelector('#highest-title'), progress);
+  if (config?.proposal && !progress.unlocked()) document.querySelector('.unlock-hint').textContent = '🔒 通常を ぜんぶクリアで スピードが ひらく';
 }
 document.querySelector(mode === 'kioku-sequence' ? '#mode-sequence' : '#mode-place')?.setAttribute('aria-current', 'page');
 document.addEventListener('click', event => {
@@ -52,10 +64,11 @@ document.addEventListener('click', event => {
 });
 addEventListener('message', event => {
   if (event.source !== parent || event.origin !== origin || event.data?.type !== 'menu-config') return;
-  style.textContent = event.data.original ? '' : layoutCSS(event.data.settings);
+  config = event.data;
   if (record !== event.data.record) { record = event.data.record; renderRecord(record); }
+  layout();
   measure();
 });
-addEventListener('resize', measure);
-document.fonts.ready.then(measure);
+addEventListener('resize', () => { layout(); measure(); });
+document.fonts.ready.then(() => { layout(); measure(); });
 send({ type: 'menu-ready' });

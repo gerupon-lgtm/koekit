@@ -22,12 +22,12 @@ URL：`https://koekit.sikumilab.com/menu-preview/`
 
 - `menu-preview/preview.js` は公開用の `doubutsu/index.html` / `kioku/index.html` を取得し、スクリプトを除いたメニューHTMLを同一サイズのiframeへ読み込む。
 - ロゴ、フォント、共有CSS、`buildGroupedLevelSelect`、`renderHighest` は実際の部品を使用。生成画像・別作りのボタンは使わない。
-- 調整のCSSは `menu-preview/layout.js` の `layoutCSS` が生成する。確定した設定を同じ関数へ渡したCSSを採用し、見た目を推測して作り直さない。
+- 調整のCSSは `src/ui/menu-layout.js` の `layoutCSS` が生成し、`menu-preview/layout.js` から再exportする。本番と同じ関数を使い、見た目を推測して作り直さない。
 - iframeではゲームコントローラ・音声・SW登録は実行しない。プレイ記録には触れず、見本用のメモリ内データだけを `Progress` に渡す。
 - 通常ルートのHTML/CSS/JSは変更しない。プレビューをトップメニューへ追加しない。
 
 ## 確認と公開
 
-ユーザーが実機で選んだ設定を受け取るまで、本番メニューへ適用しない。両作品を同じプレビューで先に確認し、公開順はピタリズム→実機OK後にメモリズム。
+実画面比較で承認された設定をピタリズムへ先行適用。両作品は同じプレビューで比較できるが、メモリズムの本番はピタリズムの実機OK後に変更する。承認値とレスポンシブ調整の実測は `menu-fit-review.md`。
 
 検証：`node scripts/test-menu-preview-browser.cjs`。即時反映、作品切り替え、設定の復元、URL共有、ロックと解放、スクロール超過検出、コピー成功／拒否時の代替、破損設定、音声読み込みなし、プレイ記録不変更を確認。

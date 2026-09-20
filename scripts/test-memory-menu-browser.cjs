@@ -15,10 +15,11 @@ const assert = require('node:assert/strict');
         const sequence = mode === 'sequence';
         const pitarhythm = mode === 'doubutsu';
         await page.goto('http://127.0.0.1:8000/' + (pitarhythm ? 'doubutsu/' : 'kioku/' + (sequence ? '?mode=sequence' : '')));
+        await page.locator('[data-level]').first().waitFor(); // 動的import完了前のreloadを避ける。
         await page.evaluate(() => localStorage.clear());
         await page.reload();
         const speed = page.locator('button[data-speed="true"]');
-        await speed.waitFor();
+        await speed.waitFor().catch(error => { throw new Error(`${mode} ${width}x${height}: ${errors.join('; ')} ${error.message}`); });
         await page.evaluate(() => document.fonts.ready);
         assert.equal(await speed.isDisabled(), true);
         assert.equal(await speed.innerText(), '🔒 スピード');
@@ -30,11 +31,13 @@ const assert = require('node:assert/strict');
           const geometry = await page.locator('[data-level]').evaluateAll(es => es.map(e => { const r = e.getBoundingClientRect(); return { top: r.top, bottom: r.bottom, height: r.height }; }));
           for (let i = 1; i < geometry.length; i++) {
             assert(Math.abs(geometry[i].height - geometry[0].height) < .1, 'equal button heights');
-            assert(Math.abs(geometry[i].top - geometry[i - 1].bottom - 12) < .1, '12px clear gaps');
+            const gap = geometry[i].top - geometry[i - 1].bottom;
+            assert(gap >= 7.9 && gap <= 20.1, 'approved responsive gaps');
           }
-          assert(geometry[0].height <= 64, 'buttons do not stretch too tall');
+          assert(geometry[0].height <= 70, 'received button height remains the upper limit');
           for (const selector of ['#start-play', '.memory-speed-picker']) {
-            assert.equal(await page.locator(selector).evaluate(e => e.getBoundingClientRect().height), 36);
+            const h = await page.locator(selector).evaluate(e => e.getBoundingClientRect().height);
+            assert(h >= 44 && h <= 58, 'approved upper control height');
           }
         }
         const initial = await Promise.all(['.app-title', pitarhythm ? '#start-play' : '.mode-picker', '.memory-speed-picker', '#highest-title'].map(top));
@@ -43,7 +46,7 @@ const assert = require('node:assert/strict');
         const key = 'koekit.progress.v1.' + (pitarhythm ? 'doubutsu' : sequence ? 'kioku-sequence' : 'kioku-place');
         await page.evaluate(key => localStorage.setItem(key, JSON.stringify(['1','2','3','4','5'])), key);
         await page.reload();
-        await speed.waitFor();
+        await speed.waitFor().catch(error => { throw new Error(`${mode} ${width}x${height}: ${errors.join('; ')} ${error.message}`); });
         assert.equal(await speed.isDisabled(), false);
         assert.equal(await speed.innerText(), 'スピード');
         await speed.focus();
@@ -52,7 +55,12 @@ const assert = require('node:assert/strict');
         assert.equal(await page.locator('[data-level]').count(), sequence ? 5 : 1);
         assert.equal(await page.locator('[data-level]').first().getAttribute('data-level'), sequence ? 's1' : 'extra');
         const switched = await Promise.all(['.app-title', pitarhythm ? '#start-play' : '.mode-picker', '.memory-speed-picker', '#highest-title'].map(top));
-        assert.deepEqual(switched, initial, 'logo and record stay in place when speed unlocks and is selected');
+        if (!pitarhythm) assert.deepEqual(switched, initial, 'unchanged memory layout stays in place');
+        else {
+          const speedRecordTop = await top('#highest-title');
+          await page.locator('button[data-speed="false"]').click();
+          assert.equal(await top('#highest-title'), speedRecordTop, 'normal and speed keep the same record position');
+        }
         await page.locator('button[data-speed="false"]').click();
         assert.equal(await page.locator('[data-level].completed').count(), 5);
         assert.equal(await page.locator('[data-level="1"]').getAttribute('aria-label'), sequence ? '通常 2て クリアずみ' : '通常 ひだり・みぎ クリアずみ');
