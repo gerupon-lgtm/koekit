@@ -331,23 +331,39 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--color-primary);
 .quit-btn { min-width: 52px; min-height: 52px; color: #8c5144; }
 #cert-quit { position: absolute; top: 12px; left: 20px; z-index: 3; }
 
-/* 3作品の入口を中央揃えのまま一画面に。短い画面は自然にスクロールする。 */
-.page { padding-top: 24px; padding-bottom: 16px; }
-.site-header { margin-bottom: 22px; }
-.site-lead { margin-top: 14px; }
+/* 4作品の入口。見出しの余白を詰め、画面高に合わせてカードを調整する。
+   拡大文字や横向きで収まらない場合も、内容を切らずスクロールできる。 */
+.page { padding-top: max(16px, env(safe-area-inset-top)); padding-bottom: max(12px, env(safe-area-inset-bottom)); }
+.site-header { margin-bottom: 16px; }
+.site-lead { margin-top: 0; }
 .app-list { gap: 12px; }
-.app-card { min-height: 130px; padding: 12px 22px 18px; }
+.app-card { min-height: clamp(98px, calc((100svh - 330px) / 4), 130px); padding: 8px 22px 10px; }
 .app-card .wordmark { height: 68px; }
 .app-card.art .app-open { color: #b87562; }
 .family-note { margin: 18px 0 8px; }
 .site-footer { padding-top: 12px; }
-@media (max-height: 740px) {
+@media (max-height: 800px) {
   .page { padding-top: 16px; }
   .site-header { margin-bottom: 16px; }
   .site-title .brand-symbol { width: 56px; height: 56px; }
-  .site-lead { margin-top: 8px; }
-  .app-card { min-height: 112px; padding-block: 8px 12px; }
-  .app-card .wordmark { height: 56px; }
+  .site-lead { margin-top: 0; }
+  .app-list { gap: 10px; }
+  .app-card { min-height: clamp(94px, calc((100svh - 290px) / 4), 120px); padding-block: 6px 10px; }
+  .app-card .wordmark { height: 52px; }
+  .family-note { margin-top: 12px; }
+  .site-footer { padding-top: 6px; }
+}
+@media (max-height: 680px) {
+  .page { padding-top: max(12px, env(safe-area-inset-top)); }
+  .site-header { margin-bottom: 10px; }
+  .site-lead { margin-bottom: 4px; }
+  .app-list { gap: 8px; }
+  .app-card { min-height: clamp(82px, calc((100svh - 252px) / 4), 104px); padding: 6px 12px; }
+  .app-card .wordmark { height: 38px; }
+  .app-desc { font-size: 12px; line-height: 1.5; }
+  .app-open { right: 10px; bottom: 8px; }
+  .family-note { margin: 4px 0; line-height: 1.6; }
+  .site-footer { padding-top: 4px; }
 }
 /* 記録・称号：保護者も読める選択画面と、絵で伝わるメダル。 */
 .play-app #title { height: auto; min-height: 100svh; gap: 14px; padding: 60px 20px 26px; overflow-y: auto; }
