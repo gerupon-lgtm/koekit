@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="robots" content="noindex,nofollow">
+  <title>コエキット メニュー調整</title>
+  <link rel="stylesheet" href="./preview.css">
+</head>
+<body>
+  <iframe id="preview" title="実際のメニューの表示確認" allow="microphone 'none'; camera 'none'"></iframe>
+  <p id="load-error" role="alert" hidden></p>
+  <button id="open-settings" aria-controls="settings" aria-expanded="false">調整</button>
+  <section id="settings" aria-label="メニュー調整" hidden>
+    <header><strong>メニュー調整</strong><button id="close-settings">画面だけ見る</button></header>
+    <div class="settings-body">
+      <label class="select-row">作品
+        <select id="game"><option value="doubutsu">ピタリズム</option><option value="kioku-place">メモリズム・場所</option><option value="kioku-sequence">メモリズム・順番</option></select>
+      </label>
+      <p id="fit" role="status">読み込み中…</p>
+      <fieldset id="sliders"><legend>数値を動かすと、その場で反映します</legend></fieldset>
+      <details><summary>記録の見本・公開画面との比較</summary>
+        <label class="select-row">記録の見本
+          <select id="record"><option value="partial">途中までクリア</option><option value="empty">未クリア</option><option value="complete">全クリア・スピード解放</option></select>
+        </label>
+        <label class="compare"><input type="checkbox" id="original"> 現在の公開画面と比べる</label>
+      </details>
+      <div class="actions"><button id="reset">初期案に戻す</button><button id="copy">この設定をコピー</button></div>
+      <p class="note">コピーした設定をこのチャットに貼ってください。同じ数値を引き継げます。</p>
+      <p class="note">変更はこのプレビューだけ。保存データや本番の見た目は変わりません。</p>
+      <p id="message" role="status"></p>
+      <textarea id="copy-fallback" aria-label="コピーする設定" readonly hidden></textarea>
+    </div>
+  </section>
+  <script type="module" src="./preview.js"></script>
+</body>
+</html>

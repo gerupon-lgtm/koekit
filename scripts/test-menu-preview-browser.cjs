@@ -1,0 +1,89 @@
+const { chromium } = require('../.local-tools/node_modules/playwright');
+const assert = require('node:assert/strict');
+
+(async () => {
+  const browser = await chromium.launch({ channel: 'chrome', headless: true });
+  try {
+    const context = await browser.newContext({ viewport: { width: 390, height: 664 }, serviceWorkers: 'block' });
+    const page = await context.newPage();
+    const errors = [], speechRequests = [];
+    page.on('pageerror', e => errors.push(e.message));
+    page.on('request', r => { if (/\/src\/speech\/|\/lib\/vosk\//.test(r.url())) speechRequests.push(r.url()); });
+    await page.goto('http://127.0.0.1:8000/menu-preview/');
+    await page.evaluate(() => localStorage.setItem('koekit.progress.v1.doubutsu', '["5"]'));
+    const preview = page.frameLocator('#preview');
+    const loaded = () => page.waitForFunction(() => !document.querySelector('#copy').disabled && document.querySelector('#fit').textContent.includes('px'));
+    await loaded();
+    assert.equal(await preview.locator('[data-level]').count(), 5);
+    assert.match(await preview.locator('#highest-title').innerText(), /うえしたマスター/);
+    assert.equal(await preview.locator('#start-play').evaluate(e => e.getBoundingClientRect().height), 44);
+    assert.equal(await preview.locator('button[data-speed="true"]').isDisabled(), true);
+    await page.locator('#open-settings').click();
+    const heightBefore = await page.locator('#preview').evaluate(e => e.getBoundingClientRect().height);
+    const slide = async (id, value) => {
+      await page.locator('#' + id).evaluate((e, v) => { e.value = v; e.dispatchEvent(new Event('input', { bubbles: true })); }, value);
+      await loaded();
+    };
+    await slide('upperHeight', 48);
+    assert.equal(await preview.locator('#start-play').evaluate(e => e.getBoundingClientRect().height), 48);
+    await slide('buttonGap', 12);
+    assert.equal(await preview.locator('.memory-level-list').evaluate(e => getComputedStyle(e).gap), '12px');
+    await page.locator('#close-settings').click();
+    assert.equal(await page.locator('#preview').evaluate(e => e.getBoundingClientRect().height), heightBefore, 'panel does not resize preview');
+    await page.reload(); await loaded();
+    assert.equal(await page.locator('#upperHeight').inputValue(), '48');
+    await page.locator('#open-settings').click();
+    for (const mode of ['kioku-place', 'kioku-sequence', 'doubutsu']) {
+      await page.locator('#game').selectOption(mode);
+      await preview.locator(`body[data-preview-mode="${mode}"]`).waitFor(); await loaded();
+      assert.equal(await preview.locator('.memory-speed-picker').evaluate(e => e.getBoundingClientRect().height), 48);
+    }
+    await page.locator('summary').click();
+    await page.locator('#record').selectOption('complete'); await loaded();
+    assert.equal(await preview.locator('button[data-speed="true"]').isDisabled(), false);
+    await page.locator('#close-settings').click();
+    const before = await preview.locator('#highest-title').evaluate(e => e.getBoundingClientRect().top);
+    await preview.locator('button[data-speed="true"]').click();
+    assert.equal(await preview.locator('[data-level]').count(), 1);
+    assert.equal(await preview.locator('#highest-title').evaluate(e => e.getBoundingClientRect().top), before);
+    await page.locator('#open-settings').click();
+    await page.locator('#original').check();
+    assert.equal(await page.locator('#copy').isDisabled(), true);
+    await page.waitForFunction(() => document.querySelector('#preview').contentDocument.querySelector('#start-play').getBoundingClientRect().height === 36);
+    assert.equal(await preview.locator('#start-play').evaluate(e => e.getBoundingClientRect().height), 36, 'current production style is available for comparison');
+    await page.locator('#original').uncheck(); await loaded();
+    await page.setViewportSize({ width: 320, height: 568 });
+    await slide('levelHeight', 80);
+    await page.waitForFunction(() => document.querySelector('#fit').classList.contains('overflow'));
+    await page.locator('#reset').click(); await loaded();
+    assert.equal(await page.locator('#fit').evaluate(e => e.classList.contains('overflow')), false);
+    // クリップボード拒否でも設定を失わず共有できる。
+    await page.evaluate(() => Object.defineProperty(navigator, 'clipboard', { value: { writeText: async () => { throw Error('denied'); } }, configurable: true }));
+    await page.locator('#copy').click();
+    assert.equal(await page.locator('#copy-fallback').isVisible(), true);
+    const copy = await page.locator('#copy-fallback').inputValue();
+    assert.match(copy, /"upperHeight": 44/);
+    const sharedURL = copy.split('同じ設定で開く：\n')[1];
+    await page.evaluate(() => Object.defineProperty(navigator, 'clipboard', { value: { writeText: async text => { window.copiedSettings = text; } }, configurable: true }));
+    await page.locator('#copy').click();
+    assert.match(await page.evaluate(() => window.copiedSettings), /"buttonGap": 10/);
+    assert.equal(await page.locator('#copy-fallback').isVisible(), false);
+    const second = await context.newPage();
+    await second.goto(sharedURL);
+    await second.waitForFunction(() => document.querySelector('#fit').textContent.includes('px'));
+    assert.equal(await second.locator('#record').inputValue(), 'complete');
+    assert.equal(await second.locator('#buttonGap').inputValue(), '10');
+    await second.close();
+    const malformed = await context.newPage();
+    await malformed.goto('http://127.0.0.1:8000/menu-preview/#null');
+    await malformed.waitForFunction(() => document.querySelector('#fit').textContent.includes('px'));
+    assert.equal(await malformed.locator('#upperHeight').inputValue(), '44');
+    await malformed.close();
+    assert.equal(await page.evaluate(() => localStorage.getItem('koekit.progress.v1.doubutsu')), '["5"]');
+    assert.deepEqual(speechRequests, []);
+    assert.deepEqual(errors, []);
+    await page.locator('#close-settings').click();
+    await page.screenshot({ path: '.local-tools/menu-preview-320.png' });
+    console.log('PASS preview: live adjustments, shared settings, reload/link restore, overflow, comparison, clipboard fallback, no speech or game record changes');
+  } finally { await browser.close(); }
+})().catch(e => { console.error(e); process.exitCode = 1; });
