@@ -1,4 +1,4 @@
-import { normalizeOptions, createRun, startRun, rollRun, playMove, nextMatch, extendRun } from './run.js';
+import { normalizeOptions, createRun, startRun, rollRun, playMove, nextMatch, extendRun, requiredItem } from './run.js';
 import { analyzeMove, listLegalMoves } from './rules.js';
 import { SlotStore } from './storage.js';
 import { parseCommand, grammarFor } from './commands.js';
@@ -82,6 +82,8 @@ function render() {
   else if (run.phase === 'dice') { screen('dice'); startDice(); listen('dice'); }
   else if (run.phase === 'playing') {
     screen('game');
+    const required = requiredItem(run);
+    if (required && pending.item !== required) pending = emptyPending(required);
     const cpu = run.mode.opponent === 'cpu' && run.match.sideToMove === 2;
     renderGame(run, pending, cpu);
     if (cpu) startCPU(); else listen(pending.analysis?.needsDirection ? 'direction' : 'human');
@@ -149,7 +151,11 @@ function startCPU() {
     clearTimeout(timer);
     timer = setTimeout(() => {
       if (token !== generation || !run || modal || document.hidden) return;
-      commit(move?.cell ?? listLegalMoves(run.match)[0], move?.item || 'basic', move?.directionId ?? null);
+      const cell = move?.cell ?? listLegalMoves(run.match)[0];
+      const item = requiredItem(run) || move?.item || 'basic';
+      const analysis = analyzeMove(run.match, cell, item);
+      const direction = item === move?.item ? move?.directionId : null;
+      commit(cell, item, direction ?? (analysis.needsDirection ? analysis.directions[0]?.id : null));
     }, Math.max(0, CONFIG.timing.cpuThink - (performance.now() - started)));
   };
   try {
@@ -223,7 +229,7 @@ async function dispatch(command) {
     else if (modal === 'help' && type === 'quit') quit();
     return;
   }
-  if (type === 'help') { openDialog('help', 'あそびかた', 'あいてのいろを はさむと、じぶんのいろになるよ。\n「えい いち」で ばしょをえらび、マスをみて「オッケー」。タッチでも あそべるよ。\n\n6×6・8×8では、ばしょのまえに「きょうか」「さいきょう」をえらべるよ。\nきょうか：うえ・した・ひだり・みぎの あいてのいろも とれるよ。ななめは ふえないよ。\nさいきょう：じぶんのいろを とびこえて、いちばんたくさんとれる ひとつのむきに つかうよ。おなじかずなら ①②…をえらんで「オッケー」。\n「もどす」で えらびなおせるよ。\n\nおけるばしょが なければパス。ふたりとも おけなくなったら、おおくとったほうの かち！', [['とじる', closeDialog]]); return; }
+  if (type === 'help') { openDialog('help', 'あそびかた', 'あいてのいろを はさむと、じぶんのいろになるよ。\n「えい いち」で ばしょをえらび、マスをみて「オッケー」。タッチでも あそべるよ。\n\n6×6・8×8では、ばしょのまえに「きょうか」「さいきょう」をえらべるよ。\nきょうか：うえ・した・ひだり・みぎの あいてのいろも とれるよ。ななめは ふえないよ。\nさいきょう：じぶんのいろを とびこえて、いちばんたくさんとれる ひとつのむきに つかうよ。おなじかずなら ①②…をえらんで「オッケー」。\n＋は おくマス、↻は ひっくりかえるマス。\n「もどす」で えらびなおせるよ。\nまいかいほじゅう：のこり2かいが めやすになったら、きょうか→さいきょうを じどうでえらぶよ。パスでは へらないよ。\nもちこし：じぶんでえらぶまで つかわないよ。\n\nおけるばしょが なければパス。ふたりとも おけなくなったら、おおくとったほうの かち！', [['とじる', closeDialog]]); return; }
   if (type === 'quit') { quit(); return; }
   if (type === 'new' || type === 'resume') { await begin(type === 'resume'); return; }
   if (!run || busy) return;
@@ -236,8 +242,12 @@ async function dispatch(command) {
     } else if (type === 'start') { run = startRun(run, selected); save(); render(); }
   } else if (run.phase === 'dice' && type === 'stop') stopDice();
   else if (run.phase === 'playing' && !(run.mode.opponent === 'cpu' && run.match.sideToMove === 2)) {
-    if (type === 'undo') pending = emptyPending();
-    else if (type === 'item' && availableItems().includes(command.item)) pending = emptyPending(command.item);
+    const required = requiredItem(run);
+    if (type === 'undo') pending = emptyPending(required || 'basic');
+    else if (type === 'item' && availableItems().includes(command.item)) {
+      if (required && command.item !== required) return;
+      pending = emptyPending(command.item);
+    }
     else if (type === 'cell') pending = { ...emptyPending(pending.item), cell: command.cell, analysis: analyzeMove(run.match, command.cell, pending.item) };
     else if (type === 'invalidCell') {
       pending = emptyPending(pending.item); notify('マスのなかをえらんでね');

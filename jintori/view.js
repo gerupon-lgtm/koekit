@@ -1,6 +1,7 @@
 import { COLORS } from '../irodori/palette.js';
 import { colLabel } from '../irodori/board.js';
 import { countCells, listLegalMoves } from './rules.js';
+import { requiredItem } from './run.js';
 
 export const $ = id => document.getElementById(id);
 export const ITEM_NAMES = { basic: 'ふつう', enhanced: 'きょうか', strongest: 'さいきょう' };
@@ -96,12 +97,19 @@ export function renderGame(run, pending, blocked) {
     label(row + 1);
     for (let col = 0; col < state.size; col++) {
       const i = row * state.size + col, owner = state.cells[i];
+      const placing = Boolean(analysis?.legal && pending.cell === i);
+      const flipping = preview.has(i) || extras.has(i);
       const button = node('button', 'cell' + (!owner ? ' empty' : '') + (legal.has(i) ? ' legal' : '') +
-        (preview.has(i) ? ' preview' : '') + (extras.has(i) ? ' extra' : '') + (pending.cell === i ? ' selected' : ''));
+        (preview.has(i) ? ' preview' : '') + (extras.has(i) ? ' extra' : '') + (pending.cell === i ? ' selected' : '') +
+        (placing ? ' placing' : '') + (flipping ? ' flipping' : ''));
       button.dataset.cell = i; button.disabled = blocked;
-      button.setAttribute('aria-label', `${colLabel(col)}${row + 1} ${owner ? sideName(run, owner) : 'あき'}${preview.has(i) || extras.has(i) ? ' いろがかわるマス' : ''}`);
+      button.setAttribute('aria-label', `${colLabel(col)}${row + 1} ${owner ? sideName(run, owner) : 'あき'}${placing ? ' ここにおく' : flipping ? ' ひっくりかえるマス' : ''}`);
       const shownOwner = preview.has(i) || extras.has(i) || analysis?.legal && pending.cell === i ? side : owner;
       if (shownOwner) { paint(button, run.colorsBySide[shownOwner]); button.append(node('span', '', sideMark(run, shownOwner))); }
+      if (placing || flipping) {
+        const mark = node('span', 'preview-mark', placing ? '＋' : '↻');
+        mark.setAttribute('aria-hidden', 'true'); button.append(mark);
+      }
       if (candidateBadges.has(i)) button.append(node('span', 'choice-badge', candidateBadges.get(i)));
       board.append(button);
     }
@@ -117,10 +125,12 @@ export function renderGame(run, pending, blocked) {
   });
   const coord = pending.cell === null ? '' : `${colLabel(pending.cell % state.size)}${Math.floor(pending.cell / state.size) + 1}`;
   $('selection-status').textContent = blocked ? '' : analysis?.needsDirection && !pending.directionId ? '① ②… からえらんでね' :
-    pending.cell !== null && !analysis?.legal ? 'ここにはおけないよ' : `${ITEM_NAMES[pending.item]}${coord ? ` · ${coord}` : ' · ばしょをえらんでね'}`;
+    pending.cell !== null && !analysis?.legal ? 'ここにはおけないよ' : `${ITEM_NAMES[pending.item]}${coord ? ` · ＋${coord}におく · ↻${new Set([...preview, ...extras]).size}マスかえる` : ' · ばしょをえらんでね'}`;
+  const required = requiredItem(run);
+  if (required && !blocked) $('selection-status').textContent = $('selection-status').textContent.replace(ITEM_NAMES[required], `${ITEM_NAMES[required]}（じどう）`);
   for (const item of ['enhanced', 'strongest']) {
     const button = $(item); button.textContent = `${ITEM_NAMES[item]} ${run.inventoryBySide[side][item]}`;
-    button.disabled = blocked || state.size === 4 || !run.inventoryBySide[side][item];
+    button.disabled = blocked || state.size === 4 || !run.inventoryBySide[side][item] || Boolean(required && required !== item);
     button.setAttribute('aria-pressed', String(pending.item === item));
   }
   $('confirm-move').disabled = blocked || !analysis?.legal || analysis.needsDirection && !pending.directionId;

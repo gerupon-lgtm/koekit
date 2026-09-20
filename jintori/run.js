@@ -1,5 +1,5 @@
 import { CONFIG } from './config.js';
-import { createMatch, applyMove } from './rules.js';
+import { createMatch, applyMove, countCells, listLegalMoves } from './rules.js';
 
 export const RULES_VERSION = 1;
 const id = () => globalThis.crypto.randomUUID();
@@ -58,8 +58,17 @@ export function rollRun(run, value) {
   requireState(Number.isInteger(value) && value >= 1 && value <= 6, 'INVALID_DICE');
   return beginMatch({ ...run, initialDice: value }, run.mode.structure === 'streak' ? 4 : run.mode.size, value % 2 ? 1 : 2);
 }
+// 現手番から交互に置く場合の残り回数。パスでは在庫を減らさない。
+export function requiredItem(run) {
+  if (run?.phase !== 'playing' || run.mode.supplyPolicy !== 'refill' || run.match.size < 6) return null;
+  if (Math.ceil(countCells(run.match).empty / 2) > 2 || !listLegalMoves(run.match).length) return null;
+  const stock = run.inventoryBySide[run.match.sideToMove];
+  return stock.enhanced > 0 ? 'enhanced' : stock.strongest > 0 ? 'strongest' : null;
+}
 export function playMove(run, cell, item = 'basic', directionId = null) {
   requireState(run.phase === 'playing');
+  const required = requiredItem(run);
+  requireState(!required || item === required, 'ITEM_REQUIRED');
   const match = applyMove(run.match, cell, item, directionId);
   const next = { ...run, match: { ...match, moveNumber: run.match.moveNumber + 1 }, inventoryBySide: copy(match.inventoryBySide) };
   return match.phase === 'result' ? recordResult(next) : next;
