@@ -65,7 +65,8 @@ export const continuousMenuCSS = `
 
 /* 4作品の比較画像で承認された配置。短い画面は上記のコンパクト配置。 */
 @media(min-height:780px){
-.play-app #title {position:relative;display:block;height:100svh;min-height:100svh;padding:0 16px;}
+.play-app #title {position:relative;height:100svh;min-height:100svh;padding:0 16px;}
+.play-app #title.active {display:block;}
 .play-app #title .app-title {position:absolute;top:58px;left:50%;transform:translateX(-50%);width:min(380px,calc(100% - 32px));height:auto;margin:0;}
 .play-app #title .mode-picker,.play-app #title .mode-placeholder {position:absolute;top:176px;left:50%;transform:translateX(-50%);width:min(420px,calc(100% - 32px));height:44px;margin:0;}
 .play-app #title .level-picker {position:absolute;top:229px;left:50%;transform:translateX(-50%);width:min(420px,calc(100% - 32px));margin:0;}

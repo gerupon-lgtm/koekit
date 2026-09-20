@@ -1,0 +1,8 @@
+const {chromium}=require('../.local-tools/node_modules/playwright');const assert=require('node:assert/strict');
+(async()=>{const b=await chromium.launch({channel:'chrome'});try{for(const route of ['doubutsu/','kioku/','kioku/?mode=sequence']) for(const input of ['voice','touch']){const c=await b.newContext({viewport:{width:412,height:840},serviceWorkers:'block'});
+await c.route('**/src/speech/index.js',r=>r.fulfill({contentType:'application/javascript',body:`export const METHODS={VOSK:'vosk',WEB_SPEECH:'webspeech',WEB_SPEECH_LOCAL:'webspeech-local'};export function createSpeechInput(){const h={};window.say=s=>h.result?.(s,0);return {name:'vosk',on(k,f){h[k]=f},start(w){window.words=w},stop(){},dispose(){}}}`}));
+const p=await c.newPage();p.on("pageerror",e=>console.error("PAGE",e.message));console.log("checking",route,input);await p.goto((process.env.INTRO_BASE||'http://127.0.0.1:8000/')+route);await p.locator('#start-play').click();await p.locator('#level-intro[open]').waitFor();await p.waitForFunction(()=>window.words?.includes('オッケー'));if(input==='voice')await p.evaluate(()=>window.say('オッケー'));else await p.locator('#intro-go').click();
+assert.equal(await p.locator('#level-intro').evaluate(e=>e.open),false);assert.equal(await p.locator('#game').evaluate(e=>e.classList.contains('active')),true);
+console.log('after speech',await p.locator('#title').evaluate(e=>({active:e.classList.contains('active'),display:getComputedStyle(e).display})));
+assert.equal(await p.locator('#title').isVisible(),false,'intro confirmation must hide title and show game');
+console.log('PASS '+route+' '+input+' starts game without title');await c.close();}}finally{await b.close()}})().catch(e=>{console.error(e);process.exitCode=1});
