@@ -6,6 +6,7 @@ export const FIELDS = [
   { key: 'sectionGap', label: '上部・各段の間隔', min: 4, max: 16, value: 6 },
   { key: 'logoWidth', label: 'ロゴの幅（画面に収まる範囲）', min: 160, max: 290, value: 220 },
   { key: 'logoOffset', label: 'ロゴを下げる量', min: 0, max: 32, value: 4 },
+  { key: 'titleGap', label: '注釈と称号の間隔を追加', min: 0, max: 40, value: 0 },
 ];
 export const DEFAULTS = Object.fromEntries(FIELDS.map(f => [f.key, f.value]));
 export function normalize(input = {}) {
@@ -25,6 +26,7 @@ export function layoutCSS(input) {
 .play-app #title #level-select { height: auto; }
 .play-app #title .memory-level-list { flex: none; grid-template-rows: repeat(5, ${s.levelHeight}px); gap: ${s.buttonGap}px; max-height: none; }
 .play-app #title .unlock-hint { margin-top: 0; }
+.play-app #title #highest-title { margin-top: ${s.titleGap}px; }
 .play-app #title .title-footer { margin-top: auto; }
 `;
 }

@@ -14,6 +14,10 @@ URL：`https://koekit.sikumilab.com/menu-preview/`
 
 調整値はプレビュー専用localStorageキーとURLフラグメントに保持する。同じURLから設定を復元可能。コピーに設定値・画面寸法・実測値・共有URLを含む。数値によっては一画面を超えるため、実際のフッター位置を測って警告する。自動縮小で指定値をごまかさない。
 
+`titleGap` は注釈と称号の間隔への追加量（px）。元の `sectionGap` に加算する。旧共有URLで未指定の場合は0として既存の表示を維持。
+
+2026-09-20受領値：upperHeight=58、levelHeight=70、buttonGap=20、sectionGap=16、logoWidth=290、logoOffset=19（1920×911pxで調整）。称号を下げる依頼に対してtitleGap=12のプレビューを用意。追加前でも390×844pxでは約30px超過するため、本番には未反映。スマホの一画面に収まることとの整合確認が必要。
+
 ## 実装
 
 - `menu-preview/preview.js` は公開用の `doubutsu/index.html` / `kioku/index.html` を取得し、スクリプトを除いたメニューHTMLを同一サイズのiframeへ読み込む。
