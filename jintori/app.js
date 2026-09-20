@@ -10,6 +10,7 @@ import { setMicState } from '../src/ui/micstate.js';
 import * as sfx from './sound.js';
 import { CONFIG } from './config.js';
 
+let hintsEnabled = false;
 let options = normalizeOptions(), run = null, lease = null;
 let pending = emptyPending(), selected = [null, null], selectedSide = 0;
 let generation = 0, timer = null, worker = null, roulette = null, modal = null;
@@ -64,6 +65,7 @@ function showConflict() {
 function screen(id) {
   for (const el of document.querySelectorAll('.screen')) el.hidden = el.id !== id;
   $('home').hidden = Boolean(run); $('quit').hidden = !run;
+  $('hint-toggle').hidden = id !== 'game';
   awake.setActive(Boolean(run));
 }
 function render() {
@@ -84,7 +86,7 @@ function render() {
     const required = requiredItem(run);
     if (required && pending.item !== required) pending = emptyPending(required);
     const cpu = run.mode.opponent === 'cpu' && run.match.sideToMove === 2;
-    renderGame(run, pending, cpu);
+    renderGame(run, pending, cpu, hintsEnabled);
     if (cpu) startCPU(); else listen(pending.analysis?.needsDirection ? 'direction' : 'human');
   } else { screen('result'); renderResult(run); listen(run.phase === 'seriesResult' ? 'series' : 'result'); }
   if (focusKey) document.querySelector(`[data-${focusKey}="${focusValue}"]:not(:disabled)`)?.focus({ preventScroll: true });
@@ -104,6 +106,7 @@ async function begin(resume) {
   if (token !== generation) { await store.close(); starting = false; return; }
   if (resume && (loaded.error || !loaded.record.active)) { starting = false; await store.close(); render(); return; }
   run = resume ? loaded.record.active : createRun(options);
+  hintsEnabled = run.mode.difficultyId === 'easy';
   if (!resume && run.mode.structure === 'streak') run.bestStreak = loaded.record.bestStreak;
   selected = [null, null]; selectedSide = 0; pending = emptyPending();
   starting = false; save(); render();
@@ -172,7 +175,7 @@ function commit(cell, item, directionId) {
   try { run = playMove(run, cell, item, directionId); }
   catch { notify('ここにはおけないよ。ばしょをえらびなおしてね。'); pending = emptyPending(); render(); return; }
   pending = emptyPending(); save(); if (conflict) return;
-  busy = true; screen('game'); renderGame(run, pending, true);
+  busy = true; screen('game'); renderGame(run, pending, true, hintsEnabled);
   const passed = run.match.turnInfo.passedSides;
     if (passed.length) notify(passed.map(side => `${sideName(run, side)}\nおけるばしょがないのでパス`).join('\n'));
   const flipped = run.match.cells.filter((owner,index) => index !== cell && owner !== previousCells[index]).length;
@@ -228,7 +231,7 @@ async function dispatch(command) {
     else if (modal === 'help' && type === 'quit') quit();
     return;
   }
-  if (type === 'help') { openDialog('help', 'あそびかた', 'あいてのいろを はさむと、じぶんのいろになるよ。\n「えい いち」で ばしょをえらび、マスをみて「オッケー」。タッチでも あそべるよ。\n\n6×6・8×8では、ばしょのまえに「きょうか」「さいきょう」をえらべるよ。\nきょうか：うえ・した・ひだり・みぎの あいてのいろも とれるよ。ななめは ふえないよ。\nさいきょう：じぶんのいろを とびこえて、いちばんたくさんとれる ひとつのむきに つかうよ。おなじかずなら ①②…をえらんで「オッケー」。\n＋は おくマス、↻は ひっくりかえるマス。\n「もどす」で えらびなおせるよ。\nまいかいほじゅう：のこり2かいが めやすになったら、きょうか→さいきょうを じどうでえらぶよ。パスでは へらないよ。\nもちこし：じぶんでえらぶまで つかわないよ。\n\nおけるばしょが なければパス。ふたりとも おけなくなったら、おおくとったほうの かち！', [['とじる', closeDialog]]); return; }
+  if (type === 'help') { openDialog('help', 'あそびかた', 'あいてのいろを はさむと、じぶんのいろになるよ。\n「えい いち」で ばしょをえらび、マスをみて「オッケー」。タッチでも あそべるよ。\n\n6×6・8×8では、ばしょのまえに「きょうか」「さいきょう」をえらべるよ。\nきょうか：うえ・した・ひだり・みぎの あいてのいろも とれるよ。ななめは ふえないよ。\nさいきょう：じぶんのいろを とびこえて、いちばんたくさんとれる ひとつのむきに つかうよ。おなじかずなら ①②…をえらんで「オッケー」。\n＋は おくマス、↻は ひっくりかえるマス。\n「ヒント」で とれるかずの ひょうじを かえられるよ。きょうか・さいきょうも いっしょにかわるよ。\n「もどす」で えらびなおせるよ。\nまいかいほじゅう：のこり2かいが めやすになったら、きょうか→さいきょうを じどうでえらぶよ。パスでは へらないよ。\nもちこし：じぶんでえらぶまで つかわないよ。\n\nおけるばしょが なければパス。ふたりとも おけなくなったら、おおくとったほうの かち！', [['とじる', closeDialog]]); return; }
   if (type === 'quit') { quit(); return; }
   if (type === 'new' || type === 'resume') { await begin(type === 'resume'); return; }
   if (!run || busy) return;
@@ -266,6 +269,12 @@ async function dispatch(command) {
 document.addEventListener('click', event => {
   const button = event.target.closest('button'); if (!button || button.disabled || button.closest('dialog')) return;
   sfx.primeAudio();
+  if (button.id === 'hint-toggle' && run && !modal && !conflict && !document.hidden) {
+    hintsEnabled = !hintsEnabled;
+    // Refresh only the view: keep CPU timers, speech and the selected move intact.
+    renderGame(run, pending, $('board').hasAttribute('aria-busy'), hintsEnabled);
+    return;
+  }
   if (button.dataset.option && !run && !starting) {
     options = normalizeOptions({ ...options, [button.dataset.option]: button.dataset.value }); render(); return;
   }

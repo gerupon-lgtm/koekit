@@ -70,7 +70,9 @@ export function renderSetup(run, selected, selectedSide) {
   $('color-confirm').disabled = selected[selectedSide] === null;
   $('color-confirm').hidden = selectedSide === 1 || run.mode.opponent === 'cpu';
 }
-export function renderGame(run, pending, blocked) {
+export function renderGame(run, pending, blocked, hintsEnabled = run.mode.difficultyId === 'easy') {
+  $('hint-toggle').textContent = `ヒント ${hintsEnabled ? 'ON' : 'OFF'}`;
+  $('hint-toggle').setAttribute('aria-pressed', String(hintsEnabled));
   const state = run.match, side = state.sideToMove;
   renderScores($('scores'), run, countCells(state), side);
   $('round-info').textContent = run.series
@@ -118,14 +120,14 @@ export function renderGame(run, pending, blocked) {
   label(''); for (let c = 0; c < state.size; c++) label(colLabel(c)); label('');
   $('direction-options').replaceChildren();
   if (analysis?.needsDirection) analysis.directions.forEach((direction, index) => {
-    const button = node('button', '', `${circled[index]} ${arrows[direction.id]} ${direction.total}マス`);
+    const button = node('button', '', `${circled[index]} ${arrows[direction.id]} ${hintsEnabled ? `${direction.total}マス` : ''}`);
     button.dataset.direction = index + 1;
     button.setAttribute('aria-pressed', String(pending.directionId === direction.id));
     button.disabled = blocked; $('direction-options').append(button);
   });
   const coord = pending.cell === null ? '' : `${colLabel(pending.cell % state.size)}${Math.floor(pending.cell / state.size) + 1}`;
   $('selection-status').textContent = blocked ? '' : analysis?.needsDirection && !pending.directionId ? '① ②… からえらんでね' :
-    pending.cell !== null && !analysis?.legal ? 'ここにはおけないよ' : `${ITEM_NAMES[pending.item]}${coord ? ` · ＋${coord}におく · ↻${new Set([...preview, ...extras]).size}マスかえる` : ' · ばしょをえらんでね'}`;
+    pending.cell !== null && !analysis?.legal ? 'ここにはおけないよ' : `${ITEM_NAMES[pending.item]}${coord ? ` · ＋${coord}におく${hintsEnabled ? ` · ↻${new Set([...preview, ...extras]).size}マスかえる` : ''}` : ' · ばしょをえらんでね'}`;
   const required = requiredItem(run);
   if (required && !blocked) $('selection-status').textContent = $('selection-status').textContent.replace(ITEM_NAMES[required], `${ITEM_NAMES[required]}（じどう）`);
   for (const item of ['enhanced', 'strongest']) {

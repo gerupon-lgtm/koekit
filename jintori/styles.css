@@ -67,3 +67,7 @@ button,a{touch-action:manipulation}button{font:inherit;color:inherit;cursor:poin
   .board {width:min(100%,430px,calc(100svh - 346px));}
   .board:has(~ .direction-options:not(:empty)) {width:min(100%,430px,calc(100svh - 393px));}
 }
+
+.hint-toggle{min-height:44px;padding:6px 10px;border:1px solid var(--line);border-radius:12px;background:#eee7dd;color:var(--ink);font:inherit;font-size:13px;font-weight:700;white-space:nowrap}
+.hint-toggle[aria-pressed=true]{background:var(--green);border-color:#8fa97d}
+.hint-toggle:focus-visible{outline:3px solid #78649b;outline-offset:2px}
