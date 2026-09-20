@@ -62,4 +62,16 @@ export const continuousMenuCSS = `
 .play-app #title #level-select {gap:6px;}
 .play-app #title .memory-level-list {gap:7px;}
 }
+
+/* 4作品の比較画像で承認された配置。短い画面は上記のコンパクト配置。 */
+@media(min-height:780px){
+.play-app #title {position:relative;display:block;height:100svh;min-height:100svh;padding:0 16px;}
+.play-app #title .app-title {position:absolute;top:58px;left:50%;transform:translateX(-50%);width:min(380px,calc(100% - 32px));height:auto;margin:0;}
+.play-app #title .mode-picker,.play-app #title .mode-placeholder {position:absolute;top:176px;left:50%;transform:translateX(-50%);width:min(420px,calc(100% - 32px));height:44px;margin:0;}
+.play-app #title .level-picker {position:absolute;top:229px;left:50%;transform:translateX(-50%);width:min(420px,calc(100% - 32px));margin:0;}
+.play-app #title #level-select {gap:8px;}
+.play-app #title .memory-level-list {grid-template-rows:repeat(7,clamp(44px,calc((100svh - 476px) / 7),52px));gap:12px;}
+.play-app #title #highest-title {position:absolute;bottom:64px;left:50%;transform:translateX(-50%);width:min(420px,calc(100% - 32px));height:58px;min-height:58px;margin:0;}
+.play-app #title .title-footer {position:absolute;bottom:max(8px,env(safe-area-inset-bottom));left:0;width:100%;margin:0;}
+}
 `;

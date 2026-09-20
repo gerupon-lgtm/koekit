@@ -262,3 +262,24 @@ button:focus-visible, a:focus-visible { outline: 3px solid #8a5a3c; outline-offs
 .ir-heart-practice span { display:grid; gap:6px; }
 .ir-heart-practice strong { font-size:20px; }
 .ir-heart-practice small,.ir-heart-practice span span { font-size:13px; line-height:1.5; }
+
+/* 2026-09-20承認：ロゴ上端58px、説明176px、メニュー229px、フッター下8px。 */
+#app:has([data-screen="mode"]:not([hidden])) { padding:0 16px; }
+[data-screen="mode"] {position:relative;display:flex;flex-direction:column;min-height:100svh;padding:58px 0 max(8px,env(safe-area-inset-bottom));}
+[data-screen="mode"] .ir-hd {position:absolute;top:8px;left:0;right:0;}
+[data-screen="mode"] .ir-logo {width:min(380px,100%);height:93px;flex-shrink:0;margin:0 auto;line-height:1;}
+[data-screen="mode"] .ir-logo img {display:block;width:100%;height:100%;object-fit:contain;object-position:top;}
+[data-screen="mode"] .ir-intro {margin:25px 0 29px;text-align:center;line-height:24px;}
+[data-screen="mode"] .ir-menu {width:min(420px,100%);margin:0 auto 24px;gap:12px;}
+[data-screen="mode"] .ir-big {height:80px;min-height:80px;padding:12px 18px;}
+[data-screen="mode"] .ir-foot {margin:auto 0 0;font-size:10px;line-height:14px;}
+@media(max-height:779px){
+[data-screen="mode"] .ir-logo {height:74px;width:min(300px,100%);}
+[data-screen="mode"] .ir-intro {margin:10px 0 16px;}
+[data-screen="mode"] .ir-menu {gap:8px;margin-bottom:16px;}
+[data-screen="mode"] .ir-big {height:64px;min-height:64px;padding:8px 12px;}
+}
+@media(max-height:620px){
+[data-screen="mode"] .ir-logo {height:56px;width:228px;}
+[data-screen="mode"] .ir-intro {margin:8px 0 12px;}
+}
