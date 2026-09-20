@@ -88,3 +88,39 @@ export function buildGroupedLevelSelect(wrapEl, levels, onPick, progress) {
   wrapEl.append(modes, prompt, list, hint);
   render();
 }
+
+// 承認済みの入口: 通常の連続開始、通常の個別レベル、スピードの連続開始。
+export function buildContinuousLevelSelect(wrapEl, levels, onPick, progress) {
+  const speedLevels = levels.filter(l => l.speed === true || l.id === 'extra');
+  const normalLevels = levels.filter(l => !speedLevels.includes(l));
+  const names = { '1': 'ひだり・みぎ', '2': 'うえ・した', '3': 'まんなか', '4': 'ななめ', '5': '9つのばしょ' };
+  const list = document.createElement('div');
+  list.className = 'memory-level-list';
+  const make = (text, id, className = '') => {
+    const button = document.createElement('button');
+    button.type = 'button'; button.className = `lv-btn ${className}`.trim();
+    button.textContent = text;
+    button.addEventListener('click', () => onPick(id));
+    list.append(button);
+    return button;
+  };
+  const start = make('▶ はじめから あそぶ', progress.game === 'doubutsu' ? '0' : '1', 'start-entry');
+  start.id = 'start-play';
+  for (const level of normalLevels) {
+    const label = level.steps ? `${level.steps}て` : names[level.id];
+    const button = make(label, level.id);
+    button.dataset.level = level.id;
+    button.setAttribute('aria-label', label + (progress.completed(level.id) ? ' クリアずみ' : ''));
+    if (progress.completed(level.id)) {
+      button.classList.add('completed');
+      const mark = document.createElement('span'); mark.className = 'memory-clear-mark';
+      mark.textContent = '✓'; mark.setAttribute('aria-hidden', 'true'); button.append(mark);
+    }
+  }
+  const speed = make(progress.unlocked() ? '▶ スピード' : '🔒 スピード', speedLevels[0].id, 'speed-entry');
+  speed.id = 'speed-play'; speed.disabled = !progress.unlocked();
+  speed.setAttribute('aria-describedby', 'memory-unlock-hint');
+  const hint = document.createElement('p'); hint.className = 'unlock-hint'; hint.id = 'memory-unlock-hint';
+  hint.textContent = progress.unlocked() ? 'スピードにも チャレンジできるよ' : '通常を ぜんぶクリアで スピードが ひらく';
+  wrapEl.replaceChildren(list, hint);
+}

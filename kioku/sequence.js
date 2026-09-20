@@ -12,7 +12,7 @@ import { openLevelIntro, closeLevelIntro } from '../src/ui/levelintro.js';
 import { LevelNavigation } from '../src/ui/levelnavigation.js';
 import { ScreenAwake } from '../src/ui/screenawake.js';
 import { renderCertificate } from '../src/ui/certificate.js';
-import { buildGroupedLevelSelect } from '../src/ui/levelselect.js';
+import { buildContinuousLevelSelect } from '../src/ui/levelselect.js';
 import { installMenuLayout } from '../src/ui/menu-fit.js';
 import { renderHighest, renderAward, medalMarkup } from '../src/ui/achievement.js';
 import { setMicState } from '../src/ui/micstate.js';
@@ -42,7 +42,7 @@ function startListening(keys) {
 }
 function stopListening() { adapter?.stop(); if (!micDenied) mic('idle'); }
 function refresh() {
-  buildGroupedLevelSelect($('#level-select'), levels, startLevel, progress);
+  buildContinuousLevelSelect($('#level-select'), levels, startLevel, progress);
   renderHighest($('#highest-title'), progress);
 }
 function startLevel(id) {

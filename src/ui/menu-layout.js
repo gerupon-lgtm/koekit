@@ -1,6 +1,6 @@
 // 実画面で確認した寸法ルール。本番とプレビューで同じCSSを使用する。
 export const FIELDS = [
-  { key: 'upperHeight', label: 'れんしゅう・モード切り替えの高さ', min: 36, max: 64, value: 44 },
+  { key: 'upperHeight', label: '場所／順番の切り替えの高さ', min: 36, max: 64, value: 44 },
   { key: 'levelHeight', label: '選択ボタンの高さ', min: 40, max: 80, value: 44 },
   { key: 'buttonGap', label: '選択ボタンの間隔', min: 4, max: 20, value: 10 },
   { key: 'sectionGap', label: '上部・各段の間隔', min: 4, max: 16, value: 6 },
@@ -30,3 +30,36 @@ export function layoutCSS(input) {
 .play-app #title .title-footer { margin-top: auto; }
 `;
 }
+
+// 2026-09-20 承認済み7ボタン配置。実画面の比較画像と同じ寸法。
+export const continuousMenuCSS = `
+.play-app #title {--menu-gap:12px; --menu-tab-height:48px; gap:12px;}
+.play-app #title .app-title {width:min(290px,calc(100% - 96px));height:auto;aspect-ratio:718/196;margin:19px 0 0;}
+.play-app #title .wordmark {height:auto;}
+.play-app #title .level-picker {flex:0 0 auto;}
+.play-app #title #level-select {height:auto;gap:12px;}
+.play-app #title .memory-level-list {flex:none;grid-template-rows:repeat(7,56px);gap:16px;max-height:none;}
+.play-app #title .unlock-hint {margin:0;font-size:13px;}
+.play-app #title #highest-title {margin-top:12px;}
+.play-app #title .title-footer {margin-top:auto;}
+.play-app #level-select .start-entry {background:#e7ddef;color:#3d2f4a;}
+.play-app #level-select .speed-entry {background:#e7ddef;color:#3d2f4a;}
+.play-app #level-select .speed-entry:disabled {background:#e9e5df;color:#79736c;opacity:1;}
+.mode-placeholder {height:48px;flex-shrink:0;}
+@media(max-height:810px){
+.play-app #title {gap:8px;--menu-tab-height:44px;}
+.play-app #title .app-title {margin-top:8px;}
+.play-app #title #level-select {gap:8px;}
+.play-app #title .memory-level-list {grid-template-rows:repeat(7,44px);gap:10px;}
+.mode-placeholder {height:44px;}
+.play-app #title #highest-title {margin-top:12px;}
+}
+
+.play-app #title #level-select #start-play {width:100%;height:100%;font-size:24px;border-radius:20px;padding:2px 12px;background:#e7ddef;color:#3d2f4a;}
+@media(max-height:620px){
+.play-app #title {gap:2px;}
+.play-app #title .app-title {margin-top:0;}
+.play-app #title #level-select {gap:6px;}
+.play-app #title .memory-level-list {gap:7px;}
+}
+`;

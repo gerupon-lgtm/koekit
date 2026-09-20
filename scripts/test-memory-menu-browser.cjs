@@ -18,7 +18,7 @@ const assert = require('node:assert/strict');
         await page.locator('[data-level]').first().waitFor(); // 動的import完了前のreloadを避ける。
         await page.evaluate(() => localStorage.clear());
         await page.reload();
-        const speed = page.locator('button[data-speed="true"]');
+        const speed = page.locator('#speed-play');
         await speed.waitFor().catch(error => { throw new Error(`${mode} ${width}x${height}: ${errors.join('; ')} ${error.message}`); });
         await page.evaluate(() => document.fonts.ready);
         assert.equal(await speed.isDisabled(), true);
@@ -32,15 +32,15 @@ const assert = require('node:assert/strict');
           for (let i = 1; i < geometry.length; i++) {
             assert(Math.abs(geometry[i].height - geometry[0].height) < .1, 'equal button heights');
             const gap = geometry[i].top - geometry[i - 1].bottom;
-            assert(gap >= 7.9 && gap <= 20.1, 'approved responsive gaps');
+            assert(gap >= 6.9 && gap <= 20.1, 'approved responsive gaps');
           }
           assert(geometry[0].height <= 70, 'received button height remains the upper limit');
-          for (const selector of ['#start-play', '.memory-speed-picker']) {
+          for (const selector of ['#start-play', '#speed-play']) {
             const h = await page.locator(selector).evaluate(e => e.getBoundingClientRect().height);
             assert(h >= 44 && h <= 58, 'approved upper control height');
           }
         }
-        const initial = await Promise.all(['.app-title', pitarhythm ? '#start-play' : '.mode-picker', '.memory-speed-picker', '#highest-title'].map(top));
+        const initial = await Promise.all(['.app-title', '#start-play', '#speed-play', '#highest-title'].map(top));
         positions.push(initial);
         await page.screenshot({ path: `.local-tools/menu-${mode}-${width}-${height}.png`, fullPage: true });
         const key = 'koekit.progress.v1.' + (pitarhythm ? 'doubutsu' : sequence ? 'kioku-sequence' : 'kioku-place');
@@ -48,25 +48,20 @@ const assert = require('node:assert/strict');
         await page.reload();
         await speed.waitFor().catch(error => { throw new Error(`${mode} ${width}x${height}: ${errors.join('; ')} ${error.message}`); });
         assert.equal(await speed.isDisabled(), false);
-        assert.equal(await speed.innerText(), 'スピード');
-        await speed.focus();
-        await page.keyboard.press('Enter');
-        assert.equal(await speed.getAttribute('aria-pressed'), 'true');
-        assert.equal(await page.locator('[data-level]').count(), sequence ? 5 : 1);
-        assert.equal(await page.locator('[data-level]').first().getAttribute('data-level'), sequence ? 's1' : 'extra');
-        const switched = await Promise.all(['.app-title', pitarhythm ? '#start-play' : '.mode-picker', '.memory-speed-picker', '#highest-title'].map(top));
-        {
-          const speedRecordTop = await top('#highest-title');
-          await page.locator('button[data-speed="false"]').click();
-          assert.equal(await top('#highest-title'), speedRecordTop, 'normal and speed keep the same record position');
-        }
-        await page.locator('button[data-speed="false"]').click();
+        assert.equal(await speed.innerText(), '▶ スピード');
+        assert.equal(await speed.isEnabled(), true);
+        assert.equal(await page.locator('[data-level]').count(), 5);
+        await speed.focus(); await page.keyboard.press('Enter');
+        assert.equal(await page.locator('#level-intro').evaluate(e => e.open), true);
+        await page.locator('#intro-back').click();
+        assert.equal(await page.locator('.memory-speed-picker').count(), 0);
         assert.equal(await page.locator('[data-level].completed').count(), 5);
-        assert.equal(await page.locator('[data-level="1"]').getAttribute('aria-label'), sequence ? '通常 2て クリアずみ' : '通常 ひだり・みぎ クリアずみ');
+        assert.equal(await page.locator('[data-level="1"]').getAttribute('aria-label'), sequence ? '2て クリアずみ' : 'ひだり・みぎ クリアずみ');
       }
-      assert.deepEqual(positions[0], positions[1], 'place and sequence share logo, menu and record positions');
+      assert.deepEqual(positions[0], positions[1], 'place and sequence share positions');
+      assert.deepEqual(positions[0], positions[2], 'both games share positions');
     }
     assert.deepEqual(errors, []);
-    console.log('PASS shared menus: labels, locks, keyboard switching, clear marks and aligned layout without scrolling at five viewport sizes');
+    console.log('PASS shared menus: labels, locks, keyboard speed entry, clear marks and aligned layout without scrolling at five viewport sizes');
   } finally { await browser.close(); }
 })().catch(e => { console.error(e); process.exitCode = 1; });

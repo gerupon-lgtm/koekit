@@ -1,10 +1,9 @@
-import { buildGroupedLevelSelect } from '../src/ui/levelselect.js';
+import { buildContinuousLevelSelect } from '../src/ui/levelselect.js';
 import { renderHighest } from '../src/ui/achievement.js';
 import { LEVELS } from '../src/game/levels.js';
 import { sequenceLevels } from '../src/game/sequence.js';
 import { Progress } from '../src/game/progress.js';
-import { layoutCSS } from './layout.js';
-import { fitProposal, RECEIVED } from './fit-proposal.js';
+import { layoutCSS, continuousMenuCSS } from '../src/ui/menu-layout.js';
 
 const mode = document.body.dataset.previewMode;
 const origin = new URL(document.baseURI).origin;
@@ -16,10 +15,10 @@ let config = null, effective = null;
 function layout() {
   if (!config) return;
   const hint = document.querySelector('.unlock-hint');
-  if (hint && record !== 'complete') hint.textContent = '🔒 通常を ぜんぶクリアで スピードが ひらく';
-  style.textContent = config.original ? '' : layoutCSS(config.settings);
-  effective = config.proposal && !config.original ? fitProposal(style, config.settings) : null;
-  if (config.original) effective = fitProposal(style, RECEIVED);
+  if (hint && record !== 'complete') hint.textContent = '通常を ぜんぶクリアで スピードが ひらく';
+  style.textContent = continuousMenuCSS;
+  if (!config.original && !config.proposal) style.textContent += layoutCSS(config.settings).replace('repeat(5,', 'repeat(7,');
+  effective = null;
 }
 const send = payload => parent.postMessage(payload, origin);
 function measure() {
@@ -45,11 +44,11 @@ function renderRecord(value) {
   const ids = value === 'complete' ? ['1','2','3','4','5', ...speedIds] : value === 'partial' ? ['1','2'] : [];
   // 実際のプレイ記録は読み書きしない。
   const progress = new Progress(mode, { speedIds, storage: { getItem: () => JSON.stringify(ids) } });
-  buildGroupedLevelSelect(document.querySelector('#level-select'), levels, () => {
+  buildContinuousLevelSelect(document.querySelector('#level-select'), levels, () => {
     send({ type: 'menu-note', text: 'ここは表示確認用です。ゲームは開始しません。' });
   }, progress);
   renderHighest(document.querySelector('#highest-title'), progress);
-  if (config?.proposal && !progress.unlocked()) document.querySelector('.unlock-hint').textContent = '🔒 通常を ぜんぶクリアで スピードが ひらく';
+  if (config?.proposal && !progress.unlocked()) document.querySelector('.unlock-hint').textContent = '通常を ぜんぶクリアで スピードが ひらく';
 }
 document.querySelector(mode === 'kioku-sequence' ? '#mode-sequence' : '#mode-place')?.setAttribute('aria-current', 'page');
 document.addEventListener('click', event => {

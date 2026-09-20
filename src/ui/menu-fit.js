@@ -1,4 +1,4 @@
-import { normalize, layoutCSS } from './menu-layout.js';
+import { normalize, layoutCSS, continuousMenuCSS } from './menu-layout.js';
 
 // 2026-09-20 実画面で承認済み。受領値を上限として一画面へ収める。
 export const RECEIVED = { upperHeight: 58, levelHeight: 70, buttonGap: 20, sectionGap: 16, logoWidth: 290, logoOffset: 19, titleGap: 12 };
@@ -18,25 +18,8 @@ export function fitProposal(style, input) {
 }
 
 export function installMenuLayout() {
-  const title = document.querySelector('#title');
   const style = document.createElement('style');
   style.id = 'approved-menu-layout';
+  style.textContent = continuousMenuCSS;
   document.head.append(style);
-  let queued = false;
-  const update = () => {
-    if (queued) return;
-    queued = true;
-    requestAnimationFrame(() => {
-      queued = false;
-      if (title.classList.contains('active')) fitProposal(style, RECEIVED);
-    });
-  };
-  const observer = new MutationObserver(update);
-  observer.observe(title, { attributes: true, attributeFilter: ['class'] });
-  observer.observe(title.querySelector('#level-select'), { childList: true, subtree: true });
-  observer.observe(title.querySelector('#highest-title'), { childList: true, subtree: true });
-  new ResizeObserver(update).observe(title);
-  addEventListener('resize', update);
-  document.fonts.ready.then(update);
-  fitProposal(style, RECEIVED);
 }

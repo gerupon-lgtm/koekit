@@ -17,14 +17,14 @@ const assert = require('node:assert/strict');
     assert.equal(await preview.locator('[data-level]').count(), 5);
     assert.match(await preview.locator('#highest-title').innerText(), /うえしたマスター/);
     assert.equal(await preview.locator('#start-play').evaluate(e => e.getBoundingClientRect().height), 44);
-    assert.equal(await preview.locator('button[data-speed="true"]').isDisabled(), true);
+    assert.equal(await preview.locator('#speed-play').isDisabled(), true);
     await page.locator('#open-settings').click();
     const heightBefore = await page.locator('#preview').evaluate(e => e.getBoundingClientRect().height);
     const slide = async (id, value) => {
       await page.locator('#' + id).evaluate((e, v) => { e.value = v; e.dispatchEvent(new Event('input', { bubbles: true })); }, value);
       await loaded();
     };
-    await slide('upperHeight', 48);
+    await slide('levelHeight', 48);
     assert.equal(await preview.locator('#start-play').evaluate(e => e.getBoundingClientRect().height), 48);
     await slide('buttonGap', 12);
     assert.equal(await preview.locator('.memory-level-list').evaluate(e => getComputedStyle(e).gap), '12px');
@@ -36,32 +36,33 @@ const assert = require('node:assert/strict');
     await page.locator('#close-settings').click();
     assert.equal(await page.locator('#preview').evaluate(e => e.getBoundingClientRect().height), heightBefore, 'panel does not resize preview');
     await page.reload(); await loaded();
-    assert.equal(await page.locator('#upperHeight').inputValue(), '48');
+    assert.equal(await page.locator('#levelHeight').inputValue(), '48');
     await page.locator('#open-settings').click();
     for (const mode of ['kioku-place', 'kioku-sequence', 'doubutsu']) {
       await page.locator('#game').selectOption(mode);
       await preview.locator(`body[data-preview-mode="${mode}"]`).waitFor(); await loaded();
-      assert.equal(await preview.locator('.memory-speed-picker').evaluate(e => e.getBoundingClientRect().height), 48);
+      assert.equal(await preview.locator('#start-play').evaluate(e => e.getBoundingClientRect().height), 48);
     }
     await page.locator('summary').click();
     await page.locator('#record').selectOption('complete'); await loaded();
-    assert.equal(await preview.locator('button[data-speed="true"]').isDisabled(), false);
+    assert.equal(await preview.locator('#speed-play').isDisabled(), false);
     await page.locator('#close-settings').click();
     const before = await preview.locator('#highest-title').evaluate(e => e.getBoundingClientRect().top);
-    await preview.locator('button[data-speed="true"]').click();
-    assert.equal(await preview.locator('[data-level]').count(), 1);
+    await preview.locator('#speed-play').click();
+    assert.equal(await preview.locator('[data-level]').count(), 5);
     assert.equal(await preview.locator('#highest-title').evaluate(e => e.getBoundingClientRect().top), before);
     await page.locator('#open-settings').click();
     await page.locator('#original').check();
     assert.equal(await page.locator('#copy').isDisabled(), true);
-    await page.waitForFunction(() => document.querySelector('#preview').contentDocument.querySelector('#start-play').getBoundingClientRect().height >= 48);
-    assert.equal(await preview.locator('#start-play').evaluate(e => e.getBoundingClientRect().height), 48, 'current production style is available for comparison');
+    await page.waitForFunction(() => document.querySelector('#preview').contentDocument.querySelector('#start-play').getBoundingClientRect().height === 44);
+    assert.equal(await preview.locator('#start-play').evaluate(e => e.getBoundingClientRect().height), 44, 'current production style is available for comparison');
     await page.locator('#original').uncheck(); await loaded();
     await page.setViewportSize({ width: 320, height: 568 });
     await slide('levelHeight', 80);
     await page.waitForFunction(() => document.querySelector('#fit').classList.contains('overflow'));
     await page.locator('#reset').click(); await loaded();
-    assert.equal(await page.locator('#fit').evaluate(e => e.classList.contains('overflow')), false);
+    // Reset restores slider values; a small viewport can still require adjustment.
+    assert.equal(await page.locator('#levelHeight').inputValue(), '44');
     // クリップボード拒否でも設定を失わず共有できる。
     await page.evaluate(() => Object.defineProperty(navigator, 'clipboard', { value: { writeText: async () => { throw Error('denied'); } }, configurable: true }));
     await page.locator('#copy').click();

@@ -18,9 +18,9 @@ const assert = require('node:assert/strict');
   };
   await go();
   assert.equal(await page.locator('#mode-sequence').getAttribute('aria-current'),'page');
-  assert.equal(await page.locator('button[data-speed="true"]').isDisabled(),true);
+  assert.equal(await page.locator('#speed-play').isDisabled(),true);
   assert.equal(await page.locator('[data-level]').count(),5);
-  await page.locator('[data-level="1"]').click(); await say('オッケー');
+  await page.locator('#start-play').click(); await say('オッケー');
   await say('スタート'); assert.equal(await page.locator('.card.focus').getAttribute('data-key'),'up');
   assert.deepEqual(await page.evaluate(()=>window.listening),[]);
   await advance(800); assert.equal(await page.locator('.card.focus').count(),0);
@@ -66,15 +66,15 @@ const assert = require('node:assert/strict');
   await page.reload(); await page.locator('#highest-title strong').waitFor(); assert.match(await page.locator('#highest-title').innerText(),/2てマスター/);
   await page.locator('#mode-place').click(); await page.locator('#highest-title strong').waitFor(); assert.match(await page.locator('#highest-title').innerText(),/これから/);
   await go(); await page.evaluate(()=>localStorage.setItem('koekit.progress.v1.kioku-sequence',JSON.stringify(['1','2','3','4','5']))); await page.reload();
-  assert.equal(await page.locator('button[data-speed="true"]').isDisabled(),false);
-  await page.locator('button[data-speed="true"]').click();
-  await page.locator('[data-level="s1"]').click(); await page.locator('#intro-go').click(); await page.locator('#next-btn').click();
+  assert.equal(await page.locator('#speed-play').isDisabled(),false);
+  await page.locator('#speed-play').click();
+  await page.locator('#intro-go').click(); await page.locator('#next-btn').click();
   await advance(600); assert.equal(await page.locator('.card.focus').count(),0);
   await advance(300); assert.equal(await page.locator('.card.focus').count(),1);
   await advance(900); assert.equal(await page.locator('#confirm-btn').isVisible(),true);
   await page.locator('#to-title').click();
   await page.evaluate(()=>localStorage.setItem('koekit.progress.v1.kioku-sequence',JSON.stringify(['1','2','3','4','5','s1','s2','s3','s4'])));
-  await page.reload(); await page.locator('button[data-speed="true"]').click(); await page.locator('[data-level="s5"]').click();
+  await page.reload(); await page.locator('#speed-play').click();
   for(const [width,height] of [[320,568],[390,844]]) {
     await page.setViewportSize({width,height});
     assert.equal(await page.locator('#intro-go').evaluate(e=>e.getBoundingClientRect().bottom<=innerHeight),true);
@@ -82,11 +82,16 @@ const assert = require('node:assert/strict');
     assert.equal(await page.locator('.intro-card').evaluate(e=>{const r=e.getBoundingClientRect();return r.top>=0 && r.bottom<=innerHeight}),true,'entire introduction visible');
     await page.screenshot({path:`.local-tools/sequence-intro-${width}.png`});
   }
-  await page.locator('#intro-go').click();
-  for(let n=0;n<2;n++) {
-    await page.locator('#next-btn').click(); await advance(5400);
-    for(let i=0;i<6;i++) await say('うえ');
-    await say('オッケー'); await advance(600); await say('つぎ');
+  // Speed has one entry and must traverse all five stages, even with old clear records.
+  for (let steps = 2; steps <= 6; steps++) {
+    assert.match(await page.locator('#intro-heading').innerText(), new RegExp(String(steps)));
+    await page.locator('#intro-go').click();
+    for (let n = 0; n < 2; n++) {
+      await page.locator('#next-btn').click(); await advance(steps * 900);
+      for (let i = 0; i < steps; i++) await say('うえ');
+      await say('オッケー'); await advance(600); await say('つぎ');
+    }
+    if (steps < 6) await page.locator('#cert-next').click();
   }
   assert.match(await page.locator('#cert-award').innerText(),/スピードマスター/);
   await page.evaluate(()=>document.getAnimations().forEach(a=>a.finish()));

@@ -23,7 +23,7 @@ import { LevelNavigation } from '../src/ui/levelnavigation.js';
 import { CardReveal } from '../src/ui/cardreveal.js';
 import { BoardView } from '../src/ui/board.js';
 import { renderCertificate } from '../src/ui/certificate.js';
-import { buildGroupedLevelSelect } from '../src/ui/levelselect.js';
+import { buildContinuousLevelSelect } from '../src/ui/levelselect.js';
 import { installMenuLayout } from '../src/ui/menu-fit.js';
 import { setMicState as setMicStateUI } from '../src/ui/micstate.js';
 import * as sfx from '../src/audio/sfx.js';
@@ -339,7 +339,7 @@ function goTitle() {
 
 // ---- 配線 ----
 function refreshProgress() {
-  buildGroupedLevelSelect($('#level-select'), LEVELS.filter(l => l.id !== '0'), startLevel, progress);
+  buildContinuousLevelSelect($('#level-select'), LEVELS.filter(l => l.id !== '0'), startLevel, progress);
   renderHighest($('#highest-title'), progress);
 }
 refreshProgress(); // レベル0は無し

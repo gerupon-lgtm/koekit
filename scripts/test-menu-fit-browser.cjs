@@ -28,10 +28,10 @@ const assert = require('node:assert/strict');
             gap: parseFloat(getComputedStyle(document.querySelector('#highest-title')).marginTop) };
         });
         assert.equal(geometry.scroll, height);
-        assert(geometry.footer <= height - 7);
+        assert(geometry.footer <= height - 7, JSON.stringify({mode,width,height,geometry}));
         assert.equal(geometry.gap, 12);
         assert(geometry.buttons.every(h => h >= 44 && Math.abs(h - geometry.buttons[0]) < .1));
-        if (height === 844) assert.equal(geometry.buttons[0], 60);
+        if (height === 844) assert.equal(geometry.buttons[0], 56);
         positions.push(geometry);
       }
       assert.deepEqual(positions[0], positions[1]);

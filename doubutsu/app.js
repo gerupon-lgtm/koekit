@@ -28,7 +28,7 @@ import { LevelNavigation } from '../src/ui/levelnavigation.js';
 import { CardReveal } from '../src/ui/cardreveal.js';
 import { BoardView } from '../src/ui/board.js';
 import { renderCertificate } from '../src/ui/certificate.js';
-import { buildGroupedLevelSelect as buildLevelSelectUI } from '../src/ui/levelselect.js';
+import { buildContinuousLevelSelect as buildLevelSelectUI } from '../src/ui/levelselect.js';
 import { installMenuLayout } from '../src/ui/menu-fit.js';
 import { setMicState as setMicStateUI } from '../src/ui/micstate.js';
 
@@ -459,11 +459,9 @@ function flash(sel, text) { const b = $(sel), old = b.textContent; b.textContent
 function refreshProgress() {
   buildLevelSelectUI($('#level-select'), LEVELS.filter(l => l.id !== '0'), startLevel, progress);
   renderHighest($('#highest-title'), progress);
-  if (!progress.unlocked()) $('.unlock-hint').textContent = '🔒 通常を ぜんぶクリアで スピードが ひらく';
 }
 refreshProgress();
 installMenuLayout();
-$('#start-play').addEventListener('click', () => startLevel('0')); // はじめる＝練習（レベル0）
 $('#next-btn').addEventListener('click', () => { if (phase?.phase === PHASES.AWAIT_RESULT_NEXT) afterResult(); });
 $('#spin-btn').addEventListener('click', onSpinTouch);
 $('#confirm-btn').addEventListener('click', doConfirm);
