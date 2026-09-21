@@ -25,6 +25,7 @@ const progress = new Progress('kioku-sequence', { maxLevel: levels.length / 2, s
 const navigation = new LevelNavigation(), awake = new ScreenAwake();
 const board = new BoardView($('#board'), $('#figure'), { onCardTap: addAnswer });
 let phase = null, adapter = null, level = null, judge = null, answer = null;
+let trialGeneration = 0, imageLoadFailed = false;
 let timer = null, pending = false, status = null, micDenied = false;
 document.body.classList.add('sequence-mode');
 
@@ -48,6 +49,7 @@ function refresh() {
 function startLevel(id) {
   const chosen = levels.find(l => l.id === id);
   if (!chosen || (chosen.speed && !progress.unlocked())) return;
+  trialGeneration++; imageLoadFailed = false;
   clearTimeout(timer); navigation.cancel(); phase?.to(PHASES.RESULT);
   sfx.primeAudio(); level = chosen; pending = false; micDenied = false;
   if (!adapter) {
@@ -69,12 +71,38 @@ function fromIntro() {
   if (!$('#level-intro').open) return;
   navigation.cancel(); closeLevelIntro(); beginTrial();
 }
-function beginTrial() {
-  clearTimeout(timer); pending = false; status = null;
+async function beginTrial() {
+  const token = ++trialGeneration;
+  clearTimeout(timer); pending = false; status = null; imageLoadFailed = false;
+  phase.to(PHASES.RESULT);
   board.clearMarks(); board.clearContent(); showSequenceNumbers(board, []);
+  $('#board').style.visibility = 'hidden';
+  $('#board').setAttribute('aria-busy', 'true');
+  $('#sequence-status').textContent = 'えを よみこみちゅう…';
   const dealt = deal(level.vocab, { letters: ANIMAL_FILES });
-  for (const key of level.vocab) board.setContent(key, animalImg(dealt.map[key]));
+  const images = level.vocab.map(key => ({ key, img: animalImg(dealt.map[key]) }));
+  try {
+    // Decode detached images first so every card is ready before showing the board.
+    await Promise.race([
+      Promise.all(images.map(({ img }) => img.decode())),
+      new Promise((_, reject) => { timer = setTimeout(() => reject(new Error('image-timeout')), 15000); }),
+    ]);
+  } catch {
+    if (token !== trialGeneration) return;
+    clearTimeout(timer);
+    imageLoadFailed = true;
+    $('#board').removeAttribute('aria-busy');
+    $('#sequence-status').textContent = 'えを よめませんでした。もういちど おしてね。';
+    $('#next-btn').classList.remove('hidden');
+    $('#next-btn').setAttribute('aria-label', 'えを よみなおす');
+    return;
+  }
+  if (token !== trialGeneration) return;
+  clearTimeout(timer);
+  for (const { key, img } of images) board.setContent(key, img);
   board.flipAll(true);
+  $('#board').style.visibility = '';
+  $('#board').removeAttribute('aria-busy');
   answer = new SequenceAnswer(makeSequence(level.steps));
   $('#sequence-status').textContent = `▶  ${judge.attempts + 1} / 3`;
   navigation.listen(phase, PHASES.AWAIT_START);
@@ -86,6 +114,7 @@ function startExample() {
   let index = 0;
   function light() {
     board.setFocus(answer.target[index]);
+    sfx.playTick();
     timer = setTimeout(() => {
       board.clearFocus();
       timer = setTimeout(() => {
@@ -182,6 +211,7 @@ function onMatch(key) {
   }
 }
 function goTitle() {
+  trialGeneration++; imageLoadFailed = false;
   clearTimeout(timer); navigation.cancel(); sfx.stopAll(); pending = false;
   phase?.to(PHASES.RESULT); adapter?.dispose?.(); adapter = null; phase = null;
   closeLevelIntro(); board.clearFocus(); awake.setActive(false); mic('idle');
@@ -193,7 +223,7 @@ $('#level-intro').addEventListener('cancel', e => { e.preventDefault(); goTitle(
 $('#to-title').addEventListener('click', goTitle);
 $('#cert-quit').addEventListener('click', goTitle);
 $('#cert-next').addEventListener('click', certNext);
-$('#next-btn').addEventListener('click', () => phase?.phase === PHASES.AWAIT_START ? startExample() : afterResult());
+$('#next-btn').addEventListener('click', () => imageLoadFailed ? beginTrial() : phase?.phase === PHASES.AWAIT_START ? startExample() : afterResult());
 $('#confirm-btn').addEventListener('click', confirm);
 $('#undo-answer').addEventListener('click', () => editAnswer(false));
 $('#clear-answer').addEventListener('click', () => editAnswer(true));

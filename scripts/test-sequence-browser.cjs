@@ -11,7 +11,11 @@ const assert = require('node:assert/strict');
   const page=await context.newPage(), errors=[];
   page.on('pageerror',e=>errors.push(e.message)); await page.clock.install();
   const advance=ms=>page.clock.runFor(ms);
-  const say=s=>page.evaluate(s=>window.say(s),s);
+  const say=async s=>{
+    // Image preparation is asynchronous; speak only once the start interval opens.
+    if(s==='スタート') await page.waitForFunction(()=>window.listening?.includes('スタート'));
+    return page.evaluate(s=>window.say(s),s);
+  };
   const go=async()=>{
     await page.goto('http://127.0.0.1:8000/kioku/?mode=sequence');
     await page.locator('[data-level="1"]').waitFor();
