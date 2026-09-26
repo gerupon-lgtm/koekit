@@ -50,8 +50,65 @@ export function detectPitch(samples, sampleRate, { rmsFloor = 0.008, threshold =
   return { kind: 'unknown', rms, confidence: 0 };
 }
 
-export function analyzeFrames(frames, { endSeconds, maxGapSeconds = 0.15, minDetectedRatio = 0.1 } = {}) {
+// Never smooth across silence/unknown. Median suppresses isolated octave errors;
+// sustained changes form notes, whose pitch is averaged BEFORE semitone rounding.
+function smoothPitches(frames, endSeconds, smoothingMs, tempo) {
   const data = frames.map(f => ({ ...f, origin: 'detected' }));
+  if (!smoothingMs) return data;
+  const radius = smoothingMs / 2000;
+  const hold = Math.min(smoothingMs * 0.00075, 60 / (tempo * 4) * 0.5);
+  for (let first = 0; first < data.length;) {
+    if (data[first].kind !== 'pitched') { first++; continue; }
+    let last = first;
+    while (last < data.length && data[last].kind === 'pitched') last++;
+    const values = [];
+    for (let i = first; i < last; i++) {
+      const near = [];
+      for (let j = first; j < last; j++) if (Math.abs(data[j].time - data[i].time) <= radius + 1e-9) near.push(data[j].midi);
+      // An edge pair can contain one octave glitch: take a third neighbour
+      // when available so an even median cannot reject both samples.
+      if (near.length < 3 && last-first >= 3) {
+        near.length=0;
+        const from=Math.min(Math.max(first,i-1),last-3);
+        for(let j=from;j<from+3;j++) near.push(data[j].midi);
+      }
+      near.sort((a,b)=>a-b);
+      const median = (near[Math.floor((near.length - 1) / 2)] + near[Math.floor(near.length / 2)]) / 2;
+      const inliers = near.filter(value => Math.abs(value - median) < 3);
+      values.push(inliers.length ? inliers.reduce((sum,value)=>sum+value,0) / inliers.length : data[i].midi);
+    }
+    const average = (a,b) => {
+      let sum=0,weight=0;
+      for(let i=a;i<b;i++) {
+        const duration=(data[i+1]?.time ?? endSeconds)-data[i].time;
+        sum+=values[i-first]*duration; weight+=duration;
+      }
+      return sum/weight;
+    };
+    const apply = (a,b) => { const midi=Math.round(average(a,b)); for(let i=a;i<b;i++) data[i].midi=midi; };
+    let start=first,pending=-1,pendingPitch=null;
+    for(let i=first+1;i<last;i++) {
+      // At a phrase onset, forward-looking smoothing can start at a vibrato
+      // crest. Keep the original onset as a short-lived reference instead of
+      // treating that crest as a separate note before one full window exists.
+      const center = start === first && data[i].time-data[start].time < Math.max(0.18,smoothingMs/500)
+        ? frames[start].midi : average(start,pending<0?i:pending);
+      const pitch=values[i-first];
+      if(Math.round(pitch)!==Math.round(center)) {
+        if(pending<0 || Math.round(pitch)!==pendingPitch) { pending=i; pendingPitch=Math.round(pitch); }
+        const end=data[i+1]?.time ?? endSeconds;
+        const required = Math.abs(pitch-center)>=0.65 ? hold : Math.max(0.18,smoothingMs/500);
+        if(end-data[pending].time+1e-9>=required) { apply(start,pending);start=pending;pending=-1; }
+      } else pending=-1;
+    }
+    apply(start,last);
+    first=last;
+  }
+  return data;
+}
+
+export function analyzeFrames(frames, { endSeconds, maxGapSeconds = 0.15, minDetectedRatio = 0.1, smoothingMs = 0, tempo = 120 } = {}) {
+  const data = smoothPitches(frames, endSeconds, smoothingMs, tempo);
   let detected = 0, nonSilent = 0;
   for (let i = 0; i < data.length; i++) {
     const span = Math.max(0, Math.min(endSeconds, data[i + 1]?.time ?? endSeconds) - data[i].time);

@@ -1,5 +1,5 @@
 import { microphoneEnabled, onMicrophoneChange } from '../../src/speech/microphone.js';
-import { scheduleVoice } from './audio.js';
+import { captureTiming, scheduleShaker } from './capture-support.js';
 export class ProbeCapture {
   constructor(ctx, onState, onResult) {
     this.ctx = ctx; this.onState = onState; this.onResult = onResult; this.serial = 0; this.counts = [];
@@ -22,11 +22,18 @@ export class ProbeCapture {
       this.source = this.ctx.createMediaStreamSource(stream);
       this.silent = this.ctx.createGain(); this.silent.gain.value = 0;
       this.source.connect(this.node).connect(this.silent).connect(this.ctx.destination);
-      const anchor = this.ctx.currentTime + 0.35, beat = 60 / tempo;
-      this.startTime = anchor + beat * 8;
-      this.endTime = this.startTime + beat * 16;
-      this.node.port.postMessage({ type: 'start', startFrame: Math.round(this.startTime * this.ctx.sampleRate), endFrame: Math.round(this.endTime * this.ctx.sampleRate) });
-      if (options.countSound) for (const tick of [0, 2, 4, 5, 6, 7]) this.counts.push(scheduleVoice(this.ctx, this.ctx.destination, { midi: 84, time: anchor + tick * beat, duration: 0.04, instrument: 'wood', gain: 0.08 }));
+      const inputSettings = stream.getAudioTracks()[0]?.getSettings() || {};
+      const anchor = this.ctx.currentTime + 0.35;
+      this.timing = captureTiming({ anchor, tempo, sampleRate: this.ctx.sampleRate, baseLatency: this.ctx.baseLatency,
+        outputLatency: this.ctx.outputLatency, inputLatency: inputSettings.latency, manualMs: options.manualMs || 0, audibleCount: !!options.countSound });
+      this.anchor = anchor; this.tempo = tempo;
+      this.startTime = this.timing.musicalStart;
+      this.endTime = this.timing.endFrame / this.ctx.sampleRate;
+      this.node.port.postMessage({ type: 'start', startFrame: this.timing.startFrame, endFrame: this.timing.endFrame });
+      if (options.countSound) for (let i = 0; i < this.timing.countTimes.length; i++) {
+        if (i >= 8 && !options.recordCount) break;
+        this.counts.push(scheduleShaker(this.ctx, this.timing.countTimes[i], i % 4 === 0));
+      }
       this.onState('count-in');
       this.timer = setInterval(() => {
         if (sessionId !== this.serial) return;
@@ -43,7 +50,9 @@ export class ProbeCapture {
         worker.onmessage = ({ data: result }) => {
           if (sessionId !== this.serial) return;
           worker.terminate(); this.worker = null; this.active = false;
-          this.onResult({ ...result, inputSettings: stream.getAudioTracks()[0]?.getSettings(), processing: options.processing, countSound: options.countSound });
+          const { deviceId, groupId, ...diagnosticSettings } = inputSettings;
+          this.onResult({ ...result, inputSettings: diagnosticSettings, processing: options.processing, countSound: options.countSound,
+            recordCount: options.recordCount, timing: this.timing });
         };
         worker.postMessage({ samples: data.samples, sampleRate: data.sampleRate, tempo, sessionId, options }, [data.samples.buffer]);
       };

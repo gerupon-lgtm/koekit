@@ -3,6 +3,7 @@ import { microphoneEnabled, setMicrophoneEnabled, onMicrophoneChange } from '../
 import { ProbeTransport } from './audio.js';
 import { ProbeCapture } from './capture.js';
 import { renderScore, pitchName } from './score.js';
+import { alignCaptureStart } from './capture-support.js';
 const $ = id => document.getElementById(id);
 const example = () => ({ bars: 4, gridStep: 1, notes: [
   { id: 'low', midi: 48, startTick: 0, durationTick: 4 },
@@ -13,13 +14,14 @@ const example = () => ({ bars: 4, gridStep: 1, notes: [
   { id: 'high', midi: 96, startTick: 24, durationTick: 4 },
   { id: 'end', midi: 60, startTick: 48, durationTick: 16 },
 ] });
-let state = { pattern: example(), cursor: 0, revision: 0 }, candidate = null, captured = null;
+let state = { pattern: example(), cursor: 0, revision: 0 }, candidate = null, captured = null, capturedOriginal = null;
 let ctx, transport, capture, serial = 0, phase = 'idle', raf, lastFrame = 0, maxFrameGapMs = 0, lastBar = -1;
-const record = { prototype: 'ML-T01-v1', timestamp: new Date().toISOString(), userAgent: navigator.userAgent, playback: null, capture: null };
+const record = { prototype: 'ML-T01-v2', timestamp: new Date().toISOString(), userAgent: navigator.userAgent, playback: null, capture: null };
 const labels = { idle: '準備できました', preparing: '音とマイクの準備中', playing: '再生中・停止はボタンで', 'count-in': '8拍のカウント中', recording: '4小節を取り込み中', analyzing: '端末内で解析中' };
 function setPhase(next, message) {
   phase = next; $('status').dataset.state = next; $('status').textContent = message || labels[next];
-  for (const id of ['tempo','instrument','length','lead','ahead','example','empty','propose','undo','capture','play','adopt','preview','discard','pitch','duration','count-sound','processing','boundary-mode','window-size','rms','ratio','gap']) $(id).disabled = next !== 'idle';
+  for (const id of ['tempo','instrument','length','lead','ahead','example','empty','propose','undo','capture','play','adopt','preview','discard','pitch','duration','count-sound','record-count','smoothing','timing-adjust','processing','boundary-mode','window-size','rms','ratio','gap']) $(id).disabled = next !== 'idle';
+  $('align-start').disabled = next !== 'idle' || !capturedOriginal?.notes[0]?.startTick;
   $('capture').disabled = next !== 'idle' || !microphoneEnabled();
   $('confirm').disabled = next !== 'idle' || !candidate || !!candidate.code;
   $('cancel').disabled = next !== 'idle' || !candidate;
@@ -46,6 +48,9 @@ async function prepare() {
     capture = new ProbeCapture(ctx, setPhase, result => {
       record.capture = result;
       captured = result.empty ? null : { bars: 4, gridStep: 1, notes: result.notes };
+      capturedOriginal = captured ? structuredClone(captured) : null;
+      record.captureAlignmentTicks = 0; $('align-start').textContent = '頭の休符を詰める';
+      $('capture-position').textContent = '取り込み完了';
       $('review').hidden = !captured;
       if (captured) renderScore($('capture-score'), captured);
       setPhase('idle', captured ? '候補を試聴して確認してください' : 'ほとんど音を検出できませんでした。カウントからやり直してください。');
@@ -68,6 +73,10 @@ function animate() {
   lastFrame = now;
   const tick = transport.active ? transport.position() : Math.max(0, (ctx.currentTime - capture.startTime) * tempoValue() * 4 / 60);
   const bar = Math.floor(tick / 16), beat = Math.floor(tick / 4) % 4;
+  if (capture?.active && Number.isFinite(capture.anchor)) {
+    const countBeat = Math.floor((ctx.currentTime - capture.anchor) * capture.tempo / 60);
+    $('capture-position').textContent = countBeat < 0 ? 'カウント待ち' : countBeat < 8 ? `準備 ${countBeat + 1} / 8拍` : countBeat < 24 ? `録音 ${Math.floor((countBeat - 8) / 4) + 1} / 4小節・${(countBeat - 8) % 4 + 1}拍` : '取り込み・解析の完了待ち';
+  }
   $('position').textContent = `${bar + 1}小節・${beat + 1}拍`;
   [...$('beats').children].forEach((node, i) => node.classList.toggle('active', i === beat));
   if (bar !== lastBar) { lastBar = bar; record.lastBoundary = { bar: bar + 1, audioTime: ctx.currentTime, tick, wallTime: now }; }
@@ -94,10 +103,14 @@ function showReport() {
 }
 $('play').onclick = () => play(); $('stop').onclick = () => { if (transport?.active) record.playback = { ...record.playback, ...transport.metrics, maxFrameGapMs, stoppedAtTick: transport.position(), reason: 'USER_STOP' }; stop(); showReport(); };
 $('capture').onclick = async () => {
-  stop(); const request = serial; captured = null; $('review').hidden = true; setPhase('preparing');
+  stop(); const request = serial; captured = null; capturedOriginal = null; $('review').hidden = true; setPhase('preparing');
+  record.timestamp = new Date().toISOString(); record.capture = null; record.captureAlignmentTicks = 0;
+  $('capture-position').textContent = 'カウント待ち';
   try {
     const tempo = tempoValue(); await prepare(); if (request !== serial) return;
-    const options = { windowSize: Number($('window-size').value), boundaryMode: $('boundary-mode').value, rmsFloor: Number($('rms').value), minDetectedRatio: Number($('ratio').value), maxGapSeconds: Number($('gap').value), processing: $('processing').checked, countSound: $('count-sound').checked };
+    const options = { windowSize: Number($('window-size').value), boundaryMode: $('boundary-mode').value, rmsFloor: Number($('rms').value), minDetectedRatio: Number($('ratio').value), maxGapSeconds: Number($('gap').value), processing: $('processing').checked, countSound: $('count-sound').checked, recordCount: $('record-count').checked, smoothingMs: Number($('smoothing').value), manualMs: Number($('timing-adjust').value) };
+    if (!Number.isFinite(options.manualMs) || options.manualMs < -200 || options.manualMs > 400 || ![0,80,120].includes(options.smoothingMs)) throw new Error('補正値が範囲外です');
+    try { localStorage.setItem('saezuri.capture.manualMs', String(options.manualMs)); } catch {}
     if (options.rmsFloor < 0.001 || options.rmsFloor > 0.1 || options.minDetectedRatio < 0 || options.minDetectedRatio > 1 || options.maxGapSeconds < 0 || options.maxGapSeconds > 0.5) throw new Error('解析条件が範囲外です');
     record.captureOptions = { tempo, ...options }; await capture.start(tempo, options);
     if (request === serial) { lastFrame = 0; animate(); }
@@ -107,6 +120,13 @@ $('mic').onclick = () => setMicrophoneEnabled(!microphoneEnabled());
 function refreshMic(enabled) { $('mic').textContent = `マイク ${enabled ? 'ON' : 'OFF'}`; $('mic').setAttribute('aria-pressed', String(enabled)); if (!enabled && phase !== 'playing') stop('マイクOFF・タッチで操作できます'); setPhase(phase); }
 onMicrophoneChange(refreshMic); refreshMic(microphoneEnabled());
 $('preview').onclick = () => captured && play(captured, true);
+$('align-start').onclick = () => {
+  if (!capturedOriginal) return;
+  record.captureAlignmentTicks = record.captureAlignmentTicks ? 0 : capturedOriginal.notes[0].startTick;
+  captured = record.captureAlignmentTicks ? alignCaptureStart(capturedOriginal, record.captureOptions.tempo) : structuredClone(capturedOriginal);
+  $('align-start').textContent = record.captureAlignmentTicks ? '頭の休符を戻す' : '頭の休符を詰める';
+  renderScore($('capture-score'), captured); showReport();
+};
 $('adopt').onclick = () => { if (!captured) return; state = { pattern: structuredClone(captured), cursor: 0, revision: state.revision + 1 }; candidate = null; captured = null; $('review').hidden = true; draw(); };
 $('discard').onclick = () => { captured = null; $('review').hidden = true; };
 $('example').onclick = () => { state = { pattern: example(), cursor: 0, revision: state.revision + 1 }; candidate = null; draw(); };
@@ -120,4 +140,5 @@ $('undo').onclick = () => { if (candidate) return; state = undo(state); draw(); 
 $('report').onclick = showReport;
 document.addEventListener('visibilitychange', () => { if (document.hidden) stop('画面が隠れたため中断しました（試作の動作）'); });
 addEventListener('pagehide', () => { stop(); ctx?.close(); });
+try { const saved = localStorage.getItem('saezuri.capture.manualMs'); if (saved !== null && Number.isFinite(Number(saved)) && Number(saved)>=-200 && Number(saved)<=400) $('timing-adjust').value = saved; } catch {}
 draw();

@@ -21,7 +21,12 @@
   </div><p id="candidate" role="status">候補なし</p><p id="remaining"></p><div id="score" class="score"></div>
  </section>
  <section><h2>3. ハナウタを取り込む</h2><p>8拍カウント → 4小節を取り込みます。音名の言葉認識は起動しません。イヤホンあり／なしを比べてください。</p>
-  <div class="fields"><button id="mic" aria-pressed="true">マイク ON</button><label><input type="checkbox" id="count-sound" checked> カウント音</label><label><input type="checkbox" id="processing"> OSの音声処理を要求</label></div>
+  <div class="fields"><button id="mic" aria-pressed="true">マイク ON</button><label><input type="checkbox" id="count-sound" checked> カウント音</label><label><input type="checkbox" id="record-count" checked> 録音中もシェーカーで拍を刻む</label><label><input type="checkbox" id="processing"> OSの音声処理を要求</label></div>
+  <p>短いシェーカー音を使い、解析時にその高音域を抑えます。スピーカーからの混入が気になる場合はイヤホンを使うか、カウント音をOFFにしてください。</p>
+  <p id="capture-position">カウント待ち</p>
+  <div class="fields"><label>音高のならし <select id="smoothing"><option value="80">標準（80ms）</option><option value="120">強め（120ms）</option><option value="0">なし（比較用）</option></select></label>
+  <label>タイミング追加補正（ms）<input id="timing-adjust" type="number" min="-200" max="400" step="10" value="0"></label></div>
+  <p>音高をならしてから最も近い半音にし、開始・長さを16分単位に丸めます。入出力遅延は端末の推定値で補正。まだ遅れる場合は追加補正を＋方向へ調整してください（この端末に保存）。</p>
   <details><summary>解析の比較条件（未確定）</summary><div class="fields">
    <label>発音区間の方式 <select id="boundary-mode"><option value="energy-gated">短区間の無音判定（比較案）</option><option value="window-start">音高窓の先頭（旧方式）</option></select></label>
    <label>音高解析窓 <select id="window-size"><option value="4096">4096標本（従来）</option><option value="2048">2048標本（比較）</option><option value="1024">1024標本（比較・低音域が狭い）</option></select></label>
@@ -31,7 +36,7 @@
    <p>両端が同じ音高の短い不明区間だけを補完候補にします。無音・片側だけ・長い不明区間は補いません。環境雑音と有声の識別は未検証です。短い解析窓は音高切替に有利な場合がありますが、低音の検出範囲が狭くなります。</p>
   </details>
   <button id="capture">カウントして取り込む</button>
-  <div id="review" hidden><p>取り込み候補。元の音列はまだ変更していません。茶色は補完候補です。</p><div id="capture-score" class="score"></div><button id="preview">候補を聴く</button><button id="adopt">試作の音列に採用</button><button id="discard">候補を捨てる</button></div>
+  <div id="review" hidden><p>取り込み候補。元の音列はまだ変更していません。茶色は補完候補です。</p><div id="capture-score" class="score"></div><button id="align-start" disabled>頭の休符を詰める</button><button id="preview">候補を聴く</button><button id="adopt">試作の音列に採用</button><button id="discard">候補を捨てる</button></div>
  </section>
  <section><h2>測定記録</h2><p>機種・イヤホン・聞こえ方は追記してください。下の記録は数値と音符だけです。</p><label>実機条件・所感 <textarea id="conditions" placeholder="端末名、ブラウザ、イヤホン有無、声域、ずれ・誤検出など"></textarea></label><button id="report">記録を表示</button><pre id="metrics">まだ計測していません。</pre></section>
 </main>

@@ -12,6 +12,8 @@
 
 ## スマホでの確認
 
+更新版ML-T01-v2では録音中のシェーカー、音高のならし、タイミング追加補正、候補の頭合わせを追加。[修正内容と旧版の実機データ](humming-v2.md)。記録のprototypeが`ML-T01-v2`であることを確認する。
+
 1. 上記URLをChromeまたはSafariで直接開く。
 2. 「3. ハナウタを取り込む」でマイクONを確認し、「カウントして取り込む」を押す。ブラウザのマイク許可に応じる。
 3. 8拍のカウント後、4小節ぶんハナウタを歌う。必要に応じてイヤホンを使う。
@@ -22,4 +24,15 @@
 
 ## 公開確認
 
-公開後にHTTPS応答、依存ファイルの一致、secure context、AudioWorkletと模擬マイクによる捕捉、ブラウザエラーを確認して追記する。実機の実声検証は発案者が行う。
+- 公開コミット: `42eb758282cf271c23dac2e13d40f338a4b5fcf4`。
+- [GitHub Pages実行36262227115](https://github.com/gerupon-lgtm/koekit/actions/runs/36262227115): success。
+- HTTPSで15ファイルが200応答し、公開用チェックアウトと内容一致。テキストのCRLF/LFは正規化し、PNGはバイト一致。
+- Chrome・390×844でsecure context、getUserMedia、AudioWorklet利用可、譜面表示、JavaScriptエラー0を確認。
+- 公開URLに対して既存ブラウザ検証も成功。模擬マイクの4小節捕捉（48kHz・256000標本）、停止・マイクOFF・候補確定、4画面サイズを確認し、外部要求0。模擬入力でありスマホ実声の品質確認ではない。
+- 実機の実声検証は未実施。発案者が上記手順で行う。
+
+### 追加のWebKit確認と限界
+
+`node scripts/test-saezuri-webkit.cjs` で既存Playwright 1.63.0のWindows版WebKitを検査。localhostの譜面表示は成功、JavaScriptエラー0。実行結果は`PARTIAL`であり、音声の合格ではない。このエンジンでは`AudioContext`・`AudioWorkletNode`・`navigator.mediaDevices.getUserMedia`がいずれもundefinedのため、音声再生／捕捉を検証できない。
+
+同エンジンによる公開HTTPSへのアクセスは証明書検証エラーで失敗。証明書チェックを無効化して合格扱いにはしていない。前記ChromeのHTTPS検証成功と分け、iPhone Safari実機での確認を残す。Windows版WebKitの不足をiPhone Safariの非対応とは解釈しない。
