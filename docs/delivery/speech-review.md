@@ -29,8 +29,10 @@
 1. `node scripts/test-delivery-speech.mjs`：実モデル辞書で照合済みのトークン、漢数字、行番号、方向のみ、区間外拒否。
 2. `node scripts/test-delivery-speech-browser.cjs`：認識結果を注入し、選択色・指示表・表示・行置換・マイクOFF・320×568の配置固定・5つの三角形の計算済み色を確認。
 3. 実Vosk日本語モデル：Windows日本語音声合成でローカル生成した「みぎ、に」「ひだり」「にばん」「オッケー」を認識し、それぞれ `右 二` / `左` / `二 番` / `オッケー` と解釈できた。音声は録音・外部送信していない。
-4. 実アダプタ結合：Chromeのテスト用マイクへローカルWAVを入力し、本番と同じVoskAdapter・AudioWorklet・DeliverySpeechを経由。「みぎ2」の繰り返しを2行へ追加し、ロボットは動かず、マイクOFF後は増えないことを確認。テスト用にモデル取得先のみローカルへ指定。
+4. 実アダプタ結合：Chromeのテスト用マイクへローカルWAVを入力し、本番と同じVoskAdapter・AudioWorklet・DeliverySpeechを経由。「みぎ2」の繰り返しを2行へ追加し、ロボットは動かず、マイクOFF後は増えないことを確認。ローカルではテスト用にモデル取得先を指定し、公開HTTPSでは既定の本番モデル配信先のまま同じ検証を実施して成功。
 
 3・4の音声と実行スクリプト、結果JSONは `.local-tools/delivery/` と `.local-tools/test-delivery-real-{model,adapter}.cjs`。モデル本体・テスト音声は公開ファイルへ含めない。
 
 合成音声での処理成立は確認したが、利用者の実発話やAndroid/iOSでの認識精度を保証するものではない。前回の模擬結果注入だけでは、この文法不具合を検出できていなかった。
+
+公開修正コミット `eb3e23d` のGitHub Pages処理成功と、`delivery/app.js`・`delivery/commands.js`・トップCSS・SWの配信内容一致を確認。公開HTTPSで実アダプタを通した合成音声の繰り返し認識・指示追加・実行待ち・マイクOFFも成功。
