@@ -43,6 +43,6 @@ GitHub Pagesへの公開は `node scripts/stamp-cache.cjs` → commit → push�
 
 © 2026 SIKUMI LAB
 
-## ローカル実装済み・未公開の小品
+## デリバリズム
 
-**デリバリズム**：声とタッチでロボットの道順を組み、荷物を届ける小品。`delivery/` に本編・練習・自作面・保存再開を実装し、アセット制作と自動検証を完了。実機受入・公開はこれからです。[実装記録](docs/delivery/implementation-log.md)。[基本設計サマリ](docs/delivery/summary.md)／[要件書](docs/requirements-robot.md)。
+**デリバリズム**：声とタッチでロボットの道順を組み、荷物を届ける小品。`delivery/` に本編・練習・自作面・保存再開を実装し、アセット制作と自動検証を完了。2026-09-26に[公開](https://gerupon-lgtm.github.io/koekit/delivery/)しました。Android/iOSの実発話・PWA受入は継続します。[実装記録](docs/delivery/implementation-log.md)。[基本設計サマリ](docs/delivery/summary.md)／[要件書](docs/requirements-robot.md)。
