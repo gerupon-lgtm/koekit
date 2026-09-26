@@ -42,3 +42,7 @@ GitHub Pagesへの公開は `node scripts/stamp-cache.cjs` → commit → push�
 通常のゲームは端末内Voskで認識します。公開版で音声を外部送信しない方針です。公開ゲームでは既定WebSpeech（方式A）を選べません。URLや旧保存設定からの指定もVoskへ戻します。方式Bは端末内処理を指定できる場合だけ開始し、非対応時もタッチで遊べます。音声そのものは保存せず、検証ログはその回限りで保持します。
 
 © 2026 SIKUMI LAB
+
+## ローカル実装済み・未公開の小品
+
+**デリバリズム**：声とタッチでロボットの道順を組み、荷物を届ける小品。`delivery/` に本編・練習・自作面・保存再開を実装し、アセット制作と自動検証を完了。実機受入・公開はこれからです。[実装記録](docs/delivery/implementation-log.md)。[基本設計サマリ](docs/delivery/summary.md)／[要件書](docs/requirements-robot.md)。

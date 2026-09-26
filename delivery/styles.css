@@ -1,0 +1,181 @@
+@font-face{font-family:"M PLUS Rounded 1c";src:url('../assets/fonts/MPLUSRounded1c-Regular.subset.woff2') format('woff2');font-weight:400;font-display:swap}
+@font-face{font-family:"M PLUS Rounded 1c";src:url('../assets/fonts/MPLUSRounded1c-Bold.subset.woff2') format('woff2');font-weight:700;font-display:swap}
+:root{--bg:#faf5ed;--ink:#493f36;--green:#dce9d5;--purple:#e7ddef;--gold:#e6c979;--teal:#458f91;--line:#ddd4c5}
+*{box-sizing:border-box}html,body{margin:0;min-height:100%}[hidden]{display:none!important}body{background:var(--bg);color:var(--ink);font:16px/1.6 "M PLUS Rounded 1c","Hiragino Maru Gothic ProN","Yu Gothic UI",Meiryo,sans-serif}
+button,select,input{font:inherit;color:inherit}button,a,select{touch-action:manipulation}button{cursor:pointer;border:0;border-radius:14px;padding:8px 12px;min-height:48px;background:#ece5da;font-weight:700}button:disabled{opacity:.45;cursor:default}button:focus-visible,a:focus-visible,select:focus-visible{outline:3px solid #77599d;outline-offset:3px}button[aria-pressed=true]{box-shadow:inset 0 0 0 2px #6d9791;background:#e0eddf}a{color:inherit}
+#app{max-width:620px;margin:auto;padding:8px 16px max(12px,env(safe-area-inset-bottom));min-height:100svh}.toolbar{display:flex;align-items:center;gap:8px;height:48px}.icon{width:46px;height:46px;min-height:46px;flex-shrink:0;display:grid;place-items:center;padding:0;background:#fff;border-radius:14px;text-decoration:none;font-size:27px}.icon svg{width:26px;height:26px}#help{margin-left:auto}#mode-label{font-size:12px;color:#7c7367}.mic-state{width:42px;height:42px;min-height:42px;border-radius:50%;padding:8px;background:#ece4d6;color:#918671}.mic{width:26px;height:26px;fill:currentColor}.mic .slash{display:none;stroke:#b94436;stroke-width:2.5}.mic-state.listening{background:#f2e2a8;color:#806121}.mic-state.denied .slash{display:block}.mic-state.restarting{opacity:.6}
+h1,h2{text-align:center}h2{font-size:24px;margin:22px 0 12px}.big{display:block;width:100%;min-height:58px;font-size:18px;border-radius:20px;padding:12px}.green{background:var(--green)}.purple{background:var(--purple)}.gold{background:var(--gold)}.peach{background:#f5b68e}.subtle{background:#eae4d9}.note{text-align:center;font-size:14px;color:#84796b}.stack{display:grid;gap:12px;margin:18px 0}.button-row{display:flex;gap:8px}.button-row>*{flex:1}.seg{display:flex;gap:4px;padding:4px;background:#e5ebe4;border-radius:18px}.seg button{flex:1;background:transparent;min-height:48px}.seg button[aria-pressed=true]{background:#fff;box-shadow:0 2px 4px #493f3610;color:#426965}
+#app:has(#title:not([hidden])){padding:0 16px;position:relative;max-width:620px}#app:has(#title:not([hidden])) .toolbar{position:absolute;top:8px;left:16px;right:16px}#title{display:flex;flex-direction:column;min-height:100svh;padding:58px 0 max(8px,env(safe-area-inset-bottom))}#title h1{width:min(380px,100%);height:93px;margin:0 auto;flex-shrink:0}.wordmark{width:100%;height:100%;object-fit:contain;object-position:top}.title-caption{margin:25px 0 29px;text-align:center;font-size:15px;line-height:24px;color:#84796b}.title-menu{display:grid;gap:12px;width:min(420px,100%);margin:0 auto}.title-menu>.big{min-height:62px}.record{display:flex;align-items:center;justify-content:center;gap:12px;background:#ffffffba;border-radius:21px;min-height:58px;width:min(420px,100%);margin:auto auto 36px;padding:8px 12px}.record small,.record strong{display:block}.record small{font-size:11px;color:#887e71}.record strong{font-size:15px;color:#304d65}.title-footer{text-align:center;font-size:10px;line-height:14px;color:#8c8071;margin:0;flex-shrink:0}.title-menu+.record{margin-top:max(24px,calc(100svh - 715px))}
+#level-list button{display:flex;align-items:center;justify-content:space-between;text-align:left;background:var(--green)}#level-list small{display:block;font-size:13px;font-weight:400}.preparing-mark{text-align:center;font-size:90px;color:var(--teal);margin-top:60px}#preparing>.big{margin:12px 0}
+.game-top{display:flex;align-items:center;gap:8px;justify-content:space-between;font-size:13px;margin:5px 0}.game-top>span:first-child{color:#6c6255}#hands{display:flex;gap:4px}.hand{width:27px;height:28px;border:1px dashed #b7a895;border-radius:7px;background:#fff9;display:grid;place-items:center}.hand img{width:24px;height:24px}.tutorial-note{font-size:14px;line-height:1.55;background:#edf0df;border-radius:12px;padding:8px 12px;margin:6px 0}.tutorial-note button{font-size:12px;min-height:32px;float:right;padding:2px 8px}.play-layout{display:grid;gap:8px}.board-area{min-width:0}.board{--n:3;display:grid;grid-template-columns:repeat(var(--n),1fr);grid-template-rows:repeat(var(--n),1fr);width:min(100%,360px,calc(100svh - 389px));aspect-ratio:1;margin:0 auto;padding:9px;gap:6px;background:#e2e9d8;border-radius:20px;overflow:hidden}.board:has(.robot){isolation:isolate}.cell{position:relative;border-radius:18%;min-width:0;min-height:0;background:#fbf5e5;display:grid;place-items:center}.cell.blocked{background:transparent}.cell img{position:relative;z-index:2;width:90%;height:90%;object-fit:contain}.cell .robot{z-index:4;width:116%;height:116%;max-width:none;position:absolute;left:-8%;top:-12%;filter:drop-shadow(0 2px 1px #654b3320)}.cell .destination{opacity:.95}.cell:has(.robot) .destination{opacity:.35}.cell.link-right:after{content:'';position:absolute;left:70%;width:calc(30% + 6px);top:35%;height:30%;background:#fbf5e5;z-index:0}.cell.link-down:before{content:'';position:absolute;top:70%;height:calc(30% + 6px);left:35%;width:30%;background:#fbf5e5;z-index:0}.cell.hint-target{outline:3px solid #d99d2a;outline-offset:0;z-index:2}.cell.failed-cell{outline:3px solid #af5347}.hint-arrow{position:absolute;z-index:5;background:#fff5cb;border-radius:50%;font-size:23px;line-height:1.2;bottom:-5px;right:-5px;padding:2px;color:#715627}.board-key{display:flex;justify-content:center;gap:12px;font-size:10px;color:#897d67;margin:3px 0}#budget{font-size:15px;font-weight:700;color:#446d66;display:flex;justify-content:space-between;background:#e8eee2;border-radius:10px;padding:5px 10px}#budget.over{color:#a13f36;background:#fae4db}#budget strong{white-space:nowrap}.sequence-heading{display:flex;align-items:center;justify-content:space-between;font-size:12px;margin:5px 0 2px}.sequence-heading span{font-size:11px;color:#836d91}#sequence{height:96px;overflow:auto;overscroll-behavior:contain;scrollbar-width:thin;border:1px solid #e4dcca;border-radius:12px;background:#fff9;padding:3px}#sequence:empty:after{content:'「みぎ 2」のように ひとつずつ';display:block;padding:10px;text-align:center;font-size:13px;color:#958672}#sequence button{display:flex;align-items:center;gap:12px;min-height:36px;padding:4px 10px;background:transparent;width:100%;text-align:left;font-size:15px;border-radius:8px}#sequence button .row-label{font-size:12px;color:#87786b;width:46px}#sequence button.selected{background:#eee2f5;box-shadow:inset 0 0 0 2px #a58bb6}#sequence button.running{background:#f8eac0}#sequence button.changed{background:#e1efdc}.directions{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-top:8px}.directions button{padding:6px 0;font-size:14px}.count-row{display:flex;gap:8px;align-items:center;margin:6px 0}.count-row label{font-size:13px}.count-row select{height:44px;min-width:65px;flex:1;border:1px solid var(--line);border-radius:12px;background:white;text-align:center}.count-row button{flex:2;min-height:44px}.edit-actions{display:grid;grid-template-columns:1fr 1.3fr 1fr;gap:6px}.edit-actions button{font-size:13px;padding:6px;min-height:42px;background:#ece4f1}#input-status{min-height:20px;margin:3px 0;text-align:center;font-size:12px;color:#7b657e}#game-voice-guide{margin:3px 0;font-size:13px;min-height:28px}#execute,#continue{min-height:48px;padding:8px}#hint-panel{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);width:min(460px,calc(100vw - 24px));padding:16px;border-radius:20px;border:2px solid #debd62;background:#fff9e6;z-index:15;box-shadow:0 8px 32px #58442e33}#hint-message{margin-top:0;text-align:center;font-weight:700}#hint-panel button{background:#ebdfba}#game:has(#tutorial-note:not([hidden])) .board{width:min(100%,330px,calc(100svh - 449px))}
+#result{padding-top:20px;text-align:center}#result-mark{height:160px;display:grid;place-items:center;color:var(--teal);font-size:95px}#result-mark .award-medal{width:115px}#result-detail{white-space:pre-line;margin:12px 0 22px}#result>.big{margin:12px 0}#save-status{position:relative;z-index:12;background:#fff0cf;border:1px solid #dabc72;padding:8px 10px;border-radius:12px;font-size:13px}#save-status button{font-size:12px;padding:3px 8px;min-height:36px;margin-left:8px}.toast{position:fixed;z-index:25;left:50%;bottom:20px;transform:translateX(-50%);width:max-content;max-width:calc(100vw - 24px);background:#493f36;color:#fff;border-radius:18px;padding:14px 20px;pointer-events:none;font-weight:700;font-size:19px;text-align:center}.toast .award-medal{width:36px;vertical-align:middle;margin-right:10px}
+dialog{border:0;border-radius:24px;background:var(--bg);color:var(--ink);width:min(94vw,480px);max-height:90svh;overflow:auto;padding:22px}dialog::backdrop{background:#30291f80}dialog h2{margin-top:0}#dialog-body{white-space:pre-line;font-size:15px}dialog .stack{margin-bottom:0}#editor-screen{padding-bottom:12px}
+@media(max-height:819px){#title h1{height:74px;width:min(300px,100%)}.title-caption{margin:10px 0 16px}.title-menu{gap:9px}.title-menu>.big{min-height:50px}.seg button{min-height:42px}.title-menu+.record{margin-top:auto;margin-bottom:24px}.board{gap:4px;padding:7px}.cell.link-right:after{width:calc(30% + 4px)}.cell.link-down:before{height:calc(30% + 4px)}#sequence{height:68px}.directions button{min-height:44px}.edit-actions button{min-height:40px}}
+@media(max-height:620px){#title h1{height:50px;width:204px}.title-caption{margin:4px 0 8px;font-size:13px;line-height:21px}.title-menu{gap:7px}.title-menu>.big{min-height:46px;padding:8px;font-size:16px}.seg button{min-height:38px;padding:5px}.record{min-height:52px}#app{padding:6px 10px}.toolbar{height:40px}.icon{width:40px;height:40px;min-height:40px}.mic-state{width:36px;height:36px;min-height:36px;padding:5px}.game-top{font-size:11px;margin:3px 0}#sequence{height:48px}#budget{font-size:13px;padding:3px 7px}.board{width:min(100%,240px,calc(100svh - 330px));border-radius:14px}#game:has(#tutorial-note:not([hidden])) .board{width:min(100%,220px,calc(100svh - 385px))}.board-key{display:none}.play-layout{gap:3px}.directions{margin-top:5px}.count-row{margin:4px 0}.edit-actions button{min-height:36px}.tutorial-note{font-size:12px;line-height:1.5;padding:5px 8px}.sequence-heading{margin:3px 0 1px}#game-voice-guide{font-size:12px;margin:2px 0}#input-status{min-height:18px;line-height:18px;margin:2px 0}.directions button{min-height:40px}#result-mark{height:100px;font-size:72px}#result-mark .award-medal{width:80px}}
+@media(min-width:900px){#app{max-width:1020px;padding:16px 28px}.play-layout{grid-template-columns:1fr 1fr;gap:28px;align-items:center}.board{width:min(100%,470px,calc(100svh - 180px))}#game:has(#tutorial-note:not([hidden])) .board{width:min(100%,450px,calc(100svh - 260px))}#sequence{height:190px}.game-top{margin-bottom:16px;font-size:16px}#result,#levels,#preparing{max-width:520px;margin:auto}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
+
+/* 共通タイトルと同じく、フッターを画面下端、称号をその少し上へ。 */
+#title .title-menu+.record{margin-top:auto;margin-bottom:42px;}
+#title .title-menu{margin-bottom:22px;}
+@media(max-height:819px){#title .title-menu+.record{margin-bottom:24px;}}
+
+/* 狭く低い画面は盤面と指示表を並べ、入力と確定を画面内に保つ。 */
+#game .voice-guide strong{font-size:16px}#game .voice-guide span{font-size:12px}#game .voice-guide{padding:4px 8px;gap:2px 6px;}
+.board{width:min(100%,360px,calc(100svh - 545px));}
+#game:has(#tutorial-note:not([hidden])) .board{width:min(100%,330px,calc(100svh - 585px));}
+@media(min-width:900px){.board{width:min(100%,470px,calc(100svh - 180px));}#game:has(#tutorial-note:not([hidden])) .board{width:min(100%,450px,calc(100svh - 260px));}}
+@media(max-height:740px) and (max-width:899px){
+  .play-layout{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:3px 8px;align-items:start;}
+  .command-area{display:contents;}
+  .board-area{grid-column:1;grid-row:1 / 4;}
+  #game .board,#game:has(#tutorial-note:not([hidden])) .board{width:100%;max-width:180px;gap:3px;padding:5px;}
+  #budget{grid-column:2;grid-row:1;display:block;font-size:12px;padding:4px 6px;line-height:1.4;}
+  #budget span,#budget strong{display:block;white-space:normal;}
+  .sequence-heading{grid-column:2;grid-row:2;display:block;line-height:1.35;margin:0;}
+  .sequence-heading span{display:block;}
+  #sequence{grid-column:2;grid-row:3;height:64px;}
+  #sequence button{font-size:12px;padding:4px;gap:2px;min-height:36px;}
+  #sequence button .row-label{font-size:10px;width:36px;flex-shrink:0;}
+  #sequence:empty:after{font-size:11px;padding:3px;}
+  #touch-input{grid-column:1 / -1;grid-row:4;}
+  #input-status{grid-column:1 / -1;grid-row:5;}
+  #game-voice-guide{grid-column:1 / -1;grid-row:6;min-height:32px;}
+  #game .voice-guide strong{font-size:14px}#game .voice-guide span{font-size:11px}
+  #execute,#continue{grid-column:1 / -1;grid-row:7;}
+}
+#failure-location{display:flex;align-items:center;justify-content:center;gap:12px;margin:8px 0;font-size:13px;}
+#failure-location>p{max-width:170px;}
+#failure-location .failure-board{width:130px;flex-shrink:0;margin:0;}
+#result.is-failure{padding-top:4px;}
+#result.is-failure #result-mark{height:55px;font-size:40px;}
+#result.is-failure #result-heading{margin:8px 0;font-size:21px;}
+#result.is-failure #result-detail{margin:6px 0;}
+
+/* 操作部の実寸を優先し、残った高さに盤面を収める。凡例は常に読める大きさで表示する。 */
+.direction-icon{width:22px;height:22px;flex-shrink:0;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.directions button,.instruction{display:flex;align-items:center;justify-content:center;gap:5px}
+.instruction{justify-content:flex-start}
+.hint-arrow{display:grid;place-items:center}
+.board-key{display:flex;flex-wrap:wrap;justify-content:center;gap:4px 12px;margin:4px 0;font-size:16px;line-height:24px;color:var(--ink);font-weight:700}
+.board-key span{display:inline-flex;align-items:center;gap:4px;white-space:nowrap}
+.board-key img{width:22px;height:22px;object-fit:contain}
+#game .voice-guide[data-input=touch] span{display:none}
+#app:has(#game:not([hidden])){height:100svh;min-height:0;display:flex;flex-direction:column;position:relative}
+#app:has(#game:not([hidden]))>.toolbar,#app:has(#game:not([hidden]))>#mic-notice,#app:has(#game:not([hidden]))>#save-status{flex-shrink:0}
+#game:not([hidden]){flex:1;min-height:0;display:flex;flex-direction:column}
+.game-top,.tutorial-note{flex-shrink:0}
+.play-layout{flex:1;min-height:0;grid-template-rows:minmax(0,1fr) auto auto;gap:4px}
+.board-area{min-height:0;display:flex;flex-direction:column;align-self:stretch}
+.board-frame{flex:1;min-height:0;container-type:size;width:100%;display:grid;place-items:center}
+#game .board,#game:has(#tutorial-note:not([hidden])) .board{width:min(100cqw,100cqh,360px,var(--finished-board-size,360px))}
+#result.board-result{flex-shrink:0;position:relative;background:#fff9e6;border:2px solid #debd62;border-radius:20px;padding:10px 14px;text-align:center;box-shadow:0 4px 16px #58442e14;margin-top:8px}
+#result.board-result #result-mark{height:30px;font-size:28px}
+#result.board-result #result-mark .award-medal{width:34px}
+#result.board-result #result-heading{font-size:21px;margin:2px 0}
+#result.board-result #result-detail{margin:2px 0;font-size:14px}
+#result.board-result .voice-guide{min-height:28px;margin:4px 0;padding:3px 6px}
+#result.board-result .voice-guide strong{font-size:17px}
+#result.board-result .voice-guide span{font-size:14px}
+#result.board-result .voice-guide[data-input=touch] span{display:none}
+#result.board-result>.big{min-height:44px;padding:7px;margin:5px 0 0}
+#result.board-result>[data-action=end]{position:absolute;right:10px;top:10px;width:auto;min-height:36px;font-size:13px;padding:5px 10px;margin:0}
+#app:has(#result.board-result:not([hidden])) .command-area{visibility:hidden}
+#result.board-result{position:absolute;left:16px;right:16px;bottom:max(12px,env(safe-area-inset-bottom));margin:0}
+@media(max-width:380px){.board-key{font-size:14px;gap:4px 6px}.board-key img{width:18px;height:18px}}
+@media(min-width:900px){
+  .play-layout{grid-template-columns:1fr 1fr;grid-template-rows:minmax(0,1fr) auto;gap:4px 28px;align-items:stretch}
+  .board-area{grid-column:1;grid-row:1}.board-key{grid-column:1;grid-row:2}.command-area{grid-column:2;grid-row:1 / 3;align-self:center}
+  #game .board,#game:has(#tutorial-note:not([hidden])) .board{width:min(100cqw,100cqh,470px,var(--finished-board-size,470px))}
+  #result.board-result{width:calc(50% - 42px);left:auto;right:28px;margin:0}
+}
+@media(max-height:740px) and (max-width:899px){
+  #app:has(#game:not([hidden])){padding:6px 10px}
+  .play-layout{grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-rows:auto auto minmax(40px,1fr) auto auto auto auto auto;gap:1px 8px}
+  #budget,.sequence-heading{line-height:1.2}
+  .board-area{grid-column:1;grid-row:1 / 4}
+  #game .board,#game:has(#tutorial-note:not([hidden])) .board{width:min(100cqw,100cqh,180px,var(--finished-board-size,180px))}
+  .board-key{grid-column:1 / -1;grid-row:4;font-size:14px;line-height:22px;margin:2px 0;gap:4px 6px}
+  .board-key img{width:18px;height:18px}
+  #sequence{height:100%;min-height:40px;max-height:110px}
+  #touch-input{grid-row:5}#input-status{grid-row:6}#game-voice-guide{grid-row:7}#execute,#continue{grid-row:8}
+  #mic-notice{font-size:12px;line-height:18px;text-align:left;margin:2px 0}
+  #mic-notice button{min-height:26px;font-size:12px;padding:2px 6px}
+  #result.board-result{padding:6px 10px;margin-top:4px}
+}
+@media(max-height:620px){
+  #result.is-failure>.big{min-height:48px;padding:8px;margin:8px 0}
+  #result.is-failure .voice-guide{min-height:36px;padding:4px 6px}
+  #result.is-failure .voice-guide strong{font-size:18px}
+  #result.is-failure .voice-guide span{font-size:14px}
+  #result.is-failure .voice-guide[data-input=touch] span{display:none}
+}
+#quit{color:#8a5a3c}
+#quit svg{width:25px;height:25px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+@media(max-height:700px){#quit{width:40px;height:40px;min-height:40px}}
+/* ピタリ／メモリの styles.css と src/ui/menu-layout.js を読取参照。
+   色・文字・角丸・枠・影・クリア印は同じ値。4レベルと再開を含む縦一列。 */
+#title{position:relative;padding-bottom:calc(max(8px,env(safe-area-inset-bottom)) + 14px)}
+#app:has(#title:not([hidden])) .toolbar{z-index:2}
+#title .title-footer{position:absolute;bottom:max(8px,env(safe-area-inset-bottom));left:0;width:100%;margin:0;padding:0;font-size:10px;line-height:1.4;font-weight:400;color:#746d62;text-align:center}
+#title .title-menu{gap:8px;margin-bottom:22px}
+#title .title-menu>.big,#title #level-list button{min-height:52px;padding:2px 12px;font-size:24px;line-height:1.2;font-weight:700;border-radius:20px;box-shadow:0 3px 0 #dce5ef;text-align:center}
+#title #new{background:#e7ddef;color:#3d2f4a}
+#title .seg{background:#e5ece7}
+#title .seg button{font-size:22px;padding:0;color:#493f36}
+#title .seg button[aria-pressed=true]{background:#fff;box-shadow:0 3px 9px #32472e18}
+#title #level-list{display:grid;grid-template-columns:1fr;gap:8px}
+#title #level-list button{position:relative;justify-content:center;padding:2px 40px;border:1px solid #dce5ef;background:#e5ece7;color:#493f36}
+#title #level-list button>span:first-child{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;white-space:nowrap}
+#title #level-list small{font-size:14px;line-height:1.4;font-weight:400;color:#746d62}
+#title #level-list button.completed{border-color:#589e80;background:#dce9d5}
+#title #level-list button:active{background:#fff8e6}
+#level-list .clear-mark{position:absolute;right:16px;top:50%;transform:translateY(-50%);font:inherit;color:inherit}
+#title .record{gap:10px;flex-wrap:wrap;min-height:clamp(44px,7svh,58px);padding:3px 10px;border-radius:20px;background:#ffffffa8;color:#223c60}
+#title .record small{font-size:11px;color:#746d62}
+#title .record strong{font-size:15px;color:#223c60}
+#title .record .award-medal{width:30px}
+#title .title-menu+.record{margin-top:auto;margin-bottom:42px}
+@media(min-height:780px){
+  #title .title-menu+.record{position:absolute;bottom:64px;left:50%;transform:translateX(-50%);width:min(420px,100%);height:58px;min-height:58px;margin:0}
+}
+@media(max-height:819px){
+  #title .title-menu,#title #level-list{gap:6px}
+  #title .title-menu>.big,#title #level-list button{min-height:44px}
+  #title .title-menu+.record{margin-bottom:16px}
+}
+@media(min-height:780px) and (max-height:819px){#title .title-menu+.record{margin:0}}
+@media(max-height:740px){
+  #title .title-caption{display:none}
+  #title .title-menu{margin-top:8px;margin-bottom:8px}
+}
+@media(max-height:620px){
+  #title .title-menu,#title #level-list{gap:4px}
+  #title .title-menu{margin-top:6px;margin-bottom:2px}
+  #title .seg button{min-height:36px}
+  #title .title-menu+.record{margin-bottom:2px}
+}
+/* 操作の意味に対応する配色はジントリと共通。 */
+.green{color:#30462e}.purple{color:#4e3869}.gold{color:#503e17}
+/* 共通 medalMarkup の色と装飾。新作の称号でも同じメダルを使う。 */
+.award-medal{display:inline-flex;width:48px;flex-shrink:0;background:transparent;color:#b57848;filter:drop-shadow(0 4px 3px #64472425)}
+.award-medal svg{display:block;width:100%;height:auto;overflow:visible;fill:currentColor}
+.award-medal circle{fill:currentColor;stroke:none}
+.award-medal .ribbon,.award-medal.silver .ribbon,.award-medal.gold .ribbon,.award-medal.platinum .ribbon{fill:#728f9e}
+.award-medal .medal-ring{fill:none;stroke:#fff9;stroke-width:1.4}
+.award-medal .medal-star{fill:#fff8df}
+.award-medal.silver{color:#99a9b6}.award-medal.gold{color:#deb049}.award-medal.platinum{color:#83b9b0}
+.award-medal.silver circle,.award-medal.gold circle,.award-medal.platinum circle{fill:currentColor;stroke:none}
+.award-medal.silver .medal-ring,.award-medal.gold .medal-ring,.award-medal.platinum .medal-ring{fill:none;stroke:#fff9}
+#title button:focus-visible{outline:3px solid #284f85;outline-offset:5px}
+#title [data-action=editor]{background:#f5b18b;color:#542d20}
+/* ヘルプの実寸50pxをヘッダー内に収め、再試行との余白を確保する。 */
+#app:not(:has(#title:not([hidden]))) .toolbar{min-height:50px}
+#mic-notice{display:flex;align-items:center;gap:8px;margin:8px 0 4px;text-align:left;line-height:20px}
+#mic-notice span{flex:1;min-width:0}
+#mic-notice button{flex-shrink:0;min-height:44px}
+#game-voice-guide{min-height:32px}
+@media(max-height:620px) and (max-width:899px){
+  .tutorial-note{margin:2px 0;padding:2px 8px}
+  #failure-location .failure-board{width:110px}
+}

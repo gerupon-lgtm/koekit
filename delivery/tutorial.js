@@ -1,0 +1,5 @@
+export const BASIC_STAGE = Object.freeze({id:'tutorial-basic',revision:1,size:3,blocked:[1,2,6,7],start:0,destination:8,packages:[{id:'basic-package',cell:5}],stepLimit:4});
+export const BASIC_SEQUENCE = Object.freeze([{direction:'down',count:1},{direction:'right',count:2},{direction:'down',count:1}]);
+export const ADDITIONAL_STAGE = Object.freeze({id:'tutorial-additional',revision:1,size:5,blocked:[5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24],start:0,destination:4,packages:[{id:'first',cell:1},{id:'second',cell:2},{id:'third',cell:3}],stepLimit:12});
+export function tutorialNeeded(progress,difficulty,level){if(!progress?.tutorialCompletion?.basic)return 'basic';if(level>=3&&!progress?.tutorialCompletion?.additional?.[difficulty])return 'additional';return null;}
+export function completeTutorial(progress,type,difficulty){const p=JSON.parse(JSON.stringify(progress));p.tutorialCompletion??={};if(type==='basic')p.tutorialCompletion.basic=true;else if(type==='additional')p.tutorialCompletion.additional={...(p.tutorialCompletion.additional??{}),[difficulty]:true};return p;}

@@ -458,3 +458,22 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--color-primary);
 .doubutsu #title .app-title { height: clamp(40px, 7svh, 56px); margin-top: 8px; }
 .doubutsu .memory-level-list { gap: 12px; max-height: 368px; }
 .doubutsu .level-picker .unlock-hint { margin-top: auto; }
+
+/* トップだけ：5作品の入口を画面高へ配分。個別アプリのCSSには波及しない。 */
+.page:has(.app-card.delivery) .app-list {gap:10px;}
+.page:has(.app-card.delivery) .app-card {min-height:clamp(76px,calc((100svh - 324px) / 5),116px);padding:6px 18px;}
+.page:has(.app-card.delivery) .app-card .wordmark {height:clamp(38px,6svh,60px);}
+.page:has(.app-card.delivery) .family-note {margin:12px 0 6px;}
+.page:has(.app-card.delivery) .app-open {bottom:8px;right:12px;}
+@media(max-height:680px){
+  .page:has(.app-card.delivery) {padding:10px 16px 8px;}
+  .page:has(.app-card.delivery) .site-title .brand-symbol {width:44px;height:44px;}
+  .page:has(.app-card.delivery) .site-lead {font-size:24px;margin-bottom:2px;}
+  .page:has(.app-card.delivery) .site-header {margin-bottom:8px;}
+  .page:has(.app-card.delivery) .site-note {font-size:12px;}
+  .page:has(.app-card.delivery) .app-list {gap:7px;}
+  .page:has(.app-card.delivery) .app-card {min-height:clamp(62px,calc((100svh - 224px) / 5),86px);padding:3px 15px;}
+  .page:has(.app-card.delivery) .app-card .wordmark {height:34px;}
+  .page:has(.app-card.delivery) .app-desc {font-size:11px;}
+  .page:has(.app-card.delivery) .family-note {font-size:11px;margin:6px 0 2px;}
+}

@@ -1,0 +1,59 @@
+{
+  "robot-empty": {
+    "sourceSize": [
+      1254,
+      1254
+    ],
+    "outputSize": [
+      256,
+      256
+    ],
+    "transparent": 40002,
+    "opaque": 24372,
+    "bounds": {
+      "left": 48,
+      "top": 28,
+      "right": 209,
+      "bottom": 230
+    },
+    "bytes": 12812
+  },
+  "robot-one": {
+    "sourceSize": [
+      1254,
+      1254
+    ],
+    "outputSize": [
+      256,
+      256
+    ],
+    "transparent": 39178,
+    "opaque": 25309,
+    "bounds": {
+      "left": 41,
+      "top": 27,
+      "right": 209,
+      "bottom": 230
+    },
+    "bytes": 13742
+  },
+  "robot-two": {
+    "sourceSize": [
+      1254,
+      1254
+    ],
+    "outputSize": [
+      256,
+      256
+    ],
+    "transparent": 38583,
+    "opaque": 25981,
+    "bounds": {
+      "left": 41,
+      "top": 27,
+      "right": 212,
+      "bottom": 230
+    },
+    "bytes": 12466
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "tool": "built-in image_gen.imagegen",
+  "transparent_background": true,
+  "reference": "docs/delivery/references/robot-concepts-abc.png (central B)",
+  "prompts": [
+    {
+      "state": "empty",
+      "prompt": "Use case: stylized-concept. Asset type: transparent game sprite, robot-empty. Reference image: use ONLY the central B bipedal robot of the provided concept sheet as visual reference; no wheels from A/C. Generate one standalone cute bipedal delivery robot with round cream shell, teal face, two large dark brown and white eyes, small smile, short arms with cocoa hands, short legs and cocoa toe caps. Both hands EMPTY, no parcels. Friendly flat softly shaded children's game illustration, simple clear silhouette, no texture noise. Front-facing slightly three-quarter toward viewer, both feet level in a neutral standing pose. Square 1024x1024 transparent canvas; head centered near x512 y260, feet bottom near y900; robot extent approximately x200..824 y120..900; enough transparent margins for held boxes later. No background, shadow, text, labels, logo, border, floor, watermark. Actual alpha transparency. Keep robot large and recognizable on a 9x9 game board."
+    },
+    {
+      "state": "one",
+      "prompt": "Use case: precise-object-edit. Asset type: robot-one transparent game sprite. Edit the provided empty-handed robot PNG. Add exactly ONE small orange cardboard delivery parcel with pale cream tape in the robot's hand at the LEFT side of the image, resting in front of that palm. The opposite hand remains empty. Keep the entire original robot identity, face, head and body geometry, pose, orientation, cream/teal/cocoa colors, dimensions, head position and feet positions PIXEL ALIGNED with the input. Do not resize, move, redraw or scale the robot or canvas. Use the exact same square canvas size as input. Only the parcel and its holding hand may differ. Parcel clear at tiny game-board scale; no markings or text. Actual transparent alpha background. No shadow, floor, labels, background, second parcel, wheels or watermark."
+    },
+    {
+      "state": "two"
+    }
+  ]
+}

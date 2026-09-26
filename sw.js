@@ -12,12 +12,20 @@
 // BUILD は scripts/stamp-cache.cjs が各デプロイ前に一意な値へ置換する。
 
 const VERSION = '0.1.0';            // version.json と一致（scripts/check-version 対象）
-const BUILD = 'v0.1.0-20260926084137-48f35e0';         // ← scripts/stamp-cache.cjs がデプロイ毎に置換
+const BUILD = 'v0.1.0-20260926134839-291b454';         // ← scripts/stamp-cache.cjs がデプロイ毎に置換
 const APP_CACHE = 'koekit-app-' + BUILD;
 const STATIC_CACHE = 'koekit-static-v2'; // 大きい静的資産（vosk.js等）。中身を変えたときだけ版を上げる
 
 // オフライン初回用に事前キャッシュする最小シェル（すべて小さいアプリ本体）
 const SHELL = [
+  './delivery/', './delivery/index.html', './delivery/styles.css', './delivery/editor.css',
+  './delivery/app.js', './delivery/view.js', './delivery/phase.js', './delivery/config.js',
+  './delivery/rules.js', './delivery/run.js', './delivery/commands.js', './delivery/storage.js',
+  './delivery/solver.js', './delivery/generator.js', './delivery/search.js', './delivery/search-worker.js',
+  './delivery/tutorial.js', './delivery/editor.js', './delivery/sound.js',
+  './assets/brand/deliverhythm.svg', './assets/delivery/robot-empty.webp',
+  './assets/delivery/robot-one.webp', './assets/delivery/robot-two.webp',
+  './assets/delivery/package.svg', './assets/delivery/destination.svg', './assets/delivery/obstacle.svg',
   './src/ui/voice-guide.js', './src/ui/voice-guide.css',
   './src/speech/microphone.js', './src/speech/switchable.js', './src/ui/mic-toggle.js', './src/ui/mic-toggle.css',
   './src/ui/menu-controls.css', './src/ui/menu-help.js',

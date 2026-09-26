@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#faf5ed">
+  <title>デリバリズム</title>
+  <link rel="manifest" href="../manifest.json">
+  <link rel="icon" href="../assets/icons/koekit-192.png">
+  <link rel="apple-touch-icon" href="../assets/icons/koekit-180.png">
+  <link rel="stylesheet" href="./styles.css">
+  <link rel="stylesheet" href="./editor.css">
+  <link rel="stylesheet" href="../src/ui/menu-controls.css">
+  <link rel="stylesheet" href="../src/ui/mic-toggle.css">
+  <link rel="stylesheet" href="../src/ui/voice-guide.css">
+  <script type="module" src="../sw-register.js"></script>
+  <script type="module" src="../src/ui/mic-toggle.js"></script>
+  <script type="module" src="./app.js"></script>
+</head>
+<body>
+<main id="app">
+  <header class="toolbar">
+    <a id="home" class="icon menu-home" href="../" aria-label="コエキット トップへ"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3l9 8h-2.5v9h-5.5v-6h-2v6H5.5v-9H3z"/></svg></a>
+    <button id="quit" class="icon" data-action="quit" aria-label="ゲームをおわる" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 4H4v16h6m0-8h11m-5-5 5 5-5 5"/></svg></button>
+    <span id="mode-label"></span>
+    <button id="help" class="icon menu-help" data-action="help" aria-label="つかいかた">？</button>
+    <button type="button" id="mic-state" class="mic-state" aria-label="マイク：オン"><svg class="mic" viewBox="0 0 24 24"><g class="body"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M6 11a6 6 0 0 0 12 0M12 17v4M8 21h8" fill="none" stroke="currentColor" stroke-width="2"/></g><path class="slash" d="m3 3 18 18"/></svg></button>
+  </header>
+  <div id="save-status" role="status" hidden></div>
+  <div id="mic-notice" class="note" role="status" hidden><span>こえを使えません。タッチであそべます。</span><button data-action="retryMic">こえを再試行</button></div>
+  <section id="title" class="screen">
+    <h1><img class="wordmark" src="../assets/brand/deliverhythm.svg" alt="デリバリズム" width="799" height="196"></h1>
+    <p class="title-caption">こえで みちをつくって、おとどけ。</p>
+    <div class="title-menu">
+      <div class="seg" aria-label="むずかしさ"><button data-difficulty="easy" aria-pressed="true">やさしい</button><button data-difficulty="hard" aria-pressed="false">むずかしい</button></div>
+      <button id="resume" class="big gold" data-action="resume" hidden>つづきから</button>
+      <button id="new" class="big purple" data-action="new">はじめから</button>
+      <div id="level-list" aria-label="レベルを えらぶ"></div>
+      <button class="big peach" data-action="editor">つくる・あそぶ</button>
+    </div>
+    <div id="record" class="record"></div>
+    <footer class="title-footer">v0.1.0 &nbsp; © 2026 SIKUMI LAB</footer>
+  </section>
+  <section id="preparing" class="screen" hidden>
+    <div class="preparing-mark" aria-hidden="true">▦</div><h2 id="preparing-message">みちを じゅんびちゅう…</h2>
+    <button id="prepare-retry" class="big green" data-action="prepareRetry" hidden>もういちど</button>
+    <button class="big subtle" data-action="title">タイトルへ</button>
+  </section>
+  <section id="game" class="screen" hidden>
+    <div class="game-top"><span id="stage-label"></span><span id="delivery-count"></span><span id="hands" aria-label="もっている にもつ"></span></div>
+    <aside id="tutorial-note" class="tutorial-note" hidden><span></span><button id="skip-tutorial" data-action="skipTutorial" hidden>スキップ</button></aside>
+    <div class="play-layout">
+      <div class="board-area"><div class="board-frame"><div id="board" class="board" role="img" aria-label="はいだつの ばんめん"></div></div></div>
+      <div class="board-key"><span><img src="../assets/delivery/package.svg" alt="">にもつ</span><span><img src="../assets/delivery/destination.svg" alt="">とどけさき</span><span><img src="../assets/delivery/obstacle.svg" alt="岩は">とおれない</span></div>
+      <div class="command-area">
+        <div id="budget" role="status"></div>
+        <div class="sequence-heading"><strong>しじの じゅんばん</strong><span id="selection-label">さいごに ついか</span></div>
+        <div id="sequence" role="group" aria-label="しじのひょう"></div>
+        <div id="touch-input">
+          <div class="directions" aria-label="ほうこう"><button data-direction="up" aria-pressed="false">↑ うえ</button><button data-direction="down" aria-pressed="false">↓ した</button><button data-direction="left" aria-pressed="false">← ひだり</button><button data-direction="right" aria-pressed="true">→ みぎ</button></div>
+          <div class="count-row"><label for="step-count">ほすう</label><select id="step-count" aria-label="ほすう"></select><button class="green" id="add-command" data-action="add">ついか</button></div>
+          <div class="edit-actions"><button data-action="undo">もどす</button><button data-action="reset">やりなおし</button><button data-action="hint">ヒント</button></div>
+        </div>
+        <p id="input-status" role="status"></p>
+        <div id="game-voice-guide"></div>
+        <button id="execute" class="big gold" data-action="execute" disabled>オッケー</button>
+        <button id="continue" class="big green" data-action="continue" hidden>つづける</button>
+      </div>
+    </div>
+    <div id="hint-panel" hidden><p id="hint-message"></p><div class="button-row"><button data-action="hintNext">つぎのヒント</button><button data-action="hintClose">とじる（オッケー）</button></div><div id="hint-voice-guide"></div></div>
+  </section>
+  <section id="result" class="screen" hidden>
+    <div id="result-mark"></div><h2 id="result-heading"></h2><p id="result-detail"></p>
+    <div id="failure-location" hidden></div>
+    <div id="result-voice-guide"></div>
+    <button id="retry" class="big green" data-action="retry" hidden>スタート</button>
+    <button id="next" class="big green" data-action="next" hidden>つぎ</button>
+    <button id="preview-return" class="big purple" data-action="previewReturn" hidden>つくる にもどる</button>
+    <button class="big subtle" data-action="end">おわり</button>
+  </section>
+  <section id="editor-screen" class="screen" hidden><div id="editor-host"></div><div id="editor-voice-guide"></div></section>
+</main>
+<div id="toast" class="toast" role="status" hidden></div>
+<dialog id="dialog" aria-labelledby="dialog-title"><h2 id="dialog-title"></h2><div id="dialog-body"></div><div id="dialog-voice-guide"></div><div id="dialog-actions" class="stack"></div></dialog>
+</body>
+</html>

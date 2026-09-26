@@ -423,3 +423,15 @@
 - [x] JT-T06の公開：発案者承認後、mainへ反映。HTTPS公開と公開版ブラウザ操作を確認。
 - [ ] JT-T06の実機受入：Android/iOS実発話、モデル取得済みオフライン音声・PWA、実機CPU応答。
 - 合意済み仕様を再確認せず進める。現行の仕様は [ジントリズム基本設計](jintorhythm-design.md)、実装範囲・検証・残件は [実装記録](jintori-implementation-log.md) を参照。
+
+## デリバリズム（2026-09-26）
+
+- [x] [基本設計v0.3](delivery/design.md)と[設計サマリ](delivery/summary.md)を作成。操作判断D-Q01〜03は確定済み。
+- [x] D-T01〜07：ローカル実装・Node／Chrome検証済み。[実装記録](delivery/implementation-log.md)に再実行と結果を記載。
+- [x] D-T08のローカル統合：トップ・SW・共通UI・オフラインタッチ・実モデル取得失敗からのタッチ継続・WebKit smoke・既存4作品回帰。
+- [ ] D-T08実機受入・公開：Android/iOS実発話・PWA・取得済みモデルのオフライン音声・音量と試遊。
+- [ ] D-T09：外部共有は後続検討。初版に含めない。
+
+- [x] D-T10制作：透過ロボット3状態・ロゴ・盤面素材・SE／ジングル。[素材記録](delivery/assets.md)。実機視認性と試聴はD-T08で確認。
+
+- [x] デリバリズムの[実装引継ぎ](delivery/handoff.md)と[アセット資料](delivery/references/README.md)を作成し、比較原画像をリポジトリ内へ複製。素材本制作とアプリ実装・自動検証を完了。引継ぎも更新済み。
