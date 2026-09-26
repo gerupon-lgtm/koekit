@@ -16,11 +16,11 @@ const example = () => ({ bars: 4, gridStep: 1, notes: [
 ] });
 let state = { pattern: example(), cursor: 0, revision: 0 }, candidate = null, captured = null, capturedOriginal = null;
 let ctx, transport, capture, serial = 0, phase = 'idle', raf, lastFrame = 0, maxFrameGapMs = 0, lastBar = -1;
-const record = { prototype: 'ML-T01-v3', timestamp: new Date().toISOString(), userAgent: navigator.userAgent, playback: null, capture: null };
+const record = { prototype: 'ML-T01-v4', timestamp: new Date().toISOString(), userAgent: navigator.userAgent, playback: null, capture: null };
 const labels = { idle: '準備できました', preparing: '音とマイクの準備中', playing: '再生中・停止はボタンで', 'count-in': '8拍のカウント中', recording: '4小節を取り込み中', analyzing: '端末内で解析中' };
 function setPhase(next, message) {
   phase = next; $('status').dataset.state = next; $('status').textContent = message || labels[next];
-  for (const id of ['tempo','instrument','length','lead','ahead','example','empty','propose','undo','capture','play','adopt','preview','discard','pitch','duration','count-sound','record-count','play-count','smoothing','timing-adjust','processing','boundary-mode','window-size','rms','ratio','gap']) $(id).disabled = next !== 'idle';
+  for (const id of ['tempo','instrument','length','lead','ahead','example','empty','propose','undo','capture','play','adopt','preview','discard','pitch','duration','count-sound','record-count','play-count','smoothing','note-mode','timing-adjust','processing','boundary-mode','window-size','rms','ratio','gap']) $(id).disabled = next !== 'idle';
   $('align-start').disabled = next !== 'idle' || !capturedOriginal?.notes[0]?.startTick;
   $('capture').disabled = next !== 'idle' || !microphoneEnabled();
   $('confirm').disabled = next !== 'idle' || !candidate || !!candidate.code;
@@ -108,7 +108,7 @@ $('capture').onclick = async () => {
   $('capture-position').textContent = 'カウント待ち';
   try {
     const tempo = tempoValue(); await prepare(); if (request !== serial) return;
-    const options = { windowSize: Number($('window-size').value), boundaryMode: $('boundary-mode').value, rmsFloor: Number($('rms').value), minDetectedRatio: Number($('ratio').value), maxGapSeconds: Number($('gap').value), processing: $('processing').checked, countSound: $('count-sound').checked, recordCount: $('record-count').checked, smoothingMs: Number($('smoothing').value), manualMs: Number($('timing-adjust').value) };
+    const options = { windowSize: Number($('window-size').value), boundaryMode: $('boundary-mode').value, rmsFloor: Number($('rms').value), minDetectedRatio: Number($('ratio').value), maxGapSeconds: Number($('gap').value), processing: $('processing').checked, countSound: $('count-sound').checked, recordCount: $('record-count').checked, smoothingMs: Number($('smoothing').value), noteMode: $('note-mode').value, manualMs: Number($('timing-adjust').value) };
     if (!Number.isFinite(options.manualMs) || options.manualMs < -200 || options.manualMs > 400 || ![0,80,120].includes(options.smoothingMs)) throw new Error('補正値が範囲外です');
     try { localStorage.setItem('saezuri.capture.manualMs', String(options.manualMs)); } catch {}
     if (options.rmsFloor < 0.001 || options.rmsFloor > 0.1 || options.minDetectedRatio < 0 || options.minDetectedRatio > 1 || options.maxGapSeconds < 0 || options.maxGapSeconds > 0.5) throw new Error('解析条件が範囲外です');

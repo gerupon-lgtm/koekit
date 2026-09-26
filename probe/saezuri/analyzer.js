@@ -52,7 +52,7 @@ export function detectPitch(samples, sampleRate, { rmsFloor = 0.008, threshold =
 
 // Never smooth across silence/unknown. Median suppresses isolated octave errors;
 // sustained changes form notes, whose pitch is averaged BEFORE semitone rounding.
-function smoothPitches(frames, endSeconds, smoothingMs, tempo) {
+function smoothPitches(frames, endSeconds, smoothingMs, tempo, noteMode) {
   const data = frames.map(f => ({ ...f, origin: 'detected' }));
   if (!smoothingMs) return data;
   const radius = smoothingMs / 2000;
@@ -86,18 +86,42 @@ function smoothPitches(frames, endSeconds, smoothingMs, tempo) {
       return sum/weight;
     };
     const apply = (a,b) => { const midi=Math.round(average(a,b)); for(let i=a;i<b;i++) data[i].midi=midi; };
+    const sustain = noteMode === 'sustain';
+    const settleSeconds = Math.max(0.18, smoothingMs / 500);
+    // Segment decisions need a full vibrato-cycle view as well as a hold.
+    // Instantaneous rounded pitches reset the hold on every oscillation and
+    // can otherwise erase even a long, intentional semitone transition.
+    const boundaryValues = sustain ? values.map((_, index) => {
+      let sum = 0, weight = 0;
+      const time = data[first + index].time, halfWindow = 0.125;
+      for (let j = first; j < last; j++) {
+        const duration = Math.max(0, Math.min(data[j + 1]?.time ?? endSeconds, time + halfWindow)
+          - Math.max(data[j].time, time - halfWindow));
+        sum += values[j - first] * duration; weight += duration;
+      }
+      return sum / weight;
+    }) : values;
+    let onsetEnd = first + 1;
+    while (onsetEnd < last && data[onsetEnd].time - data[first].time < settleSeconds) onsetEnd++;
+    const onsetCenter = sustain ? average(first, onsetEnd) : frames[first].midi;
     let start=first,pending=-1,pendingPitch=null;
     for(let i=first+1;i<last;i++) {
       // At a phrase onset, forward-looking smoothing can start at a vibrato
-      // crest. Keep the original onset as a short-lived reference instead of
-      // treating that crest as a separate note before one full window exists.
-      const center = start === first && data[i].time-data[start].time < Math.max(0.18,smoothingMs/500)
-        ? frames[start].midi : average(start,pending<0?i:pending);
-      const pitch=values[i-first];
+      // crest. Sustain mode averages the onset; detail keeps its raw reference
+      // to retain short notes before a full averaging window exists.
+      const center = start === first && data[i].time-data[start].time < settleSeconds
+        ? onsetCenter : average(start,pending<0?i:pending);
+      // Large jumps already exceed the vibrato range. Their boundary must use
+      // the short window: the long average invents intermediate pitches and
+      // would mix the new note into the preceding note's mean.
+      const largeChange = Math.abs(values[i-first]-center) >= 1.5 && Math.abs(boundaryValues[i-first]-center) >= 1.5;
+      const pitch = sustain && !largeChange ? boundaryValues[i-first] : values[i-first];
       if(Math.round(pitch)!==Math.round(center)) {
         if(pending<0 || Math.round(pitch)!==pendingPitch) { pending=i; pendingPitch=Math.round(pitch); }
         const end=data[i+1]?.time ?? endSeconds;
-        const required = Math.abs(pitch-center)>=0.65 ? hold : Math.max(0.18,smoothingMs/500);
+        // Humming: allow a vibrato excursion to return before splitting a note.
+        // Confirmed changes retain their original onset, not the confirmation time.
+        const required = (sustain ? largeChange : Math.abs(pitch-center) >= 0.65) ? hold : settleSeconds;
         if(end-data[pending].time+1e-9>=required) { apply(start,pending);start=pending;pending=-1; }
       } else pending=-1;
     }
@@ -107,8 +131,8 @@ function smoothPitches(frames, endSeconds, smoothingMs, tempo) {
   return data;
 }
 
-export function analyzeFrames(frames, { endSeconds, maxGapSeconds = 0.15, minDetectedRatio = 0.1, smoothingMs = 0, tempo = 120 } = {}) {
-  const data = smoothPitches(frames, endSeconds, smoothingMs, tempo);
+export function analyzeFrames(frames, { endSeconds, maxGapSeconds = 0.15, minDetectedRatio = 0.1, smoothingMs = 0, tempo = 120, noteMode = 'detail' } = {}) {
+  const data = smoothPitches(frames, endSeconds, smoothingMs, tempo, noteMode);
   let detected = 0, nonSilent = 0;
   for (let i = 0; i < data.length; i++) {
     const span = Math.max(0, Math.min(endSeconds, data[i + 1]?.time ?? endSeconds) - data[i].time);
@@ -147,7 +171,9 @@ export function quantizeSegments(segments, tempo, endTick = 64) {
   const scale = tempo * 4 / 60, notes = [];
   for (const segment of segments) {
     const startTick = Math.max(notes.at(-1) ? notes.at(-1).startTick + notes.at(-1).durationTick : 0, Math.round(segment.start * scale));
-    const end = Math.min(endTick, Math.max(startTick + 1, Math.round(segment.end * scale)));
+    // A fragment that rounds to zero has no sixteenth-note slot. Giving every
+    // fragment one tick would push subsequent notes away from their sung times.
+    const end = Math.min(endTick, Math.round(segment.end * scale));
     if (startTick >= end) continue;
     notes.push({ id: `capture-${notes.length}`, startTick, durationTick: end - startTick, midi: segment.midi, origin: segment.origin, completedRanges: segment.completedRanges || [] });
   }

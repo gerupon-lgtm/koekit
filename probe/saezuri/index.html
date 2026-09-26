@@ -25,9 +25,11 @@
   <div class="fields"><button id="mic" aria-pressed="true">マイク ON</button><label><input type="checkbox" id="count-sound" checked> カウント音</label><label><input type="checkbox" id="record-count" checked> 録音中もシェーカーで拍を刻む</label><label><input type="checkbox" id="processing"> OSの音声処理を要求</label></div>
   <p>短いシェーカー音を使い、解析時にその高音域を抑えます。スピーカーからの混入が気になる場合はイヤホンを使うか、カウント音をOFFにしてください。</p>
   <p id="capture-position">カウント待ち</p>
-  <div class="fields"><label>音高のならし <select id="smoothing"><option value="80">標準（80ms）</option><option value="120">強め（120ms）</option><option value="0">なし（比較用）</option></select></label>
+  <div class="fields"><label>音の区切り <select id="note-mode"><option value="sustain">長音を保つ（ハナウタ）</option><option value="detail">細かい変化も拾う（従来）</option></select></label>
+  <label>音高のならし <select id="smoothing"><option value="80">標準（80ms）</option><option value="120">強め（120ms）</option><option value="0">なし（比較用）</option></select></label>
   <label>タイミング追加補正（ms）<input id="timing-adjust" type="number" min="-200" max="400" step="10" value="0"></label></div>
   <p>音高をならしてから最も近い半音にし、開始・長さを16分単位に丸めます。入出力遅延は端末の推定値で補正。まだ遅れる場合は追加補正を＋方向へ調整してください（この端末に保存）。</p>
+  <p>「長音を保つ」は小さな揺れで音を分けず、音程が変わって落ち着くのを待ちます。速い半音の動きは「細かい変化も拾う」で比較してください。「ならし：なし」ではこの抑制もOFFになります。設定は次の取り込みに反映します。</p>
   <details><summary>解析の比較条件（未確定）</summary><div class="fields">
    <label>発音区間の方式 <select id="boundary-mode"><option value="energy-gated">短区間の無音判定（比較案）</option><option value="window-start">音高窓の先頭（旧方式）</option></select></label>
    <label>音高解析窓 <select id="window-size"><option value="4096">4096標本（従来）</option><option value="2048">2048標本（比較）</option><option value="1024">1024標本（比較・低音域が狭い）</option></select></label>
