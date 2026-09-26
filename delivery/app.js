@@ -7,7 +7,7 @@ import { SearchClient } from './search.js';
 import { mountEditor } from './editor.js';
 import { DeliverySound } from './sound.js';
 import { DeliverySpeech } from './phase.js';
-import { $, node, showScreen, renderBoard, renderSequence, renderRecord, renderStepOptions, directionIcon, medalMarkup, DIRECTIONS } from './view.js';
+import { $, node, showScreen, renderBoard, renderSequence, flashSequence, renderRecord, renderStepOptions, directionIcon, medalMarkup, DIRECTIONS } from './view.js';
 import { setMicState } from '../src/ui/micstate.js';
 import { setVoiceGuide } from '../src/ui/voice-guide.js';
 import { microphoneEnabled, onMicrophoneChange } from '../src/speech/microphone.js';
@@ -68,13 +68,14 @@ function tutorialText(){if(!session?.tutorialType)return '';if(session.tutorialT
   if(session.runtime.deliveredMask)return '2こ とどけたね！ のこりを「ひだり 1 → みぎ 1」で届けよう。';
   return session.difficulty==='easy'?'2こまで持てるよ。「みぎ 4」で3こ目を通りすぎて配達。つぎに取りにもどろう。':'2こまで持てるよ。「みぎ 4 → ひだり 1 → みぎ 1」。2回の配達をまとめて入れよう。';}
 function paintGame(){if(!session)return;const s=session;
+  $('game').classList.toggle('large-grid',s.stageSnapshot.size>=5);
   renderStepOptions(s.stageSnapshot.size);
   $('stage-label').textContent=s.source==='tutorial'?'れんしゅう':s.source==='custom'?`じぶんの面 ${s.stageIndex+1} / ${s.orderedStageSnapshots.length}`:`レベル ${s.level}・${s.stageIndex+1} / 3`;
   $('tutorial-note').hidden=s.source!=='tutorial';$('tutorial-note').style.visibility=s.phase==='cleared'?'hidden':'';
   if(!busy&&s.phase!=='cleared')$('tutorial-note').querySelector('span').textContent=tutorialText();
   $('skip-tutorial').hidden=!(s.reviewTutorial&&(s.tutorialType==='basic'?progress.tutorialCompletion?.basic:progress.tutorialCompletion?.additional?.[s.difficulty]));
   renderBoard(s.stageSnapshot,s.runtime,{hintTarget:hint?.target,hintDirection:hintLevel>=2?hint?.direction:null});renderSequence(s);
-  const remaining=remainingSteps(s),editing=s.phase==='editing';$('budget').classList.toggle('over',remaining<0);$('budget').replaceChildren(node('span',editing?'入力できる のこり':'のこり ほすう'),node('strong',remaining<0?`${remaining}歩（${-remaining}歩オーバー）`:`${remaining}歩`));
+  const remaining=remainingSteps(s),editing=s.phase==='editing';$('budget').classList.toggle('over',remaining<0);$('budget').replaceChildren(node('span',editing?(s.stageSnapshot.size>=5?'入力の のこり':'入力できる のこり'):'のこり ほすう'),node('strong',remaining<0?`${remaining}歩（${-remaining}歩オーバー）`:`${remaining}歩`));
   $('touch-input').hidden=false;for(const control of $('touch-input').querySelectorAll('button,select'))control.disabled=!editing||busy||conflict;
   $('execute').hidden=s.phase==='paused';$('execute').disabled=!editing||s.sequence.length===0||!!hint||conflict||busy;
   $('continue').hidden=s.phase!=='paused';$('continue').disabled=conflict;
@@ -103,18 +104,19 @@ function handleText(raw,context){if(context==='dialog'){if(/^(オッケー|オ�
   if(command.type==='error'){if(session.phase==='editing')$('input-status').textContent=command.code==='MULTIPLE_COMMANDS'?'ひとつずつ おねがい':'「みぎ2」「2ばん」のように いってね';return}
   if(command.type==='direction'){selectDirection(command.direction);$('input-status').textContent=`${DIRECTIONS[command.direction][1]} だね。「みぎ2」で ついか`;return}
   if(command.type==='move')selectDirection(command.direction);
-  dispatchCommand(command);
+  dispatchCommand(command,{voice:true});
 }
 function selectDirection(value){direction=value;for(const b of document.querySelectorAll('[data-direction]'))b.setAttribute('aria-pressed',String(b.dataset.direction===value));}
-function dispatchCommand(command){if(command.type==='end'){endPlay();return}if(hint||busy||conflict)return;
+function dispatchCommand(command,{voice=false}={}){if(command.type==='end'){endPlay();return}if(hint||busy||conflict)return;
   if(command.type==='confirm'){void execute();return}if(command.type==='retry'){retryPlay();return}if(command.type==='next'){if(session.phase==='paused')void execute();else void nextStage();return}if(command.type==='hint'){void showHint();return}
   const before=session,selected=session.selectedIndex;session=editSequence(session,command);if(session===before)return;hint=null;saveSession();paintGame();
   $('input-status').textContent=command.type==='move'?`${DIRECTIONS[command.direction][1]} ${command.count}：${selected!=null?`${selected+1}ばんを なおしたよ`:'ついかしたよ'}`:'表を みて たしかめよう';
-  if(command.type==='move'){$('sequence').scrollTop=$('sequence').scrollHeight;if(selected!=null){const row=$('sequence').children[selected];row?.classList.add('changed');row?.scrollIntoView({block:'nearest'})}}syncVoice();
+  if(command.type==='move'){$('sequence').scrollTop=$('sequence').scrollHeight;if(selected!=null){const row=$('sequence').children[selected];row?.classList.add('changed');if(row){const box=$('sequence').getBoundingClientRect(),item=row.getBoundingClientRect();$('sequence').scrollTop+=item.top-box.top}}if(voice)flashSequence(selected??session.sequence.length-1)}syncVoice();
 }
 async function execute(){if(!session||busy||hint||conflict||!['editing','paused'].includes(session.phase))return;const next=startExecution(session);if(next.phase!=='executing')return;
   stopAsync();session=next;busy=true;const token=epoch;saveSession();paintGame();guide('game-voice-guide','','ロボットが おとどけちゅう');
-  await wait(PLAYBACK.startMs);if(token!==epoch)return;
+  const startDuration=sound.play('start');
+  await wait(Math.max(PLAYBACK.startMs,startDuration+70));if(token!==epoch)return;
   while(token===epoch&&session?.phase==='executing'){
     const result=advance(session);
     if(result.session.phase==='cleared'){await wait(PLAYBACK.goalPauseMs);if(token!==epoch)return;}

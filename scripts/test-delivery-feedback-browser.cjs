@@ -1,0 +1,34 @@
+const {chromium}=require('../.local-tools/node_modules/playwright');
+const assert=require('node:assert/strict');
+const base=process.env.DELIVERY_BASE||'http://127.0.0.1:8001';
+const mock=`export function createSpeechInput(){const handlers=new Map();return {on(k,f){handlers.set(k,f)},off(k){handlers.delete(k)},start(){window.listening=true;window.say=t=>handlers.get('result')?.(t)},stop(){window.listening=false},dispose(){window.listening=false}}}`;
+(async()=>{const browser=await chromium.launch({channel:'chrome',headless:true});try{
+  const c=await browser.newContext({serviceWorkers:'block',viewport:{width:390,height:844}});
+  await c.route('**/src/speech/index.js',r=>r.fulfill({contentType:'application/javascript',body:mock}));
+  await c.route('**/delivery/sound.js',async r=>{const response=await r.fetch();await r.fulfill({response,body:await response.text()+`
+    const originalPlay=DeliverySound.prototype.play;
+    DeliverySound.prototype.play=function(event){const duration=originalPlay.call(this,event);(window.sounds||=[]).push({event,duration,listening:window.listening,state:this.context?.state,notes:this.playing.size,time:performance.now()});return duration};`})});
+  const p=await c.newPage();await p.goto(base+'/delivery/');await p.locator('#level-list button').last().waitFor();await p.locator('#new').click();await p.waitForFunction(()=>window.say);await p.evaluate(()=>document.fonts.ready);
+  const rects=()=>p.evaluate(()=>['board','sequence','touch-input'].map(id=>{const r=document.getElementById(id).getBoundingClientRect();return [r.x,r.y,r.width,r.height]}));
+  const before=await rects();
+  await p.evaluate(()=>window.say('右'));assert.equal(await p.locator('.voice-received').count(),0);
+  await p.evaluate(()=>window.say('下 一'));assert.equal(await p.locator('#sequence.voice-received .voice-added').count(),1);
+  await p.waitForTimeout(150);const color=await p.locator('.voice-added').evaluate(e=>getComputedStyle(e).backgroundColor);assert.notEqual(color,'rgba(0, 0, 0, 0)');
+  await p.screenshot({path:'.local-tools/delivery/voice-sequence-feedback.png'});
+  await p.evaluate(()=>window.say('右 二'));assert.equal(await p.locator('.voice-added').getAttribute('data-row'),'1');
+  await p.waitForFunction(()=>!document.querySelector('.voice-received'),{},{timeout:2500});assert.equal(await p.locator('.voice-added').count(),0);
+  await p.evaluate(()=>window.say('二 番'));await p.evaluate(()=>window.say('右 一'));assert.equal(await p.locator('.voice-added').getAttribute('data-row'),'1');
+  await p.waitForFunction(()=>!document.querySelector('.voice-received'));
+  await p.evaluate(()=>window.say('右 一 下 二'));assert.equal(await p.locator('.voice-received').count(),0);
+  const after=await rects();for(let i=0;i<before.length;i++)for(let j=0;j<4;j++)assert.ok(Math.abs(before[i][j]-after[i][j])<1);
+  assert.equal(await p.evaluate(()=>scrollY),0);
+  await p.emulateMedia({reducedMotion:'reduce'});await p.evaluate(()=>window.say('下 一'));
+  assert.equal(await p.locator('#sequence').evaluate(e=>getComputedStyle(e).animationName),'none');
+  assert.equal(await p.locator('.voice-added').evaluate(e=>getComputedStyle(e).backgroundColor),'rgb(244, 223, 160)');
+  await p.locator('#add-command').click();assert.equal(await p.locator('.voice-received').count(),0);
+  await p.emulateMedia({reducedMotion:'no-preference'});
+  await p.locator('#execute').click();await p.waitForFunction(()=>window.sounds?.some(s=>s.event==='move'));
+  const sounds=await p.evaluate(()=>window.sounds);assert.equal(sounds[0].event,'start');assert.ok(sounds[0].duration>=320&&sounds[0].duration<=321);assert.equal(sounds[0].listening,false);assert.equal(sounds[0].state,'running');assert.equal(sounds[0].notes,3);assert.ok(sounds[1].time-sounds[0].time>=380);
+  await p.locator('#quit').click();const count=await p.evaluate(()=>window.sounds.length);await p.waitForTimeout(850);assert.equal(await p.evaluate(()=>window.sounds.length),count);
+  console.log('Voice pulse append/replace/restart/cleanup, reduced motion, no page shift, touch exclusion, start audio with recognition stopped, 400ms departure and interruption: passed');
+}finally{await browser.close()}})().catch(e=>{console.error(e);process.exitCode=1});

@@ -47,7 +47,7 @@ export function renderBoard(stage,runtime,{hintTarget,hintDirection,failedCell}=
   for(let i=0;i<2;i++){const slot=node('span',undefined,'hand');if(i<held){const img=node('img');img.src='../assets/delivery/package.svg';img.alt='にもつ';slot.append(img)}else slot.textContent='−';$('hands').append(slot)}
 }
 export function renderSequence(session) {
-  const el=$('sequence'),scroll=el.scrollTop;el.replaceChildren();
+  const el=$('sequence'),scroll=el.scrollTop;el.classList.remove('voice-received');el.onanimationend=null;el.replaceChildren();
   session.sequence.forEach((command,index)=>{
     const btn=node('button');btn.dataset.row=index;btn.type='button';
     const instruction=node('span',undefined,'instruction');instruction.append(directionIcon(command.direction),document.createTextNode(`${DIRECTIONS[command.direction][1]} ${command.count}`));
@@ -63,6 +63,17 @@ export function renderSequence(session) {
   }
   $('selection-label').textContent=Number.isInteger(session.selectedIndex)?`${session.selectedIndex+1}ばんを なおす`:'さいごに ついか';
   $('add-command').textContent=Number.isInteger(session.selectedIndex)?'おきかえる':'ついか';
+}
+export function flashSequence(index) {
+  const el=$('sequence'),row=el.children[index];if(!row)return;
+  el.classList.remove('voice-received');
+  // Restart even when consecutive utterances arrive before the previous pulse ends.
+  void el.offsetWidth;
+  el.classList.add('voice-received');row.classList.add('voice-added');
+  el.onanimationend=event=>{
+    if(event.target!==el)return;
+    el.classList.remove('voice-received');row.classList.remove('voice-added');el.onanimationend=null;
+  };
 }
 export function renderRecord(el,title,difficulty) {
   el.replaceChildren();if(title)el.insertAdjacentHTML('beforeend',medalMarkup(title.medal));
