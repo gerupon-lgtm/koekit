@@ -1,3 +1,4 @@
+import { setVoiceGuide } from '../src/ui/voice-guide.js';
 // イロドリズム メインコントローラ（タッチ中核スライス）
 // 画面: モード選択→サイズ/見本選択→制作→一覧→完成プレビュー。
 // 既存2作品には影響しない（irodori/ 単独 + 共通部品の import のみ）。
@@ -142,6 +143,7 @@ function showTemplateReference() {
   $('template-canvas').setAttribute('aria-label', template.name + 'の いろつき おてほん');
   renderTemplateReference();
   updateTemplateToggle();
+  setVoiceGuide($('template-voice-guide'), template.id === 'heart-5' ? 'オッケー' : '', template.id === 'heart-5' ? 'で ぬるがめんへ' : '「ぬる」を タッチ', 'ぬる を タッチ');
   $('template-dialog').showModal();
   if (heartExplanationOpen()) void enableVoice();
 }
@@ -258,6 +260,8 @@ function draw() {
       tutorialGuide.show('undo', tutorial);
     } else if (tutorial.feedback) setMsg(tutorial.feedback);
   }
+  const cue = tutorial?.passed ? ['つぎ', 'で すすむ', 'つぎの あんないを まってね'] : tutorial?.undoReady ? ['もどす', 'で とりけす', '↶ を タッチ'] : !$('btn-confirm').disabled ? ['オッケー', 'で ぬる', 'オーケー を タッチ'] : ['', 'いろと ばしょを えらぼう'];
+  setVoiceGuide($('make-voice-guide'), ...cue);
 }
 
 function startTutorial() {

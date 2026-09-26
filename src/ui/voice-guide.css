@@ -1,0 +1,16 @@
+.voice-guide{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:2px 8px;min-height:48px;margin:6px auto;padding:6px 10px;max-width:100%;border-radius:14px;background:#fff1c9;color:#284f72;text-align:center;line-height:1.4;box-sizing:border-box;flex-shrink:0}
+.voice-guide strong{font-size:clamp(20px,5.4vw,25px);font-weight:700}
+.voice-guide span{font-size:16px;font-weight:700}
+.voice-guide[data-input=touch]{background:#e5eee8;color:#315749}
+.voice-guide:has(strong:empty){visibility:hidden}
+.voice-labeled.btn-round,.voice-labeled.intro-start{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
+.voice-button-label{font-size:clamp(14px,3.8vw,18px);font-weight:700;line-height:1.3;white-space:nowrap}
+.voice-labeled.btn-round svg{width:36%;height:36%}
+.voice-labeled.intro-start svg{width:32px;height:32px}
+.play-app #game-voice-guide{width:calc(100% - 24px);margin:2px 12px}
+.play-app #game .controls{padding-top:8px;padding-bottom:max(16px,env(safe-area-inset-bottom));min-height:calc(clamp(80px,25vw,124px) + 28px)}
+.play-app #board{width:min(80vw,460px,max(220px,calc(100svh - 310px)))}
+.play-app.sequence-mode #board{width:min(80vw,460px,max(210px,calc(100svh - 342px)))}
+.play-app .intro-voice-hint.voice-guide{text-shadow:none;color:#284f72;margin:0}
+.play-app #cert-voice-guide{margin:0;z-index:2}
+@media(max-height:650px){.voice-guide{min-height:42px;padding:4px 8px;margin-block:4px}.voice-guide strong{font-size:20px}.voice-guide span{font-size:15px}.play-app .intro-card{gap:5px}.play-app #cert{gap:10px}}

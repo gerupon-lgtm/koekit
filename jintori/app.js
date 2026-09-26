@@ -1,3 +1,4 @@
+import { setVoiceGuide } from '../src/ui/voice-guide.js';
 import { normalizeOptions, createRun, startRun, rollRun, playMove, nextMatch, extendRun, requiredItem } from './run.js';
 import { analyzeMove, listLegalMoves } from './rules.js';
 import { SlotStore } from './storage.js';
@@ -33,6 +34,7 @@ function availableItems() {
   return ['enhanced', 'strongest'].filter(item => run.inventoryBySide[run.match.sideToMove][item] > 0);
 }
 function stopWork() {
+  for (const id of ['setup', 'dice', 'game', 'result', 'dialog']) setVoiceGuide($(id + '-voice-guide'), '', 'みていてね');
   generation++;
   speech.close(); clearTimeout(timer); timer = null;
   worker?.terminate(); worker = null;
@@ -45,6 +47,17 @@ function notify(text) {
 }
 function status(text = '') { $('save-status').textContent = text; $('save-status').hidden = !text; }
 function listen(phase) {
+  const target = ['help', 'exit'].includes(phase) ? 'dialog' : ['human', 'direction'].includes(phase) ? 'game' : ['result', 'series'].includes(phase) ? 'result' : phase;
+  let cue;
+  if (phase === 'setup') cue = ['スタート', 'で はじめる', 'スタート を タッチ'];
+  else if (phase === 'dice') cue = ['ストップ', 'で とめる', 'ストップ を タッチ'];
+  else if (phase === 'direction' && !pending.directionId) cue = ['', '①②…を えらぼう'];
+  else if (phase === 'human' || phase === 'direction') cue = pending.analysis?.legal ? ['オッケー', 'で おく', 'オッケー を タッチ'] : ['', 'ばしょを いう・タッチ'];
+  else if (phase === 'result') cue = ['つぎ', 'で つぎのゲームへ', 'つぎのゲーム を タッチ'];
+  else if (phase === 'series') cue = run.series.outcome === 0 ? ['えんちょう', 'で つづける ／「おわる」で おわる', 'えんちょう・おわる を タッチ'] : ['おわる', 'で メニューへ', 'おわる を タッチ'];
+  else if (phase === 'help') cue = ['とじる', 'で ゲームへ', 'とじる を タッチ'];
+  else if (phase === 'exit') cue = ['つづける', 'で もどる ／「おわる」で おわる', 'つづける・おわる を タッチ'];
+  setVoiceGuide($(target + '-voice-guide'), ...(cue || []));
   if (document.hidden || conflict) return;
   void speech.open(grammarFor(phase, run?.match?.size || 8, availableItems()), { phase, generation });
 }
@@ -126,6 +139,7 @@ function startDice() {
 function stopDice() {
   if (run?.phase !== 'dice' || busy) return;
   // Draw and save immediately: hiding during the stopping animation never rerolls.
+  setVoiceGuide($('dice-voice-guide'), '', 'とまるまで まってね');
   speech.close(); busy = true; $('stop-dice').disabled = true;
   $('dice-result').textContent = 'ころころ… どちらからかな？';
   const value = Math.floor(Math.random() * 6) + 1;

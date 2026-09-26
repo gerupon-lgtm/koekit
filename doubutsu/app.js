@@ -1,3 +1,4 @@
+import { updatePhaseGuide } from '../src/ui/voice-guide.js';
 import { publicMethod } from '../src/speech/public-method.js';
 import { Progress } from '../src/game/progress.js';
 import { renderHighest, renderAward, medalMarkup } from '../src/ui/achievement.js';
@@ -123,6 +124,7 @@ function showFigure(key) { board.showFigure(key); }
 
 // ---- コントロール表示（区間で出し分け） ----
 function updateControls(ph) {
+  updatePhaseGuide(ph);
   $('#next-btn').setAttribute('aria-label', ph === PHASES.AWAIT_RESULT_NEXT ? 'つぎへ' : 'スタート');
   const spin = $('#spin-btn'), confirm = $('#confirm-btn');
   const isSpin = (ph === PHASES.AWAIT_START || ph === PHASES.AWAIT_STOP);

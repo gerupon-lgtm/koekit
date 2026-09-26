@@ -1,3 +1,4 @@
+import { updatePhaseGuide, setVoiceGuide, labelVoiceButton } from '../src/ui/voice-guide.js';
 import { createSpeechInput, METHODS } from '../src/speech/index.js';
 import { wordsForKeys } from '../src/speech/vocabulary.js';
 import { PHASES } from '../src/game/phase.js';
@@ -79,6 +80,7 @@ async function beginTrial() {
   $('#board').style.visibility = 'hidden';
   $('#board').setAttribute('aria-busy', 'true');
   $('#sequence-status').textContent = 'えを よみこみちゅう…';
+  setVoiceGuide($('#game-voice-guide'), '', 'えを よみこみちゅう…');
   const dealt = deal(level.vocab, { letters: ANIMAL_FILES });
   const images = level.vocab.map(key => ({ key, img: animalImg(dealt.map[key]) }));
   try {
@@ -95,6 +97,8 @@ async function beginTrial() {
     $('#sequence-status').textContent = 'えを よめませんでした。もういちど おしてね。';
     $('#next-btn').classList.remove('hidden');
     $('#next-btn').setAttribute('aria-label', 'えを よみなおす');
+    labelVoiceButton($('#next-btn'), 'よみなおす');
+    setVoiceGuide($('#game-voice-guide'), '', 'よみなおす を タッチ');
     return;
   }
   if (token !== trialGeneration) return;
@@ -129,6 +133,7 @@ function startExample() {
 function answering() { return phase && (phase.phase === SP.ANSWER || phase.phase === SP.CONFIRM); }
 function controls() {
   const ph = phase.phase;
+  updatePhaseGuide(ph);
   $('#next-btn').classList.toggle('hidden', ph !== PHASES.AWAIT_START && ph !== PHASES.AWAIT_RESULT_NEXT);
   $('#next-btn').setAttribute('aria-label', ph === PHASES.AWAIT_START ? 'スタート' : 'つぎへ（声でも「つぎ」「オッケー」）');
   $('#confirm-btn').classList.toggle('hidden', !answering());

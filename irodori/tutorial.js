@@ -1,3 +1,4 @@
+import { setVoiceGuide } from '../src/ui/voice-guide.js';
 // 練習の判定は制作コントローラから独立。作品・下書きの保存はしない。
 export const LESSONS = [
   { size: 9, title: 'A1を きいろに ぬろう', words: ['えい いち', 'きいろ', 'オーケー'], tip: 'Aは「えい」。ばしょが うごいてから、いろを いおう。', touch: 'A1 → きいろ → オーケー', cells: [0], color: 2, tool: 'single' },
@@ -78,6 +79,7 @@ export function createTutorialGuide({ onOpen, onClose, onRestart, onRetry, onFin
     dialog.querySelector('#tutorial-primary').textContent = kind === 'overview' ? 'はじめる' : kind === 'complete' ? 'おしまい' : 'やってみる';
     dialog.querySelector('#tutorial-retry').hidden = kind === 'overview' || kind === 'complete';
     dialog.querySelector('#tutorial-restart').hidden = kind === 'overview';
+    setVoiceGuide(dialog.querySelector('.ir-tutorial-voice'), 'つぎ', kind === 'complete' ? 'で おしまい' : 'で すすむ', `${dialog.querySelector('#tutorial-primary').textContent} を タッチ`);
     if (!dialog.open) { dialog.showModal(); onOpen(); }
   };
   const primary = () => {

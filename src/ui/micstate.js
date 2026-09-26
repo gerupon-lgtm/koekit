@@ -18,5 +18,6 @@ export function setMicState(stateEl, stageEl, state) {
   if (state === 'listening') { stateEl.classList.add('listening'); if (stageEl) stageEl.classList.add('listening'); }
   else if (state === 'restarting') { stateEl.classList.add('restarting'); if (stageEl) stageEl.classList.add('restarting'); }
   else if (state === 'denied') { stateEl.classList.add('denied'); }
+  document.dispatchEvent(new Event('koekit-mic-state'));
   // 'idle' は全解除のみ
 }

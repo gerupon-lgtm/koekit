@@ -1,3 +1,4 @@
+import { updatePhaseGuide } from '../src/ui/voice-guide.js';
 import { publicMethod } from '../src/speech/public-method.js';
 import { Progress } from '../src/game/progress.js';
 import { renderHighest, renderAward, medalMarkup } from '../src/ui/achievement.js';
@@ -200,6 +201,7 @@ function showTarget() {
 
 // ---- コントロール表示 ----
 function updateControls(ph) {
+  updatePhaseGuide(ph);
   $('#next-btn').setAttribute('aria-label', ph === PHASES.AWAIT_RESULT_NEXT ? 'つぎへ' : 'スタート');
   $('#next-btn').classList.toggle('hidden', ph !== PHASES.AWAIT_START && ph !== PHASES.AWAIT_RESULT_NEXT); // ▶ ＝ 開始または正解表示の先送り
   const inAnswer = (ph === PHASES.AWAIT_POSITION || ph === PHASES.AWAIT_CONFIRM);

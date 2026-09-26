@@ -13,6 +13,7 @@
   <link rel="stylesheet" href="../src/ui/menu-controls.css">
 <link rel="stylesheet" href="../src/ui/mic-toggle.css">
 <script type="module" src="../src/ui/mic-toggle.js"></script>
+<link rel="stylesheet" href="../src/ui/voice-guide.css">
 </head>
 <body>
 <main id="app">
@@ -86,6 +87,7 @@
     <button id="template-reference" hidden></button>
     <p class="ir-msg" id="make-msg" role="status"></p>
     <div class="ir-board" id="board"></div>
+    <div id="make-voice-guide"></div>
     <button class="ir-confirm" id="btn-confirm" disabled>オーケー（きめる）</button>
     <div class="ir-toolrow">
       <div class="ir-seg" id="tools">
@@ -146,6 +148,7 @@
   <div id="recipe-content" hidden><h3 id="recipe-title"></h3><div id="recipe-words" class="ir-tutorial-words"></div><p id="recipe-tip"></p><div class="ir-recipe-nav"><button id="recipe-prev" class="ir-mini">まえ</button><span id="recipe-progress"></span><button id="recipe-next" class="ir-mini">つぎ</button></div></div>
   <p id="template-freedom">おなじ いろでも、すきな いろでも。</p>
   <button id="template-guide-toggle" class="ir-mini" aria-pressed="true">したえ：オン</button>
+  <div id="template-voice-guide"></div>
   <button id="template-done" class="ir-help-done">ぬる</button>
 </dialog>
 <script type="module" src="./app.js"></script>
