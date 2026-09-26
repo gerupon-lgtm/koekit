@@ -28,7 +28,7 @@ const mock=`export function createSpeechInput(){const handlers=new Map();return 
   await p.locator('#add-command').click();assert.equal(await p.locator('.voice-received').count(),0);
   await p.emulateMedia({reducedMotion:'no-preference'});
   await p.locator('#execute').click();await p.waitForFunction(()=>window.sounds?.some(s=>s.event==='move'));
-  const sounds=await p.evaluate(()=>window.sounds);assert.equal(sounds[0].event,'start');assert.ok(sounds[0].duration>=320&&sounds[0].duration<=321);assert.equal(sounds[0].listening,false);assert.equal(sounds[0].state,'running');assert.equal(sounds[0].notes,3);assert.ok(sounds[1].time-sounds[0].time>=380);
+  const sounds=await p.evaluate(()=>window.sounds.filter(s=>s.event!=='stageStart'));assert.equal(sounds[0].event,'start');assert.ok(sounds[0].duration>=320&&sounds[0].duration<=321);assert.equal(sounds[0].listening,false);assert.equal(sounds[0].state,'running');assert.equal(sounds[0].notes,3);assert.ok(sounds[1].time-sounds[0].time-sounds[0].duration>=240,'departure sound must finish, then leave 250ms before the first step');
   await p.locator('#quit').click();const count=await p.evaluate(()=>window.sounds.length);await p.waitForTimeout(850);assert.equal(await p.evaluate(()=>window.sounds.length),count);
-  console.log('Voice pulse append/replace/restart/cleanup, reduced motion, no page shift, touch exclusion, start audio with recognition stopped, 400ms departure and interruption: passed');
+  console.log('Voice pulse append/replace/restart/cleanup, reduced motion, no page shift, touch exclusion, start audio with recognition stopped, 250ms silence before walking and interruption: passed');
 }finally{await browser.close()}})().catch(e=>{console.error(e);process.exitCode=1});

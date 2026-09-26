@@ -56,13 +56,23 @@ async function beginNormal(level,stageIndex=0,{reviewTutorial=null}={}){
   const needed=reviewTutorial||tutorialNeeded(progress,difficulty,level);
   if(needed){const stage=needed==='basic'?BASIC_STAGE:ADDITIONAL_STAGE;
     session=createSession(stage,{difficulty,source:'tutorial',level,stageIndex,tutorialType:needed,pendingStart:{level,stageIndex,difficulty},reviewTutorial:!!reviewTutorial});
-    saveSession();setScreen('game');paintGame();syncVoice();return;
+    saveSession();await enterStage();return;
   }
   pendingPrepare={level,stageIndex};setScreen('preparing');$('preparing-message').textContent='みちを じゅんびちゅう…';$('prepare-retry').hidden=true;
   const token=epoch;
   try{const seed=crypto.getRandomValues(new Uint32Array(1))[0];const stage=await search.run('generate',{seed,level,options:{difficulty}});if(token!==epoch)return;
-    session=createSession(stage,{difficulty,source:'normal',level,stageIndex});saveSession();setScreen('game');paintGame();syncVoice();
+    session=createSession(stage,{difficulty,source:'normal',level,stageIndex});saveSession();await enterStage();
   }catch{if(token!==epoch)return;$('preparing-message').textContent='みちを つくれませんでした';$('prepare-retry').hidden=false;}
+}
+async function enterStage(){
+  if(conflict)return;
+  const token=epoch;speech.close();busy=true;setScreen('game');
+  $('tutorial-note').querySelector('span').textContent=tutorialText();paintGame();
+  guide('game-voice-guide','','はじまるよ');
+  // The first stage can open within the first gesture, before AudioContext.resume resolves.
+  await sound.prime();if(token!==epoch)return;
+  const duration=sound.play('stageStart');await wait(duration+80);if(token!==epoch)return;
+  busy=false;paintGame();syncVoice();
 }
 function tutorialText(){if(!session?.tutorialType)return '';if(session.tutorialType==='basic')return ['まずは「した 1」。方向と歩数をひとつずつ入れよう。','つぎは「みぎ 2」。にもつは自動でひろうよ。','さいごに「した 1」。おうちに届けよう。','表をみて「オッケー」。4歩で届けよう。'][Math.min(session.sequence.length,3)];
   if(session.runtime.deliveredMask)return '2こ とどけたね！ のこりを「ひだり 1 → みぎ 1」で届けよう。';
@@ -116,7 +126,7 @@ function dispatchCommand(command,{voice=false}={}){if(command.type==='end'){endP
 async function execute(){if(!session||busy||hint||conflict||!['editing','paused'].includes(session.phase))return;const next=startExecution(session);if(next.phase!=='executing')return;
   stopAsync();session=next;busy=true;const token=epoch;saveSession();paintGame();guide('game-voice-guide','','ロボットが おとどけちゅう');
   const startDuration=sound.play('start');
-  await wait(Math.max(PLAYBACK.startMs,startDuration+70));if(token!==epoch)return;
+  await wait(Math.max(PLAYBACK.startMs,startDuration+PLAYBACK.startSoundGapMs));if(token!==epoch)return;
   while(token===epoch&&session?.phase==='executing'){
     const result=advance(session);
     if(result.session.phase==='cleared'){await wait(PLAYBACK.goalPauseMs);if(token!==epoch)return;}
@@ -155,7 +165,7 @@ function showResult(){if(!session)return;const failed=session.phase==='failed';
 function retryPlay(){if(session?.phase!=='failed'||busy||conflict)return;stopAsync();session=retry(session);hint=null;saveSession();setScreen('game');$('input-status').textContent='しじを なおしてから オッケー。';paintGame();syncVoice()}
 async function nextStage(){if(session?.phase!=='cleared'||busy||conflict)return;const old=session;stopAsync();busy=true;
   if(old.source==='tutorial'){if(old.reviewTutorial){endPlay();return}difficulty=old.pendingStart.difficulty;await beginNormal(old.pendingStart.level,old.pendingStart.stageIndex);return}
-  if(old.source==='custom'){if(old.preview){returnToEditor();return}if(old.stageIndex+1>=old.orderedStageSnapshots.length){endPlay();return}session=createSession(old.orderedStageSnapshots[old.stageIndex+1],{source:'custom',difficulty:old.difficulty,stageIndex:old.stageIndex+1,orderedStageSnapshots:old.orderedStageSnapshots});busy=false;saveSession();setScreen('game');paintGame();syncVoice();return}
+  if(old.source==='custom'){if(old.preview){returnToEditor();return}if(old.stageIndex+1>=old.orderedStageSnapshots.length){endPlay();return}session=createSession(old.orderedStageSnapshots[old.stageIndex+1],{source:'custom',difficulty:old.difficulty,stageIndex:old.stageIndex+1,orderedStageSnapshots:old.orderedStageSnapshots});saveSession();await enterStage();return}
   if(old.stageIndex<2)await beginNormal(old.level,old.stageIndex+1);else if(old.level<4)await beginNormal(old.level+1,0);else endPlay();
 }
 async function showHint(next=false){if(session?.phase!=='editing'||busy||conflict)return;if(hint&&next){hintLevel=2;paintGame();syncVoice();return}speech.close();busy=true;const token=epoch;
@@ -166,7 +176,7 @@ function closeHint(){hint=null;hintLevel=0;paintGame();syncVoice()}
 function resume(){stopAsync();conflict=false;const saved=readSaved();if(!saved)return;session=resumeSession(saved);difficulty=session.difficulty;hint=null;saveSession();if(['failed','cleared'].includes(session.phase))showResult();else{setScreen('game');paintGame();syncVoice()}}
 function endPlay(){stopAsync();hint=null;$('toast').hidden=true;if(session){const r=storage.endSession(session.sessionId,sessionRevision);if(r.ok){sessionRevision=r.revision;notice('')}else notice('保存を更新できません。端末に前のつづきが残る場合があります。');}session=null;showTitle()}
 function openEditor(){stopAsync();setScreen('editor-screen');editor?.dispose();editor=mountEditor($('editor-host'),{storage,search:editorSearch,onClose:showTitle,onPlay:(stages,options)=>requestCustom(stages,options),onSpeechContext:context=>{editorVoice=context;if(screen==='editor-screen')syncVoice()}})}
-function requestCustom(stages,options){const start=()=>{stopAsync();const saved=readSaved();if(saved){const r=storage.endSession(saved.sessionId,sessionRevision);if(!r.ok){notice('前のプレイを更新できません。新しいプレイは開始していません。');setScreen('editor-screen');syncVoice();return}sessionRevision=r.revision}conflict=false;previewReturn=options.onReturn;session=createSession(stages[0],{difficulty,source:'custom',stageIndex:0,orderedStageSnapshots:clone(stages),preview:!!options.preview,editorSnapshot:options.preview?editor?.getState():null});saveSession();setScreen('game');hint=null;paintGame();syncVoice()};const saved=readSaved();if(saved)openDialog('今のつづきを 置きかえる？','作った面と称号は残ります。',[{label:'あそぶ',color:'green',run:start},{label:'もどる',run:()=>{setScreen('editor-screen');syncVoice()}}]);else start()}
+function requestCustom(stages,options){const start=()=>{stopAsync();const saved=readSaved();if(saved){const r=storage.endSession(saved.sessionId,sessionRevision);if(!r.ok){notice('前のプレイを更新できません。新しいプレイは開始していません。');setScreen('editor-screen');syncVoice();return}sessionRevision=r.revision}conflict=false;previewReturn=options.onReturn;session=createSession(stages[0],{difficulty,source:'custom',stageIndex:0,orderedStageSnapshots:clone(stages),preview:!!options.preview,editorSnapshot:options.preview?editor?.getState():null});saveSession();hint=null;void enterStage()};const saved=readSaved();if(saved)openDialog('今のつづきを 置きかえる？','作った面と称号は残ります。',[{label:'あそぶ',color:'green',run:start},{label:'もどる',run:()=>{setScreen('editor-screen');syncVoice()}}]);else start()}
 function returnToEditor(){stopAsync();const snapshot=session?.editorSnapshot;if(session){const r=storage.endSession(session.sessionId,sessionRevision);if(r.ok)sessionRevision=r.revision;else notice('つづきの削除を保存できませんでした。')}session=null;if(editor&&previewReturn){setScreen('editor-screen');previewReturn();syncVoice()}else{openEditor();editor.restorePreview(snapshot)}}
 function help(){const back=()=>{closeDialog();if(screen==='game')paintGame();syncVoice()};const actions=[{label:'とじる',color:'green',run:back}];if(screen==='title')actions.push({label:'はじめの れんしゅう',run:()=>requestStart(1,{reviewTutorial:'basic'})},{label:'2かい はいたつの れんしゅう',run:()=>requestStart(3,{reviewTutorial:'additional'})});openDialog('デリバリズムの あそびかた','① 方向と歩数を ひとつずつ入れる\n② 表の順番をみて「オッケー」\n③ にもつを おうちへ とどけよう！\n\n「2ばん」で行を選んで、しじを言いなおせるよ。\nもどす：最後の1行／やりなおし：表をぜんぶ消す\n\nやさしい：届けるたびに 次のしじ。\nむずかしい：ぜんぶのしじを まとめて。\nヒントは 何回でもつかえるよ。\n\nマイクを使わなくても、ぜんぶタッチであそべます。',actions,{onVoice:back})}
 const actions={new:()=>requestStart(),title:showTitle,resume,editor:openEditor,help,

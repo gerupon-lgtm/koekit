@@ -2,6 +2,7 @@
 const n = (frequency, at, duration, gain = .09, type = 'sine') => ({ frequency, at, duration, gain, type });
 export function scoreFor(event, alternate = false) {
   switch (event) {
+    case 'stageStart': return [n(659, 0, .16, .065), n(784, .14, .16, .065), n(1047, .28, .24, .075)];
     case 'start': return [n(523, 0, .09, .075, 'triangle'), n(659, .10, .09, .075, 'triangle'), n(784, .20, .10, .08)];
     case 'move': return [n(alternate ? 620 : 830, 0, .075, .055, 'triangle'), n(alternate ? 440 : 620, .055, .055, .035)];
     case 'pickup': return [n(659, 0, .11), n(988, .08, .15)];
