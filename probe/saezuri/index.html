@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="ja">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>サエズリズム 技術試作</title>
+<link rel="stylesheet" href="../../styles.css"><link rel="stylesheet" href="./probe.css">
+<main>
+ <header><img src="../../assets/brand/saezurhythm.svg" alt="サエズリズム"><img class="bird-preview" src="../../assets/saezuri/bird-neutral-v1.png" alt="採用B案の小鳥・単体素材" width="144" height="144"><h1>音・譜面・ハナウタの技術試作</h1><p>ML-T01／未採用の比較用です。作品は保存しません。声は端末内で解析し、波形は解析後に破棄します。</p></header>
+ <section aria-labelledby="sound-title"><h2 id="sound-title">1. 音色と再生位置</h2>
+  <div class="fields"><label>テンポ <input id="tempo" type="number" min="60" max="180" value="120"></label>
+   <label>音色 <select id="instrument"><option value="piano">ピアノ風（合成試案）</option><option value="wood">木琴風（合成試案）</option><option value="soft">やわらかいシンセ</option><option value="sine">正弦波（比較基準）</option></select></label>
+   <label>長さ <select id="length"><option value="4">4小節</option><option value="129">129小節（最後は1小節）</option></select></label>
+   <label>開始猶予 <select id="lead"><option value="0.35">350ms</option><option value="0.5">500ms</option></select></label>
+   <label>先読み <select id="ahead"><option value="0.15">150ms</option><option value="0.1">100ms</option><option value="0.2">200ms</option></select></label>
+  </div><button id="play">ならべた音を聴く</button><p id="position">1小節・1拍</p><div id="beats" aria-hidden="true"><i>1</i><i>2</i><i>3</i><i>4</i></div>
+ </section>
+ <section><h2>2. 音符モデルと五線譜</h2><p>8分／16分・休符・小節またぎ・加線の比較用。長音は拍ごとにタイ分割する暫定表示です。</p>
+  <div class="fields"><button id="example">境界の作例</button><button id="empty">空の4小節</button>
+   <label>音高 <select id="pitch"></select></label><label>長さ <select id="duration"><option value="4">1拍</option><option value="2">半拍</option><option value="8">2拍</option><option value="16">4拍</option></select></label>
+   <button id="propose">候補にする</button><button id="confirm" disabled>オッケー</button><button id="cancel" disabled>候補をとりけす</button><button id="undo">もどす</button>
+  </div><p id="candidate" role="status">候補なし</p><p id="remaining"></p><div id="score" class="score"></div>
+ </section>
+ <section><h2>3. ハナウタを取り込む</h2><p>8拍カウント → 4小節を取り込みます。音名の言葉認識は起動しません。イヤホンあり／なしを比べてください。</p>
+  <div class="fields"><button id="mic" aria-pressed="true">マイク ON</button><label><input type="checkbox" id="count-sound" checked> カウント音</label><label><input type="checkbox" id="processing"> OSの音声処理を要求</label></div>
+  <details><summary>解析の比較条件（未確定）</summary><div class="fields">
+   <label>発音区間の方式 <select id="boundary-mode"><option value="energy-gated">短区間の無音判定（比較案）</option><option value="window-start">音高窓の先頭（旧方式）</option></select></label>
+   <label>音高解析窓 <select id="window-size"><option value="4096">4096標本（従来）</option><option value="2048">2048標本（比較）</option><option value="1024">1024標本（比較・低音域が狭い）</option></select></label>
+   <label>無音RMS閾値 <input id="rms" type="number" min="0.001" max="0.1" step="0.001" value="0.008"></label>
+   <label>検出率の下限 <input id="ratio" type="number" min="0" max="1" step="0.05" value="0.1"></label>
+   <label>補完候補の最大秒 <input id="gap" type="number" min="0" max="0.5" step="0.05" value="0.15"></label></div>
+   <p>両端が同じ音高の短い不明区間だけを補完候補にします。無音・片側だけ・長い不明区間は補いません。環境雑音と有声の識別は未検証です。短い解析窓は音高切替に有利な場合がありますが、低音の検出範囲が狭くなります。</p>
+  </details>
+  <button id="capture">カウントして取り込む</button>
+  <div id="review" hidden><p>取り込み候補。元の音列はまだ変更していません。茶色は補完候補です。</p><div id="capture-score" class="score"></div><button id="preview">候補を聴く</button><button id="adopt">試作の音列に採用</button><button id="discard">候補を捨てる</button></div>
+ </section>
+ <section><h2>測定記録</h2><p>機種・イヤホン・聞こえ方は追記してください。下の記録は数値と音符だけです。</p><label>実機条件・所感 <textarea id="conditions" placeholder="端末名、ブラウザ、イヤホン有無、声域、ずれ・誤検出など"></textarea></label><button id="report">記録を表示</button><pre id="metrics">まだ計測していません。</pre></section>
+</main>
+<footer><p id="status" data-state="idle" role="status">準備できました</p><button id="stop">停止・中断</button></footer>
+<script type="module" src="./app.js"></script>
+</html>
