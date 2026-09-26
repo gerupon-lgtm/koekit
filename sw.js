@@ -12,7 +12,7 @@
 // BUILD は scripts/stamp-cache.cjs が各デプロイ前に一意な値へ置換する。
 
 const VERSION = '0.1.0';            // version.json と一致（scripts/check-version 対象）
-const BUILD = 'v0.1.0-20260926140244-a5d8fd9';         // ← scripts/stamp-cache.cjs がデプロイ毎に置換
+const BUILD = 'v0.1.0-20260926141803-c890731';         // ← scripts/stamp-cache.cjs がデプロイ毎に置換
 const APP_CACHE = 'koekit-app-' + BUILD;
 const STATIC_CACHE = 'koekit-static-v2'; // 大きい静的資産（vosk.js等）。中身を変えたときだけ版を上げる
 

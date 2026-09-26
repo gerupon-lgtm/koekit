@@ -464,7 +464,7 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--color-primary);
 .page:has(.app-card.delivery) .app-card {min-height:clamp(76px,calc((100svh - 324px) / 5),116px);padding:6px 18px;}
 .page:has(.app-card.delivery) .app-card .wordmark {height:clamp(38px,6svh,60px);}
 .page:has(.app-card.delivery) .family-note {margin:12px 0 6px;}
-.page:has(.app-card.delivery) .app-open {bottom:8px;right:12px;}
+.page:has(.app-card.delivery) .app-open {bottom:8px;right:12px;color:var(--color-primary);}
 @media(max-height:680px){
   .page:has(.app-card.delivery) {padding:10px 16px 8px;}
   .page:has(.app-card.delivery) .site-title .brand-symbol {width:44px;height:44px;}

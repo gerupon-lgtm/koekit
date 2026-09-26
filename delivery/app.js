@@ -101,12 +101,15 @@ function handleText(raw,context){if(context==='dialog'){if(/^(オッケー|オ�
   if(session.phase==='paused'&&raw.replace(/\s/g,'')==='つづける'){void execute();return}
   const command=parseUtterance(raw,{phase:session.phase,maxRows:session.sequence.length});
   if(command.type==='error'){if(session.phase==='editing')$('input-status').textContent=command.code==='MULTIPLE_COMMANDS'?'ひとつずつ おねがい':'「みぎ2」「2ばん」のように いってね';return}
+  if(command.type==='direction'){selectDirection(command.direction);$('input-status').textContent=`${DIRECTIONS[command.direction][1]} だね。「みぎ2」で ついか`;return}
+  if(command.type==='move')selectDirection(command.direction);
   dispatchCommand(command);
 }
+function selectDirection(value){direction=value;for(const b of document.querySelectorAll('[data-direction]'))b.setAttribute('aria-pressed',String(b.dataset.direction===value));}
 function dispatchCommand(command){if(command.type==='end'){endPlay();return}if(hint||busy||conflict)return;
   if(command.type==='confirm'){void execute();return}if(command.type==='retry'){retryPlay();return}if(command.type==='next'){if(session.phase==='paused')void execute();else void nextStage();return}if(command.type==='hint'){void showHint();return}
   const before=session,selected=session.selectedIndex;session=editSequence(session,command);if(session===before)return;hint=null;saveSession();paintGame();
-  $('input-status').textContent=command.type==='move'?(selected!=null?`${selected+1}ばんを なおしたよ`:'しじを ついかしたよ'):'表を みて たしかめよう';
+  $('input-status').textContent=command.type==='move'?`${DIRECTIONS[command.direction][1]} ${command.count}：${selected!=null?`${selected+1}ばんを なおしたよ`:'ついかしたよ'}`:'表を みて たしかめよう';
   if(command.type==='move'){$('sequence').scrollTop=$('sequence').scrollHeight;if(selected!=null){const row=$('sequence').children[selected];row?.classList.add('changed');row?.scrollIntoView({block:'nearest'})}}syncVoice();
 }
 async function execute(){if(!session||busy||hint||conflict||!['editing','paused'].includes(session.phase))return;const next=startExecution(session);if(next.phase!=='executing')return;
@@ -170,7 +173,7 @@ const actions={new:()=>requestStart(),title:showTitle,resume,editor:openEditor,h
   quit:()=>{if(['title','editor-screen','preparing'].includes(screen)){showTitle();return}openDialog('あそびを おわる？','今のつづきは消えます。作った面と称号は残ります。',[{label:'おわる',run:endPlay},{label:'つづける',color:'green',run:()=>{if(screen==='game')paintGame();syncVoice()}}])},
   retryMic:()=>{speech.retry();syncVoice()}
 };
-document.addEventListener('click',event=>{void sound.prime();const target=event.target.closest('button');if(!target)return;if(target.dataset.action)void actions[target.dataset.action]?.();if(target.dataset.difficulty){difficulty=target.dataset.difficulty;showTitle()}if(target.dataset.level)requestStart(Number(target.dataset.level));if(target.dataset.direction){direction=target.dataset.direction;for(const b of document.querySelectorAll('[data-direction]'))b.setAttribute('aria-pressed',String(b===target))}if(target.dataset.row!=null&&session)dispatchCommand({type:'select',index:Number(target.dataset.row)})});
+document.addEventListener('click',event=>{void sound.prime();const target=event.target.closest('button');if(!target)return;if(target.dataset.action)void actions[target.dataset.action]?.();if(target.dataset.difficulty){difficulty=target.dataset.difficulty;showTitle()}if(target.dataset.level)requestStart(Number(target.dataset.level));if(target.dataset.direction)selectDirection(target.dataset.direction);if(target.dataset.row!=null&&session)dispatchCommand({type:'select',index:Number(target.dataset.row)})});
 $('dialog').addEventListener('cancel',()=>{dialogContext=null;speech.close();setTimeout(syncVoice,0)});
 document.addEventListener('visibilitychange',()=>{if(document.hidden)pause();else if(!dialogContext)syncVoice()});
 window.addEventListener('pagehide',()=>pause());
