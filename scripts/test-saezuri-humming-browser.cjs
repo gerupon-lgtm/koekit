@@ -48,7 +48,7 @@ const base = process.env.SAEZURI_BASE || 'http://127.0.0.1:8000';
    } finally {clearTimeout(timer);capture.cancel();capture.unsubscribe();navigator.mediaDevices.getUserMedia=original;await ctx.close();}
   });
   assert.deepEqual(result.notes,[55,52,55,50,48,47,55].map((m,i)=>[i*8,6,m]));
-  assert.equal(result.countEvents,24);
+  assert.equal(result.countEvents,22);
   assert.ok(result.states.includes('recording'));
   assert.equal(result.countOnlySilent,true);
   assert.equal(result.tracksEnded,true);

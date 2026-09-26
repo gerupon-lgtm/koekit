@@ -31,8 +31,9 @@ export class ProbeCapture {
       this.endTime = this.timing.endFrame / this.ctx.sampleRate;
       this.node.port.postMessage({ type: 'start', startFrame: this.timing.startFrame, endFrame: this.timing.endFrame });
       if (options.countSound) for (let i = 0; i < this.timing.countTimes.length; i++) {
-        if (i >= 8 && !options.recordCount) break;
-        this.counts.push(scheduleShaker(this.ctx, this.timing.countTimes[i], i % 4 === 0));
+        const beat = this.timing.countBeats[i];
+        if (beat >= 8 && !options.recordCount) break;
+        this.counts.push(scheduleShaker(this.ctx, this.timing.countTimes[i], beat % 4 === 0));
       }
       this.onState('count-in');
       this.timer = setInterval(() => {

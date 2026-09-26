@@ -1,5 +1,6 @@
 // ML-T01 only: locally synthesized comparison voices, not approved instrument assets.
 import { tickSeconds } from '../../saezuri/document.js';
+import { scheduleShaker } from './capture-support.js';
 export function scheduleVoice(ctx, output, { midi, time, duration, instrument = 'piano', gain = 0.16 }) {
   const harmonics = { sine: [1], piano: [1, 0.35, 0.16, 0.08], wood: [1, 0, 0.12], soft: [1, 0.12, 0.04] }[instrument];
   if (!harmonics) throw new Error('INSTRUMENT_UNKNOWN');
@@ -27,7 +28,7 @@ export function scheduleVoice(ctx, output, { midi, time, duration, instrument = 
 
 export class ProbeTransport {
   constructor(ctx, onStop) { this.ctx = ctx; this.onStop = onStop; this.serial = 0; this.voices = new Set(); this.active = false; }
-  start(notes, { tempo = 120, totalTicks = 64, instrument = 'piano', lead = 0.35, ahead = 0.15 } = {}) {
+  start(notes, { tempo = 120, totalTicks = 64, instrument = 'piano', lead = 0.35, ahead = 0.15, countSound = false } = {}) {
     this.stop(false);
     if (this.ctx.state !== 'running') throw new Error('AUDIO_NOT_READY');
     const serial = this.serial;
@@ -35,9 +36,9 @@ export class ProbeTransport {
     this.tempo = tempo;
     this.totalTicks = totalTicks;
     this.active = true;
-    this.metrics = { events: 0, maxTimerGapMs: 0, aheadMs: ahead * 1000, leadMs: lead * 1000 };
+    this.metrics = { events: 0, countEvents: 0, maxTimerGapMs: 0, aheadMs: ahead * 1000, leadMs: lead * 1000 };
     const queue = [...notes].sort((a,b) => a.startTick - b.startTick);
-    let index = 0, previous = performance.now();
+    let index = 0, countTick = 0, previous = performance.now();
     const pump = () => {
       if (serial !== this.serial) return;
       const wall = performance.now();
@@ -46,6 +47,14 @@ export class ProbeTransport {
       const now = this.ctx.currentTime;
       for (const voice of this.voices) if (voice.end < now) this.voices.delete(voice);
       if (this.ctx.state !== 'running') return this.stop(true, 'AUDIO_INTERRUPTED');
+      while (countSound && countTick < totalTicks) {
+        const time = this.anchor + tickSeconds(countTick, tempo);
+        if (time > now + ahead) break;
+        if (time < now - 0.04) return this.stop(true, 'SCHEDULER_LATE');
+        const stop = scheduleShaker(this.ctx, Math.max(now,time), countTick % 16 === 0);
+        this.voices.add({stop, end:time+0.05});
+        countTick += 4; this.metrics.countEvents++;
+      }
       while (index < queue.length) {
         const note = queue[index], time = this.anchor + tickSeconds(note.startTick, tempo);
         if (time > now + ahead) break;

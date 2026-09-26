@@ -7,9 +7,17 @@ test('latency shifts the whole four-bar capture window, preserving its end',()=>
  assert.ok(Math.abs(plan.correctionSeconds-0.1246666667)<1e-9);
  assert.equal(plan.endFrame-plan.startFrame,384000);
  assert.equal(plan.musicalStart,5);
- assert.equal(plan.countTimes.length,24);
- assert.equal(plan.countTimes[8],5);
+ assert.equal(plan.countTimes.length,22);
+ assert.deepEqual(plan.countTimes.slice(0,7),[1,2,3,3.5,4,4.5,5]);
+ assert.deepEqual(plan.countBeats.slice(0,7),[0,2,4,5,6,7,8]);
+ assert.equal(plan.countTimes[6],5);
  assert.equal(plan.countTimes.at(-1),12.5);
+});
+test('bar-head shaker is longer and stronger than ordinary beats',()=>{
+ const regular=shakerSamples(48000),accent=shakerSamples(48000,true);
+ assert.ok(accent.length>=regular.length*1.5);
+ const peak=s=>s.reduce((p,x)=>Math.max(p,Math.abs(x)),0);
+ assert.ok(peak(accent)>=peak(regular)*1.8);
 });
 test('unknown latency does not invent a measurement and explicit adjustment may be negative',()=>{
  const plan=captureTiming({anchor:1,tempo:180,sampleRate:44100,manualMs:-50});
@@ -29,8 +37,9 @@ test('explicit align shifts the candidate only and keeps internal rests and leng
  assert.equal(result.notes[0].completedRanges[0].start,0.07500000000000001);
 });
 for(const sr of [44100,48000]) test(`shaker spill is suppressed without removing low or high melody at ${sr}`,()=>{
- const click=shakerSamples(sr), samples=new Float32Array(sr);
- for(const start of [0,0.5]) samples.set(click,Math.round(start*sr));
+ const samples=new Float32Array(sr);
+ samples.set(shakerSamples(sr,true),0);
+ samples.set(shakerSamples(sr),Math.round(0.5*sr));
  const filtered=filterCaptureSamples(samples,sr);
  assert.ok(Math.max(...filtered)<0.008);
  assert.ok(analyzeSamples(filtered,sr).every(f=>f.kind==='silence'));

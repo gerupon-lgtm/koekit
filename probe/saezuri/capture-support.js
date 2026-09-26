@@ -5,15 +5,17 @@ export function captureTiming({ anchor, tempo, sampleRate, baseLatency, outputLa
   const correctionSeconds = Math.max(-0.2, Math.min(1, estimatedLatencySeconds + manualMs / 1000));
   const beat = 60 / tempo, musicalStart = anchor + 8 * beat;
   const startFrame = Math.round((musicalStart + correctionSeconds) * sampleRate);
+  const countBeats = [0, 2, 4, 5, 6, 7, ...Array.from({length:16},(_,i)=>8+i)];
   return { musicalStart, startFrame, endFrame: startFrame + Math.round(16 * beat * sampleRate), correctionSeconds, estimatedLatencySeconds,
-    countTimes: Array.from({ length: 24 }, (_, i) => anchor + i * beat) };
+    countBeats, countTimes: countBeats.map(index => anchor + index * beat) };
 }
 
 // A short, noise-like high-band shaker. All spectral components are above the
 // detector's voice band. Speaker nonlinearities can still produce lower energy.
 export function shakerSamples(sampleRate, accent = false) {
-  const size = Math.round(sampleRate * 0.025), buffer = new Float32Array(size);
-  const low = Math.min(6500, sampleRate * 0.30), high = Math.min(10500, sampleRate * 0.44);
+  const size = Math.round(sampleRate * (accent ? 0.04 : 0.02)), buffer = new Float32Array(size);
+  const low = Math.min(accent ? 6500 : 8500, sampleRate * (accent ? 0.30 : 0.36));
+  const high = Math.min(accent ? 8500 : 10500, sampleRate * (accent ? 0.36 : 0.44));
   let seed = 7243;
   for (let n = 0; n < 48; n++) {
     seed = (1664525 * seed + 1013904223) >>> 0;
@@ -27,7 +29,7 @@ export function shakerSamples(sampleRate, accent = false) {
     buffer[i] *= Math.sin(Math.PI * i / (size - 1)) ** 2;
     peak = Math.max(peak, Math.abs(buffer[i]));
   }
-  for (let i = 0; i < size; i++) buffer[i] *= (accent ? 0.13 : 0.09) / peak;
+  for (let i = 0; i < size; i++) buffer[i] *= (accent ? 0.18 : 0.09) / peak;
   return buffer;
 }
 

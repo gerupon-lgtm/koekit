@@ -16,11 +16,11 @@ const example = () => ({ bars: 4, gridStep: 1, notes: [
 ] });
 let state = { pattern: example(), cursor: 0, revision: 0 }, candidate = null, captured = null, capturedOriginal = null;
 let ctx, transport, capture, serial = 0, phase = 'idle', raf, lastFrame = 0, maxFrameGapMs = 0, lastBar = -1;
-const record = { prototype: 'ML-T01-v2', timestamp: new Date().toISOString(), userAgent: navigator.userAgent, playback: null, capture: null };
+const record = { prototype: 'ML-T01-v3', timestamp: new Date().toISOString(), userAgent: navigator.userAgent, playback: null, capture: null };
 const labels = { idle: '準備できました', preparing: '音とマイクの準備中', playing: '再生中・停止はボタンで', 'count-in': '8拍のカウント中', recording: '4小節を取り込み中', analyzing: '端末内で解析中' };
 function setPhase(next, message) {
   phase = next; $('status').dataset.state = next; $('status').textContent = message || labels[next];
-  for (const id of ['tempo','instrument','length','lead','ahead','example','empty','propose','undo','capture','play','adopt','preview','discard','pitch','duration','count-sound','record-count','smoothing','timing-adjust','processing','boundary-mode','window-size','rms','ratio','gap']) $(id).disabled = next !== 'idle';
+  for (const id of ['tempo','instrument','length','lead','ahead','example','empty','propose','undo','capture','play','adopt','preview','discard','pitch','duration','count-sound','record-count','play-count','smoothing','timing-adjust','processing','boundary-mode','window-size','rms','ratio','gap']) $(id).disabled = next !== 'idle';
   $('align-start').disabled = next !== 'idle' || !capturedOriginal?.notes[0]?.startTick;
   $('capture').disabled = next !== 'idle' || !microphoneEnabled();
   $('confirm').disabled = next !== 'idle' || !candidate || !!candidate.code;
@@ -93,8 +93,8 @@ async function play(pattern = state.pattern, preview = false) {
       if (offset + note.startTick >= bars * 16) continue;
       notes.push({ ...note, startTick: offset + note.startTick, durationTick: Math.min(note.durationTick, bars * 16 - offset - note.startTick) });
     }
-    record.playback = { tempo, bars, instrument: $('instrument').value, sampleRate: ctx.sampleRate, baseLatency: ctx.baseLatency, outputLatency: ctx.outputLatency, notes: notes.length };
-    transport.start(notes, { tempo, totalTicks: bars * 16, instrument: $('instrument').value, lead: Number($('lead').value), ahead: Number($('ahead').value) });
+    record.playback = { tempo, bars, instrument: $('instrument').value, sampleRate: ctx.sampleRate, baseLatency: ctx.baseLatency, outputLatency: ctx.outputLatency, notes: notes.length, countSound: $('play-count').checked };
+    transport.start(notes, { tempo, totalTicks: bars * 16, instrument: $('instrument').value, lead: Number($('lead').value), ahead: Number($('ahead').value), countSound: $('play-count').checked });
     setPhase('playing'); lastFrame = 0; maxFrameGapMs = 0; lastBar = -1; animate();
   } catch (error) { if (request === serial) stop(error.message); }
 }
