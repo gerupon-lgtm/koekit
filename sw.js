@@ -12,7 +12,7 @@
 // BUILD は scripts/stamp-cache.cjs が各デプロイ前に一意な値へ置換する。
 
 const VERSION = '0.1.0';            // version.json と一致（scripts/check-version 対象）
-const BUILD = 'v0.1.0-20260926145026-de6562a';         // ← scripts/stamp-cache.cjs がデプロイ毎に置換
+const BUILD = 'v0.1.0-20260926151200-23dd6fa';         // ← scripts/stamp-cache.cjs がデプロイ毎に置換
 const APP_CACHE = 'koekit-app-' + BUILD;
 const STATIC_CACHE = 'koekit-static-v2'; // 大きい静的資産（vosk.js等）。中身を変えたときだけ版を上げる
 
@@ -24,7 +24,7 @@ const SHELL = [
   './delivery/solver.js', './delivery/generator.js', './delivery/search.js', './delivery/search-worker.js',
   './delivery/tutorial.js', './delivery/editor.js', './delivery/sound.js',
   './assets/brand/deliverhythm.svg', './assets/delivery/robot-empty.webp',
-  './assets/delivery/robot-one.webp', './assets/delivery/robot-two.webp',
+  './assets/delivery/robot-one.webp', './assets/delivery/robot-two.webp', './assets/delivery/all-clear.webp',
   './assets/delivery/package.svg', './assets/delivery/destination.svg', './assets/delivery/obstacle.svg',
   './src/ui/voice-guide.js', './src/ui/voice-guide.css',
   './src/speech/microphone.js', './src/speech/switchable.js', './src/ui/mic-toggle.js', './src/ui/mic-toggle.css',

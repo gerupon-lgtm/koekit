@@ -13,6 +13,7 @@
 | `assets/delivery/package.svg` | オレンジ色の荷物、viewBox 64×64 |
 | `assets/delivery/destination.svg` | 青緑の屋根とチェック印の届け先、viewBox 64×64 |
 | `assets/delivery/obstacle.svg` | 灰色の岩、viewBox 64×64 |
+| `assets/delivery/all-clear.webp` | 全面クリアの承認済み一枚絵、1254×1254、188,414 bytes |
 
 盤面素材は透明余白を残す。セル全体を背景色で塗らず、足場や隣接セルのつながりを覆わない。所持状態はRuntimeのheldMaskから描画側で選ぶ。顔や足元を基準に画像ごとの拡大・切抜きを行わず、同じ画像枠へ`object-fit: contain`で表示する。
 
@@ -38,6 +39,8 @@
 
 ## 効果音API
 
+2026-09-27：全面クリア絵は既存 `robot-empty.png` をキャラクター参照に組み込みimage_genで生成し、ユーザー承認を得た画像を採用。原本は `originals/all-clear.png`。生成の構図・色・内容は `all-clear-brief.json`。`node assets/delivery/export-all-clear.cjs` で全画素範囲を保ったままWebP quality=.9へ変換する。切抜き・再描画はしない。配信用WebPはSWに事前保存し、アプリは原本PNGを読み込まない。
+
 `delivery/sound.js`は`DeliverySound`クラスをexportする。出力専用Web Audio合成、BGMなし、既存`sfx.js`には書き込まない。
 
 ```js
@@ -55,6 +58,9 @@ sound.stopAll(); // 再生中・未来に予約済みの音も停止
 | failure | 小音量の柔らかな下降音 | 400 |
 | clear | 最終配達の着地を含む面クリア音 | 830 |
 | award | レベルクリアの和音付きジングル | 1180 |
+| stageStart | 新しい盤面表示時の開始音 | 540 |
+| start | オッケー後の出発音。終了後250ms待って歩行開始 | 約320 |
+| allClear | 全面クリア絵の表示時。柔らかい旋律と和音を一度再生 | 4720 |
 
 未知のeventは0ms。音を利用できない／resume拒否時にも有効eventの待機時間を返して進行を維持する。実行側で認識停止→再生→待機後に現在区間の認識再開を制御し、終了／非表示では`stopAll()`とイベント世代の無効化を合わせる。`play()`自体はマイクを操作しない。
 

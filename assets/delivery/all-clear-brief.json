@@ -1,0 +1,9 @@
+{
+  "approvedOn": "2026-09-27",
+  "tool": "image_gen.imagegen",
+  "reference": "originals/robot-empty.png",
+  "original": "originals/all-clear.png",
+  "use": "All-stage completion illustration, approved in conversation before implementation",
+  "promptSummary": "One square children's storybook celebration scene. Preserve the existing ivory bipedal robot, teal face, brown eyes and mitten hands. Empty-handed robot raises its arms joyfully in front of a cream home with a teal roof. Two adults and a child celebrate receiving orange parcels; one adult holds a parcel, another claps, the child raises their hands. Same softly shaded matte style, warm daylight, cream/teal/brown/orange/sage palette, subtle paper texture, sparse confetti and gold sparkles, small garden flowers. Full robot visible, readable happy faces, no text, logo, UI, trophies or medals.",
+  "export": "node assets/delivery/export-all-clear.cjs; WebP quality 0.9, original dimensions, no crop or retouch"
+}

@@ -175,6 +175,20 @@ dialog{border:0;border-radius:24px;background:var(--bg);color:var(--ink);width:m
 #mic-notice span{flex:1;min-width:0}
 #mic-notice button{flex-shrink:0;min-height:44px}
 #game-voice-guide{min-height:32px}
+/* 全面クリアは絵を切り抜かず表示し、手動でタイトルへ戻る。 */
+#app:has(#ending:not([hidden])){height:100svh;min-height:0;display:flex;flex-direction:column}
+#app:has(#ending:not([hidden])) .toolbar{flex-shrink:0}
+#ending{flex:1;min-height:0;display:flex;flex-direction:column;align-items:center;text-align:center;gap:8px;padding-top:8px}
+#ending-difficulty{margin:0;font-size:13px;color:#746d62}
+#ending-heading{margin:0;font-size:clamp(24px,6vw,32px);line-height:1.4;color:#458f91}
+.ending-art{flex:1;min-height:0;width:100%;display:flex;justify-content:center;align-items:center}
+.ending-art img{display:block;max-width:100%;max-height:100%;width:auto;height:auto;object-fit:contain;border-radius:22px}
+.ending-message{margin:0;font-size:16px;line-height:1.6}.ending-message strong{font-size:24px;color:#88634e}
+#ending-voice-guide{width:100%;max-width:440px;min-height:40px}
+#ending .voice-guide{padding:6px;min-height:40px;margin:0}
+#ending .voice-guide strong{font-size:18px}#ending .voice-guide span{font-size:14px}
+#ending>.big{max-width:440px;min-height:48px;padding:8px;flex-shrink:0}
+@media(max-height:620px){#ending{gap:4px;padding-top:4px}#ending-heading{font-size:24px}.ending-message{font-size:14px}.ending-message strong{font-size:20px}}
 /* 5×5以上は余白と入力欄を詰め、盤面へ高さを戻す。実行中も同じ寸法。 */
 @media(max-width:899px){
   #game.large-grid .board{max-width:none;width:min(100cqw,100cqh,var(--finished-board-size,100cqw))}

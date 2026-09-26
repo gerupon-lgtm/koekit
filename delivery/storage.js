@@ -4,6 +4,7 @@ import { resumeSession } from './run.js';
 const clone=value=>JSON.parse(JSON.stringify(value));
 const fail=code=>({ok:false,code,value:null,revision:null});
 export function validateSession(value){
+  if(value&&(['allClearReady','endingShown'].some(key=>value[key]!=null&&typeof value[key]!=='boolean')||((value.allClearReady||value.endingShown)&&(value.source!=='normal'||value.phase!=='cleared'||value.stageIndex!==2))||(value.endingShown&&!value.allClearReady)))return false;
   if(!value||typeof value.sessionId!=='string'||value.rulesVersion!==RULES_VERSION||!['normal','custom','tutorial'].includes(value.source)||!['easy','hard'].includes(value.difficulty)||!['editing','executing','paused','failed','cleared'].includes(value.phase))return false;
   if(!Number.isSafeInteger(value.revision)||value.revision<0||!Number.isInteger(value.stageIndex)||value.stageIndex<0)return false;
   if(!validateStage(value.stageSnapshot).ok||!validateRuntime(value.stageSnapshot,value.runtime)||!validateRuntime(value.stageSnapshot,value.checkpoint)||!Array.isArray(value.sequence))return false;

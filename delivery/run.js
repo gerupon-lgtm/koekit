@@ -60,3 +60,6 @@ export function markLevelCleared(progress,session) {
 export function highestTitle(progress,difficulty) {
   const ids=progress?.[difficulty]?.clearedLevelIds??[];return [...TITLES].reverse().find(t=>ids.includes(t.level))??null;
 }
+export function allLevelsCleared(progress,difficulty) {
+  return LEVELS.every(level=>progress?.[difficulty]?.clearedLevelIds?.includes(level.id));
+}

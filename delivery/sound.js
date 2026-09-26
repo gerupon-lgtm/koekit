@@ -2,6 +2,13 @@
 const n = (frequency, at, duration, gain = .09, type = 'sine') => ({ frequency, at, duration, gain, type });
 export function scoreFor(event, alternate = false) {
   switch (event) {
+    case 'allClear': return [
+      ...[[523,0,.25],[659,.28,.25],[784,.56,.4],[659,1,.25],[784,1.28,.25],[1047,1.56,.5],
+        [880,2.12,.25],[784,2.4,.25],[659,2.68,.4],[587,3.12,.25],[659,3.4,.25],[523,3.76,.94]]
+        .map(([frequency,at,duration])=>n(frequency,at,duration,.07)),
+      ...[[262,0,.8],[330,0,.8],[262,1.56,.8],[392,1.56,.8],[294,2.68,.8],[392,2.68,.8],[262,3.76,.94],[330,3.76,.94],[392,3.76,.94]]
+        .map(([frequency,at,duration])=>n(frequency,at,duration,.025,'triangle')),
+    ];
     case 'stageStart': return [n(659, 0, .16, .065), n(784, .14, .16, .065), n(1047, .28, .24, .075)];
     case 'start': return [n(523, 0, .09, .075, 'triangle'), n(659, .10, .09, .075, 'triangle'), n(784, .20, .10, .08)];
     case 'move': return [n(alternate ? 620 : 830, 0, .075, .055, 'triangle'), n(alternate ? 440 : 620, .055, .055, .035)];

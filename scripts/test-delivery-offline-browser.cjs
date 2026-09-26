@@ -89,6 +89,8 @@ function monitor(context) {
     for (const sprite of sprites) { assert.equal(sprite.width, 256); assert.equal(sprite.height, 256); assert.ok(sprite.transparent > 0 && sprite.solid > 0); }
     await context.setOffline(true);
     await page.reload();
+    await page.locator('#ending img').evaluate(img=>img.decode());
+    assert.equal(await page.locator('#ending img').evaluate(img=>img.naturalWidth),1254,'Ending illustration decodes offline');
     await page.locator('#new').waitFor({ state: 'visible' });
     await finishBasicTutorial(page);
     assert.deepEqual(observed.model, [], 'Mic OFF never primes/downloads the speech model');
@@ -107,7 +109,8 @@ function monitor(context) {
     await failurePage.waitForFunction(() => document.querySelectorAll('#level-list button').length === 4);
     await failurePage.locator('#new').click();
     await failurePage.locator('#game').waitFor({ state: 'visible' });
-    assert.equal(await failurePage.locator('#mic-state').getAttribute('data-mic-state'), 'restarting', 'Model startup is loading, not falsely listening');
+    await failurePage.waitForFunction(()=>document.querySelector('#mic-state').dataset.micState!=='idle');
+    assert.ok(['restarting','denied'].includes(await failurePage.locator('#mic-state').getAttribute('data-mic-state')), 'After stage-start music, model startup is loading or failed, never falsely listening');
     let failureNotice = false;
     try { await failurePage.locator('#mic-notice').waitFor({ state: 'visible', timeout: 70000 }); failureNotice = true; }
     catch (error) {

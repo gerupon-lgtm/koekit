@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { initialRuntime, step, validateStage, validateRuntime } from '../delivery/rules.js';
-import { createSession, editSequence, startExecution, advance, retry, resumeSession, remainingSteps, markLevelCleared, highestTitle } from '../delivery/run.js';
+import { createSession, editSequence, startExecution, advance, retry, resumeSession, remainingSteps, markLevelCleared, highestTitle, allLevelsCleared } from '../delivery/run.js';
 import { solve, hint } from '../delivery/solver.js';
 import { generate, hasMultipleRelevantRoutes } from '../delivery/generator.js';
 import { parseUtterance } from '../delivery/commands.js';
@@ -124,4 +124,10 @@ const search=new SearchClient({workerFactory:()=>new FakeWorker(),timeoutMs:30})
 const pending=search.run('solve',{stage:stage()});search.cancel();assert.equal((await pending).status,'cancelled');assert.equal(workers[0].terminated,true);
 const timed=await search.run('solve',{stage:stage()},{timeoutMs:1});assert.equal(timed.status,'timeout');assert.equal(workers[1].terminated,true);
 const finished=search.run('solve',{stage:stage()});workers[2].onmessage({data:{id:workers[2].message.id,result:{status:'solved',minSteps:4,path:[]}}});assert.equal((await finished).minSteps,4);search.dispose();
+assert.equal(allLevelsCleared({easy:{clearedLevelIds:[4]}},'easy'),false);
+assert.equal(allLevelsCleared({easy:{clearedLevelIds:[1,2,3,4]}},'easy'),true);
+assert.equal(allLevelsCleared({easy:{clearedLevelIds:[1,2,3,4]}},'hard'),false);
+assert.equal(allLevelsCleared({hard:{clearedLevelIds:[4,2,1,3]}},'hard'),true);
+assert.equal(validateSession({...createSession(stage()),allClearReady:true}),false);
+assert.equal(validateSession({...createSession(stage()),endingShown:'true'}),false);
 console.log('Delivery core: rule, runtime, oracle, generation, commands, tutorial, progress, storage and Worker tests passed');

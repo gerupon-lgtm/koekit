@@ -1,5 +1,5 @@
 import { LEVELS, TITLES, PLAYBACK } from './config.js';
-import { createSession, editSequence, startExecution, advance, retry, resumeSession, remainingSteps, markLevelCleared, highestTitle } from './run.js';
+import { createSession, editSequence, startExecution, advance, retry, resumeSession, remainingSteps, markLevelCleared, highestTitle, allLevelsCleared } from './run.js';
 import { parseUtterance, vocabulary } from './commands.js';
 import { BASIC_STAGE, ADDITIONAL_STAGE, tutorialNeeded, completeTutorial } from './tutorial.js';
 import { DeliveryStorage } from './storage.js';
@@ -27,7 +27,7 @@ function notice(text,action){const el=$('save-status');el.replaceChildren();el.h
 function wait(ms){return new Promise(resolve=>{const id=setTimeout(()=>{timers.delete(id);resolve()},ms);timers.set(id,resolve)})}
 function stopAsync(){epoch++;for(const[id,resolve]of timers){clearTimeout(id);resolve()}timers.clear();search.cancel();sound.stopAll();speech.close();busy=false;}
 function pause(){stopAsync();if(screen==='preparing'){$('preparing-message').textContent='じゅんびを おやすみしました';$('prepare-retry').hidden=false;}if(session?.phase==='executing'){session={...session,phase:'paused'};saveSession()}if(screen==='game'){if(['cleared','failed'].includes(session?.phase))showResult();else paintGame();}}
-function setScreen(id){screen=id;showScreen(id);if(!['game','result'].includes(id))$('mic-notice').hidden=true;if(id!=='result'){$('result').classList.remove('board-result');$('app').style.removeProperty('--finished-board-size')}if(id==='game')$('input-status').textContent='';awake.setActive(['game','result'].includes(id));}
+function setScreen(id){screen=id;showScreen(id);if(!['game','result'].includes(id))$('mic-notice').hidden=true;if(id!=='result'){$('result').classList.remove('board-result');$('app').style.removeProperty('--finished-board-size')}if(id==='game')$('input-status').textContent='';awake.setActive(['game','result','ending'].includes(id));}
 function loadProgress(){const r=storage.load('progress');progressRevision=r.revision??0;if(r.ok&&r.value)progress=r.value;else if(!r.ok)notice('記録を読みこめません。保存済みの内容は残しています。');}
 function mergeProgress(a,b){return {...a,...b,easy:{clearedLevelIds:[...new Set([...(a.easy?.clearedLevelIds||[]),...(b.easy?.clearedLevelIds||[])])].sort()},hard:{clearedLevelIds:[...new Set([...(a.hard?.clearedLevelIds||[]),...(b.hard?.clearedLevelIds||[])])].sort()},tutorialCompletion:{basic:!!(a.tutorialCompletion?.basic||b.tutorialCompletion?.basic),additional:{easy:!!(a.tutorialCompletion?.additional?.easy||b.tutorialCompletion?.additional?.easy),hard:!!(a.tutorialCompletion?.additional?.hard||b.tutorialCompletion?.additional?.hard)}}};}
 function saveProgress(next){let r=storage.save('progress',next,progressRevision);if(!r.ok&&r.code==='STALE_REVISION'){const latest=storage.load('progress');if(latest.ok){next=mergeProgress(latest.value||{},next);progressRevision=latest.revision;r=storage.save('progress',next,progressRevision)}}progress=next;if(r.ok)progressRevision=r.revision;else notice('記録を保存できません。この画面を閉じるまで保持します。');}
@@ -95,6 +95,7 @@ function paintGame(){if(!session)return;const s=session;
 function guide(el,word,action,touch){setVoiceGuide($(el),word,action,touch)}
 function syncVoice(){if(document.hidden||conflict||busy||$('dialog').open)return;
   if(screen==='editor-screen'){if(editorVoice){guide('editor-voice-guide',editorVoice.cue,'',editorVoice.touch);speech.open(editorVoice.words,'editor',`editor-${epoch}-${editorVoice.words.join('|')}`)}else{speech.close();guide('editor-voice-guide','','ボタンで えらぼう')}return}
+  if(screen==='ending'){guide('ending-voice-guide','オッケー','で タイトルへ','タイトルへ を タッチ');speech.open(['オッケー','オーケー','おわり'],'ending',`ending-${epoch}`);return}
   if(!session||!['game','result'].includes(screen)){speech.close();return}
   const phase=hint?'hint':session.phase;
   if(phase==='executing'){speech.close();guide('game-voice-guide','','ロボットが おとどけちゅう');return}
@@ -108,6 +109,7 @@ function syncVoice(){if(document.hidden||conflict||busy||$('dialog').open)return
 function handleText(raw,context){if(context==='dialog'){if(/^(オッケー|オーケー|つぎ)$/.test(raw.trim()))dialogContext?.onVoice?.();return}
   if(context==='editor'){editorVoice?.onText(raw);return}
   if(!session||busy||conflict||$('dialog').open)return;
+  if(context==='ending'){if(/^(オッケー|オーケー|おわり)$/.test(raw.trim()))endPlay();return}
   if(hint){if(/^(ヒント|ひんと|つぎ)$/.test(raw.trim()))void showHint(true);else if(/^(オッケー|オーケー|おっけー)$/.test(raw.trim()))closeHint();else if(raw.trim()==='おわり')endPlay();return}
   if(session.phase==='paused'&&raw.replace(/\s/g,'')==='つづける'){void execute();return}
   const command=parseUtterance(raw,{phase:session.phase,maxRows:session.sequence.length});
@@ -157,13 +159,26 @@ function showResult(){if(!session)return;const failed=session.phase==='failed';
   }else{
     $('result-heading').textContent=session.source==='tutorial'?'できた！':'ぜんぶ とどけた！';$('result-mark').textContent='✓';$('result-detail').textContent=`${session.runtime.usedSteps}歩で おとどけ。`;
     if(session.source==='tutorial')saveProgress(completeTutorial(progress,session.tutorialType,session.difficulty));
-    if(session.source==='normal'&&session.stageIndex===2){saveProgress(markLevelCleared(progress,session));const award=TITLES.find(t=>t.level===session.level);$('result-mark').innerHTML=medalMarkup(award.medal);$('result-heading').textContent=award.title;$('result-detail').textContent=session.level===4?'レベル4 たっせい！ 3めん とどけたね。':'3めん クリア！ つぎのレベルへ。';if(!session.awardShown)session={...session,awardShown:true};}
+    if(session.source==='normal'&&session.stageIndex===2){const wasComplete=allLevelsCleared(progress,session.difficulty);saveProgress(markLevelCleared(progress,session));if(allLevelsCleared(progress,session.difficulty)&&(!wasComplete||session.level===4))session={...session,allClearReady:true};const award=TITLES.find(t=>t.level===session.level);$('result-mark').innerHTML=medalMarkup(award.medal);$('result-heading').textContent=award.title;$('result-detail').textContent=session.level===4?'レベル4 たっせい！ 3めん とどけたね。':'3めん クリア！ つぎのレベルへ。';if(!session.awardShown)session={...session,awardShown:true};}
+    if(session.allClearReady)$('result-detail').textContent='ぜんぶの レベルを クリア！';
     saveSession();
   }
   syncVoice();
 }
+async function showEnding({music=true}={}){
+  stopAsync();if(conflict)return;const token=epoch;
+  session={...session,endingShown:true};saveSession();if(conflict)return;
+  setScreen('ending');$('ending-difficulty').textContent=`${session.difficulty==='easy'?'やさしい':'むずかしい'}・ぜんぶの レベル クリア！`;
+  if(!music){syncVoice();return}
+  busy=true;guide('ending-voice-guide','','タイトルへ を タッチ');
+  await sound.prime();if(token!==epoch)return;
+  try{await $('ending').querySelector('img').decode()}catch{}if(token!==epoch)return;
+  await wait(sound.play('allClear')+150);if(token!==epoch)return;
+  busy=false;syncVoice();
+}
 function retryPlay(){if(session?.phase!=='failed'||busy||conflict)return;stopAsync();session=retry(session);hint=null;saveSession();setScreen('game');$('input-status').textContent='しじを なおしてから オッケー。';paintGame();syncVoice()}
 async function nextStage(){if(session?.phase!=='cleared'||busy||conflict)return;const old=session;stopAsync();busy=true;
+  if(old.source==='normal'&&old.allClearReady&&allLevelsCleared(progress,old.difficulty)){await showEnding();return}
   if(old.source==='tutorial'){if(old.reviewTutorial){endPlay();return}difficulty=old.pendingStart.difficulty;await beginNormal(old.pendingStart.level,old.pendingStart.stageIndex);return}
   if(old.source==='custom'){if(old.preview){returnToEditor();return}if(old.stageIndex+1>=old.orderedStageSnapshots.length){endPlay();return}session=createSession(old.orderedStageSnapshots[old.stageIndex+1],{source:'custom',difficulty:old.difficulty,stageIndex:old.stageIndex+1,orderedStageSnapshots:old.orderedStageSnapshots});saveSession();await enterStage();return}
   if(old.stageIndex<2)await beginNormal(old.level,old.stageIndex+1);else if(old.level<4)await beginNormal(old.level+1,0);else endPlay();
@@ -173,7 +188,7 @@ async function showHint(next=false){if(session?.phase!=='editing'||busy||conflic
   catch{if(token===epoch){busy=false;$('input-status').textContent='ヒントを よみこめませんでした。';syncVoice()}}
 }
 function closeHint(){hint=null;hintLevel=0;paintGame();syncVoice()}
-function resume(){stopAsync();conflict=false;const saved=readSaved();if(!saved)return;session=resumeSession(saved);difficulty=session.difficulty;hint=null;saveSession();if(['failed','cleared'].includes(session.phase))showResult();else{setScreen('game');paintGame();syncVoice()}}
+function resume(){stopAsync();conflict=false;const saved=readSaved();if(!saved)return;session=resumeSession(saved);difficulty=session.difficulty;hint=null;saveSession();if(session.endingShown&&allLevelsCleared(progress,session.difficulty))void showEnding({music:false});else if(['failed','cleared'].includes(session.phase))showResult();else{setScreen('game');paintGame();syncVoice()}}
 function endPlay(){stopAsync();hint=null;$('toast').hidden=true;if(session){const r=storage.endSession(session.sessionId,sessionRevision);if(r.ok){sessionRevision=r.revision;notice('')}else notice('保存を更新できません。端末に前のつづきが残る場合があります。');}session=null;showTitle()}
 function openEditor(){stopAsync();setScreen('editor-screen');editor?.dispose();editor=mountEditor($('editor-host'),{storage,search:editorSearch,onClose:showTitle,onPlay:(stages,options)=>requestCustom(stages,options),onSpeechContext:context=>{editorVoice=context;if(screen==='editor-screen')syncVoice()}})}
 function requestCustom(stages,options){const start=()=>{stopAsync();const saved=readSaved();if(saved){const r=storage.endSession(saved.sessionId,sessionRevision);if(!r.ok){notice('前のプレイを更新できません。新しいプレイは開始していません。');setScreen('editor-screen');syncVoice();return}sessionRevision=r.revision}conflict=false;previewReturn=options.onReturn;session=createSession(stages[0],{difficulty,source:'custom',stageIndex:0,orderedStageSnapshots:clone(stages),preview:!!options.preview,editorSnapshot:options.preview?editor?.getState():null});saveSession();hint=null;void enterStage()};const saved=readSaved();if(saved)openDialog('今のつづきを 置きかえる？','作った面と称号は残ります。',[{label:'あそぶ',color:'green',run:start},{label:'もどる',run:()=>{setScreen('editor-screen');syncVoice()}}]);else start()}
@@ -182,7 +197,7 @@ function help(){const back=()=>{closeDialog();if(screen==='game')paintGame();syn
 const actions={new:()=>requestStart(),title:showTitle,resume,editor:openEditor,help,
   add:()=>{const before=session;dispatchCommand({type:'move',direction,count:Number($('step-count').value)});if(session!==before)$('step-count').value='1';},undo:()=>dispatchCommand({type:'undo'}),reset:()=>dispatchCommand({type:'reset'}),execute,continue:execute,retry:retryPlay,next:nextStage,end:endPlay,hint:showHint,hintNext:()=>showHint(true),hintClose:closeHint,previewReturn:returnToEditor,
   skipTutorial:()=>{if(!$('skip-tutorial').hidden)endPlay()},prepareRetry:()=>beginNormal(pendingPrepare.level,pendingPrepare.stageIndex),
-  quit:()=>{if(['title','editor-screen','preparing'].includes(screen)){showTitle();return}openDialog('あそびを おわる？','今のつづきは消えます。作った面と称号は残ります。',[{label:'おわる',run:endPlay},{label:'つづける',color:'green',run:()=>{if(screen==='game')paintGame();syncVoice()}}])},
+  quit:()=>{if(screen==='ending'){endPlay();return}if(['title','editor-screen','preparing'].includes(screen)){showTitle();return}openDialog('あそびを おわる？','今のつづきは消えます。作った面と称号は残ります。',[{label:'おわる',run:endPlay},{label:'つづける',color:'green',run:()=>{if(screen==='game')paintGame();syncVoice()}}])},
   retryMic:()=>{speech.retry();syncVoice()}
 };
 document.addEventListener('click',event=>{void sound.prime();const target=event.target.closest('button');if(!target)return;if(target.dataset.action)void actions[target.dataset.action]?.();if(target.dataset.difficulty){difficulty=target.dataset.difficulty;showTitle()}if(target.dataset.level)requestStart(Number(target.dataset.level));if(target.dataset.direction)selectDirection(target.dataset.direction);if(target.dataset.row!=null&&session)dispatchCommand({type:'select',index:Number(target.dataset.row)})});
