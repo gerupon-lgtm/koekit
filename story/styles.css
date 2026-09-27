@@ -143,6 +143,8 @@ button, a { touch-action: manipulation; -webkit-tap-highlight-color: transparent
 button:focus-visible, a:focus-visible, select:focus-visible, input:focus-visible, summary:focus-visible { outline: 3px solid #7459a8; outline-offset: 3px; }
 button:active:not(:disabled) { transform: translateY(1px); }
 button:disabled { opacity: .42; cursor: default; }
+/* めくった札は操作不可でも鮮明に。選ばなかった札の .dim だけは薄く残す。 */
+.cell.open:not(.dim):disabled { opacity: 1; }
 .toolbar { display: flex; align-items: center; gap: 8px; min-height: 50px; }
 .icon { width: 44px; height: 44px; flex-shrink: 0; padding: 0; display: grid; place-items: center; border: 0; border-radius: 12px; background: #fff; color: #8a5a3c; cursor: pointer; }
 .icon svg { width: 25px; height: 25px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
@@ -173,6 +175,13 @@ main:has(#s-start:not([hidden])) { padding-inline: 16px; padding-bottom: max(8px
 #voice { min-width: 0; min-height: 44px; color: var(--ink); }
 .toast { max-width: calc(100% - 24px); text-align: center; z-index: 10; }
 .heard:empty { display: none; }
+/* 案内・発話候補・聞き取り結果の有無で、下の操作ボタンを動かさない。 */
+#guide.voice-guide { min-height: 68px; margin: 6px auto; }
+#guide.voice-guide strong { font-size: 18px; }
+#guide.voice-guide span { font-size: 16px; }
+#guide-words { display: block; min-height: 48px; font-size: 15px; line-height: 24px; white-space: pre-line; margin: 4px 0 0; }
+#s-board:has(#board-btns:not([hidden])) .heard { display: block; min-height: 22px; line-height: 22px; }
+#s-board:has(#board-btns[hidden]) #guide-words { display: none; }
 @media (max-height: 819px) {
   #s-start h1 { height: 74px; width: min(352px, 100%); }
   .lead { margin: 10px 0 16px; }
@@ -197,7 +206,8 @@ main:has(#s-start:not([hidden])) { padding-inline: 16px; padding-bottom: max(8px
   .menu-options { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
   .menu-options .row:nth-child(n + 3) { grid-column: 1 / -1; }
   .seg button { min-height: 36px; padding: 6px 3px; font-size: 14px; }
-  .brow .cell:not(.open) { aspect-ratio: auto; height: clamp(48px, calc((100svh - 350px) / 4), 76px); }
+  .brow .cell:not(.open) { aspect-ratio: auto; height: clamp(44px, calc((100svh - 382px) / 4), 76px); }
+  .brow .cell:not(.open) .pips { grid-template-rows: repeat(3, minmax(0, 1fr)); font-size: clamp(10px, 1.8svh, 13px); }
   .cell .pips.p1 i { font-size: 1.6rem; }
   .cell .idx { font-size: .65rem; }
   .voice-options { font-size: 11px; }

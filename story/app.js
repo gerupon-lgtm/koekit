@@ -14,7 +14,6 @@ import { setVoiceGuide } from '../src/ui/voice-guide.js';
 const screenAwake = new ScreenAwake();
 
 const $ = id => document.getElementById(id);
-const NUM_WORDS = ['いち', 'に', 'さん', 'よん', 'ご'];
 const SETTINGS_KEY = 'koekit.story.settings';
 
 // ---------- 設定（端末内に保存。失敗しても既定値で動く） ----------
@@ -96,6 +95,9 @@ function paintCue(id, word, action, touch, words = '') {
   setVoiceGuide($(id), reader.busy || modal ? '' : word,
     reader.busy ? 'よみあげちゅう。タッチでも すすめるよ' : action, touch);
   $(id + '-words').textContent = speaking && words ? `いえること：${words}` : '';
+  if (id === 'guide' && !speaking) {
+    $(id + '-words').textContent = reader.busy ? 'よみあげちゅう\nタッチでも すすめるよ' : 'カードや ボタンを\nタッチで えらぼう';
+  }
 }
 
 // ---------- MG-S01 はじめ ----------
@@ -296,7 +298,7 @@ function paintGuide() {
   if (st.picks) { g.hidden = true; $('guide-words').textContent = ''; return; }
   g.hidden = false;
   const cols = st.board.cols;
-  const nums = NUM_WORDS.slice(0, cols).join('・');
+  const nums = Array.from({ length: cols }, (_, i) => i + 1).join('・');
   $('back').hidden = false; // めくる直前もタッチで選び直せる
   $('omakase').hidden = $('ok').hidden = st.done;
   $('start').hidden = !st.done;
@@ -308,10 +310,10 @@ function paintGuide() {
   const label = set.rows[k].label;
   const selected = st.sel[k];
   let main;
-  if (selected.length >= MAX_PER_ROW) main = '3つ えらんだよ。つぎへ すすむね';
+  if (selected.length >= MAX_PER_ROW) main = '3つ えらんだよ。つぎへ';
   else if (selected.length) main = `${selected.map(i => i + 1).join('・')}ばん。オッケーで つぎへ`;
   else main = `${label}？ 3つまで えらぼう`;
-  paintCue('guide', '', main, '', `${nums}・オッケー・おまかせ・もどる`);
+  paintCue('guide', '', main, '', `${nums}\nオッケー・おまかせ・もどる`);
 }
 
 // 番号の指定（タッチ・声で共通）：その場で選択／解除する（2026-09-27 発案者指示）。
@@ -414,7 +416,7 @@ function readAll() {
   const summary = picksSummary(settings.audience, st.picks);
   const items = [
     ...summary.map((text, i) => ({ text, onStart: () => mark('picks', i) })),
-    { text: st.story.intro, onStart: () => { mark('picks', null); scrollToStory(); } },
+    { text: st.story.intro, pauseAfter: 800, onStart: () => { mark('picks', null); scrollToStory(); } },
     ...st.story.lines.map((l, i) => ({ text: l.text, onStart: () => mark('story', i) })),
   ];
   reader.speak(items).then(() => mark('story', null));

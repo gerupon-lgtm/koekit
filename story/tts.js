@@ -55,12 +55,13 @@ export class Reader {
 
   stop() {
     this.token++;
+    this.cancelPause?.();
     this.keep = [];
     if (synth) synth.cancel();
     this.setBusy(false);
   }
 
-  // items: [{ text, onStart }] を順に読む。読み終わり／中断で resolve（中断なら false）
+  // items: [{ text, onStart, pauseAfter? }] を順に読む。間も busy を保ち、stop で取り消す。
   async speak(items) {
     this.stop();
     if (!this.enabled || !synth) return true;
@@ -71,6 +72,14 @@ export class Reader {
         if (my !== this.token) return false;
         item.onStart?.();
         await this.speakOne(s, my);
+      }
+      if (my !== this.token) return false;
+      if (item.pauseAfter > 0) {
+        await new Promise(resolve => {
+          const finish = () => { clearTimeout(timer); this.cancelPause = null; resolve(); };
+          const timer = setTimeout(finish, item.pauseAfter);
+          this.cancelPause = finish;
+        });
       }
     }
     if (my !== this.token) return false;
