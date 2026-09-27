@@ -52,7 +52,7 @@ const base=process.env.SAEZURI_BASE||'http://127.0.0.1:8014';
  await home();assert.equal(await page.locator('#status').getAttribute('data-state'),'idle');
  await page.locator('#home-create').click();await page.locator('#editor-source details > summary').click();await page.locator('#capture-import-text').fill('{bad');await page.locator('#capture-import-button').click();
  assert.equal(await page.locator('#melody-choose').isVisible(),true);assert.match(await page.locator('#capture-import-status').textContent(),/JSON/);
- await page.locator('#choose-example').click();assert.equal(await page.locator('#capture-blocks button').count(),7);await home();await page.locator('#home-connect').click();
+ await page.locator('#choose-example').click();await page.locator('[data-practice-edit="walk"]').click();assert.equal(await page.locator('#capture-blocks button').count(),7);await home();await page.locator('#home-connect').click();
  await page.evaluate(()=>{const sizes=[...document.querySelectorAll('p,label,button,input,select,summary,h2,h3')].map(n=>[n,parseFloat(getComputedStyle(n).fontSize)*2]);for(const[n,s]of sizes)n.style.fontSize=s+'px';});
  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,'large text connect');
  await page.locator('#melody-connect [data-screen-back]').click();await page.locator('#home-resume').click();assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,'large text create');

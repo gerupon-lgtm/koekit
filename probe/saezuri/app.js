@@ -40,7 +40,7 @@ const editingExample = () => ({ bars: 4, gridStep: 1, notes: [
 ] });
 let state = { pattern: editingExample(), cursor: 0, revision: 0 }, candidate = null, captured = null, capturedOriginal = null;
 let ctx, transport, capture, serial = 0, phase = 'idle', raf, lastFrame = 0, maxFrameGapMs = 0, lastBar = -1, playbackPreview = false;
-const record = { prototype: 'ML-T01-v22', timestamp: new Date().toISOString(), userAgent: navigator.userAgent, playback: null, capture: null };
+const record = { prototype: 'ML-T01-v23', timestamp: new Date().toISOString(), userAgent: navigator.userAgent, playback: null, capture: null };
 const keyChoices = { score: null, capture: null };
 const displayOctaves = { score: 0, capture: 0 };
 const captureAlignments = new Map();
@@ -199,7 +199,7 @@ async function play(pattern = state.pattern, preview = false, options={}) {
   stop(); const request = serial;
   setPhase('preparing');
   try {
-    const tempo = tempoValue(); await prepare(); if (request !== serial) return;
+    const tempo = options.tempo??tempoValue(); await prepare(); if (request !== serial) return;
     const bars = preview ? pattern.bars : Number($('length').value)===129?129:pattern.bars, notes = [];
     for (let offset = 0; offset < bars * 16; offset += pattern.bars*16) for (const note of pattern.notes) {
       if (offset + note.startTick >= bars * 16) continue;
@@ -210,8 +210,9 @@ async function play(pattern = state.pattern, preview = false, options={}) {
     for(let offset=0;offset<bars*16;offset+=pattern.bars*16) for(const note of backing) if(offset+note.startTick<bars*16) accompaniment.push({...note,startTick:offset+note.startTick});
     record.playback.accompaniment=pattern.accompaniment??null;
     transport.start(notes, { tempo, totalTicks: bars * 16, instrument: $('instrument').value, lead: Number($('lead').value), ahead: Number($('ahead').value), countSound: $('play-count').checked, countStyle: $('play-count-style').value, countVolume: Number($('count-volume').value),accompaniment });
-    playbackPreview=preview&&!options.sequence;
+    playbackPreview=preview&&!options.sequence&&!options.standalone;
     if(options.sequence){record.playback.sequence=true;record.playback.draft=options.pending;}
+    if(options.standalone){record.playback.previewSource='preset';record.playback.draft=false;}
     setPhase('playing'); lastFrame = 0; maxFrameGapMs = 0; lastBar = -1; animate();
   } catch (error) { if (request === serial) stop(error.message); }
 }
@@ -319,6 +320,7 @@ $('adopt').onclick = () => {
 };
 function discardCurrent() {
   if(phase!=='idle') return;
+  shell?.learning?.end();if($('after-keep'))$('after-keep').hidden=true;
   captured=null; capturedOriginal=null;captureAlignments.clear();captureEditor.load(null);$('review').hidden=true;setPhase('idle');showReport();
 }
 $('discard').onclick=discardCurrent;
@@ -392,8 +394,13 @@ const screenNavigation=compactEditor && new URLSearchParams(location.search).get
 if(compactEditor&&!screenNavigation) $('edit-score').click();
 if(screenNavigation) {
   shell=new MelodyScreens({editor:captureEditor,onStop:()=>stop(),onNavigate:()=>setPhase(phase),
+    onOpenPattern:(pattern,source,tempo)=>{
+      keyChoices.capture=null;displayOctaves.capture=0;captureAlignments.clear();$('tempo').value=String(tempo);
+      captureEditor.openPattern(pattern);$('review').hidden=false;record.capture=null;record.captureOptions=null;record.playback=null;record.editingSource=source;delete record.importedFrom;
+      record.timestamp=new Date().toISOString();if($('after-keep'))$('after-keep').hidden=true;setPhase('idle');showReport();
+    },
+    onAudition:item=>play(item.pattern,true,{standalone:true,tempo:item.tempo}),
     onDiscard:discardCurrent,onPlay:(data,pending)=>play(data.pattern,true,{sequence:true,backing:data.backing,pending}),
-    onExample:()=>{captureEditor.openPattern(editingExample());$('review').hidden=false;record.capture=null;record.captureOptions=null;record.playback=null;record.editingSource='example';showReport();}
   });
   setPhase(phase);
 }

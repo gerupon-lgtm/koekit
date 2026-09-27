@@ -1,11 +1,12 @@
+import {MelodyLearning} from './learning.js';
 import {emptySequence,keepPhrase,sequencePlayback,proposeSequence,commitSequence,undoPlacement} from './sequence-session.js';
 import {readCaptureReport} from './capture-report.js';
 const $=id=>document.getElementById(id);
 const button=(text,fn)=>{const b=document.createElement('button');b.type='button';b.textContent=text;b.onclick=fn;return b;};
 
 export class MelodyScreens {
- constructor({editor,onStop,onNavigate,onPlay,onDiscard,onExample}) {
-  Object.assign(this,{editor,onStop,onNavigate,onPlay,onDiscard,onExample});
+ constructor({editor,onStop,onNavigate,onPlay,onDiscard,onOpenPattern,onAudition}) {
+  Object.assign(this,{editor,onStop,onNavigate,onPlay,onDiscard,onOpenPattern,onAudition});
   this.screen='home';this.sequence=emptySequence();this.proposal=null;this.selected=null;this.mode='input';this.busy=false;
   document.body.classList.add('melody-app');document.title='サエズリズム';
   document.querySelector('main > header').hidden=true;
@@ -14,7 +15,7 @@ export class MelodyScreens {
   home.innerHTML=`<nav class="home-nav"><a class="menu-home" href="../../" aria-label="コエキットへ"><svg viewBox="0 0 24 24"><path d="M12 3l9 8h-2.5v9h-5.5v-6h-2v6H5.5v-9H3z"/></svg></a><button class="menu-help" id="melody-help" aria-label="つかいかた">？</button></nav>
    <h1><img src="../../assets/brand/saezurhythm.svg" alt="サエズリズム"></h1><p class="home-caption">こえと タッチで、メロディーを つくろう。</p>
    <div class="home-menu"><button id="home-create">つくる<small>音をならべて、ひとつのフレーズに</small></button><button id="home-connect">つなげる<small>フレーズをならべて、長い曲に</small></button><button id="home-resume" hidden>つづきから</button></div>
-   <p class="session-note">このタブの中で試せます。再読み込みすると作業は消えます。</p><p class="home-credit">試作 v22　© 2026 SIKUMI LAB</p>`;
+   <p class="session-note">このタブの中で試せます。再読み込みすると作業は消えます。</p><p class="home-credit">試作 v23　© 2026 SIKUMI LAB</p>`;
   const choose=document.createElement('section');choose.id='melody-choose';choose.className='melody-screen';
   choose.innerHTML='<div class="screen-heading"><button data-screen-back>← トップ</button><h2 tabindex="-1">つくる</h2></div><p>どこから はじめる？</p><div id="creation-choices"></div><p id="choose-notice" role="status"></p><button id="choose-resume" hidden>つづきから</button>';
   const create=document.createElement('div');create.id='melody-create';create.className='melody-screen';
@@ -26,7 +27,7 @@ export class MelodyScreens {
   const source=$('editor-source');source.open=true;$('creation-choices').append(source);
   const chooseMic=button('マイク ON',()=>$('mic').click());chooseMic.id='choose-mic';$('creation-choices').prepend(chooseMic);
   $('new-manual').textContent='じゆうに つくる';$('new-image').textContent='イメージから つくる';$('capture').textContent='ハナウタで つくる';
-  const sample=button('おためしの フレーズ',()=>{if(!editor.pending){onExample();this.go('create');this.setMode('edit');}});sample.id='choose-example';source.querySelector('.source-actions').append(sample);
+  const sample=button('おためしを アレンジ',()=>this.go('samples'));sample.id='choose-example';source.querySelector('.source-actions').append(sample);
   for(const id of ['new-manual','new-image']) $(id).addEventListener('click',()=>{if(!editor.pending){$('phrase-feedback').textContent='';this.go('create');this.setMode(id==='new-image'?'backing':'input');}});
   // The recording button keeps its existing permission / start handler.
   $('capture').addEventListener('click',()=>this.go('create',{stop:false}));
@@ -53,6 +54,8 @@ export class MelodyScreens {
   const save=document.createElement('div');save.className='phrase-register';
   save.innerHTML='<label>フレーズの名前<input id="phrase-name" maxlength="24" placeholder="フレーズ1"></label><button id="keep-phrase">フレーズにする</button><p id="phrase-feedback" role="status"></p>';
   create.append(save);
+  const next=document.createElement('div');next.id='after-keep';next.hidden=true;next.innerHTML='<button id="after-keep-connect">つなげるへ</button><button id="after-keep-more">もうひとつ つくる</button>';create.append(next);
+  $('after-keep-connect').onclick=()=>this.go('connect');$('after-keep-more').onclick=()=>this.go('choose');
   $('keep-phrase').onclick=()=>this.keep();
   for(const b of document.querySelectorAll('[data-mode]')) b.onclick=()=>this.setMode(b.dataset.mode);
   for(const id of ['capture-score','capture-blocks'])$(id).addEventListener('click',event=>{if(!this.busy&&!editor.pending&&event.target.closest('[data-note-id]'))this.setMode('edit');});
@@ -75,7 +78,7 @@ export class MelodyScreens {
   confirm.addEventListener('close',()=>{this.discardAction=null;this.onNavigate();});
   $('discard-confirm').onclick=()=>{const action=this.discardAction;if(!action)return;this.discardAction=null;confirm.close();this.onDiscard();$('phrase-name').value='';$('phrase-feedback').textContent='';action();};
   // Capture phase intercepts existing handlers before they can replace a session.
-  for(const id of ['new-manual','new-image','capture','choose-example','capture-import-button'])$(id).addEventListener('click',event=>{
+  for(const id of ['new-manual','new-image','capture','capture-import-button'])$(id).addEventListener('click',event=>{
    if(!this.editor.isOpen)return;
    event.preventDefault();event.stopImmediatePropagation();
    if(id==='capture-import-button'){try{readCaptureReport($('capture-import-text').value);}catch(error){$('capture-import-status').textContent=error.message;return;}}
@@ -85,7 +88,8 @@ export class MelodyScreens {
   $('sequence-confirm').onclick=()=>{if(!this.busy&&this.proposal){const next=commitSequence(this.sequence,this.proposal);if(!next.code){this.sequence=next;this.proposal=null;this.renderSequence();}}};
   $('sequence-undo').onclick=()=>{if(this.busy)return;if(this.proposal)this.proposal=null;else this.sequence=undoPlacement(this.sequence);this.renderSequence();};
   for(const [id,type,delta] of [['sequence-left','move',-1],['sequence-right','move',1],['sequence-delete','remove',0]])$(id).onclick=()=>this.stage({type,placementId:this.selected,index:this.sequence.placements.findIndex(p=>p.id===this.selected)+delta});
-  addEventListener('popstate',()=>this.go(['home','choose','create','connect'].includes(history.state?.melodyScreen)?history.state.melodyScreen:'home',{history:false}));
+  addEventListener('popstate',()=>this.go(['home','choose','create','connect','samples'].includes(history.state?.melodyScreen)?history.state.melodyScreen:'home',{history:false}));
+  this.learning=new MelodyLearning(this);
   history.replaceState({...history.state,melodyScreen:'home'},'');this.go('home',{history:false});
  }
  icon(node,type,label,aria=label){
@@ -109,7 +113,7 @@ export class MelodyScreens {
   this.discardAction=null;this.discardDialog?.close();this.dialog.close();this.screen=screen;document.body.dataset.melodyScreen=screen;
   for(const [name,node] of Object.entries(this.screens))node.hidden=name!==screen;
   if(screen==='choose')$('editor-source').open=true;
-  document.querySelector('body > footer').hidden=!['create','connect'].includes(screen);
+  document.querySelector('body > footer').hidden=!['create','connect','samples'].includes(screen);
   if(push)history.pushState({...history.state,melodyScreen:screen},'');
   this.onNavigate();this.sync(this.phase??'idle');window.scrollTo(0,0);
   (this.screens[screen].querySelector('h2')??this.screens[screen].querySelector('button'))?.focus({preventScroll:true});
@@ -130,10 +134,11 @@ export class MelodyScreens {
   $('keep-phrase').disabled=this.busy||!this.editor.isOpen||this.editor.pending||!!this.proposal||!this.editor.pattern?.notes.length;
   if(this.proposal)$('phrase-feedback').textContent='つなげる画面の候補を確定か取消してから登録できます。';
   $('phrase-name').disabled=this.busy;
+  for(const id of ['after-keep-connect','after-keep-more'])$(id).disabled=this.busy;
   for(const b of document.querySelectorAll('[data-mode]'))b.disabled=this.busy||(b.dataset.mode!=='edit'&&!manual);
   document.body.dataset.createMode=this.mode;
-  $('composer-candidate').hidden=!manual||this.mode==='backing';
-  this.renderSequence();
+  $('composer-candidate').hidden=!manual||this.mode!=='input';
+  this.renderSequence();this.learning?.sync(phase);
  }
  keep() {
   if(this.busy||!this.editor.isOpen||this.editor.pending||this.proposal||!this.editor.pattern)return;
@@ -142,6 +147,7 @@ export class MelodyScreens {
   if(next.code)return;
   this.sequence=next;this.proposal=null;
   $('phrase-feedback').textContent=`「${next.patterns.at(-1).name}」をつなげる画面に追加しました。`;
+  $('after-keep').hidden=false;
   $('phrase-name').value='';$('phrase-name').placeholder=`フレーズ${next.patterns.length+1}`;
   this.renderSequence();
  }

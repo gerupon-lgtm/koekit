@@ -30,7 +30,7 @@ const base=process.env.SAEZURI_BASE||'http://127.0.0.1:8014';
  await click('discard-cancel');await page.waitForFunction(()=>document.querySelector('#edit-voice-status').textContent==='声を受け付けています');assert.deepEqual((await report()).captureEditing,pending);
  await click('discard');await confirm();assert.equal(await page.locator('#melody-home').isVisible(),true);assert.equal(await page.locator('#home-resume').isVisible(),false);
  await click('home-connect');assert.equal(await page.locator('#phrase-shelf button').count(),1,'registered phrase survives editor discard');
- await page.locator('#melody-connect [data-screen-back]').click();await click('home-create');await click('choose-example');
+ await page.locator('#melody-connect [data-screen-back]').click();await click('home-create');await click('choose-example');await page.locator('[data-practice-edit="walk"]').click();
  await back();await click('new-image');await confirm();assert.equal(await page.locator('#capture-blocks button').count(),0);
  // Button roles and compact layout are checked from rendered styles, not class names.
  await page.locator('[data-mode="input"]').click();await page.locator('[data-pitch="0"]').click();

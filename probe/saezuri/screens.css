@@ -124,3 +124,31 @@ body.melody-app{background:#faf5ed;color:#443b36}
 .melody-app.editor-focus .home-menu #home-connect{background:#f5b68e;color:#542d20}
 .melody-app.editor-focus .home-menu #home-resume{background:#dce9d5;color:#30462e;min-height:56px}
 .melody-app.editor-focus .menu-help{background:#fff;color:#8a5a3c;border-radius:15px;min-height:50px}
+
+/* Learning uses the existing editor, with a compact instruction above its tabs. */
+.melody-app .source-actions button small{display:block;font-size:12px;font-weight:400;margin-top:3px}
+.melody-app.editor-focus .source-actions{gap:8px;margin:12px auto}
+.melody-app.editor-focus .source-actions button{min-height:56px;padding:8px;font-size:18px}
+.melody-app.editor-focus #new-tutorial{background:#fff3d1;color:#634f22}
+.melody-app.editor-focus #choose-example{background:#e7ddef;color:#3d2f4a}
+.melody-app.editor-focus #new-manual{background:#dce9d5;color:#30462e}
+.melody-app #learning-guide{background:#fff3d1;border-radius:14px;padding:8px 10px;margin:6px 0}
+.melody-app .learning-heading{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.melody-app .learning-heading strong{font-size:13px}
+.melody-app.editor-focus #learning-close{font-size:12px;min-height:32px;margin:0;padding:4px 8px;background:transparent}
+.melody-app #learning-message{font-size:13px;line-height:1.5;margin:4px 0}
+.melody-app.editor-focus #learning-next{font-size:13px;min-height:40px;width:100%;margin:4px 0 0;background:#e7ddef}
+.melody-app [data-learning-target]{outline:3px solid #b07915!important;outline-offset:2px}
+.melody-app #practice-list{display:grid;gap:10px}
+.melody-app .practice-card{background:#fff;border-radius:16px;padding:12px}
+.melody-app .practice-card h3{margin:0;font-size:17px}
+.melody-app .practice-card p,.melody-app .samples-intro{font-size:13px;line-height:1.5;margin:5px 0 8px}
+.melody-app .practice-actions,.melody-app #after-keep{display:grid;grid-template-columns:1fr 1.4fr;gap:8px}
+.melody-app.editor-focus .practice-actions button{font-size:14px;min-height:44px;margin:0;background:#e7ddef}
+.melody-app.editor-focus .practice-actions button[data-practice-edit]{background:#dce9d5}
+.melody-app #after-keep{margin-top:8px}
+.melody-app.editor-focus #after-keep button{font-size:13px;min-height:44px;margin:0;background:#e7ddef}
+.melody-app.editor-focus #after-keep-connect{background:#dce9d5}
+@media(min-width:650px){.melody-app #practice-list{grid-template-columns:1fr 1fr}}
+
+.melody-app.editor-focus #capture-blocks button[aria-pressed=true]{color:#30462e}
