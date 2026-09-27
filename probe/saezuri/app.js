@@ -15,6 +15,7 @@ import {blankPattern} from './entry-session.js';
 import {ENTRY_WORDS,parseEntryCommand} from './entry-voice.js';
 import {ImageControls} from './image-controls.js';
 import {accompanimentEvents} from '../../saezuri/music/accompaniment.js';
+import {MelodyScreens} from './screens.js';
 const compactEditor=setupEditorLayout();
 const $ = id => document.getElementById(id);
 const example = () => ({ bars: 4, gridStep: 1, notes: [
@@ -39,19 +40,19 @@ const editingExample = () => ({ bars: 4, gridStep: 1, notes: [
 ] });
 let state = { pattern: editingExample(), cursor: 0, revision: 0 }, candidate = null, captured = null, capturedOriginal = null;
 let ctx, transport, capture, serial = 0, phase = 'idle', raf, lastFrame = 0, maxFrameGapMs = 0, lastBar = -1, playbackPreview = false;
-const record = { prototype: 'ML-T01-v20', timestamp: new Date().toISOString(), userAgent: navigator.userAgent, playback: null, capture: null };
+const record = { prototype: 'ML-T01-v21', timestamp: new Date().toISOString(), userAgent: navigator.userAgent, playback: null, capture: null };
 const keyChoices = { score: null, capture: null };
 const displayOctaves = { score: 0, capture: 0 };
 const captureAlignments = new Map();
-let voice, voiceTimer, composer, imageControls;
+let voice, voiceTimer, composer, imageControls, shell;
 function syncVoice() {
   if(!voice) return;
   if(captureEditor.previewPattern?.source==='manual') voice.configure(ENTRY_WORDS,parseEntryCommand);
   else voice.configure();
   clearTimeout(voiceTimer);
   const enabled=$('edit-voice').checked && microphoneEnabled();
-  const available=enabled && captureEditor.isOpen && !$('review').hidden && !document.hidden && phase==='idle';
-  if(!available) voice.setActive(false,{release:!enabled || !captureEditor.isOpen || document.hidden || ['count-in','recording','analyzing'].includes(phase)});
+  const available=enabled && (!shell||shell.allowsVoice) && captureEditor.isOpen && !$('review').hidden && !document.hidden && phase==='idle';
+  if(!available) voice.setActive(false,{release:!enabled || !captureEditor.isOpen || document.hidden || (shell&&!shell.allowsVoice) || ['count-in','recording','analyzing'].includes(phase)});
   else voiceTimer=setTimeout(()=>voice.setActive(true),250);
 }
 const captureEditor = new CaptureEditorView({ onChange(change) {
@@ -118,6 +119,7 @@ function setPhase(next, message) {
   }
   syncVoice();
   updateKeyButtons();
+  shell?.sync(next);
 }
 function draw() {
   drawPattern('score', state.pattern);
@@ -128,6 +130,7 @@ function draw() {
 function stop(message = '停止しました。必要ならもう一度開始してください。') {
   serial++; transport?.stop(false); capture?.cancel(); cancelAnimationFrame(raf);
   playbackPreview=false;captureEditor.followPlayback(null);
+  shell?.follow(null);
   setPhase('idle', message);
 }
 async function prepare() {
@@ -165,6 +168,7 @@ function acceptCapture(result) {
       setPhase('idle', captured?.notes.length ? '候補を選んで試聴・編集してください' : 'ほとんど音を検出できませんでした。別の方式を確認するか、カウントからやり直してください。');
       showReport();
       focusEditor();
+      if(shell){shell.go('create');shell.setMode('edit');}
 }
 function tempoValue() {
   const tempo = Number($('tempo').value);
@@ -178,6 +182,7 @@ function animate() {
   lastFrame = now;
   const tick = transport.active ? transport.position() : Math.max(0, (ctx.currentTime - capture.startTime) * tempoValue() * 4 / 60);
   if(playbackPreview && transport.active && ctx.currentTime>=transport.anchor) captureEditor.followPlayback(tick);
+  if(shell?.screen==='connect' && transport.active && ctx.currentTime>=transport.anchor)shell.follow(tick);
   const bar = Math.floor(tick / 16), beat = Math.floor(tick / 4) % 4;
   if (capture?.active && Number.isFinite(capture.anchor)) {
     const countBeat = Math.floor((ctx.currentTime - capture.anchor) * capture.tempo / 60);
@@ -188,7 +193,7 @@ function animate() {
   if (bar !== lastBar) { lastBar = bar; record.lastBoundary = { bar: bar + 1, audioTime: ctx.currentTime, tick, wallTime: now }; }
   raf = requestAnimationFrame(animate);
 }
-async function play(pattern = state.pattern, preview = false) {
+async function play(pattern = state.pattern, preview = false, options={}) {
   if(candidate?.code && !preview) { $('status').textContent=`この候補は再生できません：${candidate.code}`; return; }
   if(candidate && !preview && !candidate.code) pattern=candidate.pattern;
   stop(); const request = serial;
@@ -201,11 +206,12 @@ async function play(pattern = state.pattern, preview = false) {
       notes.push({ ...note, startTick: offset + note.startTick, durationTick: Math.min(note.durationTick, bars * 16 - offset - note.startTick) });
     }
     record.playback = { tempo, bars, instrument: $('instrument').value, sampleRate: ctx.sampleRate, baseLatency: ctx.baseLatency, outputLatency: ctx.outputLatency, notes: notes.length, draft:preview ? captureEditor.pending : !!candidate, pitches:notes.map(n=>n.midi), countSound: $('play-count').checked, countStyle: $('play-count-style').value, countVolume: Number($('count-volume').value) };
-    const backing=accompanimentEvents(pattern),accompaniment=[];
+    const backing=options.backing??accompanimentEvents(pattern),accompaniment=[];
     for(let offset=0;offset<bars*16;offset+=pattern.bars*16) for(const note of backing) if(offset+note.startTick<bars*16) accompaniment.push({...note,startTick:offset+note.startTick});
     record.playback.accompaniment=pattern.accompaniment??null;
     transport.start(notes, { tempo, totalTicks: bars * 16, instrument: $('instrument').value, lead: Number($('lead').value), ahead: Number($('ahead').value), countSound: $('play-count').checked, countStyle: $('play-count-style').value, countVolume: Number($('count-volume').value),accompaniment });
-    playbackPreview=preview;
+    playbackPreview=preview&&!options.sequence;
+    if(options.sequence){record.playback.sequence=true;record.playback.draft=options.pending;}
     setPhase('playing'); lastFrame = 0; maxFrameGapMs = 0; lastBar = -1; animate();
   } catch (error) { if (request === serial) stop(error.message); }
 }
@@ -273,7 +279,7 @@ $('capture-import-button').onclick = () => {
       record.capture=null;record.editingSource='manual';displayOctaves.capture=0;
       captureAlignments.clear();captureEditor.openPattern(imported.pattern);$('review').hidden=false;
       setPhase('idle');focusEditor();showReport();
-      $('capture-import-status').textContent='通常作成の確定した音列を開きました。';return;
+      $('capture-import-status').textContent='通常作成の確定した音列を開きました。';if(shell){shell.go('create');shell.setMode('input');}return;
     }
     acceptCapture(imported.result);
     $('capture-import-status').textContent = '元の取り込みを開きました。方式を選んで試聴・編集できます。';
@@ -317,7 +323,7 @@ $('discard').onclick = () => {
 };
 voice=new EditVoice({createInput:()=>createSpeechInput(METHODS.VOSK),
   onCommand(command) {
-    if(phase!=='idle' || !captureEditor.isOpen || document.hidden || !microphoneEnabled()) return;
+    if(phase!=='idle' || !captureEditor.isOpen || document.hidden || !microphoneEnabled() || (shell&&!shell.allowsVoice)) return;
     if(command?.type==='note') {
       captureEditor.inputNote({...command,...($('composer-replace')?.checked?{replaceNoteId:captureEditor.selectedNoteId}:{})});return;
     }
@@ -381,7 +387,15 @@ function newComposition(withImage=false) {
 composer=new ComposerControls({editor:captureEditor,onNew:()=>newComposition()});
 imageControls=new ImageControls({editor:captureEditor,onNew:()=>newComposition(true),onTempo:tempo=>{$('tempo').value=String(tempo);}});
 draw();
-if(compactEditor) $('edit-score').click();
+const screenNavigation=compactEditor && new URLSearchParams(location.search).get('view')!=='editor';
+if(compactEditor&&!screenNavigation) $('edit-score').click();
+if(screenNavigation) {
+  shell=new MelodyScreens({editor:captureEditor,onStop:()=>stop(),onNavigate:()=>setPhase(phase),
+    onNew:newComposition,onPlay:(data,pending)=>play(data.pattern,true,{sequence:true,backing:data.backing,pending}),
+    onExample:()=>{captureEditor.openPattern(editingExample());$('review').hidden=false;record.capture=null;record.captureOptions=null;record.playback=null;record.editingSource='example';showReport();}
+  });
+  setPhase(phase);
+}
 if(compactEditor) {
   let width=0;
   new ResizeObserver(entries=>{

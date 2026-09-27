@@ -9,7 +9,7 @@ const base=process.env.SAEZURI_BASE||'http://127.0.0.1:8014';
    constructor(){this.events={};window.recognizers.push(this);}on(k,f){this.events[k]=f;}acceptWaveform(){}remove(){}
   }})};});
   const page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
-  await page.goto(base+'/probe/saezuri/');await page.locator('#capture-score svg').first().waitFor();
+  await page.goto(base+'/probe/saezuri/?view=editor');await page.locator('#capture-score svg').first().waitFor();
   const report=async()=>{await page.evaluate(()=>document.querySelector('#report').click());return JSON.parse(await page.locator('#metrics').textContent());};
   const fit=()=>page.evaluate(()=>{
    const score=document.querySelector('#capture-score');

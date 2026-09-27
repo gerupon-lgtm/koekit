@@ -1,0 +1,93 @@
+/* Suite menu language: wordmark, large purpose buttons, back/header and help. */
+body.melody-app{background:#faf5ed;color:#443b36}
+.melody-app.editor-focus main{max-width:760px;padding:8px 12px 90px}
+.melody-app .melody-screen{margin:0;padding:0;border:0;background:transparent;border-radius:0;min-width:0}
+.melody-app button{min-height:44px;touch-action:manipulation}
+.melody-app input:not([type=checkbox]),.melody-app select{font-size:16px}
+.melody-app .home-nav,.melody-app .screen-heading{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:50px}
+.melody-app .screen-heading h2{font-size:20px;margin:0;flex:1;text-align:center}
+.melody-app .screen-heading>button{font-size:14px;padding:8px 10px;margin:0;background:white}
+.melody-app #melody-home{text-align:center;min-height:calc(100svh - 24px);display:flex;flex-direction:column}
+.melody-app #melody-home h1{margin:12px 0 0}
+.melody-app #melody-home h1 img{width:min(92%,390px);height:auto}
+.melody-app .home-caption{font-size:15px;margin:8px 0 24px}
+.melody-app .home-menu{width:min(100%,400px);margin:0 auto;display:grid;gap:14px}
+.melody-app .home-menu button{font-size:24px;font-weight:700;min-height:84px;border:0;border-radius:20px;background:#e7ddef;margin:0;padding:16px}
+.melody-app .home-menu button small{display:block;font-size:13px;font-weight:400;margin-top:5px}
+.melody-app .home-menu #home-connect{background:#f9e1c9}
+.melody-app .home-menu #home-resume{background:#d9ebd5;font-size:19px;min-height:56px}
+.melody-app .session-note{font-size:12px;max-width:320px;margin:22px auto;color:#756759}
+.melody-app .home-credit{font-size:12px;margin-top:auto;padding-top:12px}
+.melody-app[data-melody-screen=home] main,.melody-app[data-melody-screen=choose] main{padding-bottom:12px}
+.melody-app #editor-source{border:0;background:none;padding:0;margin:0}
+.melody-app #editor-source>summary{display:none}
+.melody-app #source-hint{display:none}
+.melody-app .source-actions{display:grid;grid-template-columns:1fr;gap:12px;margin:18px auto;max-width:420px}
+.melody-app .source-actions button{font-size:20px;border:0;border-radius:18px;min-height:68px;margin:0}
+.melody-app #choose-notice{font-size:14px;color:#85430c}
+.melody-app #creation-tabs{display:flex;gap:5px;margin:8px 0}
+.melody-app #creation-tabs button{flex:1;padding:6px;font-size:14px;min-height:40px;margin:0}
+.melody-app.editor-focus #edit-workspace{padding:0;margin:0;background:none;border:0}
+.melody-app.editor-focus .editor-voice{float:none;max-width:none;margin:4px 0;gap:6px;min-height:28px}
+.melody-app.editor-focus .editor-voice #mic{min-height:32px}
+.melody-app.editor-focus #edit-voice-status{font-size:11px}
+.melody-app.editor-focus #capture-note-panel{display:flex;flex-direction:column;gap:4px}
+.melody-app.editor-focus #capture-score{order:0;height:168px;min-height:150px;max-height:none;background:white;margin:0}
+.melody-app.editor-focus #capture-blocks{order:1;padding:3px 2px;gap:6px}
+.melody-app.editor-focus #capture-blocks button{min-height:44px;border-top-width:4px!important;flex-direction:row;gap:5px;padding:4px 8px;min-width:56px}
+.melody-app.editor-focus #capture-blocks strong{font-size:16px}
+.melody-app.editor-focus #capture-blocks span{font-size:11px}
+.melody-app.editor-focus .edit-toolbar{order:2;position:static;padding:0;background:transparent;border:0}
+.melody-app.editor-focus #composer-panel{border:0;padding:0;margin:0;background:transparent}
+.melody-app.editor-focus #composer-position{font-size:12px;margin:1px 0 4px}
+.melody-app.editor-focus .composer-values{gap:8px}
+.melody-app.editor-focus .composer-values label{font-size:12px;gap:2px}
+.melody-app.editor-focus .composer-values input,.melody-app.editor-focus .composer-values select{min-height:44px;padding:5px;font-size:16px}
+.melody-app.editor-focus #composer-keys{grid-template-columns:repeat(8,minmax(0,1fr));gap:2px;margin:6px 0}
+.melody-app.editor-focus #composer-keys button{min-height:48px;padding:4px 0;font-size:14px;background:#fff}
+.melody-app.editor-focus #composer-keys button:last-child{font-size:11px}
+.melody-app #composer-panel .composer-replace{font-size:12px;margin:4px 0}
+.melody-app .composer-voice-hint{display:none}
+.melody-app #composer-candidate{font-size:12px;margin:3px 0;line-height:1.4;min-height:17px}
+.melody-app.editor-focus .listen-actions{margin:4px 0;gap:6px}
+.melody-app.editor-focus .listen-actions button{min-height:46px;font-size:15px}
+.melody-app.editor-focus #capture-edit-status{margin:3px 0;line-height:1.4;min-height:17px}
+.melody-app #image-settings{border:0;padding:0;margin:0}
+.melody-app #image-settings>summary{display:none}
+.melody-app #image-settings p{font-size:12px;line-height:1.5;margin:4px 0}
+.melody-app #image-settings label{font-size:13px}
+.melody-app[data-create-mode=input] #screen-note-edit,.melody-app[data-create-mode=backing] #screen-note-edit{display:none}
+.melody-app[data-create-mode=edit] #composer-panel,.melody-app[data-create-mode=backing] #composer-panel{display:none}
+.melody-app:not([data-create-mode=backing]) #image-settings{display:none}
+.melody-app #screen-note-edit{margin:3px 0 6px}
+.melody-app .phrase-register{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 8px;align-items:end;border-top:1px solid #ded1e6;padding-top:6px;margin-top:8px}
+.melody-app .phrase-register label{font-size:12px;gap:2px}
+.melody-app .phrase-register input{min-height:40px;padding:6px;width:100%;font-size:16px}
+.melody-app .phrase-register button{margin:0;min-height:40px;font-size:13px;padding:6px 10px}
+.melody-app #phrase-feedback{grid-column:1/-1;font-size:12px;margin:0;line-height:1.4}
+.melody-app #phrase-feedback:empty{display:none}
+.melody-app #capture-position{margin:5px 0;font-size:16px}
+.melody-app dialog{width:min(94vw,560px);max-height:88svh;border:0;border-radius:18px;padding:16px;color:#443b36;background:#faf5ed;font:inherit;overflow:auto}
+.melody-app dialog::backdrop{background:#30291f80}
+.melody-app dialog .screen-heading{position:sticky;top:-16px;background:#faf5ed;z-index:6;margin-bottom:12px}
+.melody-app dialog .quick-transpose{max-width:none}
+.melody-app dialog #editor-more{border-top:0}
+.melody-app dialog #composer-beats{grid-template-columns:repeat(4,1fr)}
+.melody-app dialog #composer-view{width:100%}
+.melody-app #phrase-shelf{display:flex;gap:8px;flex-wrap:wrap;max-height:180px;overflow:auto}
+.melody-app #phrase-shelf button{background:#e7ddef;margin:0;font-size:14px}
+.melody-app #sequence-line{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;max-height:32svh;overflow:auto;min-height:70px;background:#fff;padding:8px;border-radius:12px}
+.melody-app #sequence-line:empty::before{content:'ここに順番にならびます';font-size:13px;grid-column:1/-1;color:#746575;align-self:center;text-align:center}
+.melody-app #sequence-line button{font-size:14px;margin:0;overflow-wrap:anywhere}
+.melody-app #sequence-line button.sequence-draft{border:2px dashed #b06018}
+.melody-app #sequence-line button[data-playing]{background:#d9ebd5;outline:2px solid #16816e}
+.melody-app .sequence-edit,.melody-app .sequence-actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-top:10px}
+.melody-app .sequence-edit button,.melody-app .sequence-actions button{margin:0;font-size:14px;padding:6px}
+.melody-app #sequence-confirm{background:#d9ebd5}.melody-app #sequence-preview{background:#d9ebd5}
+.melody-app #melody-connect h3{font-size:15px;margin:14px 0 6px}
+.melody-app #sequence-message,.melody-app #sequence-empty{font-size:14px;line-height:1.6}
+.melody-app #sequence-count{font-weight:400;margin-left:8px}
+.melody-app.editor-focus footer{font-size:12px;padding:6px 12px}
+.melody-app.editor-focus footer button{min-height:40px;font-size:14px}
+@media(max-width:350px){.melody-app.editor-focus main{padding-inline:8px}.melody-app.editor-focus #composer-keys{grid-template-columns:repeat(4,minmax(0,1fr))}.melody-app #melody-home h1{margin:4px 0}.melody-app .home-caption{margin-bottom:14px}.melody-app .home-menu{gap:10px}}
+@media(min-width:650px){.melody-app.editor-focus #capture-note-panel{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}.melody-app.editor-focus #capture-score{grid-column:1;grid-row:1;height:230px}.melody-app.editor-focus #capture-blocks{grid-column:1;grid-row:2}.melody-app.editor-focus .edit-toolbar{grid-column:2;grid-row:1/3}.melody-app.editor-focus #composer-keys{grid-template-columns:repeat(4,1fr)}.melody-app .phrase-register{max-width:400px;margin-left:auto}.melody-app #sequence-line{grid-template-columns:repeat(4,minmax(0,1fr))}}

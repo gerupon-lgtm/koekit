@@ -12,7 +12,7 @@ const base=process.env.SAEZURI_BASE||'http://127.0.0.1:8014';
  const report=async()=>{await page.evaluate(()=>document.querySelector('#report').click());return JSON.parse(await page.locator('#metrics').textContent());};
  const say=word=>page.evaluate(word=>window.recognizers.at(-1).events.result({result:{text:word}}),word);
  const listen=()=>page.waitForFunction(()=>document.querySelector('#edit-voice-status').textContent==='声を受け付けています');
- await page.goto(base+'/probe/saezuri/');await page.locator('#capture-score svg').first().waitFor();
+ await page.goto(base+'/probe/saezuri/?view=editor');await page.locator('#capture-score svg').first().waitFor();
  await page.locator('#editor-source > summary').click();await page.locator('#new-manual').click();
  let r=await report();assert.equal(r.captureCandidate.source,'manual');assert.equal(r.captureCandidate.gridStep,2);assert.equal(r.captureCandidate.notes.length,0);
  await page.locator('[data-pitch="0"]').click();r=await report();assert.equal(r.captureCandidate.notes.length,0);assert.equal(r.captureEditing.inputCursor,0);assert.equal(r.captureEditing.editCandidate.notes[0].midi,60);

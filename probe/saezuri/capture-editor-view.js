@@ -349,7 +349,7 @@ export class CaptureEditorView {
     if(block) blocks.scrollLeft+=block.getBoundingClientRect().left-blocks.getBoundingClientRect().left-(blocks.clientWidth-block.offsetWidth)/2;
     const visibleHead=head.getBoundingClientRect(), footer=document.querySelector('footer').getBoundingClientRect();
     const toolbar=document.querySelector('.edit-toolbar').getBoundingClientRect();
-    if(!manual && (visibleHead.top<Math.max(0,toolbar.bottom) || visibleHead.bottom>footer.top)) {
+    if(!manual && !document.body.classList.contains('melody-app') && (visibleHead.top<Math.max(0,toolbar.bottom) || visibleHead.bottom>footer.top)) {
       document.getElementById('capture-note-panel').scrollIntoView({block:'start',behavior:'instant'});
     }
   }
