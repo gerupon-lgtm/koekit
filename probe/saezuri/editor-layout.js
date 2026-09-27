@@ -7,9 +7,9 @@ export function setupEditorLayout() {
   document.body.classList.add('editor-focus');
   document.title='サエズリズム 編集テスト';
   const header=main.querySelector('header');
-  header.innerHTML='<h1>サエズリズム <small>編集テスト v19</small></h1><p>音を選ぶ → 直す → 聴く → オッケー</p>';
+  header.innerHTML='<h1>サエズリズム <small>作成・編集テスト v20</small></h1><p>音を選ぶ → 直す → 聴く → オッケー</p>';
   const source=document.createElement('details');source.id='editor-source';
-  source.innerHTML='<summary>音列を開く・ハナウタを録る</summary><p id="source-hint">仮の変更があるときは、確定するか取り消してから開けます。</p><div class="source-actions"></div>';
+  source.innerHTML='<summary>新しくつくる・音列を開く</summary><p id="source-hint">仮の変更があるときは、確定するか取り消してから開けます。</p><div class="source-actions"></div>';
   const workspace=document.createElement('section');workspace.id='edit-workspace';
   workspace.setAttribute('aria-label','音列の編集');
   workspace.innerHTML='<div class="listen-settings" aria-label="試聴設定"></div><div id="editor-standby"><p>確定した音列を、もう一度編集できます。</p></div>';
@@ -71,7 +71,7 @@ export function syncEditorLayout({open,pending,phase}) {
   if(recording) source.open=true;
   document.getElementById('source-hint').textContent=pending
     ? '仮の変更があります。オッケーで確定するか、仮の変更を戻してから開いてください。'
-    : '記録を読み込むか、4小節を歌って編集できます。読み込み・録音で編集セッションを切り替えます。';
+    : '空から作るか、記録やハナウタから編集できます。読み込み・録音で編集セッションを切り替えます。';
 }
 
 export function focusEditor() {

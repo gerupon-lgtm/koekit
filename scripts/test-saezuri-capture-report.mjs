@@ -4,6 +4,14 @@ import { readCaptureReport } from '../probe/saezuri/capture-report.js';
 import { analyzeFrames, quantizeSegments } from '../probe/saezuri/analyzer.js';
 import { buildAnalysisComparison } from '../probe/saezuri/analysis-comparison.js';
 
+test('manual diagnostics reopen the confirmed 8-bar melody and accompaniment, never the draft',()=>{
+ const pattern={source:'manual',bars:8,gridStep:2,key:{tonicPitchClass:9,mode:'minor'},notes:[{id:'a',midi:60,startTick:100,durationTick:8}],accompaniment:{enabled:true,genre:'rock',rhythm:'quarters',progression:'pop'}};
+ const report={capture:null,captureCandidate:pattern,compositionOptions:{tempo:140},captureEditing:{editCandidate:{notes:[]}}};
+ const imported=readCaptureReport(JSON.stringify(report));assert.deepEqual(imported.pattern,pattern);assert.equal(imported.options.tempo,140);
+ for(const bad of [{...pattern,bars:5},{...pattern,gridStep:1},{...pattern,key:{mode:'major',tonicPitchClass:1}},{...pattern,accompaniment:{enabled:true}}]) assert.throws(()=>readCaptureReport(JSON.stringify({...report,captureCandidate:bad})),/通常作成/);
+ assert.throws(()=>readCaptureReport(JSON.stringify({...report,compositionOptions:null})),/通常作成/);
+});
+
 function fixture() {
   const frames = Array.from({ length: 400 }, (_, i) => ({ time: i * .02, kind: 'pitched', midi: i % 25 < 12 ? 55 : 56, rms: .1 }));
   const options = { tempo: 120, endSeconds: 8, smoothingMs: 120, noteMode: 'sustain', maxGapSeconds: .1, minDetectedRatio: .5 };

@@ -10,6 +10,11 @@ import { inferSignature, signature } from './key-signature.js';
 import { CaptureEditorView } from './capture-editor-view.js';
 import { readCaptureReport } from './capture-report.js';
 import { setupEditorLayout, syncEditorLayout, focusEditor } from './editor-layout.js';
+import {ComposerControls} from './composer-controls.js';
+import {blankPattern} from './entry-session.js';
+import {ENTRY_WORDS,parseEntryCommand} from './entry-voice.js';
+import {ImageControls} from './image-controls.js';
+import {accompanimentEvents} from '../../saezuri/music/accompaniment.js';
 const compactEditor=setupEditorLayout();
 const $ = id => document.getElementById(id);
 const example = () => ({ bars: 4, gridStep: 1, notes: [
@@ -34,13 +39,15 @@ const editingExample = () => ({ bars: 4, gridStep: 1, notes: [
 ] });
 let state = { pattern: editingExample(), cursor: 0, revision: 0 }, candidate = null, captured = null, capturedOriginal = null;
 let ctx, transport, capture, serial = 0, phase = 'idle', raf, lastFrame = 0, maxFrameGapMs = 0, lastBar = -1, playbackPreview = false;
-const record = { prototype: 'ML-T01-v19', timestamp: new Date().toISOString(), userAgent: navigator.userAgent, playback: null, capture: null };
+const record = { prototype: 'ML-T01-v20', timestamp: new Date().toISOString(), userAgent: navigator.userAgent, playback: null, capture: null };
 const keyChoices = { score: null, capture: null };
 const displayOctaves = { score: 0, capture: 0 };
 const captureAlignments = new Map();
-let voice, voiceTimer;
+let voice, voiceTimer, composer, imageControls;
 function syncVoice() {
   if(!voice) return;
+  if(captureEditor.previewPattern?.source==='manual') voice.configure(ENTRY_WORDS,parseEntryCommand);
+  else voice.configure();
   clearTimeout(voiceTimer);
   const enabled=$('edit-voice').checked && microphoneEnabled();
   const available=enabled && captureEditor.isOpen && !$('review').hidden && !document.hidden && phase==='idle';
@@ -63,10 +70,10 @@ const captureEditor = new CaptureEditorView({ onChange(change) {
   showReport();
 } });
 function drawPattern(kind, pattern) {
-  const inferred = inferSignature(kind==='capture' ? (captured?.notes ?? pattern.notes) : pattern.notes), fifths = keyChoices[kind] ?? inferred.fifths;
+  const inferred = inferSignature(kind==='capture' ? (captured?.notes ?? pattern.notes) : pattern.notes), fifths = keyChoices[kind] ?? (pattern.source==='manual'?0:inferred.fifths);
   const label = $(`${kind}-key-label`);
-  const source = keyChoices[kind] !== null ? '手動' : inferred.estimated ? '推定' : '未推定・調号なし';
-  label.textContent = `調号：${source} — ${signature(fifths).label}${keyChoices[kind] === null && inferred.alternatives.length ? '（ほかの調号の可能性もあります）' : ''}`;
+  const source = keyChoices[kind] !== null ? '手動' : pattern.source==='manual'?'指定':inferred.estimated ? '推定' : '未推定・調号なし';
+  label.textContent = `調号：${source} — ${signature(fifths).label}${source==='推定' && inferred.alternatives.length ? '（ほかの調号の可能性もあります）' : ''}`;
   label.dataset.fifths = String(fifths);
   record.scoreSignatures ??= {};
   record.scoreSignatures[kind] = { fifths, source };
@@ -96,6 +103,10 @@ function setPhase(next, message) {
   $('adopt').disabled = next !== 'idle' || !captureEditor.accepted || captureEditor.pending;
   $('capture-import-button').disabled = next !== 'idle' || captureEditor.pending;
   captureEditor.setBusy(next !== 'idle');
+  $('preview').disabled=next!=='idle' || !!captureEditor.entry?.proposal.code;
+  composer?.render(next!=='idle');
+  imageControls?.render(next!=='idle');
+  document.body.classList.toggle('manual-composer',captureEditor.isOpen&&captureEditor.previewPattern?.source==='manual');
   $('capture').disabled = next !== 'idle' || !microphoneEnabled() || captureEditor.isOpen;
   $('confirm').disabled = next !== 'idle' || !candidate || !!candidate.code;
   $('cancel').disabled = next !== 'idle' || !candidate;
@@ -184,13 +195,16 @@ async function play(pattern = state.pattern, preview = false) {
   setPhase('preparing');
   try {
     const tempo = tempoValue(); await prepare(); if (request !== serial) return;
-    const bars = preview ? 4 : Number($('length').value), notes = [];
-    for (let offset = 0; offset < bars * 16; offset += 64) for (const note of pattern.notes) {
+    const bars = preview ? pattern.bars : Number($('length').value)===129?129:pattern.bars, notes = [];
+    for (let offset = 0; offset < bars * 16; offset += pattern.bars*16) for (const note of pattern.notes) {
       if (offset + note.startTick >= bars * 16) continue;
       notes.push({ ...note, startTick: offset + note.startTick, durationTick: Math.min(note.durationTick, bars * 16 - offset - note.startTick) });
     }
     record.playback = { tempo, bars, instrument: $('instrument').value, sampleRate: ctx.sampleRate, baseLatency: ctx.baseLatency, outputLatency: ctx.outputLatency, notes: notes.length, draft:preview ? captureEditor.pending : !!candidate, pitches:notes.map(n=>n.midi), countSound: $('play-count').checked, countStyle: $('play-count-style').value, countVolume: Number($('count-volume').value) };
-    transport.start(notes, { tempo, totalTicks: bars * 16, instrument: $('instrument').value, lead: Number($('lead').value), ahead: Number($('ahead').value), countSound: $('play-count').checked, countStyle: $('play-count-style').value, countVolume: Number($('count-volume').value) });
+    const backing=accompanimentEvents(pattern),accompaniment=[];
+    for(let offset=0;offset<bars*16;offset+=pattern.bars*16) for(const note of backing) if(offset+note.startTick<bars*16) accompaniment.push({...note,startTick:offset+note.startTick});
+    record.playback.accompaniment=pattern.accompaniment??null;
+    transport.start(notes, { tempo, totalTicks: bars * 16, instrument: $('instrument').value, lead: Number($('lead').value), ahead: Number($('ahead').value), countSound: $('play-count').checked, countStyle: $('play-count-style').value, countVolume: Number($('count-volume').value),accompaniment });
     playbackPreview=preview;
     setPhase('playing'); lastFrame = 0; maxFrameGapMs = 0; lastBar = -1; animate();
   } catch (error) { if (request === serial) stop(error.message); }
@@ -198,7 +212,7 @@ async function play(pattern = state.pattern, preview = false) {
 function showReport() {
   const frames = record.capture?.frames ?? [];
   const frameSummary = !frames.length && record.importedFrom?.frameSummary ? record.importedFrom.frameSummary : { count: frames.length, pitched: frames.filter(f => f.kind === 'pitched').length, unknown: frames.filter(f => f.kind === 'unknown').length };
-  $('metrics').textContent = JSON.stringify({ ...record, conditions: $('conditions').value, captureCandidate: captured, capture: record.capture ? { ...record.capture, frames: frameSummary } : null }, null, 2);
+  $('metrics').textContent = JSON.stringify({ ...record, ...(captured?.source==='manual'?{compositionOptions:{tempo:Number($('tempo').value)}}:{}), conditions: $('conditions').value, captureCandidate: captured, capture: record.capture ? { ...record.capture, frames: frameSummary } : null }, null, 2);
 }
 async function copyReport(event) {
   const button=event.currentTarget;
@@ -255,6 +269,12 @@ $('capture-import-button').onclick = () => {
     delete record.lastBoundary;
     keyChoices.capture = null;
     $('tempo').value = String(imported.options.tempo);
+    if(imported.pattern) {
+      record.capture=null;record.editingSource='manual';displayOctaves.capture=0;
+      captureAlignments.clear();captureEditor.openPattern(imported.pattern);$('review').hidden=false;
+      setPhase('idle');focusEditor();showReport();
+      $('capture-import-status').textContent='通常作成の確定した音列を開きました。';return;
+    }
     acceptCapture(imported.result);
     $('capture-import-status').textContent = '元の取り込みを開きました。方式を選んで試聴・編集できます。';
     $('capture-position').textContent = '記録から読み込みました';
@@ -271,7 +291,7 @@ $('comparison-settings').onclick = () => {
 $('mic').onclick = () => setMicrophoneEnabled(!microphoneEnabled());
 function refreshMic(enabled) { $('mic').textContent = `マイク ${enabled ? 'ON' : 'OFF'}`; $('mic').setAttribute('aria-pressed', String(enabled)); if (!enabled && phase !== 'playing') stop('マイクOFF・タッチで操作できます'); setPhase(phase); }
 onMicrophoneChange(refreshMic); refreshMic(microphoneEnabled());
-$('preview').onclick = () => captured && play(captureEditor.previewPattern, true);
+$('preview').onclick = () => captured && !captureEditor.entry?.proposal.code && play(captureEditor.previewPattern, true);
 $('align-start').onclick = () => {
   if (!capturedOriginal || !capturedOriginal.notes[0]?.startTick || phase !== 'idle' || captureEditor.pending || captureEditor.edited) return;
   record.captureAlignmentTicks = record.captureAlignmentTicks ? 0 : capturedOriginal.notes[0].startTick;
@@ -298,6 +318,13 @@ $('discard').onclick = () => {
 voice=new EditVoice({createInput:()=>createSpeechInput(METHODS.VOSK),
   onCommand(command) {
     if(phase!=='idle' || !captureEditor.isOpen || document.hidden || !microphoneEnabled()) return;
+    if(command?.type==='note') {
+      captureEditor.inputNote({...command,...($('composer-replace')?.checked?{replaceNoteId:captureEditor.selectedNoteId}:{})});return;
+    }
+    if(command?.type==='position') {
+      const bar=Math.min(captureEditor.previewPattern.bars-1,Math.floor(captureEditor.cursor/16));
+      captureEditor.moveCursor(bar*16+(command.beat-1)*4+2);return;
+    }
     if(command==='preview') $('preview').click(); else captureEditor.command(command);
   },
   onStatus(status) {
@@ -339,6 +366,20 @@ document.addEventListener('visibilitychange', () => {
 });
 addEventListener('pagehide', () => { stop(); clearTimeout(voiceTimer);voice?.setActive(false,{release:true});captureEditor.load(null);ctx?.close(); });
 try { const saved = localStorage.getItem('saezuri.capture.manualMs'); if (saved !== null && Number.isFinite(Number(saved)) && Number(saved)>=-200 && Number(saved)<=400) $('timing-adjust').value = saved; } catch {}
+function newComposition(withImage=false) {
+  if(phase!=='idle' || captureEditor.pending) return;
+  keyChoices.capture=null;displayOctaves.capture=0;
+  const pattern=blankPattern();
+  if(withImage)pattern.accompaniment={enabled:true,genre:'nursery',rhythm:'quarters',progression:'home'};
+  $('tempo').value='120';
+  captureAlignments.clear();captureEditor.openPattern(pattern);
+  $('review').hidden=false;record.editingSource='manual';record.capture=null;record.playback=null;
+  record.captureOptions=null;delete record.importedFrom;record.timestamp=new Date().toISOString();
+  setPhase('idle','音や休符を選び、オッケーで置いていきます。');focusEditor();showReport();
+  if(imageControls?.panel)imageControls.panel.open=withImage;
+}
+composer=new ComposerControls({editor:captureEditor,onNew:()=>newComposition()});
+imageControls=new ImageControls({editor:captureEditor,onNew:()=>newComposition(true),onTempo:tempo=>{$('tempo').value=String(tempo);}});
 draw();
 if(compactEditor) $('edit-score').click();
 if(compactEditor) {

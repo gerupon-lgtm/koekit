@@ -69,7 +69,7 @@ const base = process.env.SAEZURI_BASE || 'http://127.0.0.1:8000';
     assert.equal(await page.locator('#capture-variant').count(), 1, 'capture editor variant selector missing');
     const expected = await page.evaluate(() => window.editorExpected);
     assert.deepEqual(rows(expected.notes), [[4, 4, 60], [8, 4, 60], [16, 4, 64], [20, 4, 65]]);
-    assert.equal((await report()).prototype, 'ML-T01-v19');
+    assert.equal((await report()).prototype, 'ML-T01-v20');
     assert.equal(await page.evaluate(() => window.editorTracks.every(track => track.readyState === 'ended')), true);
     for (const mode of ['detail', 'unsmoothed', 'current']) {
       await page.locator('#capture-variant').selectOption(mode);
