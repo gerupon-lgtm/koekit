@@ -33,7 +33,7 @@ const base = process.env.SAEZURI_BASE || 'http://127.0.0.1:8000';
       worker.onerror=e=>{clearTimeout(timeout);reject(Error(e.message));};
       worker.postMessage({samples,sampleRate:sr,tempo:120,sessionId:1,options:{windowSize:4096,boundaryMode:'energy-gated',adaptiveWindow:true,smoothingMs:120,noteMode:'sustain',maxGapSeconds:.1,minDetectedRatio:.1,countSound:false,recordCount:false}},[samples.buffer]);
      });
-     outputs.push({fixture,notes:result.notes.map(n=>[n.startTick,n.durationTick,n.midi]),empty:result.empty,diagnostics:result.analysisDiagnostics});
+     outputs.push({fixture,notes:result.notes.map(n=>[n.startTick,n.durationTick,n.midi]),empty:result.empty,diagnostics:result.analysisDiagnostics,comparison:result.analysisComparison,comparisonMs:result.comparisonMs});
     } finally {worker.terminate();}
    }
    return outputs;
@@ -46,6 +46,13 @@ const base = process.env.SAEZURI_BASE || 'http://127.0.0.1:8000';
   assert.ok(Array.isArray(results[2].diagnostics.quantizationAdjustments));
   assert.equal(results[3].empty,true);
   assert.equal(results[3].notes.length,0);
+  for(const result of results){
+   assert.equal(result.comparison?.input,'same-pitch-frames');
+   assert.deepEqual(result.comparison.variants.map(v=>v.mode),['current','detail','unsmoothed']);
+   assert.deepEqual(result.comparison.variants[0].notes,result.notes);
+   assert.equal(result.comparison.pitchTrace.rows.split('\n').length,375);
+   assert.ok(Number.isFinite(result.comparisonMs)&&result.comparisonMs>=0);
+  }
   assert.deepEqual(errors,[]);
   console.log(JSON.stringify({result:'PASS',cases:results.map(r=>({fixture:r.fixture,notes:r.notes.length,shortWindowFrames:r.diagnostics.shortWindowFrames,gapDecisions:r.diagnostics.gapDecisions.length})),errors}));
  } finally {await browser.close();}

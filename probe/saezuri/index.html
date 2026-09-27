@@ -37,6 +37,9 @@
   <label>タイミング追加補正（ms）<input id="timing-adjust" type="number" min="-200" max="400" step="10" value="0"></label></div>
   <p>音高をならしてから最も近い半音にし、開始・長さを16分単位に丸めます。ドンカマの実測が成功すれば推定補正を置き換えます。追加補正はどちらにも加算します（この端末に保存）。実測の初回比較では追加補正を0にしてください。</p>
   <p>「長音を保つ」は揺れをならしながら、短くても安定した別の音は分けます。歌い出しの短い半音ずれは後続の長音へまとめます。「細かい変化も拾う」でも比較できます。「ならし：なし」ではこの抑制もOFFになります。設定は次の取り込みに反映します。</p>
+  <button id="comparison-settings">今回の比較設定にする</button>
+  <p>半音交替の確認：カウントのあと、声を切らずにG／G♯を8分音符で交互に歌ってください。1回の入力から3通りの区切り方を自動比較します。試聴する候補は現在の設定の結果です。</p>
+  <p id="analysis-comparison" role="status">比較結果と、ならす前の音程・音量の数値を「記録をコピー」に含めます。音声は保存・送信しません。</p>
   <details><summary>解析の比較条件（未確定）</summary><div class="fields">
    <label>発音区間の方式 <select id="boundary-mode"><option value="energy-gated">短区間の無音判定（比較案）</option><option value="window-start">音高窓の先頭（旧方式）</option></select></label>
    <label>音高解析窓 <select id="window-size"><option value="4096">4096標本（従来）</option><option value="2048">2048標本（比較）</option><option value="1024">1024標本（比較・低音域が狭い）</option></select></label>

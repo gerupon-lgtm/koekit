@@ -17,7 +17,7 @@ const example = () => ({ bars: 4, gridStep: 1, notes: [
 ] });
 let state = { pattern: example(), cursor: 0, revision: 0 }, candidate = null, captured = null, capturedOriginal = null;
 let ctx, transport, capture, serial = 0, phase = 'idle', raf, lastFrame = 0, maxFrameGapMs = 0, lastBar = -1;
-const record = { prototype: 'ML-T01-v11', timestamp: new Date().toISOString(), userAgent: navigator.userAgent, playback: null, capture: null };
+const record = { prototype: 'ML-T01-v12', timestamp: new Date().toISOString(), userAgent: navigator.userAgent, playback: null, capture: null };
 const keyChoices = { score: null, capture: null };
 const displayOctaves = { score: 0, capture: 0 };
 function drawPattern(kind, pattern) {
@@ -49,7 +49,7 @@ function updateKeyButtons() {
 const labels = { idle: '準備できました', preparing: '音とマイクの準備中', playing: '再生中・停止はボタンで', 'count-in': '8拍のカウント中', recording: '4小節を取り込み中', analyzing: '端末内で解析中' };
 function setPhase(next, message) {
   phase = next; $('status').dataset.state = next; $('status').textContent = message || labels[next];
-  for (const id of ['tempo','instrument','length','lead','ahead','example','empty','propose','undo','capture','play','adopt','preview','discard','pitch','duration','count-sound','count-volume','record-count','play-count','smoothing','note-mode','timing-adjust','acoustic-sync','processing','boundary-mode','window-size','adaptive-window','rms','ratio','gap']) $(id).disabled = next !== 'idle';
+  for (const id of ['tempo','instrument','length','lead','ahead','example','empty','propose','undo','capture','play','adopt','preview','discard','pitch','duration','count-sound','count-volume','record-count','play-count','smoothing','note-mode','timing-adjust','acoustic-sync','processing','boundary-mode','window-size','adaptive-window','rms','ratio','gap','comparison-settings']) $(id).disabled = next !== 'idle';
   $('align-start').disabled = next !== 'idle' || !capturedOriginal?.notes[0]?.startTick;
   $('capture').disabled = next !== 'idle' || !microphoneEnabled();
   $('confirm').disabled = next !== 'idle' || !candidate || !!candidate.code;
@@ -77,6 +77,11 @@ async function prepare() {
     });
     capture = new ProbeCapture(ctx, setPhase, result => {
       record.capture = result;
+      const comparison = result.analysisComparison;
+      const comparisonLabels = { current:'現在の設定', detail:'細かい変化', unsmoothed:'ならしなし' };
+      $('analysis-comparison').textContent = comparison
+        ? `同じ入力の比較：${comparison.variants.map(v=>`${comparisonLabels[v.mode]} ${v.notes.length}音`).join(' ／ ')}。比較結果と音程推移を記録に含めました。`
+        : '今回の解析比較はありません。';
       const acoustic=result.acousticTiming;
       $('acoustic-status').textContent=acoustic?.status==='measured'
         ? `ドンカマ実測：${Math.round(acoustic.delaySeconds*1000)}ms（${acoustic.inliers}/6拍一致）。実測の補正を使用しました。`
@@ -161,11 +166,12 @@ async function copyReport(event) {
 $('play').onclick = () => play(); $('stop').onclick = () => { if (transport?.active) record.playback = { ...record.playback, ...transport.metrics, maxFrameGapMs, stoppedAtTick: transport.position(), reason: 'USER_STOP' }; stop(); showReport(); };
 $('capture').onclick = async () => {
   stop(); const request = serial; captured = null; capturedOriginal = null; $('review').hidden = true; setPhase('preparing');
-  record.timestamp = new Date().toISOString(); record.capture = null; record.captureAlignmentTicks = 0;
+  record.timestamp = new Date().toISOString(); record.capture = null; record.captureAlignmentTicks = 0; record.playback = null;
   keyChoices.capture = null;
   if (record.scoreSignatures) delete record.scoreSignatures.capture;
   $('capture-position').textContent = 'カウント待ち';
   $('acoustic-status').textContent = '今回の取り込みを待っています。';
+  $('analysis-comparison').textContent = '今回の取り込みを待っています。';
   try {
     const tempo = tempoValue(); await prepare(); if (request !== serial) return;
     const options = { countVolume: Number($('count-volume').value), acousticSync: $('acoustic-sync').checked, windowSize: Number($('window-size').value), adaptiveWindow: $('adaptive-window').checked, boundaryMode: $('boundary-mode').value, rmsFloor: Number($('rms').value), minDetectedRatio: Number($('ratio').value), maxGapSeconds: Number($('gap').value), processing: $('processing').checked, countSound: $('count-sound').checked, recordCount: $('record-count').checked, smoothingMs: Number($('smoothing').value), noteMode: $('note-mode').value, manualMs: Number($('timing-adjust').value) };
@@ -175,6 +181,14 @@ $('capture').onclick = async () => {
     record.captureOptions = { tempo, ...options }; await capture.start(tempo, options);
     if (request === serial) { lastFrame = 0; animate(); }
   } catch (error) { if (request === serial) stop(`取り込めません：${error.message}。タッチの音符入力は利用できます。`); }
+};
+$('comparison-settings').onclick = () => {
+  if (phase !== 'idle') return;
+  const values = { tempo:'120', 'note-mode':'sustain', smoothing:'120', gap:'0.1', 'window-size':'4096', 'boundary-mode':'energy-gated', 'timing-adjust':'0', ratio:'0.5', rms:'0.008' };
+  for(const [id,value] of Object.entries(values)) $(id).value=value;
+  for(const id of ['adaptive-window','acoustic-sync','count-sound','record-count']) $(id).checked=true;
+  $('processing').checked=false;
+  $('status').textContent='比較設定にしました。カウントのあと、切らずにG／G♯を8分音符で交互に歌ってください。';
 };
 $('mic').onclick = () => setMicrophoneEnabled(!microphoneEnabled());
 function refreshMic(enabled) { $('mic').textContent = `マイク ${enabled ? 'ON' : 'OFF'}`; $('mic').setAttribute('aria-pressed', String(enabled)); if (!enabled && phase !== 'playing') stop('マイクOFF・タッチで操作できます'); setPhase(phase); }

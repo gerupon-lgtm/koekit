@@ -1,6 +1,7 @@
 import { analyzeSamples, analyzeFrames, quantizeSegments } from './analyzer.js';
 import { filterCaptureSamples } from './capture-support.js';
 import { measureCountDelay, selectCaptureWindow } from './acoustic-sync.js';
+import { buildAnalysisComparison } from './analysis-comparison.js';
 self.onmessage = ({ data }) => {
   const { sampleRate, tempo, sessionId, options } = data;
   let samples=data.samples, timing=data.timing;
@@ -18,10 +19,14 @@ self.onmessage = ({ data }) => {
   }
   const filtered = options.recordCount && options.countSound ? filterCaptureSamples(samples, sampleRate) : samples;
   const frames = analyzeSamples(filtered, sampleRate, options);
-  const result = analyzeFrames(frames, { endSeconds: samples.length / sampleRate, maxGapSeconds: options.maxGapSeconds, minDetectedRatio: options.minDetectedRatio, smoothingMs: options.smoothingMs ?? 80, noteMode: options.noteMode ?? 'sustain', tempo });
+  const analysisOptions = { endSeconds: samples.length / sampleRate, maxGapSeconds: options.maxGapSeconds ?? 0.1, minDetectedRatio: options.minDetectedRatio ?? 0.1, smoothingMs: options.smoothingMs ?? 80, noteMode: options.noteMode ?? 'sustain', tempo };
+  const result = analyzeFrames(frames, analysisOptions);
   const quantizationAdjustments = [];
   const notes = quantizeSegments(result.segments, tempo, 64, quantizationAdjustments);
   const analysisDiagnostics = { shortWindowFrames: frames.filter(f=>f.pitchSource==='short-window').length, gapDecisions: result.gapDecisions, quantizationAdjustments };
+  const comparisonStarted = performance.now();
+  const analysisComparison = buildAnalysisComparison(frames, analysisOptions, { result, notes, quantizationAdjustments });
+  const comparisonMs = performance.now() - comparisonStarted;
   // Transfer only pitch diagnostics. Raw samples die with this worker after response.
-  self.postMessage({ sessionId, notes, frames, unquantizedNotes:result.segments, empty: result.empty || notes.length === 0, ratio: result.ratio, unknownSeconds: result.unknownSeconds, onsetCorrections: result.onsetCorrections, analysisDiagnostics, analysisMs: performance.now() - started, sampleRate, samples: samples.length, acousticTiming, timing });
+  self.postMessage({ sessionId, notes, frames, unquantizedNotes:result.segments, empty: result.empty || notes.length === 0, ratio: result.ratio, unknownSeconds: result.unknownSeconds, onsetCorrections: result.onsetCorrections, analysisDiagnostics, analysisComparison, comparisonMs, analysisMs: performance.now() - started, sampleRate, samples: samples.length, acousticTiming, timing });
 };
