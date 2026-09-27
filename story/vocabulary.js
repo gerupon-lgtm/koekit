@@ -11,14 +11,21 @@ export const COMMANDS = {
   back: ['もどる'],
   start: ['スタート'],
   next: ['つぎ'],
+  end: ['おわり'],
+  kids: ['こども'],
+  adult: ['おとな'],
+  normal: ['ふつう'],
+  mechakucha: ['めちゃくちゃ'],
 };
 
 // 区間ごとの受け付け語（Vosk へ渡す表記）
 export function wordsFor(ctx) {
-  if (ctx.type === 'name') return [...ctx.names, ...COMMANDS.omakase, ...(ctx.hasCand ? COMMANDS.ok : [])];
+  // はじめの画面：モード・場面の順番の切り替えと、オッケーではじめる（2026-09-27 発案者指示）
+  if (ctx.type === 'top') return [...COMMANDS.kids, ...COMMANDS.adult, ...COMMANDS.normal, ...COMMANDS.mechakucha, ...COMMANDS.ok];
+  if (ctx.type === 'name') return [...ctx.names, ...COMMANDS.omakase, ...COMMANDS.back, ...(ctx.hasCand ? COMMANDS.ok : [])];
   if (ctx.type === 'row') return [...NUMBERS.slice(0, ctx.cols).flat(), ...COMMANDS.ok, ...COMMANDS.omakase, ...COMMANDS.back];
   if (ctx.type === 'ready') return [...COMMANDS.ok, ...COMMANDS.back]; // 最後の確定も「オッケー」（2026-09-27 発案者指示）
-  if (ctx.type === 'after') return [...COMMANDS.next];
+  if (ctx.type === 'after') return [...COMMANDS.next, ...COMMANDS.end];
   return [];
 }
 

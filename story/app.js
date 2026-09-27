@@ -49,19 +49,22 @@ function show(screen) {
   window.scrollTo(0, 0);
   syncVoice();
 }
-function home() { reader.stop(); show('start'); syncVoice(); }
+function home() { reader.stop(); show('start'); paintStartGuide(); syncVoice(); }
 document.querySelectorAll('[data-home]').forEach(b => (b.onclick = home));
 
 // ---------- MG-S01 はじめ ----------
+function paintSegs() {
+  document.querySelectorAll('.seg').forEach(seg => seg.querySelectorAll('button')
+    .forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v === settings[seg.dataset.key]))));
+}
+function setSetting(key, value) { settings[key] = value; saveSettings(); paintSegs(); applySettings(); }
 document.querySelectorAll('.seg').forEach(seg => {
-  const key = seg.dataset.key;
-  const paint = () => seg.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v === settings[key])));
   seg.addEventListener('click', e => {
     const b = e.target.closest('button'); if (!b) return;
-    settings[key] = b.dataset.v; saveSettings(); paint(); applySettings();
+    setSetting(seg.dataset.key, b.dataset.v);
   });
-  paint();
 });
+paintSegs();
 function applySettings() {
   document.body.classList.toggle('kids', settings.audience === 'kids');
   document.body.classList.toggle('adult', settings.audience === 'adult');
@@ -71,7 +74,8 @@ applySettings();
 $('go-name').onclick = () => openName();
 // 物語データ（data/*.json）を読み込むまで「はじめる」を押せないようにする
 $('go-name').disabled = true;
-loadSets().then(() => { $('go-name').disabled = false; log('物語データを読み込みました'); })
+let setsReady = false;
+loadSets().then(() => { setsReady = true; $('go-name').disabled = false; log('物語データを読み込みました'); paintStartGuide(); syncVoice(); })
   .catch(e => { log(`✕ 物語データを読み込めません ${e.message}`); toast('物語データを読み込めませんでした。ひらき直してください'); });
 // 直近2回の物語で使った場面は、なるべく使わない（同じ話に見えないように）
 const recentScenes = [];
@@ -140,7 +144,7 @@ function paintName() {
   $('name-guide').innerHTML = (st.nameCand
     ? `「${esc(st.nameCand)}」で いい？ →「オッケー」`
     : (speak ? 'なまえを いってね' : 'なまえを えらんでね'))
-    + `<span class="words">${speak ? 'いえること：なまえ・おまかせ' + (st.nameCand ? '・オッケー' : '') : 'タッチで えらんでね'}</span>`;
+    + `<span class="words">${speak ? 'いえること：なまえ・おまかせ・もどる' + (st.nameCand ? '・オッケー' : '') : 'タッチで えらんでね'}</span>`;
   syncVoice();
 }
 $('name-ok').onclick = () => { if (st.nameCand) { st.name = st.nameCand; openBoard(); } };
@@ -225,7 +229,6 @@ function paintGuide() {
   const nums = NUM_WORDS.slice(0, cols).join('・');
   $('back').hidden = $('omakase').hidden = $('ok').hidden = st.done;
   $('start').hidden = !st.done;
-  $('back').disabled = !st.done && st.row === 0;
   if (st.done) {
     g.innerHTML = `「オッケー」で めくろう<span class="words">${canSpeak() ? 'いえること：オッケー・もどる' : 'オッケー を タッチ'}</span>`;
     return;
@@ -282,6 +285,7 @@ function back() {
   st.cand = null;
   if (st.done) { st.done = false; renderBoard(); promptRow(); return; }
   if (st.row > 0) { st.row--; renderBoard(); promptRow(); }
+  else { reader.stop(); openName(); } // 最初の行で「もどる」→ なまえの画面へ
 }
 function promptRow() {
   const set = SETS[settings.audience];
@@ -307,6 +311,7 @@ function startReveal() {
   $('picks').innerHTML = summary.map((s, i) => `<li data-i="${i}">${esc(s)}</li>`).join('');
   $('story').innerHTML = st.story.lines.map((l, i) => `<li data-i="${i}" class="${l.shift ? 'shift' : ''}">${esc(l.text)}</li>`).join('');
   $('story-area').hidden = false;
+  paintAfterGuide();
   setTimeout(() => readAll(), 900); // めくりの演出が終わってから読む
   syncVoice();
 }
@@ -339,6 +344,12 @@ $('read').onclick = () => {
 };
 $('stop').onclick = () => { reader.stop(); mark('story', null); };
 $('again').onclick = () => { reader.stop(); openName(); };
+$('end').onclick = home;
+function paintAfterGuide() {
+  $('after-guide').innerHTML = canSpeak()
+    ? '<span class="words">よみおわったら いえること：つぎ・おわり</span>'
+    : '<span class="words">つぎ／おわり を タッチ</span>';
+}
 
 // ---------- 声の入力（MG-T04） ----------
 let micState = 'idle';
@@ -356,6 +367,7 @@ const speech = new StorySpeech({
 // いまの画面で受け付ける区間。読み上げ中・はじめ画面は受け付けない
 function voiceContext() {
   if (reader.busy) return null;
+  if (st.screen === 'start') return setsReady ? { type: 'top' } : null;
   if (st.screen === 'name') return { type: 'name', names: SETS[settings.audience].names, hasCand: !!st.nameCand };
   if (st.screen !== 'board') return null;
   if (st.picks) return { type: 'after' };
@@ -375,8 +387,13 @@ function handleText(raw, ctx) {
   if (!cmd) return; // 登録外の発話・雑音は何もしない
   $('heard').textContent = `きこえた：${raw}`;
   clearTimeout(heardTimer); heardTimer = setTimeout(() => ($('heard').textContent = ''), 2500);
-  if (ctx.type === 'name') {
-    if (cmd.type === 'name') { st.nameCand = cmd.value; paintName(); }
+  if (ctx.type === 'top') {
+    if (cmd.type === 'kids' || cmd.type === 'adult') setSetting('audience', cmd.type);
+    else if (cmd.type === 'normal' || cmd.type === 'mechakucha') setSetting('order', cmd.type);
+    else if (cmd.type === 'ok') openName();
+  } else if (ctx.type === 'name') {
+    if (cmd.type === 'back') home();
+    else if (cmd.type === 'name') { st.nameCand = cmd.value; paintName(); }
     else if (cmd.type === 'ok') $('name-ok').click();
     else if (cmd.type === 'omakase') $('name-omakase').click();
   } else if (ctx.type === 'row') {
@@ -387,12 +404,22 @@ function handleText(raw, ctx) {
   } else if (ctx.type === 'ready') {
     if (cmd.type === 'ok') startReveal();
     else if (cmd.type === 'back') back();
-  } else if (ctx.type === 'after' && cmd.type === 'next') $('again').click();
+  } else if (ctx.type === 'after') {
+    if (cmd.type === 'next') $('again').click();
+    else if (cmd.type === 'end') home();
+  }
 }
 let heardTimer;
+// はじめの画面の案内（声で言えること）
+function paintStartGuide() {
+  $('start-guide').innerHTML = canSpeak() && setsReady
+    ? '「オッケー」で はじめる<span class="words">いえること：こども・おとな・ふつう・めちゃくちゃ・オッケー</span>'
+    : '<span class="words">ボタンを タッチ</span>';
+}
 function repaint() {
+  if (st.screen === 'start') paintStartGuide();
   if (st.screen === 'name') paintName();
-  if (st.screen === 'board' && st.board) paintGuide();
+  if (st.screen === 'board' && st.board) { paintGuide(); if (st.picks) paintAfterGuide(); }
 }
 reader.on(e => { if (e.type === 'busy') syncVoice(); });
 onMicrophoneChange(() => { repaint(); syncVoice(); });

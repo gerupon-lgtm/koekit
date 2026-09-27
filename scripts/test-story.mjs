@@ -147,6 +147,11 @@ for (const a of ['kids', 'adult']) {
   eq('オッケー', { type: 'ready' }, { type: 'ok' }); eq('スタート', { type: 'ready' }, null); eq('もどる', { type: 'ready' }, { type: 'back' }); eq('つぎ', { type: 'after' }, { type: 'next' });
   eq('はな', name, { type: 'name', value: 'はな' }); eq('オッケー', name, null); eq('オッケー', { ...name, hasCand: true }, { type: 'ok' });
   for (const w of wordsFor(row5)) if (!w) bad('空の受付語');
+  // はじめの画面・なまえの もどる・おわり（2026-09-27 追加）
+  const top = { type: 'top' };
+  eq('こども', top, { type: 'kids' }); eq('おとな', top, { type: 'adult' }); eq('ふつう', top, { type: 'normal' });
+  eq('めちゃくちゃ', top, { type: 'mechakucha' }); eq('オッケー', top, { type: 'ok' }); eq('いち', top, null);
+  eq('もどる', name, { type: 'back' }); eq('おわり', { type: 'after' }, { type: 'end' }); eq('おわり', row4, null);
 }
 
 if (stats.together === 0 || stats.join === 0) bad('だれとの2形が両方出ていない', stats);
