@@ -79,4 +79,3 @@ const base=process.env.SAEZURI_BASE||'http://127.0.0.1:8014';
   console.log(JSON.stringify({result:'PASS',base,compactEditor:true,checks:'source import, draft protection, nearby timbres, preview, confirm, undo, voice, octave display, end/reopen, count-in visibility',viewports:4}));
  } finally {await browser.close();}
 })().catch(e=>{console.error(e);process.exitCode=1;});
-
