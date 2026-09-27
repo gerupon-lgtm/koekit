@@ -420,7 +420,25 @@ function readAll() {
     { text: st.story.intro, pauseAfter: 800, onStart: () => { mark('picks', null); scrollToStory(); } },
     ...st.story.lines.map((l, i) => ({ text: l.text, onStart: () => mark('story', i) })),
   ];
-  reader.speak(items).then(() => mark('story', null));
+  speakStory(items);
+}
+// 完読した読み上げだけが最下部へ進む。停止・再読・画面移動後の古い完了通知は無視する。
+function speakStory(items) {
+  const story = st.story;
+  const audible = reader.enabled && reader.available;
+  const reading = reader.speak(items);
+  const token = reader.token;
+  reading.then(completed => {
+    if (!completed || reader.token !== token || st.screen !== 'board' || st.story !== story) return;
+    mark('story', null);
+    if (audible && !modal && !document.hidden) {
+      requestAnimationFrame(() => {
+        if (reader.token !== token || st.screen !== 'board' || st.story !== story || modal || document.hidden) return;
+        window.scrollTo({ top: document.documentElement.scrollHeight,
+          behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' });
+      });
+    }
+  });
 }
 // 物語の読み上げに入ったら、物語の見出しが画面の上に来るまでスクロールする
 function scrollToStory() { $('intro').scrollIntoView({ block: 'start', behavior: 'smooth' }); }
@@ -428,7 +446,7 @@ $('read').onclick = () => {
   if (!reader.enabled) { toast('よみあげは OFF です（はじめの画面で ON）'); return; }
   clearTimeout(revealTimer); revealTimer = null;
   scrollToStory();
-  reader.speak(st.story.lines.map((l, i) => ({ text: l.text, onStart: () => mark('story', i) }))).then(() => mark('story', null));
+  speakStory(st.story.lines.map((l, i) => ({ text: l.text, onStart: () => mark('story', i) })));
 };
 $('stop').onclick = () => { clearTimeout(revealTimer); revealTimer = null; reader.stop(); mark('story', null); };
 $('again').onclick = () => { reader.stop(); openName(); };

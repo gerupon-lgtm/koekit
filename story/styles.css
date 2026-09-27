@@ -165,6 +165,8 @@ main:has(#s-start:not([hidden])) { padding-inline: 16px; padding-bottom: max(8px
 #s-name, #s-board { max-width: 520px; margin-inline: auto; }
 .voice-options { text-align: center; font-size: 12px; color: var(--sub); line-height: 1.6; margin: 4px 0 0; overflow-wrap: anywhere; }
 .voice-options:empty, .guide:empty { display: none; }
+/* 読み終わりのマイク再開で案内が現れても、最下部の位置を変えない。 */
+#after-guide-words { display: block; min-height: 1.6em; }
 .result-actions { display: grid; gap: 10px; margin-top: 14px; }
 .help-steps { padding-left: 1.4em; }
 .help-steps li { margin-bottom: 12px; }

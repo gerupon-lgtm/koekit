@@ -62,6 +62,7 @@ const base = process.env.STORY_BASE || 'http://127.0.0.1:8124';
     }
     // 実際の読み上げ列で紹介文の終了から本文の開始までを計測。
     console.log('CHECK intro gap');
+    await page.setViewportSize({ width: 320, height: 568 });
     await page.locator('#go-name').click(); await page.locator('#name-omakase').click();
     for (let i = 0; i < 4; i++) await page.locator('#ok').click();
     await page.evaluate(() => { window.readings = []; });
@@ -79,6 +80,33 @@ const base = process.env.STORY_BASE || 'http://127.0.0.1:8124';
       return first.start - intro.end;
     });
     assert.ok(gap >= 780 && gap < 1600, '800ms pause: ' + gap);
+    const bottom = async () => {
+      try { await page.waitForFunction(() =>
+        window.__story.voiceContext()?.type === 'after' &&
+        Math.abs(document.documentElement.scrollHeight - innerHeight - scrollY) <= 2); }
+      catch (error) { console.error(await page.evaluate(() => ({ context: window.__story.voiceContext(), y: scrollY, height: innerHeight, full: document.documentElement.scrollHeight, last: window.readings.slice(-3) }))); throw error; }
+    };
+    await bottom();
+    assert.ok(await page.locator('#end').evaluate(el => el.getBoundingClientRect().bottom <= innerHeight), 'auto reading ends at bottom');
+    await page.locator('#read').click();
+    await bottom();
+    // 途中停止では最下部へ移動しない。フォーカスによる自動スクロールを避けDOMから操作する。
+    await page.evaluate(() => { document.getElementById('read').click(); document.getElementById('stop').click(); window.scrollTo({ top: 0, behavior: 'instant' }); });
+    await page.waitForTimeout(400);
+    assert.equal(await page.evaluate(() => scrollY), 0, 'stopped reading does not scroll');
+    await page.evaluate(() => { document.getElementById('read').click(); document.getElementById('help-open').click(); window.scrollTo({ top: 0, behavior: 'instant' }); });
+    await page.waitForTimeout(400);
+    assert.equal(await page.evaluate(() => scrollY), 0, 'help cancels completion scroll');
+    await page.locator('#help-close').click();
+    await page.evaluate(() => { document.getElementById('read').click(); document.getElementById('end').click(); });
+    await page.waitForTimeout(400);
+    assert.equal(await page.evaluate(() => scrollY), 0, 'home stays at top');
+    // 読み上げOFFは完読扱いにせず、物語の冒頭を表示する。
+    await page.locator('[data-key="tts"] [data-v="off"]').click();
+    await page.locator('#go-name').click(); await page.locator('#name-omakase').click();
+    for (let i = 0; i < 4; i++) await page.locator('#ok').click();
+    await page.locator('#start').click(); await page.waitForTimeout(1400);
+    assert.ok(await page.evaluate(() => document.documentElement.scrollHeight - innerHeight - scrollY > 50), 'TTS off keeps story beginning');
     await page.locator('#end').click();
     // 待機中の stop で次の発話を取り消す（ヘルプ・終了も同じ stop を使う）。
     const canceled = await page.evaluate(async () => {
@@ -91,6 +119,6 @@ const base = process.env.STORY_BASE || 'http://127.0.0.1:8124';
       return !result && !reader.busy && !window.readings.some(r => r.text === '続き');
     });
     assert.ok(canceled);
-    console.log('PASS: kids default, saved modes, stable controls at 320/390/768px, clear revealed cards, intro gap ' + Math.round(gap) + 'ms, cancel during gap');
+    console.log('PASS: kids default, saved modes, stable controls at 320/390/768px, clear cards, intro gap ' + Math.round(gap) + 'ms, completed reading scrolls to bottom, cancellation and TTS off preserve position');
   } finally { await browser.close(); }
 })().catch(error => { console.error(error); process.exitCode = 1; });
