@@ -25,14 +25,14 @@ const base=process.env.SAEZURI_BASE||'http://127.0.0.1:8000';
    };
   });
   const page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
-  await page.goto(base+'/probe/saezuri/');await page.locator('#score svg').first().waitFor();
+  await page.goto(base+'/probe/saezuri/?view=full');await page.locator('#score svg').first().waitFor();
   await page.locator('#tempo').fill('180');await page.locator('#timing-adjust').fill('0');
   for(const omitCount of [false,true]){
    await page.evaluate(v=>{window.omitCount=v;},omitCount);
    await page.locator('#capture').click();assert.equal(await page.locator('#acoustic-sync').isDisabled(),true);
    await page.waitForFunction(()=>document.querySelector('#status').dataset.state==='idle',null,{timeout:25000});
    const report=JSON.parse(await page.locator('#metrics').innerText());
-   assert.equal(report.prototype,'ML-T01-v17');
+   assert.equal(report.prototype,'ML-T01-v18');
    assert.equal(report.capture.acousticTiming.status,omitCount?'unavailable':'measured');
    assert.match(await page.locator('#acoustic-status').innerText(),omitCount?/従来の推定補正/:/220ms/);
    assert.equal(report.capture.notes[0].startTick,0);assert.equal(report.capture.notes[0].midi,57);

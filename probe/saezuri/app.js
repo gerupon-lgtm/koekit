@@ -9,6 +9,8 @@ import { alignCaptureStart } from './capture-support.js';
 import { inferSignature, signature } from './key-signature.js';
 import { CaptureEditorView } from './capture-editor-view.js';
 import { readCaptureReport } from './capture-report.js';
+import { setupEditorLayout, syncEditorLayout, focusEditor } from './editor-layout.js';
+const compactEditor=setupEditorLayout();
 const $ = id => document.getElementById(id);
 const example = () => ({ bars: 4, gridStep: 1, notes: [
   { id: 'low', midi: 48, startTick: 0, durationTick: 4 },
@@ -21,7 +23,7 @@ const example = () => ({ bars: 4, gridStep: 1, notes: [
 ] });
 let state = { pattern: example(), cursor: 0, revision: 0 }, candidate = null, captured = null, capturedOriginal = null;
 let ctx, transport, capture, serial = 0, phase = 'idle', raf, lastFrame = 0, maxFrameGapMs = 0, lastBar = -1;
-const record = { prototype: 'ML-T01-v17', timestamp: new Date().toISOString(), userAgent: navigator.userAgent, playback: null, capture: null };
+const record = { prototype: 'ML-T01-v18', timestamp: new Date().toISOString(), userAgent: navigator.userAgent, playback: null, capture: null };
 const keyChoices = { score: null, capture: null };
 const displayOctaves = { score: 0, capture: 0 };
 const captureAlignments = new Map();
@@ -87,6 +89,11 @@ function setPhase(next, message) {
   $('confirm').disabled = next !== 'idle' || !candidate || !!candidate.code;
   $('cancel').disabled = next !== 'idle' || !candidate;
   if(captureEditor.isOpen) for(const id of ['edit-score','example','empty','propose','confirm','cancel','undo','capture-import-button']) $(id).disabled=true;
+  if(compactEditor) {
+    $('capture').disabled=next!=='idle' || !microphoneEnabled() || captureEditor.pending;
+    $('capture-import-button').disabled=next!=='idle' || captureEditor.pending;
+    syncEditorLayout({open:captureEditor.isOpen,pending:captureEditor.pending,phase:next});
+  }
   syncVoice();
   updateKeyButtons();
 }
@@ -116,6 +123,7 @@ async function prepare() {
   if (ctx.state !== 'running') throw new Error('AUDIO_NOT_READY');
 }
 function acceptCapture(result) {
+      record.editingSource='capture';
       record.capture = result;
       const comparison = result.analysisComparison;
       const comparisonLabels = { current:'現在の設定', detail:'細かい変化', unsmoothed:'ならしなし' };
@@ -133,6 +141,7 @@ function acceptCapture(result) {
       $('review').hidden = false;
       setPhase('idle', captured?.notes.length ? '候補を選んで試聴・編集してください' : 'ほとんど音を検出できませんでした。別の方式を確認するか、カウントからやり直してください。');
       showReport();
+      focusEditor();
 }
 function tempoValue() {
   const tempo = Number($('tempo').value);
@@ -261,7 +270,8 @@ $('edit-score').onclick = () => {
   keyChoices.capture=keyChoices.score; displayOctaves.capture=displayOctaves.score;
   captureAlignments.clear(); captureEditor.openPattern(state.pattern);
   $('review').hidden=false; record.editingSource='score'; setPhase('idle');
-  $('review').scrollIntoView({behavior:'smooth',block:'start'});
+  if(compactEditor) focusEditor();
+  else $('review').scrollIntoView({behavior:'smooth',block:'start'});
 };
 $('adopt').onclick = () => {
   if(phase!=='idle' || !captureEditor.accepted || !captureEditor.end()) return;
@@ -316,3 +326,4 @@ document.addEventListener('visibilitychange', () => {
 addEventListener('pagehide', () => { stop(); clearTimeout(voiceTimer);voice?.setActive(false,{release:true});captureEditor.load(null);ctx?.close(); });
 try { const saved = localStorage.getItem('saezuri.capture.manualMs'); if (saved !== null && Number.isFinite(Number(saved)) && Number(saved)>=-200 && Number(saved)<=400) $('timing-adjust').value = saved; } catch {}
 draw();
+if(compactEditor) $('edit-score').click();

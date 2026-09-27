@@ -4,7 +4,7 @@ const base=process.env.SAEZURI_BASE||'http://127.0.0.1:8014';
 (async()=>{
  const browser=await chromium.launch({channel:'chrome',headless:true});
  try {
-  const page=await browser.newPage();await page.goto(base+'/probe/saezuri/');
+  const page=await browser.newPage();await page.goto(base+'/probe/saezuri/?view=full');
   const results=await page.evaluate(async()=>{
    const {schedulePlaybackCount,COUNT_STYLES}=await import('./playback-count.js');
    const {scheduleVoice}=await import('./audio.js');

@@ -6,7 +6,7 @@ const base = process.env.SAEZURI_BASE || 'http://127.0.0.1:8000';
  try {
   const page=await browser.newPage({viewport:{width:390,height:844}}), errors=[];
   page.on('pageerror',e=>errors.push(e.message));
-  await page.goto(base+'/probe/saezuri/');
+  await page.goto(base+'/probe/saezuri/?view=full');
   await page.locator('#score svg').first().waitFor();
   // Exercise the actual worker's default and explicit comparison options.
   const modes=await page.evaluate(async()=>{

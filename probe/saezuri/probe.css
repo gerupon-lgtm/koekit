@@ -22,3 +22,56 @@ button[aria-pressed=true]{border:2px solid #77599b;background:#ded5ef}
 @media(min-width:600px) and (max-height:480px){#capture-note-panel{display:grid;grid-template-columns:minmax(250px,1fr) minmax(0,1fr);gap:8px;align-items:start}#capture-note-panel .edit-toolbar{grid-column:1;grid-row:1}#capture-blocks{grid-column:1;grid-row:2;max-width:100%}#capture-score{grid-column:2;grid-row:1 / 3;height:230px;max-height:64svh}}
 
 .note-actions{grid-template-columns:repeat(4,minmax(0,1fr))}#capture-edit-delete{background:#fff0e6;border-color:#b67850}
+
+/* Editing-first presentation; the technical layout remains available for comparison. */
+.editor-focus main{max-width:1000px;padding:12px 12px 100px}
+.editor-focus header h1{margin:0;font-size:19px;display:flex;gap:12px;align-items:baseline;flex-wrap:wrap}
+.editor-focus header small{font-size:12px;font-weight:400;color:#746575}
+.editor-focus header p{margin:5px 0 10px;font-size:13px}
+.editor-focus summary{cursor:pointer;min-height:44px;box-sizing:border-box;padding:11px 6px;font-size:14px}
+.editor-focus #editor-source,.editor-focus #technical-tools{border:1px solid #dfd6e5;border-radius:10px;padding:0 10px;background:#fff;margin:8px 0}
+.editor-focus #edit-workspace{margin:8px 0;padding:12px;border-radius:14px;scroll-margin-top:8px}
+.editor-focus .listen-settings{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;margin-bottom:10px}
+.editor-focus .listen-settings label{font-size:12px;min-width:0;gap:3px}
+.editor-focus .listen-settings label:has(#tempo),.editor-focus .listen-settings label:has(#count-volume){grid-column:span 2}
+.editor-focus .listen-settings label:has(#instrument){grid-column:span 4}
+.editor-focus .listen-settings label:has(#play-count-style){grid-column:span 3}
+.editor-focus .listen-settings input,.editor-focus .listen-settings select{width:100%;min-width:0;font-size:14px;min-height:40px;padding:7px}
+.editor-focus .listen-settings label:has(#play-count){display:flex;align-items:center;justify-content:center;gap:6px}
+.editor-focus .listen-settings #play-count{width:22px;min-height:22px}
+.editor-focus .editor-voice{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px}
+.editor-focus .editor-voice label{font-size:13px;display:flex;flex-direction:row;align-items:center}
+.editor-focus .editor-voice #mic{font-size:12px;min-height:36px;margin:0;padding:6px}
+.editor-focus #edit-voice-status{font-size:12px;margin:0;flex:1;min-width:120px;line-height:1.4}
+.editor-focus .quick-transpose{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin:6px 0}
+.editor-focus .quick-transpose button{font-size:13px;min-height:40px;margin:0;padding:7px}
+.editor-focus .edit-toolbar{background:#f7f3fb;border-color:#d9cfe5;position:sticky;top:0;padding:7px}
+.editor-focus .note-actions,.editor-focus .listen-actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-top:6px}
+.editor-focus #capture-edit-status{font-size:12px;line-height:1.4;margin:5px 0 0;min-height:0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.editor-focus #capture-blocks{gap:6px;padding:6px 2px}
+.editor-focus #capture-blocks button{min-width:52px;padding:5px 8px;margin:0}
+.editor-focus #capture-score{height:210px;min-height:150px;max-height:32svh;margin:0}
+.editor-focus #editor-more{margin:8px 0;border-top:1px solid #e4dce9}
+.editor-focus #editor-more p{font-size:13px}
+.editor-focus .editor-finish{gap:6px}
+.editor-focus .editor-finish button{font-size:12px;min-height:40px;margin:0;padding:7px}
+.editor-focus #copy-status:empty{display:none}
+.editor-focus #source-hint{font-size:13px;margin:4px 0}
+.editor-focus .source-actions{display:flex;gap:8px;flex-wrap:wrap}
+.editor-focus #capture-position{font-size:15px;margin:8px 0;padding:8px}
+.editor-focus #technical-tools section{margin:8px 0;padding:10px}
+.editor-focus footer{padding:7px 12px;font-size:13px}
+.editor-focus footer button{min-height:42px;margin:0}
+@media(min-width:700px){
+ .editor-focus .listen-settings{grid-template-columns:80px minmax(150px,2fr) minmax(140px,2fr) 90px 70px}
+ .editor-focus .listen-settings label:has(input),.editor-focus .listen-settings label:has(select){grid-column:auto}
+ .editor-focus #capture-score{height:270px;max-height:42svh}
+ .editor-focus .editor-voice{float:right;max-width:52%}
+ .editor-focus .quick-transpose{max-width:46%;margin-bottom:10px}
+ .editor-focus #capture-note-panel{clear:both}
+}
+@media(min-width:600px) and (max-height:480px){
+ .editor-focus #capture-note-panel{display:grid;grid-template-columns:minmax(240px,1fr) minmax(0,1fr)}
+ .editor-focus .edit-toolbar{position:static}
+ .editor-focus #capture-score{height:260px;max-height:72svh;grid-column:2;grid-row:1 / 3}
+}

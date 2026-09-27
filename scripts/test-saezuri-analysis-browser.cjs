@@ -6,7 +6,7 @@ const base = process.env.SAEZURI_BASE || 'http://127.0.0.1:8000';
  try {
   const page=await browser.newPage(), errors=[];
   page.on('pageerror',e=>errors.push(e.message));
-  await page.goto(base+'/probe/saezuri/');
+  await page.goto(base+'/probe/saezuri/?view=full');
   await page.locator('#score svg').first().waitFor();
   const results=await page.evaluate(async()=>{
    const outputs=[];

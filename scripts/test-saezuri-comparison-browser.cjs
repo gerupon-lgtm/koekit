@@ -58,7 +58,7 @@ const base = process.env.SAEZURI_BASE || 'http://127.0.0.1:8000';
     page.on('pageerror', error => {errors.push(error.message);console.error(error.stack);});
     page.on('requestfailed', request=>console.error('REQUEST_FAILED',request.url(),request.failure()));
     page.on('request', request => { if (!request.url().startsWith(base) && !request.url().startsWith('data:')) external.push(request.url()); });
-    await page.goto(base + '/probe/saezuri/');
+    await page.goto(base + '/probe/saezuri/?view=full');
     await page.locator('#score svg').first().waitFor();
     assert.equal(await page.locator('#comparison-settings').count(), 1, 'comparison settings button is missing');
     assert.ok((await page.locator('#analysis-comparison').innerText()).length > 0);
@@ -104,7 +104,7 @@ const base = process.env.SAEZURI_BASE || 'http://127.0.0.1:8000';
 
     const report = JSON.parse(await page.locator('#metrics').innerText());
     const expected = await page.evaluate(() => window.comparisonExpected);
-    assert.equal(report.prototype, 'ML-T01-v17');
+    assert.equal(report.prototype, 'ML-T01-v18');
     assert.ok(report.capture.samples > 0);
     assert.deepEqual(report.capture.analysisComparison, expected.analysisComparison);
     assert.deepEqual(report.captureCandidate.notes, expected.notes);

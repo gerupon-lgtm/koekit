@@ -6,7 +6,7 @@ const base=process.env.SAEZURI_BASE||'http://127.0.0.1:8000';
  try{
   const page=await browser.newPage({viewport:{width:390,height:844}}),errors=[];
   page.on('pageerror',e=>errors.push(e.message));
-  await page.goto(base+'/probe/saezuri/');await page.locator('#score svg').first().waitFor();
+  await page.goto(base+'/probe/saezuri/?view=full');await page.locator('#score svg').first().waitFor();
   const original=await page.locator('#score [data-note-id]').evaluateAll(nodes=>nodes.map(n=>({midi:n.dataset.midi,tick:n.dataset.startTick,y:Number(n.querySelector('ellipse').getAttribute('cy'))})));
   await page.locator('#score-octave-up').click();
   const raised=await page.locator('#score [data-note-id]').evaluateAll(nodes=>nodes.map(n=>({midi:n.dataset.midi,tick:n.dataset.startTick,y:Number(n.querySelector('ellipse').getAttribute('cy'))})));
@@ -30,7 +30,7 @@ const base=process.env.SAEZURI_BASE||'http://127.0.0.1:8000';
   const copied=await page.evaluate(()=>window.copied);
   assert.equal(copied,await page.locator('#metrics').innerText());
   assert.equal(JSON.parse(copied).conditions,'Windows11 コピーの確認');
-  assert.equal(JSON.parse(copied).prototype,'ML-T01-v17');
+  assert.equal(JSON.parse(copied).prototype,'ML-T01-v18');
   await page.evaluate(()=>navigator.clipboard.writeText=async()=>{throw new DOMException('Denied','NotAllowedError');});
   await page.locator('#conditions').fill('最新の所感');
   await page.locator('#copy-report').click();
