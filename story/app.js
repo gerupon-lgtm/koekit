@@ -17,7 +17,7 @@ const NUM_WORDS = ['いち', 'に', 'さん', 'よん', 'ご'];
 const SETTINGS_KEY = 'koekit.story.settings';
 
 // ---------- 設定（端末内に保存。失敗しても既定値で動く） ----------
-const settings = { audience: 'kids', tts: 'on', order: 'normal', rate: 1, voice: '' };
+const settings = { audience: 'kids', tts: 'on', order: 'normal', rate: 1, voice: '', voiceName: '' };
 try { Object.assign(settings, JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}')); } catch { /* 既定値 */ }
 const saveSettings = () => { try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); } catch { /* 保存できなくても続行 */ } };
 
@@ -32,7 +32,7 @@ function log(msg) {
 
 const reader = new Reader({ log });
 reader.rate = settings.rate;
-if (settings.voice) reader.voiceURI = settings.voice;
+reader.setPreferred(settings.voice, settings.voiceName); // 選んだ声は端末に保存して次回も使う
 
 // ---------- 状態 ----------
 const st = {
@@ -88,8 +88,9 @@ $('rate').value = settings.rate; $('rateV').textContent = (+settings.rate).toFix
 $('rate').oninput = () => { settings.rate = reader.rate = +$('rate').value; $('rateV').textContent = reader.rate.toFixed(1); saveSettings(); };
 // 声を選んだら、その声で短く試し読みする（読み上げONのとき）
 $('voice').onchange = () => {
-  settings.voice = reader.voiceURI = $('voice').value; saveSettings();
-  const v = reader.voices.find(x => x.voiceURI === reader.voiceURI);
+  const v = reader.voices.find(x => x.voiceURI === $('voice').value);
+  settings.voice = $('voice').value; settings.voiceName = v ? v.name : ''; saveSettings();
+  reader.setPreferred(settings.voice, settings.voiceName);
   log(`声を変更 ${v ? v.name : '既定'}`);
   if (reader.enabled && reader.available) reader.speak([{ text: settings.audience === 'kids' ? 'この こえで よむね。' : 'この声で読みます。' }]);
 };
@@ -178,6 +179,16 @@ function openBoard() {
   log(`盤面 mode=${settings.audience} order=${settings.order}`);
 }
 
+// 行ごとのトランプの印（いつ♠・どこで♥・だれと♦・なにを♣）
+// \uFE0E：絵文字ではなく文字の形で出す（iPhone でハートが赤い絵文字になるのを防ぐ）
+const SUITS = [{ s: '♠\uFE0E', name: 'スペード', red: false }, { s: '♥\uFE0E', name: 'ハート', red: true },
+  { s: '♦\uFE0E', name: 'ダイヤ', red: true }, { s: '♣\uFE0E', name: 'クラブ', red: false }];
+// 数字の札：左上の数字と印、まん中に数と同じだけの印
+function cardFace(n, suit) {
+  const pips = Array.from({ length: n }, () => `<i>${suit.s}</i>`).join('');
+  return `<span class="idx">${n}<br>${suit.s}</span><span class="pips p${n}">${pips}</span>`;
+}
+
 function rowKey() { return ROW_KEYS[st.row]; }
 
 function renderBoard() {
@@ -192,7 +203,9 @@ function renderBoard() {
     if (!st.picks && (st.done || r < st.row)) row.classList.add('done');
     const lab = document.createElement('div');
     lab.className = 'rlabel';
-    lab.innerHTML = `<span class="ico">${set.rows[k].icon}</span>${set.rows[k].label}`;
+    const suit = SUITS[r];
+    row.classList.add(suit.red ? 'red' : 'black');
+    lab.innerHTML = `<span class="ico suit">${suit.s}</span>${set.rows[k].label}`;
     row.appendChild(lab);
     for (let c = 0; c < st.board.cols; c++) {
       const cell = document.createElement('button');
@@ -208,15 +221,15 @@ function renderBoard() {
         if (picked) {
           cell.classList.add(p.omakase ? 'omk' : 'sel');
           cell.style.setProperty('--d', `${(r * st.board.cols + c) * 0.06}s`);
-          cell.innerHTML = `<span class="emo">${it.e}</span><span class="word">${esc(it.w)}</span>`
+          cell.innerHTML = `<span class="idx">${c + 1}<br>${suit.s}</span><span class="emo">${it.e}</span><span class="word">${esc(it.w)}</span>`
             + (p.omakase ? '<span class="badge omakase">おまかせ</span>' : `<span class="badge">${p.idx.indexOf(c) + 1}</span>`);
         } else {
           cell.classList.add('dim');
-          cell.textContent = c + 1;
+          cell.innerHTML = cardFace(c + 1, suit);
         }
       } else {
-        cell.textContent = c + 1;
-        cell.setAttribute('aria-label', `${set.rows[k].label} ${c + 1}ばん`);
+        cell.innerHTML = cardFace(c + 1, suit);
+        cell.setAttribute('aria-label', `${set.rows[k].label}（${suit.name}）${c + 1}ばん`);
         cell.disabled = st.done || r !== st.row;
         if (order >= 0) { cell.classList.add('sel'); cell.insertAdjacentHTML('beforeend', `<span class="badge">${order + 1}</span>`); }
         if (r === st.row && st.cand === c) cell.classList.add('cand', ...(order >= 0 ? ['unsel'] : []));

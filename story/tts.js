@@ -12,6 +12,7 @@ export class Reader {
     this.enabled = true;
     this.rate = 1;
     this.voiceURI = '';
+    this.preferred = null; // 利用者が選んだ声 { uri, name }。一覧に無い間も覚えておく
     this.voices = [];
     this.log = log;
     this.token = 0;
@@ -32,11 +33,21 @@ export class Reader {
     const all = synth.getVoices();
     this.allVoiceCount = all.length;
     this.voices = all.filter(v => /^ja/i.test(v.lang));
-    if (!this.voices.find(v => v.voiceURI === this.voiceURI)) {
+    // 選んだ声を優先（識別子で探し、変わっていれば名前で探す）。まだ一覧に無ければ仮の声を使い、選んだ声は忘れない
+    const p = this.preferred;
+    const mine = p && (this.voices.find(v => v.voiceURI === p.uri) || this.voices.find(v => v.name === p.name));
+    if (mine) this.voiceURI = mine.voiceURI;
+    else if (!this.voices.find(v => v.voiceURI === this.voiceURI)) {
       const best = this.voices.find(v => v.localService) || this.voices[0];
       this.voiceURI = best ? best.voiceURI : '';
     }
     this.listeners.forEach(fn => fn({ type: 'voices' }));
+  }
+
+  // 選んだ声を覚えて、すぐ反映する
+  setPreferred(uri, name) {
+    this.preferred = uri || name ? { uri, name } : null;
+    if (synth) this.loadVoices();
   }
 
   on(fn) { this.listeners.add(fn); return () => this.listeners.delete(fn); }

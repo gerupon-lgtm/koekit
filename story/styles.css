@@ -107,3 +107,30 @@ body.kids ol.story li { font-size: 1.2rem; line-height: 1.9; }
 .intro { margin: 10px 0 6px; font-weight: bold; color: var(--accent); }
 #voice { width: 100%; padding: 10px 8px; border-radius: 10px; background: #fff; }
 #voice:disabled { opacity: .5; }
+
+/* トランプ風のカード（2026-09-27 発案者指示）：行ごとに ♠♥♦♣、数字の札のように数だけ印を並べる */
+.brow { --suit: #2f2a24; }
+.brow.red { --suit: #c8283c; }
+.rlabel .suit { color: var(--suit); font-size: 1.6rem; line-height: 1.1; }
+.cell { aspect-ratio: 5 / 7; background: #fffdf8; color: var(--suit); border: 2px solid var(--line);
+  box-shadow: 0 1px 3px rgba(47,42,36,.18), inset 0 0 0 3px #fffdf8, inset 0 0 0 4px var(--line); }
+.brow:not(.active) .cell:not(.open) { filter: none; opacity: .75; }
+.brow.active .cell:not(:disabled) { box-shadow: 0 2px 6px rgba(47,42,36,.25), inset 0 0 0 3px #fffdf8, inset 0 0 0 4px var(--line); }
+.cell .idx { position: absolute; top: 3px; left: 5px; font-size: .72rem; line-height: 1.05; font-weight: bold; text-align: center; }
+.cell .pips { position: absolute; inset: 18% 16% 10% 22%; display: grid; grid-template: repeat(3, 1fr) / repeat(2, 1fr); place-items: center; font-size: 1rem; line-height: 1; }
+.cell .pips.p1 i { grid-area: 1 / 1 / 4 / 3; font-size: 2rem; }
+.cell .pips.p2 i:nth-child(1) { grid-area: 1 / 1 / 2 / 3; } .cell .pips.p2 i:nth-child(2) { grid-area: 3 / 1 / 4 / 3; transform: rotate(180deg); }
+.cell .pips.p3 i:nth-child(1) { grid-area: 1 / 1 / 2 / 3; } .cell .pips.p3 i:nth-child(2) { grid-area: 2 / 1 / 3 / 3; } .cell .pips.p3 i:nth-child(3) { grid-area: 3 / 1 / 4 / 3; transform: rotate(180deg); }
+.cell .pips.p4 i:nth-child(1) { grid-area: 1 / 1; } .cell .pips.p4 i:nth-child(2) { grid-area: 1 / 2; }
+.cell .pips.p4 i:nth-child(3) { grid-area: 3 / 1; transform: rotate(180deg); } .cell .pips.p4 i:nth-child(4) { grid-area: 3 / 2; transform: rotate(180deg); }
+.cell .pips.p5 i:nth-child(1) { grid-area: 1 / 1; } .cell .pips.p5 i:nth-child(2) { grid-area: 1 / 2; } .cell .pips.p5 i:nth-child(3) { grid-area: 2 / 1 / 3 / 3; }
+.cell .pips.p5 i:nth-child(4) { grid-area: 3 / 1; transform: rotate(180deg); } .cell .pips.p5 i:nth-child(5) { grid-area: 3 / 2; transform: rotate(180deg); }
+.cell .pips i { font-style: normal; }
+body.adult .cell .pips { font-size: .8rem; } body.adult .cell .pips.p1 i { font-size: 1.6rem; }
+.cell.sel { border-color: var(--sel); box-shadow: 0 0 0 3px var(--sel-soft); background: #f2f8fd; }
+.cell.open { background: #fffdf8; color: var(--ink); border-color: var(--line); }
+.cell.open .idx { color: var(--suit); font-size: .6rem; }
+.cell.open.dim { opacity: .35; background: #fffdf8; color: var(--suit); }
+/* めくった札：左上の数字と重ならないよう上をあけ、長い言葉のときは札が縦にのびる */
+.cell.open:not(.dim) { aspect-ratio: auto; justify-content: flex-start; padding: 19px 2px 4px; gap: 1px; }
+body.adult .cell.open:not(.dim) .emo { font-size: 1.3rem; }
