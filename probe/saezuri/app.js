@@ -1,5 +1,7 @@
 import { proposeNote, commitNote, undo } from '../../saezuri/document.js';
 import { microphoneEnabled, setMicrophoneEnabled, onMicrophoneChange } from '../../src/speech/microphone.js';
+import { createSpeechInput, METHODS } from '../../src/speech/index.js';
+import { EditVoice } from './edit-voice.js';
 import { ProbeTransport } from './audio.js';
 import { ProbeCapture } from './capture.js';
 import { renderScore, pitchName } from './score.js';
@@ -19,12 +21,26 @@ const example = () => ({ bars: 4, gridStep: 1, notes: [
 ] });
 let state = { pattern: example(), cursor: 0, revision: 0 }, candidate = null, captured = null, capturedOriginal = null;
 let ctx, transport, capture, serial = 0, phase = 'idle', raf, lastFrame = 0, maxFrameGapMs = 0, lastBar = -1;
-const record = { prototype: 'ML-T01-v13', timestamp: new Date().toISOString(), userAgent: navigator.userAgent, playback: null, capture: null };
+const record = { prototype: 'ML-T01-v14', timestamp: new Date().toISOString(), userAgent: navigator.userAgent, playback: null, capture: null };
 const keyChoices = { score: null, capture: null };
 const displayOctaves = { score: 0, capture: 0 };
 const captureAlignments = new Map();
+let voice, voiceTimer;
+function syncVoice() {
+  if(!voice) return;
+  clearTimeout(voiceTimer);
+  const enabled=$('edit-voice').checked && microphoneEnabled();
+  const available=enabled && captureEditor.isOpen && !$('review').hidden && !document.hidden && phase==='idle';
+  if(!available) voice.setActive(false,{release:!enabled || !captureEditor.isOpen || document.hidden || ['count-in','recording','analyzing'].includes(phase)});
+  else voiceTimer=setTimeout(()=>voice.setActive(true),250);
+}
 const captureEditor = new CaptureEditorView({ onChange(change) {
   captured = change.pattern;
+  if(change.confirmed) {
+    keyChoices.score=keyChoices.capture; displayOctaves.score=displayOctaves.capture;
+    state={pattern:structuredClone(captured),cursor:0,revision:state.revision+1}; candidate=null;
+    draw();
+  }
   if (change.sourceChanged) capturedOriginal = change.sourcePattern;
   record.captureAlignmentTicks = captureAlignments.get(change.variant) ?? 0;
   $('align-start').textContent = record.captureAlignmentTicks ? '頭の休符を戻す' : '頭の休符を詰める';
@@ -34,7 +50,7 @@ const captureEditor = new CaptureEditorView({ onChange(change) {
   showReport();
 } });
 function drawPattern(kind, pattern) {
-  const inferred = inferSignature(pattern.notes), fifths = keyChoices[kind] ?? inferred.fifths;
+  const inferred = inferSignature(kind==='capture' ? (captured?.notes ?? pattern.notes) : pattern.notes), fifths = keyChoices[kind] ?? inferred.fifths;
   const label = $(`${kind}-key-label`);
   const source = keyChoices[kind] !== null ? '手動' : inferred.estimated ? '推定' : '未推定・調号なし';
   label.textContent = `調号：${source} — ${signature(fifths).label}${keyChoices[kind] === null && inferred.alternatives.length ? '（ほかの調号の可能性もあります）' : ''}`;
@@ -62,14 +78,16 @@ function updateKeyButtons() {
 const labels = { idle: '準備できました', preparing: '音とマイクの準備中', playing: '再生中・停止はボタンで', 'count-in': '8拍のカウント中', recording: '4小節を取り込み中', analyzing: '端末内で解析中' };
 function setPhase(next, message) {
   phase = next; $('status').dataset.state = next; $('status').textContent = message || labels[next];
-  for (const id of ['tempo','instrument','length','lead','ahead','example','empty','propose','undo','capture','play','adopt','preview','discard','pitch','duration','count-sound','count-volume','record-count','play-count','smoothing','note-mode','timing-adjust','acoustic-sync','processing','boundary-mode','window-size','adaptive-window','rms','ratio','gap','comparison-settings','capture-import-button','capture-import-text']) $(id).disabled = next !== 'idle';
+  for (const id of ['edit-score','tempo','instrument','length','lead','ahead','example','empty','propose','undo','capture','play','adopt','preview','discard','pitch','duration','count-sound','count-volume','record-count','play-count','smoothing','note-mode','timing-adjust','acoustic-sync','processing','boundary-mode','window-size','adaptive-window','rms','ratio','gap','comparison-settings','capture-import-button','capture-import-text']) $(id).disabled = next !== 'idle';
   $('align-start').disabled = next !== 'idle' || captureEditor.pending || captureEditor.edited || !capturedOriginal?.notes[0]?.startTick;
-  $('adopt').disabled = next !== 'idle' || !captured || captureEditor.pending;
+  $('adopt').disabled = next !== 'idle' || !captureEditor.accepted || captureEditor.pending;
   $('capture-import-button').disabled = next !== 'idle' || captureEditor.pending;
   captureEditor.setBusy(next !== 'idle');
-  $('capture').disabled = next !== 'idle' || !microphoneEnabled();
+  $('capture').disabled = next !== 'idle' || !microphoneEnabled() || captureEditor.isOpen;
   $('confirm').disabled = next !== 'idle' || !candidate || !!candidate.code;
   $('cancel').disabled = next !== 'idle' || !candidate;
+  if(captureEditor.isOpen) for(const id of ['edit-score','example','empty','propose','confirm','cancel','undo','capture-import-button']) $(id).disabled=true;
+  syncVoice();
   updateKeyButtons();
 }
 function draw() {
@@ -138,7 +156,8 @@ function animate() {
   raf = requestAnimationFrame(animate);
 }
 async function play(pattern = state.pattern, preview = false) {
-  if (candidate && !preview) { $('status').textContent = '候補を確定するか、とりけしてから再生してください'; return; }
+  if(candidate?.code && !preview) { $('status').textContent=`この候補は再生できません：${candidate.code}`; return; }
+  if(candidate && !preview && !candidate.code) pattern=candidate.pattern;
   stop(); const request = serial;
   setPhase('preparing');
   try {
@@ -148,7 +167,7 @@ async function play(pattern = state.pattern, preview = false) {
       if (offset + note.startTick >= bars * 16) continue;
       notes.push({ ...note, startTick: offset + note.startTick, durationTick: Math.min(note.durationTick, bars * 16 - offset - note.startTick) });
     }
-    record.playback = { tempo, bars, instrument: $('instrument').value, sampleRate: ctx.sampleRate, baseLatency: ctx.baseLatency, outputLatency: ctx.outputLatency, notes: notes.length, countSound: $('play-count').checked, countVolume: Number($('count-volume').value) };
+    record.playback = { tempo, bars, instrument: $('instrument').value, sampleRate: ctx.sampleRate, baseLatency: ctx.baseLatency, outputLatency: ctx.outputLatency, notes: notes.length, draft:preview ? captureEditor.pending : !!candidate, pitches:notes.map(n=>n.midi), countSound: $('play-count').checked, countVolume: Number($('count-volume').value) };
     transport.start(notes, { tempo, totalTicks: bars * 16, instrument: $('instrument').value, lead: Number($('lead').value), ahead: Number($('ahead').value), countSound: $('play-count').checked, countVolume: Number($('count-volume').value) });
     setPhase('playing'); lastFrame = 0; maxFrameGapMs = 0; lastBar = -1; animate();
   } catch (error) { if (request === serial) stop(error.message); }
@@ -182,6 +201,7 @@ async function copyReport(event) {
 }
 $('play').onclick = () => play(); $('stop').onclick = () => { if (transport?.active) record.playback = { ...record.playback, ...transport.metrics, maxFrameGapMs, stoppedAtTick: transport.position(), reason: 'USER_STOP' }; stop(); showReport(); };
 $('capture').onclick = async () => {
+  voice?.setActive(false,{release:true});
   stop(); const request = serial; captured = null; capturedOriginal = null; $('review').hidden = true; setPhase('preparing');
   record.timestamp = new Date().toISOString(); record.capture = null; record.captureAlignmentTicks = 0; record.playback = null;
   delete record.importedFrom;
@@ -236,8 +256,33 @@ $('align-start').onclick = () => {
   captureAlignments.set(captureEditor.variant, record.captureAlignmentTicks);
   captureEditor.setPattern(captured);
 };
-$('adopt').onclick = () => { if (!captured || phase !== 'idle' || captureEditor.pending) return; keyChoices.score = keyChoices.capture; displayOctaves.score = displayOctaves.capture; state = { pattern: structuredClone(captured), cursor: 0, revision: state.revision + 1 }; candidate = null; $('review').hidden = true; draw(); showReport(); };
-$('discard').onclick = () => { if (phase !== 'idle') return; captured = null; captureEditor.load(null); $('review').hidden = true; showReport(); };
+$('edit-score').onclick = () => {
+  if(phase!=='idle' || captureEditor.isOpen) return;
+  keyChoices.capture=keyChoices.score; displayOctaves.capture=displayOctaves.score;
+  captureAlignments.clear(); captureEditor.openPattern(state.pattern);
+  $('review').hidden=false; record.editingSource='score'; setPhase('idle');
+  $('review').scrollIntoView({behavior:'smooth',block:'start'});
+};
+$('adopt').onclick = () => {
+  if(phase!=='idle' || !captureEditor.accepted || !captureEditor.end()) return;
+  $('review').hidden=true; setPhase('idle');showReport();
+};
+$('discard').onclick = () => {
+  if(phase!=='idle') return;
+  captured=null; captureEditor.load(null); $('review').hidden=true;setPhase('idle');showReport();
+};
+voice=new EditVoice({createInput:()=>createSpeechInput(METHODS.VOSK),
+  onCommand(command) {
+    if(phase!=='idle' || !captureEditor.isOpen || document.hidden || !microphoneEnabled()) return;
+    if(command==='preview') $('preview').click(); else captureEditor.command(command);
+  },
+  onStatus(status) {
+    if(status==='error') $('edit-voice').checked=false;
+    $('edit-voice-status').textContent=status==='error' ? '音声を準備できませんでした。ボタンで操作できます。' : !$('edit-voice').checked ? '音声操作OFF・ボタンで操作できます' :
+      ({paused:'音声受付はおやすみ中',loading:'音声認識の準備中…',listening:'声を受け付けています',error:'音声を準備できませんでした。ボタンで操作できます。'}[status]);
+  }
+});
+$('edit-voice').onchange=syncVoice;
 $('example').onclick = () => { state = { pattern: example(), cursor: 0, revision: state.revision + 1 }; candidate = null; draw(); };
 $('empty').onclick = () => { state = { pattern: { bars: 4, gridStep: 2, notes: [] }, cursor: 0, revision: state.revision + 1 }; candidate = null; draw(); };
 for (const midi of [null, ...Array.from({ length: 49 }, (_, i) => i + 48)]) { const option = document.createElement('option'); option.value = midi ?? 'rest'; option.textContent = midi === null ? 'やすみ' : pitchName(midi); $('pitch').append(option); }
@@ -264,7 +309,10 @@ for (const kind of ['score','capture']) for (const [suffix,delta] of [['flat',-1
     drawPattern(kind, pattern); captureEditor.setBusy(false); showReport();
   };
 }
-document.addEventListener('visibilitychange', () => { if (document.hidden) stop('画面が隠れたため中断しました（試作の動作）'); });
-addEventListener('pagehide', () => { stop(); ctx?.close(); });
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) stop('画面が隠れたため中断しました（試作の動作）');
+  else syncVoice();
+});
+addEventListener('pagehide', () => { stop(); clearTimeout(voiceTimer);voice?.setActive(false,{release:true});captureEditor.load(null);ctx?.close(); });
 try { const saved = localStorage.getItem('saezuri.capture.manualMs'); if (saved !== null && Number.isFinite(Number(saved)) && Number(saved)>=-200 && Number(saved)<=400) $('timing-adjust').value = saved; } catch {}
 draw();

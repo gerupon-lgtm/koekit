@@ -17,7 +17,7 @@
   </div><button id="play">ならべた音を聴く</button><p id="position">1小節・1拍</p><div id="beats" aria-hidden="true"><i>1</i><i>2</i><i>3</i><i>4</i></div>
  </section>
  <section><h2>2. 音符モデルと五線譜</h2><p>8分／16分・休符・小節またぎ・加線の比較用。長音は拍ごとにタイ分割する暫定表示です。</p>
-  <div class="fields"><button id="example">境界の作例</button><button id="empty">空の4小節</button>
+  <div class="fields"><button id="edit-score">この音列を編集する</button><button id="example">境界の作例</button><button id="empty">空の4小節</button>
    <label>音高 <select id="pitch"></select></label><label>長さ <select id="duration"><option value="4">1拍</option><option value="2">半拍</option><option value="8">2拍</option><option value="16">4拍</option></select></label>
    <button id="propose">候補にする</button><button id="confirm" disabled>オッケー</button><button id="cancel" disabled>候補をとりけす</button><button id="undo">もどす</button>
   </div><p id="candidate" role="status">候補なし</p><p id="remaining"></p>
@@ -55,12 +55,19 @@
    <button id="capture-import-button">記録を読み込む</button><p id="capture-import-status" role="status"></p>
    <p>端末内で読み込みます。v12以降の音程推移があれば、同じ入力の3方式を選べます。開くのは元の解析結果です。読み込むと、いま編集中の取り込み候補を置き換えます。</p>
   </details>
-  <div id="review" hidden><p>取り込み候補。元の音列はまだ変更していません。茶色は補完候補です。</p><p id="capture-key-label" role="status"></p><div class="fields"><button id="capture-key-flat">♭側へ</button><button id="capture-key-sharp">♯側へ</button><button id="capture-key-auto">自動推定に戻す</button></div>
+  <div id="review" hidden><p>音を選ぶ → 直す → 流れを聴く → まとめてオッケー。点線は仮の変更、茶色は補完候補です。</p><p id="capture-key-label" role="status"></p><div class="fields"><button id="capture-key-flat">♭側へ</button><button id="capture-key-sharp">♯側へ</button><button id="capture-key-auto">自動推定に戻す</button></div>
    <p id="capture-octave-label" role="status"></p><div class="fields"><button id="capture-octave-up" aria-pressed="false">1オクターブ上に表示</button><button id="capture-octave-original" aria-pressed="true">原音表示</button><button id="capture-octave-down" aria-pressed="false">1オクターブ下に表示</button></div>
    <label>編集の出発点 <select id="capture-variant"><option value="current">現在の設定</option><option value="detail">細かい変化</option><option value="unsmoothed">ならしなし</option></select></label>
    <p>方式ごとに編集を保持します。音符をタップするか、下の一覧で選んでください。タイでつながる音符は一つの音として編集します。</p>
+    <div class="fields edit-toolbar"><button id="capture-previous">← まえ</button><button id="capture-next">つぎ →</button><button id="capture-pitch-up">↑ たかく</button><button id="capture-pitch-down">↓ ひくく</button><button id="preview">流れを聴く</button></div>
    <div id="capture-score" class="score"></div>
+   <div id="capture-blocks" aria-label="音のブロック一覧"></div>
    <div class="capture-editor"><label>選ぶ音 <select id="capture-note"></select></label>
+
+    <p>高さは1回で半音ずつ動きます。</p>
+    <label><input id="edit-voice" type="checkbox"> 声でも操作する（端末内認識）</label><p id="edit-voice-status" role="status">音声操作OFF</p>
+    <p>「たかく／あげる」「ひくく／さげる」「つぎ」「まえ」「きく」「オッケー」「もどす」「とりけし」。最初の利用時は認識モデルを読み込みます。</p>
+    <details id="capture-edit-details"><summary>長さ・位置・分割などの詳しい編集</summary>
     <div class="fields"><label>音高（MIDI番号）<input id="capture-edit-midi" type="number" min="0" max="127" step="1"></label>
      <label>開始位置（16分・1〜64）<input id="capture-edit-start" type="number" min="1" max="64" step="1"></label>
      <label>長さ（16分の個数）<input id="capture-edit-length" type="number" min="1" max="64" step="1"></label>
@@ -69,10 +76,11 @@
     <div class="fields"><label>何個目の16分で区切るか<input id="capture-split-at" type="number" min="1" max="63" step="1" value="1"></label>
      <button id="capture-edit-split">分割候補を作る</button><button id="capture-edit-merge">次の音と結合候補を作る</button></div>
     <p>結合は休符を挟まない次の音まで。選んだ音の高さを残します。</p>
+    </details>
     <p id="capture-edit-status" role="status"></p>
-    <div class="fields"><button id="capture-edit-confirm" disabled>この編集で確定</button><button id="capture-edit-cancel" disabled>編集候補をとりけす</button><button id="capture-edit-undo" disabled>編集をもどす</button></div>
+    <div class="fields"><button id="capture-edit-confirm" disabled>まとめてオッケー</button><button id="capture-edit-cancel" disabled>確定したところに戻す</button><button id="capture-edit-undo" disabled>ひとつもどす</button></div>
    </div>
-   <button id="align-start" disabled>頭の休符を詰める</button><button id="preview">候補を聴く</button><button id="adopt">試作の音列に採用</button><button id="discard">候補を捨てる</button><button id="copy-capture-report">記録をコピー</button></div>
+   <button id="align-start" disabled>頭の休符を詰める</button><button id="adopt">おわり</button><button id="discard">仮の変更を捨てておわる</button><button id="copy-capture-report">記録をコピー</button></div>
  </section>
  <section><h2>測定記録</h2><p>機種・イヤホン・聞こえ方は追記してください。下の記録は数値と音符だけです。</p><label>実機条件・所感 <textarea id="conditions" placeholder="端末名、ブラウザ、イヤホン有無、声域、ずれ・誤検出など"></textarea></label><button id="report">記録を表示</button><button id="copy-report">記録をコピー</button><p id="copy-status" role="status"></p><label id="copy-fallback" hidden>手動コピー用の記録<textarea id="copy-text" readonly></textarea></label><pre id="metrics">まだ計測していません。</pre></section>
 </main>

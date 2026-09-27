@@ -30,7 +30,7 @@ const base=process.env.SAEZURI_BASE||'http://127.0.0.1:8000';
   const copied=await page.evaluate(()=>window.copied);
   assert.equal(copied,await page.locator('#metrics').innerText());
   assert.equal(JSON.parse(copied).conditions,'Windows11 コピーの確認');
-  assert.equal(JSON.parse(copied).prototype,'ML-T01-v13');
+  assert.equal(JSON.parse(copied).prototype,'ML-T01-v14');
   await page.evaluate(()=>navigator.clipboard.writeText=async()=>{throw new DOMException('Denied','NotAllowedError');});
   await page.locator('#conditions').fill('最新の所感');
   await page.locator('#copy-report').click();

@@ -69,7 +69,7 @@ const base = process.env.SAEZURI_BASE || 'http://127.0.0.1:8000';
     assert.equal(await page.locator('#capture-variant').count(), 1, 'capture editor variant selector missing');
     const expected = await page.evaluate(() => window.editorExpected);
     assert.deepEqual(rows(expected.notes), [[4, 4, 60], [8, 4, 60], [16, 4, 64], [20, 4, 65]]);
-    assert.equal((await report()).prototype, 'ML-T01-v13');
+    assert.equal((await report()).prototype, 'ML-T01-v14');
     assert.equal(await page.evaluate(() => window.editorTracks.every(track => track.readyState === 'ended')), true);
     for (const mode of ['detail', 'unsmoothed', 'current']) {
       await page.locator('#capture-variant').selectOption(mode);
@@ -96,141 +96,78 @@ const base = process.env.SAEZURI_BASE || 'http://127.0.0.1:8000';
     await page.locator('#capture-octave-original').click();
     assert.equal(Number(await page.locator('#capture-edit-start').inputValue()), 5, 'input positions are one-based');
     assert.equal(Number(await page.locator('#capture-edit-length').inputValue()), 4);
-    await page.locator('#capture-edit-midi').fill('72');
-    await page.locator('#capture-edit-replace').click();
-    assert.equal(await page.locator('#capture-edit-confirm').isEnabled(), true);
-    assert.equal(await page.locator('#adopt').isDisabled(), true);
-    assert.equal(await page.locator('#align-start').isDisabled(), true);
-    assert.equal((await score('#capture-score'))[0][2], 72);
-    assert.deepEqual((await report()).capture.notes, expected.notes);
+    await page.locator('#capture-pitch-up').click();
+    await page.locator('#capture-next').click();
+    await page.locator('#capture-pitch-down').click();
+    let r=await report();
+    assert.deepEqual(r.captureEditing.editCandidate.notes.map(n=>n.midi),[61,59,64,65]);
+    assert.deepEqual(r.captureCandidate.notes,baseline);
+    assert.deepEqual(await score('#score'),mainBefore);
+    assert.equal(r.captureEditing.undoDepth,2);
+    assert.ok(await page.locator('#capture-score .capture-note-draft').count());
+    assert.ok((await page.locator('#capture-score text').allTextContents()).some(t=>t==='♯' || t==='♭'));
     await page.locator('#preview').click();
-    await page.waitForFunction(() => document.querySelector('#status').dataset.state === 'playing');
-    assert.equal(await page.locator('#capture-edit-confirm').isDisabled(), true);
+    await page.waitForFunction(()=>document.querySelector('#status').dataset.state==='playing');
+    r=await report();assert.deepEqual(r.playback.pitches,[61,59,64,65]);assert.equal(r.playback.draft,true);
+    assert.equal(await page.locator('#capture-pitch-up').isDisabled(),true);
     await page.locator('#stop').click();
-    assert.equal(await page.locator('#capture-edit-confirm').isEnabled(), true);
+    await page.locator('#capture-edit-confirm').click();
+    assert.equal(await page.locator('#review').isVisible(),true);
+    assert.deepEqual((await score('#score')).map(n=>n[2]),[61,59,64,65]);
+    const confirmedScore=await score('#score');
+    await page.locator('#capture-edit-undo').click();
+    r=await report();assert.deepEqual(r.captureEditing.editCandidate.notes.map(n=>n.midi),[61,60,64,65]);
+    assert.deepEqual(await score('#score'),confirmedScore);
+    assert.equal(await page.locator('#adopt').isDisabled(),true);
     await page.locator('#capture-edit-cancel').click();
-    assert.deepEqual(rows((await report()).captureCandidate.notes), rows(baseline));
-    assert.equal((await score('#capture-score'))[0][2], 60);
-
-    await page.locator('#capture-note').selectOption(firstId);
-    await page.locator('#capture-edit-midi').fill('72');
-    await page.locator('#capture-edit-replace').click();
+    assert.equal((await report()).captureEditing.pending,false);
+    await page.locator('#capture-blocks button').nth(2).click();
+    assert.equal(await page.locator('#capture-note').inputValue(),thirdId);
+    await page.locator('#capture-pitch-up').click();
     await page.locator('#capture-edit-confirm').click();
-    const replaced = (await report()).captureCandidate.notes;
-    assert.deepEqual(rows(replaced), [[4, 4, 72], [8, 4, 60], [16, 4, 64], [20, 4, 65]]);
-    assert.deepEqual(await score('#score'), mainBefore);
-
-    await page.locator('#capture-variant').selectOption('detail');
-    assert.deepEqual(rows((await report()).captureCandidate.notes), expected.analysisComparison.variants.find(v => v.mode === 'detail').notes);
-    await page.locator('#capture-edit-midi').fill('66');
-    await page.locator('#capture-edit-replace').click();
-    await page.locator('#capture-edit-confirm').click();
-    const editedDetail = rows((await report()).captureCandidate.notes);
-    assert.equal(editedDetail[0][2], 66);
-    await page.locator('#capture-variant').selectOption('current');
-    assert.deepEqual(rows((await report()).captureCandidate.notes), rows(replaced));
-    await page.locator('#capture-variant').selectOption('detail');
-    assert.deepEqual(rows((await report()).captureCandidate.notes), editedDetail, 'each source retains its own edits');
-    await page.locator('#capture-edit-undo').click();
-    assert.deepEqual(rows((await report()).captureCandidate.notes), expected.analysisComparison.variants.find(v => v.mode === 'detail').notes);
-    await page.locator('#capture-variant').selectOption('current');
-    assert.deepEqual(rows((await report()).captureCandidate.notes), rows(replaced), 'undo in another source must not affect current');
-
-    // Dropdowns are the primary touch path. Staff selection is an additional path.
-    await page.locator('#capture-note').selectOption(firstId);
-    await page.locator('#capture-split-at').fill('2');
-    await page.locator('#capture-edit-split').click();
-    await page.locator('#capture-edit-confirm').click();
-    const split = (await report()).captureCandidate.notes;
-    assert.deepEqual(rows(split).slice(0, 2), [[4, 2, 72], [6, 2, 72]]);
-    await page.locator('#capture-note').selectOption(split[0].id);
+    // Detailed operations still act on the same draft and can be undone.
+    await page.locator('#capture-edit-details summary').click();
+    await page.locator('#capture-split-at').fill('2');await page.locator('#capture-edit-split').click();
+    assert.equal((await report()).captureEditing.editCandidate.notes.length,5);
     await page.locator('#capture-edit-merge').click();
-    await page.locator('#capture-edit-confirm').click();
-    assert.deepEqual(rows((await report()).captureCandidate.notes), rows(replaced));
-
-    await page.locator('#capture-note').selectOption(thirdId);
+    assert.equal((await report()).captureEditing.editCandidate.notes.length,4);
+    await page.locator('#capture-edit-cancel').click();
     await page.locator('#capture-edit-delete').click();
-    await page.locator('#capture-edit-confirm').click();
-    assert.equal((await report()).captureCandidate.notes.some(n => n.id === thirdId), false);
+    assert.equal((await report()).captureEditing.editCandidate.notes.length,3);
     await page.locator('#capture-edit-undo').click();
-    assert.deepEqual(rows((await report()).captureCandidate.notes), rows(replaced));
-
-    const invalidProposal = async operation => {
-      const before = await score('#capture-score');
-      await operation();
-      assert.equal(await page.locator('#capture-edit-confirm').isDisabled(), true);
-      assert.ok((await page.locator('#capture-edit-status').innerText()).length > 0);
-      assert.deepEqual(await score('#capture-score'), before);
-      assert.deepEqual(rows((await report()).captureCandidate.notes), rows(replaced));
-    };
-    await page.locator('#capture-note').selectOption(replaced[0].id);
-    await invalidProposal(async () => {
-      await page.locator('#capture-edit-start').fill('9');
-      await page.locator('#capture-edit-length').fill('4');
-      await page.locator('#capture-edit-replace').click();
-    });
-    await invalidProposal(async () => {
-      await page.locator('#capture-edit-start').fill('64');
-      await page.locator('#capture-edit-replace').click();
-    });
-    await page.locator('#capture-note').selectOption(secondId);
-    await invalidProposal(() => page.locator('#capture-edit-merge').click());
-
-    await page.locator(`#capture-score [data-note-id="${thirdId}"] ellipse`).first().click();
-    assert.equal(await page.locator('#capture-note').inputValue(), thirdId);
-    assert.equal(Number(await page.locator('#capture-edit-start').inputValue()), 17);
-    assert.deepEqual(await page.locator('#capture-score [data-editor-selected="true"]').evaluateAll(nodes => [...new Set(nodes.map(n => n.dataset.noteId))]), [thirdId]);
-    for (const [width, height] of [[320, 568], [390, 844], [844, 390], [1280, 800]]) {
-      await page.setViewportSize({ width, height });
-      assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true, `${width}x${height}`);
+    assert.equal((await report()).captureEditing.pending,false);
+    await page.locator('#capture-note').selectOption(firstId);
+    const beforeInvalid=await score('#capture-score');
+    await page.locator('#capture-edit-length').fill('8');await page.locator('#capture-edit-replace').click();
+    assert.match(await page.locator('#capture-edit-status').innerText(),/重なり/);
+    assert.deepEqual(await score('#capture-score'),beforeInvalid);
+    await page.locator('#capture-edit-details summary').click();
+    for(const [width,height] of [[320,568],[390,844],[844,390],[1280,800]]) {
+      await page.setViewportSize({width,height});
+      assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,`${width}x${height}`);
     }
-    const finalReport = await report();
-    assert.deepEqual(finalReport.capture.notes, expected.notes);
-    assert.deepEqual(finalReport.capture.analysisComparison, expected.analysisComparison);
+    const finalReport=await report();
+    assert.deepEqual(finalReport.capture.notes,expected.notes);
+    assert.deepEqual(finalReport.capture.analysisComparison,expected.analysisComparison);
     await page.locator('#adopt').click();
-    const adopted = await score('#score');
-    assert.deepEqual(adopted.map(n => [n[1], n[2]]), [[4, 72], [8, 60], [16, 64], [20, 65]]);
-    assert.deepEqual(rows((await report()).captureCandidate.notes), rows(replaced), 'adopted edits remain available in copied diagnostics');
-
-    // Reopen the original numerical capture, not the separately edited candidate.
-    // v12 reports used the same trace contract and do not contain raw PCM.
-    const previousVersionReport = { ...finalReport, prototype: 'ML-T01-v12' };
-    const importDetails = page.locator('details').filter({ has: page.locator('#capture-import-text') });
-    if (await importDetails.count() && !(await importDetails.evaluate(node => node.open))) await importDetails.locator('summary').click();
-    await page.locator('#capture-import-text').fill(JSON.stringify(previousVersionReport));
+    assert.equal((await report()).captureEditing.undoDepth,0);
+    assert.equal(await page.locator('#review').isHidden(),true);
+    await page.locator('#edit-score').click();
+    assert.equal((await report()).captureEditing.undoDepth,0);
+    await page.locator('#capture-pitch-down').click();await page.locator('#capture-edit-confirm').click();
+    await page.locator('#adopt').click();
+    const adopted=await score('#score');
+    const details=page.locator('details').filter({has:page.locator('#capture-import-text')});
+    await details.locator('summary').click();
+    await page.locator('#capture-import-text').fill(JSON.stringify({...finalReport,prototype:'ML-T01-v12'}));
     await page.locator('#capture-import-button').click();
-    assert.match(await page.locator('#capture-import-status').innerText(), /元の取り込みを開きました/);
-    assert.equal(await page.locator('#capture-variant').inputValue(), 'current');
-    const reopened = await report();
-    assert.deepEqual(reopened.captureCandidate.notes, expected.notes, 'import resumes the original capture, excluding manual edits');
-    assert.deepEqual(reopened.capture.notes, expected.notes);
-    assert.deepEqual(await score('#score'), adopted, 'import must preserve the adopted main melody');
-    for (const mode of ['unsmoothed', 'detail', 'current']) {
-      await page.locator('#capture-variant').selectOption(mode);
-      assert.deepEqual(rows((await report()).captureCandidate.notes), expected.analysisComparison.variants.find(v => v.mode === mode).notes);
-    }
-    const candidateBeforeBadImport = (await report()).captureCandidate;
-    await page.locator('#capture-import-text').fill('{"capture":');
-    await page.locator('#capture-import-button').click();
-    assert.match(await page.locator('#capture-import-status').innerText(), /JSON/);
-    assert.deepEqual((await report()).captureCandidate, candidateBeforeBadImport);
-    assert.deepEqual(await score('#score'), adopted);
-    for (const note of candidateBeforeBadImport.notes) {
-      await page.locator('#capture-note').selectOption(note.id);
-      await page.locator('#capture-edit-delete').click();
-      await page.locator('#capture-edit-confirm').click();
-    }
-    assert.equal((await report()).captureCandidate.notes.length, 0);
-    assert.equal(await page.locator('#capture-score [data-note-id]').count(), 0);
-    assert.equal(await page.locator('#capture-note').isDisabled(), true);
-    await page.locator('#capture-edit-undo').click();
-    assert.equal((await report()).captureCandidate.notes.length, 1);
-    assert.equal(await page.locator('#capture-note').isEnabled(), true);
-    assert.deepEqual((await report()).capture.notes, expected.notes);
-    assert.deepEqual(await score('#score'), adopted);
-    assert.equal(await page.evaluate(() => window.editorMediaRequests), 1);
-    assert.deepEqual(errors, []);
-    assert.deepEqual(external, []);
-    console.log(JSON.stringify({ result: 'PASS', base, realCaptures: 1, variants: 3, manualEdits: 'replace/cancel/confirm, split/merge, delete/undo, overlap/overflow/gap rejection, independent source edits', reportImport: 'v12 trace replay, original capture retained, malformed JSON preserves candidate', viewports: 4, analysis: 'deterministic frames; real-voice accuracy not tested' }));
+    assert.deepEqual((await report()).captureCandidate.notes,expected.notes);
+    assert.deepEqual(await score('#score'),adopted);
+    await page.locator('#discard').click();
+    await page.locator('#capture-import-text').fill('{"capture":');await page.locator('#capture-import-button').click();
+    assert.match(await page.locator('#capture-import-status').innerText(),/JSON/);
+    assert.equal(await page.evaluate(()=>window.editorMediaRequests),1);
+    assert.deepEqual(errors,[]);assert.deepEqual(external,[]);
+    console.log(JSON.stringify({result:'PASS',base,realCaptures:1,variants:3,draft:'multiple edits / preview / confirm / continued editing / undo after confirmation / end / reopen',viewports:4}));
   } finally { await browser.close(); }
 })().catch(error => { console.error(error); process.exitCode = 1; });

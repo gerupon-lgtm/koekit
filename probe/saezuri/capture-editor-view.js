@@ -1,4 +1,4 @@
-import { createCaptureEditor, proposeCaptureEdit, commitNote, undo } from './capture-editor.js';
+import { openEditSession, stageEdit, selectEditNote, confirmEditSession, cancelEditSession, undoEditSession, hasDraftChanges } from './edit-session.js';
 import { analyzeFrames, quantizeSegments } from './analyzer.js';
 import { decodePitchTrace } from './analysis-comparison.js';
 import { pitchName } from './score.js';
@@ -17,8 +17,8 @@ const messages = {
   STALE_CANDIDATE: '編集前の状態が変わりました。候補を取り消してやり直してください。',
 };
 
-// The capture and comparison diagnostics remain immutable. Each source owns a
-// separate proposal, selection and undo history; only confirmation changes it.
+// Original diagnostics stay immutable. Each source owns a working melody and
+// session history; only explicit confirmation updates the main melody.
 export class CaptureEditorView {
   constructor({ onChange } = {}) {
     this.onChange = onChange;
@@ -29,7 +29,7 @@ export class CaptureEditorView {
     for (const id of ['capture-variant', 'capture-note', 'capture-edit-midi', 'capture-edit-start',
       'capture-edit-length', 'capture-split-at', 'capture-edit-replace', 'capture-edit-delete',
       'capture-edit-split', 'capture-edit-merge', 'capture-edit-confirm', 'capture-edit-cancel',
-      'capture-edit-undo', 'capture-edit-status', 'capture-score']) {
+      'capture-edit-undo', 'capture-edit-status', 'capture-score', 'capture-pitch-up', 'capture-pitch-down', 'capture-previous', 'capture-next', 'capture-blocks']) {
       this._elements[id] = document.getElementById(id);
       if (!this._elements[id]) throw new Error(`CAPTURE_EDITOR_ELEMENT: ${id}`);
     }
@@ -45,21 +45,37 @@ export class CaptureEditorView {
     this._elements['capture-edit-confirm'].addEventListener('click', () => this._confirm());
     this._elements['capture-edit-cancel'].addEventListener('click', () => this._cancel());
     this._elements['capture-edit-undo'].addEventListener('click', () => this._undo());
+    for (const command of ['up','down','previous','next']) this._elements[`capture-${command === 'up' || command === 'down' ? 'pitch-' : ''}${command}`].onclick = () => this.command(command);
+    this._elements['capture-blocks'].onclick = event => { const note=event.target.closest('[data-note-id]'); if(note) this._select(note.dataset.noteId); };
     this._render(true);
   }
 
   get _active() { return this._variants.get(this._variant); }
-  get pattern() { return clone(this._active?.state.pattern ?? null); }
-  get previewPattern() { return clone(this._active?.proposal?.pattern ?? this._active?.state.pattern ?? null); }
-  get pending() { return !!this._active?.proposal; }
+  get pattern() { return clone(this._active?.session.confirmed ?? null); }
+  get previewPattern() { return clone(this._active?.state.pattern ?? null); }
+  get pending() { return hasDraftChanges(this._active?.session); }
   get edited() { return !!this._active?.edited; }
+  get accepted() { return !!this._active?.session.accepted; }
+  get isOpen() { return !!this._active && !this._active.session.closed; }
   get variant() { return this._variant; }
 
   _makeVariant(pattern) {
-    const state = createCaptureEditor(pattern);
-    if (state.code) throw new Error(state.code);
-    state.selectedNoteId = state.pattern.notes[0]?.id ?? null;
-    return { state, sourcePattern: clone(pattern), proposal: null, edited: false };
+    const session = openEditSession(pattern);
+    if (session.code) throw new Error(session.code);
+    return {session, get state() { return this.session.working; }, sourcePattern:clone(pattern), edited:false};
+  }
+
+  openPattern(pattern) {
+    this._variants.clear(); this._variant='current';
+    this._variants.set('current',this._makeVariant(pattern));
+    this._status('音を選んで直し、流れを聴いてから、まとめてオッケー。');
+    this._emit(true);
+  }
+
+  end() {
+    if (!this.isOpen || this.pending || this._busy) return false;
+    for (const item of this._variants.values()) item.session={...item.session,closed:true,history:[]};
+    this._emit(false); return true;
   }
 
   load(result, captureOptions = {}) {
@@ -97,7 +113,7 @@ export class CaptureEditorView {
       }
     }
     this._status(unavailable ? '比較用の音程推移を読み込めませんでした。現在の設定の候補を編集できます。'
-      : '音符を選び、変更を候補にしてから「この編集で確定」を押してください。');
+      : '音を選んで直し、流れを聴いてから、まとめてオッケー。');
     this._emit(true);
   }
 
@@ -105,11 +121,9 @@ export class CaptureEditorView {
   // available to restore the original leading rest without altering diagnostics.
   setPattern(pattern) {
     if (this._busy || this.pending || !this._active || this.edited) return false;
-    const state = createCaptureEditor(pattern);
-    if (state.code) { this._status(messages[state.code] ?? 'この音列は編集できません。'); return false; }
-    state.selectedNoteId = state.pattern.notes.some(note => note.id === this._active.state.selectedNoteId)
-      ? this._active.state.selectedNoteId : state.pattern.notes[0]?.id ?? null;
-    this._active.state = state;
+    const session = openEditSession(pattern);
+    if (session.code) { this._status(messages[session.code] ?? 'この音列は編集できません。'); return false; }
+    this._active.session = session;
     this._emit(false);
     return true;
   }
@@ -126,16 +140,17 @@ export class CaptureEditorView {
       revision: this._active?.state.revision ?? 0,
       edited: this.edited,
       pending: this.pending,
-      ...(this.pending ? { editCandidate: clone(this._active.proposal.pattern) } : {}),
+      accepted:this.accepted, closed:!this.isOpen, undoDepth:this._active?.session.history.length ?? 0,
+      ...(this.pending ? { editCandidate: this.previewPattern } : {}),
     };
   }
 
   _status(text) { this._elements['capture-edit-status'].textContent = text; }
 
-  _emit(sourceChanged, fields = true) {
+  _emit(sourceChanged, fields = true, confirmed = false) {
     this._render(fields);
     this.onChange?.({ pattern: this.pattern, previewPattern: this.previewPattern, pending: this.pending,
-      edited: this.edited, variant: this.variant, sourcePattern: clone(this._active?.sourcePattern ?? null), sourceChanged });
+      edited: this.edited, variant: this.variant, sourcePattern: clone(this._active?.sourcePattern ?? null), sourceChanged, confirmed });
     this._highlight();
   }
 
@@ -143,76 +158,70 @@ export class CaptureEditorView {
     if (this._busy || this.pending || !this._variants.has(mode)) { this._render(false); return; }
     if (mode === this.variant) return;
     this._variant = mode;
+    this._active.session={...this._active.session,accepted:false};
     this._status(`${labels[mode]}の候補に切り替えました。方式ごとの編集は保持しています。`);
     this._emit(true);
   }
 
   _select(noteId) {
-    if (this._busy || this.pending || !this._active) return;
-    if (!this._active.state.pattern.notes.some(note => note.id === noteId)) return;
-    this._active.state = { ...this._active.state, selectedNoteId: noteId };
-    this._status('選んだ音符の値を変更し、編集候補を作ってください。');
+    if (this._busy || !this.isOpen) return;
+    const next = selectEditNote(this._active.session,noteId);
+    if (next.code) return;
+    this._active.session=next;
+    this._emit(false);
+  }
+
+  command(command) {
+    if(this._busy || !this.isOpen) return;
+    if(command==='confirm') return this._confirm();
+    if(command==='undo') return this._undo();
+    if(command==='cancel') return this._cancel();
+    const notes=this._active.state.pattern.notes, index=notes.findIndex(n=>n.id===this._active.state.selectedNoteId), note=notes[index];
+    if(!note) return;
+    if(command==='next' || command==='previous') return this._select(notes[Math.max(0,Math.min(notes.length-1,index+(command==='next'?1:-1)))].id);
+    if(command==='up' || command==='down') this._stage({type:'replace',noteId:note.id,midi:note.midi+(command==='up'?1:-1),startTick:note.startTick,durationTick:note.durationTick});
+  }
+
+  _stage(command) {
+    const next=stageEdit(this._active.session,command);
+    if(next.code) {this._status(messages[next.code] ?? 'この変更はできません。');return;}
+    this._active.session=next; this._active.edited=true;
+    this._status('仮の変更です。ほかの音も直せます。「流れを聴く」で確認してからオッケー。');
     this._emit(false);
   }
 
   _propose(type) {
-    if (this._busy || this.pending || !this._active) return;
-    const number = id => this._elements[id].value.trim() === '' ? NaN : Number(this._elements[id].value);
-    const command = { type: type === 'merge' ? 'merge-next' : type, noteId: this._active.state.selectedNoteId };
-    if (type === 'replace') Object.assign(command, { midi: number('capture-edit-midi'),
-      startTick: number('capture-edit-start') - 1, durationTick: number('capture-edit-length') });
-    if (type === 'split') command.offsetTick = number('capture-split-at');
-    const proposal = proposeCaptureEdit(this._active.state, command);
-    if (proposal.code) {
-      this._status(messages[proposal.code] ?? 'この変更はできません。音符と入力値を確認してください。');
-      this._render(false);
-      return;
-    }
-    this._active.proposal = proposal;
-    this._status(type === 'merge'
-      ? '選んだ音高で次の音符とつなぐ候補です。試聴後、「この編集で確定」を押してください。'
-      : '編集候補を表示しています。試聴後、「この編集で確定」を押すか、取り消してください。');
-    this._emit(false, false);
+    if(this._busy || !this.isOpen) return;
+    const number=id=>this._elements[id].value.trim()===''?NaN:Number(this._elements[id].value);
+    const command={type:type==='merge'?'merge-next':type,noteId:this._active.state.selectedNoteId};
+    if(type==='replace') Object.assign(command,{midi:number('capture-edit-midi'),startTick:number('capture-edit-start')-1,durationTick:number('capture-edit-length')});
+    if(type==='split') command.offsetTick=number('capture-split-at');
+    this._stage(command);
   }
 
   _confirm() {
-    if (this._busy || !this.pending) return;
-    const next = commitNote(this._active.state, this._active.proposal);
-    if (next.code) { this._status(messages[next.code] ?? '確定できません。候補を取り消してやり直してください。'); return; }
-    this._active.state = next;
-    this._active.proposal = null;
-    this._active.edited = true;
-    this._ensureSelection();
-    this._status('編集を確定しました。「編集をもどす」で直前の編集を戻せます。');
-    this._emit(false);
+    if(this._busy || !this.isOpen) return;
+    this._active.session=confirmEditSession(this._active.session);
+    this._status('まとめて確定しました。続けて編集できます。履歴は「おわり」まで残ります。');
+    this._emit(false,true,true);
   }
 
   _cancel() {
-    if (this._busy || !this.pending) return;
-    this._active.proposal = null;
-    this._status('編集候補を取り消しました。');
-    this._emit(false);
+    if(this._busy || !this.isOpen || !this.pending) return;
+    this._active.session=cancelEditSession(this._active.session);
+    this._status('最後に確定した音列へ戻しました。'); this._emit(false);
   }
 
   _undo() {
-    if (this._busy || this.pending || !this._active?.state.undoStack?.length) return;
-    this._active.state = undo(this._active.state);
-    this._ensureSelection();
-    this._status('直前の編集を戻しました。');
-    this._emit(false);
-  }
-
-  _ensureSelection() {
-    const state = this._active.state;
-    if (!state.pattern.notes.some(note => note.id === state.selectedNoteId)) {
-      this._active.state = { ...state, selectedNoteId: state.pattern.notes[0]?.id ?? null };
-    }
+    if(this._busy || !this.isOpen || !this._active.session.history.length) return;
+    this._active.session=undoEditSession(this._active.session);
+    this._status('ひとつ戻しました。仮の音列を確認してオッケーで確定してください。'); this._emit(false);
   }
 
   _render(fields) {
-    const elements = this._elements, active = this._active, locked = this._busy || this.pending || !active;
+    const elements = this._elements, active = this._active, locked = this._busy || !this.isOpen;
     elements['capture-variant'].value = this.variant;
-    elements['capture-variant'].disabled = locked;
+    elements['capture-variant'].disabled = locked || this.pending;
     for (const option of elements['capture-variant'].options) option.disabled = !this._variants.has(option.value);
     const notes = active?.state.pattern.notes ?? [];
     const selected = notes.find(note => note.id === active?.state.selectedNoteId);
@@ -221,7 +230,7 @@ export class CaptureEditorView {
       for (const [index, note] of notes.entries()) {
         const option = document.createElement('option');
         option.value = note.id;
-        option.textContent = `${index + 1}: ${pitchName(note.midi)}（MIDI ${note.midi}）・位置${note.startTick + 1}・長さ${note.durationTick}`;
+        option.textContent = `${index + 1}ばんめ：${pitchName(note.midi)}`;
         elements['capture-note'].append(option);
       }
       elements['capture-note'].value = selected?.id ?? '';
@@ -231,18 +240,27 @@ export class CaptureEditorView {
       elements['capture-split-at'].value = selected ? Math.max(1, Math.floor(selected.durationTick / 2)) : '';
     }
     for (const id of ['capture-note', 'capture-edit-midi', 'capture-edit-start', 'capture-edit-length',
-      'capture-split-at', 'capture-edit-replace', 'capture-edit-delete', 'capture-edit-split', 'capture-edit-merge']) {
+      'capture-split-at', 'capture-edit-replace', 'capture-edit-delete', 'capture-edit-split', 'capture-edit-merge', 'capture-pitch-up', 'capture-pitch-down', 'capture-next', 'capture-previous']) {
       elements[id].disabled = locked || !selected;
     }
-    elements['capture-edit-confirm'].disabled = this._busy || !this.pending;
+    elements['capture-edit-confirm'].disabled = locked || (this.accepted && !this.pending);
     elements['capture-edit-cancel'].disabled = this._busy || !this.pending;
-    elements['capture-edit-undo'].disabled = locked || !active?.state.undoStack?.length;
+    elements['capture-edit-undo'].disabled = locked || !active?.session.history.length;
+    const blocks=elements['capture-blocks']; blocks.replaceChildren();
+    for(const [i,note] of notes.entries()) {
+      const button=document.createElement('button');button.dataset.noteId=note.id;button.textContent=`${i+1} ${pitchName(note.midi)}`;
+      button.setAttribute('aria-pressed',String(note.id===selected?.id));button.disabled=locked;
+      button.style.borderTopWidth=`${4+Math.min(24,note.midi-Math.min(...notes.map(n=>n.midi)))*2}px`; blocks.append(button);
+    }
     this._highlight();
   }
 
   _highlight() {
     for (const element of this._elements['capture-score'].querySelectorAll('[data-note-id]')) {
       const selected = element.getAttribute('data-note-id') === this._active?.state.selectedNoteId;
+      const id=element.getAttribute('data-note-id');
+      const before=this.pattern?.notes.find(n=>n.id===id), after=this.previewPattern?.notes.find(n=>n.id===id);
+      element.classList.toggle('capture-note-draft',JSON.stringify(before)!==JSON.stringify(after));
       element.classList.toggle('capture-note-selected', selected);
       if (selected) element.setAttribute('data-editor-selected', 'true');
       else element.removeAttribute('data-editor-selected');

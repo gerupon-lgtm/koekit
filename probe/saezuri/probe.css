@@ -5,3 +5,7 @@ header .bird-preview{display:block;width:144px;height:144px;object-fit:contain;m
 button[aria-pressed=true]{border:2px solid #77599b;background:#ded5ef}
 .capture-editor{padding:14px;background:#f7f4fb;border:1px solid #d9cfe5;border-radius:12px;margin:12px 0}
 #capture-note{width:100%}#capture-edit-status{min-height:1.65em;color:#614478}#capture-score [data-note-id]{cursor:pointer}#capture-score [data-editor-selected=true]{outline:2px solid #77599b;outline-offset:3px}
+
+#capture-blocks{display:flex;gap:8px;overflow:auto;padding:8px 0}#capture-blocks button{flex:0 0 auto;min-width:64px;border-top-color:#baa7d4}#capture-score .capture-note-draft{outline:2px dashed #b06018;outline-offset:5px}#capture-edit-confirm,#preview{background:#d9ebd5;border-color:#64865b}#capture-edit-details{margin:16px 0}#capture-edit-details summary{cursor:pointer;padding:10px}
+
+.edit-toolbar{position:sticky;top:0;z-index:3;background:#fffaf2;border:1px solid #ded0ba;border-radius:10px;padding:6px;gap:6px}.edit-toolbar button{font-size:14px;padding:7px;min-height:44px;margin:0}
