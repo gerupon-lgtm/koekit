@@ -40,7 +40,7 @@ const editingExample = () => ({ bars: 4, gridStep: 1, notes: [
 ] });
 let state = { pattern: editingExample(), cursor: 0, revision: 0 }, candidate = null, captured = null, capturedOriginal = null;
 let ctx, transport, capture, serial = 0, phase = 'idle', raf, lastFrame = 0, maxFrameGapMs = 0, lastBar = -1, playbackPreview = false;
-const record = { prototype: 'ML-T01-v21', timestamp: new Date().toISOString(), userAgent: navigator.userAgent, playback: null, capture: null };
+const record = { prototype: 'ML-T01-v22', timestamp: new Date().toISOString(), userAgent: navigator.userAgent, playback: null, capture: null };
 const keyChoices = { score: null, capture: null };
 const displayOctaves = { score: 0, capture: 0 };
 const captureAlignments = new Map();
@@ -317,10 +317,11 @@ $('adopt').onclick = () => {
   if(phase!=='idle' || !captureEditor.accepted || !captureEditor.end()) return;
   $('review').hidden=true; setPhase('idle');showReport();
 };
-$('discard').onclick = () => {
+function discardCurrent() {
   if(phase!=='idle') return;
-  captured=null; captureEditor.load(null); $('review').hidden=true;setPhase('idle');showReport();
-};
+  captured=null; capturedOriginal=null;captureAlignments.clear();captureEditor.load(null);$('review').hidden=true;setPhase('idle');showReport();
+}
+$('discard').onclick=discardCurrent;
 voice=new EditVoice({createInput:()=>createSpeechInput(METHODS.VOSK),
   onCommand(command) {
     if(phase!=='idle' || !captureEditor.isOpen || document.hidden || !microphoneEnabled() || (shell&&!shell.allowsVoice)) return;
@@ -391,7 +392,7 @@ const screenNavigation=compactEditor && new URLSearchParams(location.search).get
 if(compactEditor&&!screenNavigation) $('edit-score').click();
 if(screenNavigation) {
   shell=new MelodyScreens({editor:captureEditor,onStop:()=>stop(),onNavigate:()=>setPhase(phase),
-    onNew:newComposition,onPlay:(data,pending)=>play(data.pattern,true,{sequence:true,backing:data.backing,pending}),
+    onDiscard:discardCurrent,onPlay:(data,pending)=>play(data.pattern,true,{sequence:true,backing:data.backing,pending}),
     onExample:()=>{captureEditor.openPattern(editingExample());$('review').hidden=false;record.capture=null;record.captureOptions=null;record.playback=null;record.editingSource='example';showReport();}
   });
   setPhase(phase);

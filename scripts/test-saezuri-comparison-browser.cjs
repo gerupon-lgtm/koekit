@@ -104,7 +104,7 @@ const base = process.env.SAEZURI_BASE || 'http://127.0.0.1:8000';
 
     const report = JSON.parse(await page.locator('#metrics').innerText());
     const expected = await page.evaluate(() => window.comparisonExpected);
-    assert.equal(report.prototype, 'ML-T01-v21');
+    assert.equal(report.prototype, 'ML-T01-v22');
     assert.ok(report.capture.samples > 0);
     assert.deepEqual(report.capture.analysisComparison, expected.analysisComparison);
     assert.deepEqual(report.captureCandidate.notes, expected.notes);

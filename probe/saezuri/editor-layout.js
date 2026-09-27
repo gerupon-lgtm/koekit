@@ -7,7 +7,7 @@ export function setupEditorLayout() {
   document.body.classList.add('editor-focus');
   document.title='サエズリズム 編集テスト';
   const header=main.querySelector('header');
-  header.innerHTML='<h1>サエズリズム <small>作成・編集テスト v21</small></h1><p>音を選ぶ → 直す → 聴く → オッケー</p>';
+  header.innerHTML='<h1>サエズリズム <small>作成・編集テスト v22</small></h1><p>音を選ぶ → 直す → 聴く → オッケー</p>';
   const source=document.createElement('details');source.id='editor-source';
   source.innerHTML='<summary>新しくつくる・音列を開く</summary><p id="source-hint">仮の変更があるときは、確定するか取り消してから開けます。</p><div class="source-actions"></div>';
   const workspace=document.createElement('section');workspace.id='edit-workspace';

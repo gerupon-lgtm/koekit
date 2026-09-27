@@ -91,3 +91,36 @@ body.melody-app{background:#faf5ed;color:#443b36}
 .melody-app.editor-focus footer button{min-height:40px;font-size:14px}
 @media(max-width:350px){.melody-app.editor-focus main{padding-inline:8px}.melody-app.editor-focus #composer-keys{grid-template-columns:repeat(4,minmax(0,1fr))}.melody-app #melody-home h1{margin:4px 0}.melody-app .home-caption{margin-bottom:14px}.melody-app .home-menu{gap:10px}}
 @media(min-width:650px){.melody-app.editor-focus #capture-note-panel{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}.melody-app.editor-focus #capture-score{grid-column:1;grid-row:1;height:230px}.melody-app.editor-focus #capture-blocks{grid-column:1;grid-row:2}.melody-app.editor-focus .edit-toolbar{grid-column:2;grid-row:1/3}.melody-app.editor-focus #composer-keys{grid-template-columns:repeat(4,1fr)}.melody-app .phrase-register{max-width:400px;margin-left:auto}.melody-app #sequence-line{grid-template-columns:repeat(4,minmax(0,1fr))}}
+
+/* Editing controls follow delivery/styles.css button/seg and irodori/styles.css ir-icon.
+   Scoped here so the shared apps and the legacy technical layout stay independent. */
+.melody-app.editor-focus{color:#493f36}
+.melody-app.editor-focus button{border:0;border-radius:14px;background:#ece5da;color:#493f36;font-weight:700;min-height:48px}
+.melody-app.editor-focus button:disabled{opacity:.45;cursor:default}
+.melody-app.editor-focus button:focus-visible{outline:3px solid #77599d;outline-offset:3px}
+.melody-app.editor-focus button[aria-pressed=true]{box-shadow:inset 0 0 0 2px #6d9791;background:#e0eddf}
+.melody-app.editor-focus .screen-heading .melody-icon{width:50px;height:50px;min-height:50px;flex-shrink:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;padding:3px 0;margin:0;background:#fff;border-radius:15px;color:#8a5a3c;box-shadow:0 1px 2px #0000001a}
+.melody-app .melody-icon svg{width:23px;height:23px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.melody-app .melody-icon span{font-size:10px;line-height:16px}
+.melody-app.editor-focus #creation-tabs{padding:4px;background:#e5ebe4;border-radius:18px;gap:4px;margin:6px 0}
+.melody-app.editor-focus #creation-tabs button{background:transparent;min-height:40px}
+.melody-app.editor-focus #creation-tabs button[aria-pressed=true]{background:#fff;box-shadow:0 2px 4px #493f3610;color:#426965}
+.melody-app.editor-focus #capture-edit-confirm,.melody-app.editor-focus #sequence-confirm,.melody-app.editor-focus #keep-phrase,.melody-app.editor-focus #discard-confirm{background:#dce9d5;color:#30462e}
+.melody-app.editor-focus #preview,.melody-app.editor-focus #capture-edit-undo,.melody-app.editor-focus #sequence-preview,.melody-app.editor-focus #sequence-undo,.melody-app.editor-focus .note-actions button{background:#e7ddef;color:#3d2f4a}
+.melody-app.editor-focus #composer-keys button{background:#fff;border-radius:12px;box-shadow:0 1px 2px #0000001a}
+.melody-app.editor-focus #capture-blocks button{border-radius:12px;background:#ece4f1;box-shadow:none}
+.melody-app.editor-focus #capture-blocks button[aria-pressed=true]{background:#e0eddf;box-shadow:inset 0 0 0 2px #6d9791}
+.melody-app.editor-focus #capture-blocks button[data-playing]{background:#f8eac0}
+.melody-app.editor-focus #choose-resume{display:block;width:min(100%,420px);margin:12px auto;background:#dce9d5}
+.melody-app.editor-focus footer{border-top:1px solid #ddd4c5;background:#faf5ed}
+.melody-app.editor-focus footer #stop{background:#ece5da;color:#493f36}
+.melody-app #melody-discard{width:min(92vw,460px);border-radius:22px;padding:24px}
+.melody-app #melody-discard h2{margin:0 0 16px;text-align:center}
+.melody-app .discard-actions{display:grid;gap:10px;margin-top:16px}
+.melody-app .discard-actions button{width:100%;margin:0}
+
+.melody-app.editor-focus .home-menu button{min-height:84px;border-radius:20px}
+.melody-app.editor-focus .home-menu #home-create{background:#e7ddef;color:#3d2f4a}
+.melody-app.editor-focus .home-menu #home-connect{background:#f5b68e;color:#542d20}
+.melody-app.editor-focus .home-menu #home-resume{background:#dce9d5;color:#30462e;min-height:56px}
+.melody-app.editor-focus .menu-help{background:#fff;color:#8a5a3c;border-radius:15px;min-height:50px}
