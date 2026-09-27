@@ -54,6 +54,7 @@ export class ComposerControls {
     if(entry) this.$('duration').value=entry.input.durationTick/4;
     const bar=Math.min(pattern.bars,Math.floor(cursor/16)+1);
     const displayTick=entry?.input.replaceNoteId?pattern.notes.find(n=>n.id===entry.input.replaceNoteId)?.startTick??cursor:cursor;
+    if(busy)this.displayTick=null;
     if(!busy && this.displayTick!==displayTick) {
       const score=document.getElementById('capture-score'),staff=score.querySelector(`[data-bar="${Math.min(pattern.bars-1,Math.floor(displayTick/16))}"]`);
       if(staff) score.scrollTop+=staff.getBoundingClientRect().top-score.getBoundingClientRect().top-2;

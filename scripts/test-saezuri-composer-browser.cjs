@@ -42,6 +42,7 @@ const base=process.env.SAEZURI_BASE||'http://127.0.0.1:8014';
  await say('スタート');await page.waitForFunction(()=>document.querySelector('#status').dataset.state==='playing');
  r=await report();assert.equal(r.playback.bars,8);assert.equal(r.playback.notes,8);assert.equal(await page.locator('[data-pitch="0"]').isDisabled(),true);
  await page.locator('#stop').click();await listen();
+ assert.equal(await page.locator('#capture-score').evaluate(n=>{const bar=n.querySelector('[data-bar="4"]').getBoundingClientRect(),frame=n.getBoundingClientRect();return Math.abs(bar.top-frame.top)<5;}),true,'stop restores input bar');
  // Image changes remain provisional; audition includes backing without changing melody.
  const melody=(await report()).captureCandidate.notes;
  await page.locator('#image-settings > summary').click();await page.locator('#image-enabled').check();
