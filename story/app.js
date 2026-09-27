@@ -98,6 +98,8 @@ addEventListener('offline', () => { updateStatus(); log('オフラインにな�
 navigator.serviceWorker?.addEventListener('controllerchange', updateStatus);
 updateStatus();
 log(`起動 UA=${navigator.userAgent}`);
+// 版数はコエキット共通の version.json（正典）から表示する。取れなければ表示しない
+fetch('../version.json').then(r => r.json()).then(v => { if (v?.version) $('ver').textContent = `v${v.version}　`; }).catch(() => {});
 $('copy-log').onclick = async () => {
   const v = reader.voices.map(x => `${x.name}|${x.lang}|local=${x.localService}`).join('\n');
   try { await navigator.clipboard.writeText(`${logLines.join('\n')}\n--- 日本語の声 ---\n${v}`); toast('記録をコピーしました'); } catch { toast('コピーできませんでした'); }

@@ -54,10 +54,21 @@ for (const audience of ['kids', 'adult']) {
           for (let i = 1; i < pos.length; i++) if (pos[i] < pos[i - 1]) bad(`${k} が選んだ順に進まない`, ws.join('/'));
         }
         if (!st.lines[st.lines.length - 1].text.length) bad('最後の文が空');
+        if (st.lines[0].shift) bad('ふつうで最初の文がつなぎ文', st.lines[0].text);
       }
       for (const l of st.lines) if (!splitSentences(l.text).length) bad('文分割が空', l.text);
     }
   }
+}
+
+// データの約束：はじまりの場面は必ず「いつ」「どこで」を含む（ふつうで最初につなぎ文が来ないため）
+for (const a of ['kids', 'adult']) {
+  const S = SETS[a];
+  if (!S.scenes[0].every(t => t.includes('{itsu}') && t.includes('{basho}'))) bad('はじまりの場面に いつ／どこで がない', a);
+  if (!S.scenes[1].some(t => t.includes('{aite}') && t.includes('{mono}'))) bad('できごとに だれと＋なにを を両方含む場面がない', a);
+  for (const k of ROW_KEYS) if (S.rows[k].pool.length < S.cols) bad('候補が列数より少ない', `${a}/${k}`);
+  const words = ROW_KEYS.flatMap(k => S.rows[k].pool.map(p => p.w));
+  if (new Set(words).size !== words.length) bad('盤面の言葉が重複', a);
 }
 
 // おまかせ：何も選ばなければ各行1つ・印つき
