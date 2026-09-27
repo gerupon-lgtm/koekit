@@ -21,7 +21,18 @@ const example = () => ({ bars: 4, gridStep: 1, notes: [
   { id: 'high', midi: 96, startTick: 24, durationTick: 4 },
   { id: 'end', midi: 60, startTick: 48, durationTick: 16 },
 ] });
-let state = { pattern: example(), cursor: 0, revision: 0 }, candidate = null, captured = null, capturedOriginal = null;
+// A familiar seven-note phrase for editing. Keep the boundary fixture above
+// available only from the technical comparison controls.
+const editingExample = () => ({ bars: 4, gridStep: 1, notes: [
+  { id: 'demo-1', midi: 66, startTick: 0, durationTick: 8 },
+  { id: 'demo-2', midi: 63, startTick: 8, durationTick: 2 },
+  { id: 'demo-3', midi: 64, startTick: 10, durationTick: 2 },
+  { id: 'demo-4', midi: 66, startTick: 14, durationTick: 10 },
+  { id: 'demo-5', midi: 61, startTick: 24, durationTick: 2 },
+  { id: 'demo-6', midi: 63, startTick: 26, durationTick: 2 },
+  { id: 'demo-7', midi: 59, startTick: 30, durationTick: 34 },
+] });
+let state = { pattern: editingExample(), cursor: 0, revision: 0 }, candidate = null, captured = null, capturedOriginal = null;
 let ctx, transport, capture, serial = 0, phase = 'idle', raf, lastFrame = 0, maxFrameGapMs = 0, lastBar = -1;
 const record = { prototype: 'ML-T01-v18', timestamp: new Date().toISOString(), userAgent: navigator.userAgent, playback: null, capture: null };
 const keyChoices = { score: null, capture: null };
