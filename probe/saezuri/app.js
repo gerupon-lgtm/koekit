@@ -33,8 +33,8 @@ const editingExample = () => ({ bars: 4, gridStep: 1, notes: [
   { id: 'demo-7', midi: 59, startTick: 30, durationTick: 34 },
 ] });
 let state = { pattern: editingExample(), cursor: 0, revision: 0 }, candidate = null, captured = null, capturedOriginal = null;
-let ctx, transport, capture, serial = 0, phase = 'idle', raf, lastFrame = 0, maxFrameGapMs = 0, lastBar = -1;
-const record = { prototype: 'ML-T01-v18', timestamp: new Date().toISOString(), userAgent: navigator.userAgent, playback: null, capture: null };
+let ctx, transport, capture, serial = 0, phase = 'idle', raf, lastFrame = 0, maxFrameGapMs = 0, lastBar = -1, playbackPreview = false;
+const record = { prototype: 'ML-T01-v19', timestamp: new Date().toISOString(), userAgent: navigator.userAgent, playback: null, capture: null };
 const keyChoices = { score: null, capture: null };
 const displayOctaves = { score: 0, capture: 0 };
 const captureAlignments = new Map();
@@ -72,7 +72,7 @@ function drawPattern(kind, pattern) {
   record.scoreSignatures[kind] = { fifths, source };
   record.displayOctaves = { ...displayOctaves };
   $(`${kind}-octave-label`).textContent = displayOctaves[kind]>0?'表示：1オクターブ上（実音は譜面より1オクターブ下）':displayOctaves[kind]<0?'表示：1オクターブ下（実音は譜面より1オクターブ上）':'表示：原音の高さ';
-  renderScore($(kind === 'score' ? 'score' : 'capture-score'), pattern, { fifths, displayOctave: displayOctaves[kind] });
+  renderScore($(kind === 'score' ? 'score' : 'capture-score'), pattern, { fifths, displayOctave: displayOctaves[kind], fitWidth:compactEditor && kind==='capture' });
   updateKeyButtons();
 }
 function updateKeyButtons() {
@@ -116,6 +116,7 @@ function draw() {
 }
 function stop(message = '停止しました。必要ならもう一度開始してください。') {
   serial++; transport?.stop(false); capture?.cancel(); cancelAnimationFrame(raf);
+  playbackPreview=false;captureEditor.followPlayback(null);
   setPhase('idle', message);
 }
 async function prepare() {
@@ -165,6 +166,7 @@ function animate() {
   if (lastFrame) maxFrameGapMs = Math.max(maxFrameGapMs, now - lastFrame);
   lastFrame = now;
   const tick = transport.active ? transport.position() : Math.max(0, (ctx.currentTime - capture.startTime) * tempoValue() * 4 / 60);
+  if(playbackPreview && transport.active && ctx.currentTime>=transport.anchor) captureEditor.followPlayback(tick);
   const bar = Math.floor(tick / 16), beat = Math.floor(tick / 4) % 4;
   if (capture?.active && Number.isFinite(capture.anchor)) {
     const countBeat = Math.floor((ctx.currentTime - capture.anchor) * capture.tempo / 60);
@@ -189,6 +191,7 @@ async function play(pattern = state.pattern, preview = false) {
     }
     record.playback = { tempo, bars, instrument: $('instrument').value, sampleRate: ctx.sampleRate, baseLatency: ctx.baseLatency, outputLatency: ctx.outputLatency, notes: notes.length, draft:preview ? captureEditor.pending : !!candidate, pitches:notes.map(n=>n.midi), countSound: $('play-count').checked, countStyle: $('play-count-style').value, countVolume: Number($('count-volume').value) };
     transport.start(notes, { tempo, totalTicks: bars * 16, instrument: $('instrument').value, lead: Number($('lead').value), ahead: Number($('ahead').value), countSound: $('play-count').checked, countStyle: $('play-count-style').value, countVolume: Number($('count-volume').value) });
+    playbackPreview=preview;
     setPhase('playing'); lastFrame = 0; maxFrameGapMs = 0; lastBar = -1; animate();
   } catch (error) { if (request === serial) stop(error.message); }
 }
@@ -338,3 +341,16 @@ addEventListener('pagehide', () => { stop(); clearTimeout(voiceTimer);voice?.set
 try { const saved = localStorage.getItem('saezuri.capture.manualMs'); if (saved !== null && Number.isFinite(Number(saved)) && Number(saved)>=-200 && Number(saved)<=400) $('timing-adjust').value = saved; } catch {}
 draw();
 if(compactEditor) $('edit-score').click();
+if(compactEditor) {
+  let width=0;
+  new ResizeObserver(entries=>{
+    const next=entries[0].contentRect.width;
+    if(!next || Math.abs(next-width)<1) return;
+    width=next;
+    if(!captureEditor.isOpen) return;
+    captureEditor.followPlayback(null);
+    drawPattern('capture',captureEditor.previewPattern);
+    captureEditor.setBusy(phase!=='idle');
+    if(playbackPreview && transport?.active && ctx.currentTime>=transport.anchor) captureEditor.followPlayback(transport.position());
+  }).observe($('capture-score'));
+}

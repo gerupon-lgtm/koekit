@@ -57,11 +57,11 @@ const base=process.env.SAEZURI_BASE||'http://127.0.0.1:8014';
    await page.locator('#capture-first').click();
   }
   await page.setViewportSize({width:390,height:844});await page.evaluate(()=>window.scrollTo(0,0));
-  await page.screenshot({path:'.local-tools/saezuri-v18-editor-mobile.png'});
+  await page.screenshot({path:'.local-tools/saezuri-v19-editor-mobile.png'});
   await page.evaluate(()=>{navigator.clipboard.writeText=async()=>{throw Error('clipboard denied');};});
   await page.locator('#copy-capture-report').click();
   assert.equal(await page.locator('#copy-fallback').isVisible(),true);
-  assert.equal(JSON.parse(await page.locator('#copy-text').inputValue()).prototype,'ML-T01-v18');
+  assert.equal(JSON.parse(await page.locator('#copy-text').inputValue()).prototype,'ML-T01-v19');
   assert.equal(await page.locator('#technical-tools').getAttribute('open'),null);
   await page.locator('#editor-more > summary').click();assert.equal(await page.locator('#capture-octave-up').isVisible(),true);
   await page.locator('#capture-octave-up').click();assert.equal((await report()).captureEditing.pending,false);

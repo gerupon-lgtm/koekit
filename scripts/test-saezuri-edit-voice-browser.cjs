@@ -111,7 +111,7 @@ const base=process.env.SAEZURI_BASE || 'http://127.0.0.1:8000';
   assert.equal(await page.evaluate(()=>window.streams.length),before);
   await page.setViewportSize({width:390,height:844});
   await page.locator('#capture-pitch-up').click();await page.locator('#capture-score').scrollIntoViewIfNeeded();
-  await page.screenshot({path:'.local-tools/saezuri-v18-editor.png'});
+  await page.screenshot({path:'.local-tools/saezuri-v19-editor.png'});
   await page.locator('#capture-edit-cancel').click();
   const checkpoint=(await report()).captureCandidate.notes;
   await page.locator('[data-transpose="12"]').click();

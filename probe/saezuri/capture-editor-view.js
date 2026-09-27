@@ -295,6 +295,7 @@ export class CaptureEditorView {
   }
 
   _revealSelection() {
+    if(this._playbackKey!=null) return;
     const score=this._elements['capture-score'];
     const selected=score.querySelector('[data-editor-selected="true"]');
     if(!selected) return;
@@ -302,8 +303,9 @@ export class CaptureEditorView {
     // the controls off the phone screen. Use the head, not the whole tie group.
     const head=selected.querySelector('ellipse') ?? selected;
     const bounds=head.getBoundingClientRect(), viewport=score.getBoundingClientRect();
-    score.scrollTo({left:score.scrollLeft+bounds.left-viewport.left-(score.clientWidth-bounds.width)/2,
-      top:score.scrollTop+bounds.top-viewport.top-(score.clientHeight-bounds.height)/2,behavior:'instant'});
+    const staff=selected.closest('svg'), fit=document.body.classList.contains('editor-focus');
+    score.scrollTo({left:fit?0:score.scrollLeft+bounds.left-viewport.left-(score.clientWidth-bounds.width)/2,
+      top:fit?score.scrollTop+staff.getBoundingClientRect().top-viewport.top-2:score.scrollTop+bounds.top-viewport.top-(score.clientHeight-bounds.height)/2,behavior:'instant'});
     const blocks=this._elements['capture-blocks'];
     const block=[...blocks.children].find(button=>button.dataset.noteId===this._active.state.selectedNoteId);
     if(block) blocks.scrollLeft+=block.getBoundingClientRect().left-blocks.getBoundingClientRect().left-(blocks.clientWidth-block.offsetWidth)/2;
@@ -324,5 +326,41 @@ export class CaptureEditorView {
       if (selected) element.setAttribute('data-editor-selected', 'true');
       else element.removeAttribute('data-editor-selected');
     }
+  }
+
+  followPlayback(tick) {
+    const score=this._elements['capture-score'], blocks=this._elements['capture-blocks'];
+    if(tick==null) {
+      if(this._playbackKey==null) return;
+      this._playbackKey=null;
+      score.classList.remove('is-playing');blocks.classList.remove('is-playing');
+      for(const node of [...score.querySelectorAll('[data-playing]'),...blocks.querySelectorAll('[data-playing]')]) {
+        node.removeAttribute('data-playing');node.removeAttribute('aria-current');
+      }
+      this._render(false);return;
+    }
+    if(!this.isOpen) return;
+    const notes=orderedNotes(this._active.state.pattern.notes);
+    const index=notes.findIndex(n=>n.startTick<=tick && tick<n.startTick+n.durationTick);
+    const note=notes[index], bar=Math.min(this._active.state.pattern.bars-1,Math.floor(tick/16));
+    const fragment=[...score.querySelectorAll('[data-start-tick]')].find(n=>Number(n.dataset.startTick)<=tick && tick<Number(n.dataset.startTick)+Number(n.dataset.durationTick));
+    const key=`${bar}:${note?.id??'rest'}:${fragment?.dataset.startTick??''}`;
+    if(key===this._playbackKey) return;
+    this._playbackKey=key;
+    score.classList.add('is-playing');blocks.classList.add('is-playing');
+    for(const node of score.querySelectorAll('[data-playing]')) node.removeAttribute('data-playing');
+    const staff=score.querySelector(`[data-bar="${bar}"]`);
+    staff?.setAttribute('data-playing','bar');fragment?.setAttribute('data-playing','note');
+    for(const block of blocks.children) {
+      if(block.dataset.noteId===note?.id) {block.setAttribute('data-playing','note');block.setAttribute('aria-current','true');
+        blocks.scrollLeft+=block.getBoundingClientRect().left-blocks.getBoundingClientRect().left-(blocks.clientWidth-block.offsetWidth)/2;
+      } else {block.removeAttribute('data-playing');block.removeAttribute('aria-current');}
+    }
+    this._elements['capture-selection'].textContent=note
+      ? `再生 ${bar+1}小節・${index+1} / ${notes.length} ばん・${pitchName(note.midi)}`
+      : `再生 ${bar+1}小節・休符`;
+    if(staff) score.scrollTo({left:0,top:score.scrollTop+staff.getBoundingClientRect().top-score.getBoundingClientRect().top-2,behavior:'instant'});
+    const viewport=score.getBoundingClientRect(), footer=document.querySelector('footer').getBoundingClientRect();
+    if(viewport.top<0 || viewport.bottom>footer.top) document.getElementById('capture-note-panel').scrollIntoView({block:'start',behavior:'instant'});
   }
 }
