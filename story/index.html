@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#f7f3ea">
+<title>モノガタリズム（仮称）試作</title>
+<script type="module" src="../sw-register.js"></script>
+<link rel="stylesheet" href="./styles.css">
+</head>
+<body class="kids">
+<main>
+  <!-- MG-S01 はじめ -->
+  <section id="s-start" class="screen">
+    <h1>モノガタリズム<small>（仮称・試作）</small></h1>
+    <p class="lead">うらがえしの ばんから えらんで、おはなしを つくろう。</p>
+    <div class="panel">
+      <div class="row"><span class="lbl">モード</span>
+        <div class="seg" data-key="audience"><button data-v="kids">こども</button><button data-v="adult">おとな</button></div></div>
+      <div class="row"><span class="lbl">よみあげ</span>
+        <div class="seg" data-key="tts"><button data-v="on">ON</button><button data-v="off">OFF</button></div></div>
+      <div class="row"><span class="lbl">ばめんの じゅんばん</span>
+        <div class="seg" data-key="order"><button data-v="normal">ふつう</button><button data-v="mechakucha">めちゃくちゃ</button></div></div>
+    </div>
+    <button class="main" id="go-name">はじめる</button>
+
+    <details class="panel small">
+      <summary>読み上げの設定</summary>
+      <div class="row"><span class="lbl">声</span><select id="voice"></select></div>
+      <div class="row"><span class="lbl">速さ <span id="rateV">1.0</span></span><input type="range" id="rate" min="0.6" max="1.4" step="0.1" value="1"></div>
+      <button class="btn" id="tts-test">ためしに よむ</button>
+    </details>
+    <details class="panel small" id="diag">
+      <summary>読み上げの検証（オフライン確認用）</summary>
+      <p id="status"></p>
+      <p>手順：①オンラインで一度ひらく ②機内モードにする ③ひらき直して「ためしに よむ」→下の記録を確認</p>
+      <table><thead><tr><th>声</th><th>言語</th><th>端末内</th></tr></thead><tbody id="voices"></tbody></table>
+      <pre class="log" id="log"></pre>
+      <div class="btns"><button class="btn" id="copy-log">記録をコピー</button></div>
+    </details>
+    <footer>© 2026 SIKUMI LAB</footer>
+  </section>
+
+  <!-- MG-S02 なまえ -->
+  <section id="s-name" class="screen" hidden>
+    <div class="top"><button class="btn ghost" data-home>はじめへ</button></div>
+    <h2>だれの おはなし？</h2>
+    <div class="names" id="names"></div>
+    <p class="guide" id="name-guide"></p>
+    <div class="btns">
+      <button class="btn" id="name-omakase">おまかせ</button>
+      <button class="btn ok" id="name-ok">オッケー</button>
+    </div>
+  </section>
+
+  <!-- MG-S03 ばん ／ MG-S04 おはなし -->
+  <section id="s-board" class="screen" hidden>
+    <div class="top"><button class="btn ghost" data-home>はじめへ</button><span class="who" id="who"></span></div>
+    <div class="board" id="board"></div>
+    <p class="guide" id="guide"></p>
+    <div class="btns" id="board-btns">
+      <button class="btn" id="back">もどる</button>
+      <button class="btn" id="omakase">おまかせ</button>
+      <button class="btn ok" id="ok">オッケー</button>
+      <button class="btn ok big" id="start" hidden>スタート</button>
+    </div>
+    <div id="story-area" hidden>
+      <ul class="picks" id="picks"></ul>
+      <ol class="story" id="story"></ol>
+      <div class="btns">
+        <button class="btn dark" id="read">▶ よみあげ</button>
+        <button class="btn" id="stop">■ とめる</button>
+        <button class="btn ok" id="again">つぎ</button>
+      </div>
+    </div>
+  </section>
+</main>
+<div class="toast" id="toast"></div>
+<script type="module" src="./app.js"></script>
+</body>
+</html>
