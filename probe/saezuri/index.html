@@ -36,14 +36,15 @@
   <label>音高のならし <select id="smoothing"><option value="80">標準（80ms）</option><option value="120">強め（120ms）</option><option value="0">なし（比較用）</option></select></label>
   <label>タイミング追加補正（ms）<input id="timing-adjust" type="number" min="-200" max="400" step="10" value="0"></label></div>
   <p>音高をならしてから最も近い半音にし、開始・長さを16分単位に丸めます。ドンカマの実測が成功すれば推定補正を置き換えます。追加補正はどちらにも加算します（この端末に保存）。実測の初回比較では追加補正を0にしてください。</p>
-  <p>「長音を保つ」は小さな揺れで音を分けず、歌い出しの短い半音のずれも後続の長音にまとめます。意図した短い半音の動きは「細かい変化も拾う」で比較してください。「ならし：なし」ではこの抑制もOFFになります。設定は次の取り込みに反映します。</p>
+  <p>「長音を保つ」は揺れをならしながら、短くても安定した別の音は分けます。歌い出しの短い半音ずれは後続の長音へまとめます。「細かい変化も拾う」でも比較できます。「ならし：なし」ではこの抑制もOFFになります。設定は次の取り込みに反映します。</p>
   <details><summary>解析の比較条件（未確定）</summary><div class="fields">
    <label>発音区間の方式 <select id="boundary-mode"><option value="energy-gated">短区間の無音判定（比較案）</option><option value="window-start">音高窓の先頭（旧方式）</option></select></label>
    <label>音高解析窓 <select id="window-size"><option value="4096">4096標本（従来）</option><option value="2048">2048標本（比較）</option><option value="1024">1024標本（比較・低音域が狭い）</option></select></label>
+   <label><input id="adaptive-window" type="checkbox" checked> 短い解析窓でも音高を確認する</label>
    <label>無音RMS閾値 <input id="rms" type="number" min="0.001" max="0.1" step="0.001" value="0.008"></label>
    <label>検出率の下限 <input id="ratio" type="number" min="0" max="1" step="0.05" value="0.1"></label>
-   <label>補完候補の最大秒 <input id="gap" type="number" min="0" max="0.5" step="0.05" value="0.15"></label></div>
-   <p>両端が同じ音高の短い不明区間だけを補完候補にします。無音・片側だけ・長い不明区間は補いません。環境雑音と有声の識別は未検証です。短い解析窓は音高切替に有利な場合がありますが、低音の検出範囲が狭くなります。</p>
+   <label>補完候補の最大秒 <input id="gap" type="number" min="0" max="0.5" step="0.05" value="0.10"></label></div>
+   <p>前後が同じ音高でも、音量が落ちて発音し直した形跡があれば区切りを残します。無音は補いません。短窓の補助は4096標本・短区間の無音判定で使い、不明だった音高だけを確認します。環境雑音と有声の識別は継続検証中です。</p>
   </details>
   <button id="capture">カウントして取り込む</button>
   <div id="review" hidden><p>取り込み候補。元の音列はまだ変更していません。茶色は補完候補です。</p><p id="capture-key-label" role="status"></p><div class="fields"><button id="capture-key-flat">♭側へ</button><button id="capture-key-sharp">♯側へ</button><button id="capture-key-auto">自動推定に戻す</button></div>
