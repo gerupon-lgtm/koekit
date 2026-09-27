@@ -1,11 +1,12 @@
 // 盤面版の組み立て（画面に依存しない部分）— 基本設計6節
-import { SETS, ROW_KEYS, STAGES } from './story-data.js';
+// 物語は「型」（場面の並び）で作る。型・場面・つなぎ文などは story/data/*.json にある
+import { SETS, ROW_KEYS, FIRST_STAGE } from './story-data.js';
 export { loadSets } from './story-data.js';
 
 export const MAX_PER_ROW = 3; // 1行で選べる上限（要件B区分）
-const TOTAL = STAGES.length;
 
 const randInt = (n, rnd) => Math.floor(rnd() * n);
+const pick = (list, rnd) => list[randInt(list.length, rnd)];
 
 function shuffle(arr, rnd) {
   const a = arr.slice();
@@ -34,23 +35,22 @@ export function resolvePicks(board, selections, rnd = Math.random) {
   return picks;
 }
 
-// 場面ごとに、どの語を使うかの並び（長さ TOTAL）
-//  ふつう：選んだ順に前へ進む（floor(i×個数÷5)）
+// 場面ごとに、どの語を使うかの並び（長さ total）
+//  ふつう：選んだ順に前へ進む（floor(i×個数÷total)）
 //  めちゃくちゃ：全語を1回以上含むランダムな並び
-function sequenceFor(words, order, rnd) {
+function sequenceFor(words, order, rnd, total) {
   const n = words.length;
-  if (order !== 'mechakucha') return Array.from({ length: TOTAL }, (_, i) => words[Math.min(n - 1, Math.floor((i * n) / TOTAL))]);
-  const seq = words.slice();
-  while (seq.length < TOTAL) seq.push(words[randInt(n, rnd)]);
+  if (order !== 'mechakucha') return Array.from({ length: total }, (_, i) => words[Math.min(n - 1, Math.floor((i * n) / total))]);
+  const seq = words.slice(0, total);
+  while (seq.length < total) seq.push(words[randInt(n, rnd)]);
   return shuffle(seq, rnd);
 }
 
 // だれと：物語ごとに「最初から一緒」か「途中で現れる」かをランダムに決める
 // 途中で現れる場合、1人目が物語に出てきた場面（first）より後で、2人目以降が加わる
-// 1人目が最後の場面まで出てこない組み合わせでは「最初から一緒」にする
-function companionPlan(words, first, order, rnd) {
-  const last = TOTAL - 1;
-  if (words.length < 2 || first >= last || rnd() < 0.5) return { mode: 'together', joinAt: words.map(() => 0) };
+function companionPlan(words, first, order, rnd, total) {
+  const last = total - 1;
+  if (words.length < 2 || first < 0 || first >= last || rnd() < 0.5) return { mode: 'together', joinAt: words.map(() => 0) };
   const joinAt = [0];
   if (order === 'mechakucha') {
     for (let j = 1; j < words.length; j++) joinAt.push(first + 1 + randInt(last - first, rnd));
@@ -68,61 +68,77 @@ function fill(tpl, vars) {
   return tpl.replace(/\{(\w+)\}/g, (_, k) => vars[k] ?? '');
 }
 
-// 場面カードを選ぶ。avoid（直前の物語で使った "段階:番号"）はなるべく避ける
-function pickCards(set, order, rnd, avoid) {
-  const fresh = (refs) => { const f = refs.filter(r => !avoid.has(r.stage + ':' + r.idx)); return f.length ? f : refs; };
+// 型を選び、かっこつきの場面を入れるかどうか決める（avoidType は直前の型）
+export function chooseFlow(set, rnd, avoidType) {
+  const names = Object.keys(set.types);
+  const cand = names.length > 1 ? names.filter(n => n !== avoidType) : names;
+  const type = set.types[pick(cand, rnd)];
+  const stages = type.flow.filter(s => !s.optional || rnd() < 0.5).map(s => s.stage);
+  return { type, stages };
+}
+
+const ref = c => c.stage + ':' + c.idx;
+
+// 場面カードを選ぶ。avoid（直前の物語で使った "場面:番号"）と、同じ物語の中での重複はなるべく避ける
+function pickCards(set, stages, order, rnd, avoid) {
+  const used = new Set();
+  const choose = refs => {
+    const fresh = refs.filter(r => !avoid.has(ref(r)) && !used.has(ref(r)));
+    const notDup = refs.filter(r => !used.has(ref(r)));
+    const c = pick(fresh.length ? fresh : notDup.length ? notDup : refs, rnd);
+    used.add(ref(c));
+    return c;
+  };
+  const refsOf = stage => set.scenes[stage].map((tpl, idx) => ({ stage, idx, tpl }));
   if (order === 'mechakucha') {
-    const all = [];
-    set.scenes.forEach((list, stage) => list.forEach((tpl, idx) => all.push({ stage, idx, tpl })));
-    return shuffle(fresh(all), rnd).slice(0, TOTAL);
+    const all = Object.keys(set.scenes).flatMap(refsOf);
+    return stages.map(() => choose(all));
   }
-  return set.scenes.map((list, stage) => {
-    const refs = fresh(list.map((tpl, idx) => ({ stage, idx, tpl })));
-    return refs[randInt(refs.length, rnd)];
-  });
+  return stages.map(stage => choose(refsOf(stage)));
 }
 
 // 主人公・だれと・なにを が、物語のどこかに必ず出るようにする
-const hasSlots = cards => ['{name}', '{aite}', '{mono}'].every(k => cards.some(c => c.tpl.includes(k)));
+const NEED = ['{name}', '{aite}', '{mono}'];
+const hasSlots = cards => NEED.every(k => cards.some(c => c.tpl.includes(k)));
 
-// 最後の手段：できごとの段階から「だれと」「なにを」を両方含むカードに差しかえる
+// 最後の手段：2番目の場面を「3つとも含むカード」に差しかえる（はじまり・おわりは残す）
 function ensureSlots(set, cards) {
   if (hasSlots(cards)) return cards;
-  const list = set.scenes[1];
-  let idx = list.findIndex(t => ['{name}', '{aite}', '{mono}'].every(k => t.includes(k)));
-  if (idx < 0) idx = list.findIndex(t => t.includes('{aite}') && t.includes('{mono}'));
-  const pos = cards.findIndex(c => c.stage === 1);
-  const out = cards.slice();
-  out[pos >= 0 ? pos : 1] = { stage: 1, idx, tpl: list[idx] };
-  return out;
+  for (const [stage, list] of Object.entries(set.scenes)) {
+    const idx = list.findIndex(t => NEED.every(k => t.includes(k)));
+    if (idx >= 0) { const out = cards.slice(); out[1] = { stage, idx, tpl: list[idx] }; return out; }
+  }
+  return cards;
 }
 
 // つなぎ文を選ぶ（同じ物語の中では同じ文をなるべく繰り返さない）
 function pickShift(list, used, rnd) {
   const cand = list.filter(t => !used.has(t));
-  const t = (cand.length ? cand : list)[randInt((cand.length ? cand : list).length, rnd)];
+  const t = pick(cand.length ? cand : list, rnd);
   used.add(t);
   return t;
 }
 
 // 物語の生成
-//  avoid：直前に使った場面（"段階:番号" の Set）。app 側が直近の物語ぶんを渡す
-export function buildStory({ audience, name, picks, order = 'normal', rnd = Math.random, avoid = new Set() }) {
+//  avoid：直前に使った場面（"場面:番号" の Set）、avoidType：直前の型。app 側が渡す
+export function buildStory({ audience, name, picks, order = 'normal', rnd = Math.random, avoid = new Set(), avoidType }) {
   const set = SETS[audience];
+  const { type, stages } = chooseFlow(set, rnd, avoidType);
+  const total = stages.length;
   let cards = null;
   for (let attempt = 0; attempt < 200 && !cards; attempt++) {
-    const c = pickCards(set, order, rnd, avoid);
+    const c = pickCards(set, stages, order, rnd, avoid);
     if (hasSlots(c)) cards = c;
   }
-  cards = ensureSlots(set, cards || pickCards(set, order, rnd, avoid));
+  cards = ensureSlots(set, cards || pickCards(set, stages, order, rnd, avoid));
 
-  const seq = { itsu: sequenceFor(picks.itsu.words, order, rnd), basho: sequenceFor(picks.basho.words, order, rnd) };
+  const seq = { itsu: sequenceFor(picks.itsu.words, order, rnd, total), basho: sequenceFor(picks.basho.words, order, rnd, total) };
   const firstAite = cards.findIndex(c => c.tpl.includes('{aite}'));
-  const plan = companionPlan(picks.aite.words, firstAite, order, rnd);
+  const plan = companionPlan(picks.aite.words, firstAite, order, rnd, total);
   const mono = picks.mono.words.join(set.join);
   // 脇役・小道具・音は物語ごとに1つ選び、同じ物語の中では同じものが出る
   const extras = {};
-  for (const [k, list] of Object.entries(set.extras)) extras[k] = list[randInt(list.length, rnd)];
+  for (const [k, list] of Object.entries(set.extras)) extras[k] = pick(list, rnd);
 
   const lines = [];
   const last = { itsu: null, basho: null };
@@ -144,9 +160,9 @@ export function buildStory({ audience, name, picks, order = 'normal', rnd = Math
       last[k] = v;
     }
     for (const w of newcomers) lines.push({ stage: null, text: fill(pickShift(set.shift.aite, usedShift, rnd), { ...vars, new: w }), shift: true });
-    lines.push({ stage: STAGES[c.stage], text: fill(c.tpl, vars), shift: false });
+    lines.push({ stage: c.stage, text: fill(c.tpl, vars), shift: false });
   });
-  return { lines, companion: plan.mode, used: cards.map(c => c.stage + ':' + c.idx), extras };
+  return { lines, companion: plan.mode, used: cards.map(ref), extras, type: type.name, intro: type.intro, stages, seq };
 }
 
 // めくった結果の読み上げ文
@@ -171,3 +187,5 @@ export function splitSentences(text) {
   if (buf.trim()) out.push(buf);
   return out.map(s => s.trim()).filter(Boolean);
 }
+
+export { FIRST_STAGE };

@@ -2,7 +2,7 @@
 // 実行: node scripts/test-story.mjs
 import { readFileSync } from 'node:fs';
 import { makeBoard, resolvePicks, buildStory, splitSentences, MAX_PER_ROW } from '../story/story.js';
-import { SETS, ROW_KEYS, STAGES, EXTRA_KEYS, loadSets } from '../story/story-data.js';
+import { SETS, ROW_KEYS, EXTRA_KEYS, FIRST_STAGE, LAST_STAGE, loadSets } from '../story/story-data.js';
 import { parse, wordsFor } from '../story/vocabulary.js';
 
 // 画面と同じ JSON を読む
@@ -16,6 +16,7 @@ function seeded(seed) {
 
 let fail = 0, runs = 0;
 const stats = { together: 0, join: 0 };
+const typeCount = {};
 const bad = (msg, ctx) => { fail++; if (fail <= 10) console.error('NG:', msg, ctx ?? ''); };
 
 for (const audience of ['kids', 'adult']) {
@@ -38,7 +39,10 @@ for (const audience of ['kids', 'adult']) {
       if (/[{}]|undefined|null/.test(all)) bad('置換漏れ', all);
       for (const k of ROW_KEYS) for (const w of picks[k].words) if (!all.includes(w)) bad(`選んだ語が出ない ${k}=${w}`, all);
       if (!all.includes(set.names[0])) bad('名前が出ない', all);
-      if (st.lines.filter(l => !l.shift).length !== 5) bad('場面数が5でない');
+      const sceneCount = st.lines.filter(l => !l.shift).length;
+      if (sceneCount !== st.stages.length || sceneCount < 4 || sceneCount > 7) bad('場面数が型と合わない', `${st.type} ${sceneCount}`);
+      typeCount[`${audience}/${st.type}`] = (typeCount[`${audience}/${st.type}`] || 0) + 1;
+      if (new Set(st.used).size !== st.used.length) bad('同じ物語で同じ場面を2回使った', st.used);
       stats[st.companion]++;
       // 途中で現れる仲間は、1人目が登場した後に加わる
       if (st.companion === 'join') {
@@ -53,15 +57,11 @@ for (const audience of ['kids', 'adult']) {
       // ふつう：いつ・どこでは選んだ順にだけ進む（戻らない）
       if (order === 'normal') {
         for (const k of ['itsu', 'basho']) {
+          // 場面ごとの並び（seq）が、選んだ順にだけ進むこと。選んだ語はすべて並びに入ること
           const ws = picks[k].words;
-          // 他の言葉の一部として含まれる場合（うみ ⊂ うみのそこ）は、長い言葉を先に伏せてから探す
-          const pool = [...set.rows[k].pool.map(p => p.w), ...Object.values(set.extras).flat()]; // 例：うちゅう ⊂ うちゅうじん
-          const pos = ws.map(w => {
-            let t = all;
-            for (const longer of pool) if (longer !== w && longer.includes(w)) t = t.split(longer).join('＊'.repeat(longer.length));
-            return t.indexOf(w);
-          });
-          for (let i = 1; i < pos.length; i++) if (pos[i] < pos[i - 1]) bad(`${k} が選んだ順に進まない`, ws.join('/'));
+          const order = st.seq[k].map(w => ws.indexOf(w));
+          for (let i = 1; i < order.length; i++) if (order[i] < order[i - 1]) bad(`${k} が選んだ順に進まない`, st.seq[k].join('/'));
+          for (const w of ws) if (!st.seq[k].includes(w)) bad(`${k} の語が並びに入らない`, w);
         }
         if (!st.lines[st.lines.length - 1].text.length) bad('最後の文が空');
         if (st.lines[0].shift) bad('ふつうで最初の文がつなぎ文', st.lines[0].text);
@@ -72,10 +72,17 @@ for (const audience of ['kids', 'adult']) {
 }
 
 // データの約束：はじまりの場面は必ず「いつ」「どこで」を含む（ふつうで最初につなぎ文が来ないため）
+// 型：最初は はじまり、最後は おわり、使う場面がすべてある（読み込み時にも確認している）
 for (const a of ['kids', 'adult']) {
   const S = SETS[a];
-  if (!S.scenes[0].every(t => t.includes('{itsu}') && t.includes('{basho}'))) bad('はじまりの場面に いつ／どこで がない', a);
-  if (!S.scenes[1].some(t => ['{name}', '{aite}', '{mono}'].every(k => t.includes(k)))) bad('できごとに 主人公＋だれと＋なにを を含む場面がない', a);
+  if (!S.scenes[FIRST_STAGE].every(t => t.includes('{itsu}') && t.includes('{basho}'))) bad('はじまりの場面に いつ／どこで がない', a);
+  for (const t of Object.values(S.types)) {
+    if (t.flow[0].stage !== FIRST_STAGE || t.flow.at(-1).stage !== LAST_STAGE) bad('型の最初・最後', t.name);
+    if (!t.intro) bad('型の紹介文がない', t.name);
+    const min = t.flow.filter(f => !f.optional).length, max = t.flow.length;
+    if (min < 4 || max > 7) bad('型の長さが4〜7場面でない', `${t.name} ${min}-${max}`);
+  }
+  if (!S.scenes['できごと'].some(t => ['{name}', '{aite}', '{mono}'].every(k => t.includes(k)))) bad('できごとに 主人公＋だれと＋なにを を含む場面がない', a);
   for (const k of ROW_KEYS) if (S.rows[k].pool.length < S.cols) bad('候補が列数より少ない', `${a}/${k}`);
   const words = ROW_KEYS.flatMap(k => S.rows[k].pool.map(p => p.w));
   if (new Set(words).size !== words.length) bad('盤面の言葉が重複', a);
@@ -89,7 +96,7 @@ for (const a of ['kids', 'adult']) {
     for (const m of text.matchAll(/\{(\w*)\}?/g)) if (!allowed.has(m[1]) || !m[0].endsWith('}')) bad(`使えない差しこみ語 {${m[1]}}`, `${a}/${where}: ${text}`);
     if (/[{}]/.test(text.replace(/\{\w+\}/g, ''))) bad('かっこの閉じ忘れ', `${a}/${where}: ${text}`);
   };
-  for (const st of STAGES) for (const t of raw.scenes[st]) check(t, sceneKeys, st);
+  for (const st of Object.keys(raw.scenes)) for (const t of raw.scenes[st]) check(t, sceneKeys, st);
   for (const k of ['itsu', 'basho', 'aite']) for (const t of raw.shift[k]) check(t, new Set([...sceneKeys, 'new']), 'つなぎ文');
   if (a === 'kids') {
     const body = JSON.stringify({ ...raw, _説明: undefined });
@@ -98,7 +105,9 @@ for (const a of ['kids', 'adult']) {
   }
   for (const k of EXTRA_KEYS) if (!raw.extras?.[k]?.length) bad('差しこみ語の候補がない', `${a}/${k}`);
   for (const k of ['itsu', 'basho', 'aite']) if (raw.shift[k].length < 5) bad('つなぎ文が少ない', `${a}/${k}`);
-  for (const st of STAGES) if (new Set(raw.scenes[st]).size !== raw.scenes[st].length) bad('同じ場面文が重複', `${a}/${st}`);
+  for (const st of Object.keys(raw.scenes)) if (new Set(raw.scenes[st]).size !== raw.scenes[st].length) bad('同じ場面文が重複', `${a}/${st}`);
+  const allScenes = Object.values(raw.scenes).flat();
+  if (new Set(allScenes).size !== allScenes.length) bad('別の段階に同じ場面文がある', a);
 }
 
 // 直前に使った場面は避ける
@@ -141,6 +150,20 @@ for (const a of ['kids', 'adult']) {
 }
 
 if (stats.together === 0 || stats.join === 0) bad('だれとの2形が両方出ていない', stats);
+for (const a of ['kids', 'adult']) for (const t of Object.keys(SETS[a].types)) if (!typeCount[`${a}/${t}`]) bad('一度も出ない型がある', `${a}/${t}`);
+// 直前と同じ型は続かない
+{
+  const rnd = seeded(11);
+  const b = makeBoard('kids', rnd);
+  const p = resolvePicks(b, {}, rnd);
+  let prev = null;
+  for (let i = 0; i < 200; i++) {
+    const st = buildStory({ audience: 'kids', name: 'はな', picks: p, rnd, avoidType: prev });
+    if (st.type === prev) { bad('同じ型が続いた', st.type); break; }
+    prev = st.type;
+  }
+}
 console.log(`runs=${runs} together=${stats.together} join=${stats.join}`);
+console.log('型の出現', JSON.stringify(typeCount));
 if (fail) { console.error(`失敗 ${fail} 件`); process.exit(1); }
 console.log('test-story: OK');

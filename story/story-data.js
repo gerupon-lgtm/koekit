@@ -3,19 +3,36 @@
 // - 読み込んだデータは SETS に入り、story.js から参照する
 
 export const ROW_KEYS = ['itsu', 'basho', 'aite', 'mono'];
-export const STAGES = ['はじまり', 'できごと', 'ピンチ', 'かいけつ', 'おわり'];
+export const FIRST_STAGE = 'はじまり';
+export const LAST_STAGE = 'おわり';
 export const EXTRA_KEYS = ['hito', 'komono', 'oto'];
 export const AUDIENCES = ['kids', 'adult'];
 
 export const SETS = {};
 
-// JSON を実行時の形に整える（場面は段階の順の配列にする）
-export function registerSet(key, json) {
-  const scenes = STAGES.map(stage => {
-    const list = json.scenes?.[stage];
-    if (!Array.isArray(list) || !list.length) throw new Error(`${key}: 場面「${stage}」がありません`);
-    return list;
+// 「(よりみち)」→ { stage: 'よりみち', optional: true }
+function parseFlow(key, typeName, flow) {
+  return flow.map(raw => {
+    const m = /^[(（](.+)[)）]$/.exec(raw.trim());
+    return { stage: m ? m[1] : raw.trim(), optional: !!m };
   });
+}
+
+// JSON を実行時の形に整え、書き間違いがあれば理由つきで止める
+export function registerSet(key, json) {
+  const scenes = json.scenes || {};
+  for (const [stage, list] of Object.entries(scenes)) {
+    if (!Array.isArray(list) || !list.length) throw new Error(`${key}: 場面「${stage}」が空です`);
+  }
+  const types = {};
+  for (const [name, t] of Object.entries(json.types || {})) {
+    const flow = parseFlow(key, name, t.flow || []);
+    for (const s of flow) if (!scenes[s.stage]) throw new Error(`${key}: 型「${name}」の場面「${s.stage}」がありません`);
+    if (flow[0]?.stage !== FIRST_STAGE || flow[0].optional) throw new Error(`${key}: 型「${name}」の最初は ${FIRST_STAGE}`);
+    if (flow.at(-1)?.stage !== LAST_STAGE || flow.at(-1).optional) throw new Error(`${key}: 型「${name}」の最後は ${LAST_STAGE}`);
+    types[name] = { name, intro: t.intro || '', flow };
+  }
+  if (!Object.keys(types).length) throw new Error(`${key}: 型（types）がありません`);
   const extras = {};
   for (const k of EXTRA_KEYS) extras[k] = json.extras?.[k]?.length ? json.extras[k] : [''];
   const shift = {};
@@ -23,7 +40,7 @@ export function registerSet(key, json) {
     const v = json.shift?.[k];
     shift[k] = Array.isArray(v) ? v : [v];
   }
-  SETS[key] = { ...json, scenes, extras, shift };
+  SETS[key] = { ...json, scenes, types, extras, shift };
   return SETS[key];
 }
 

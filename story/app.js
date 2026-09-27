@@ -70,6 +70,7 @@ loadSets().then(() => { $('go-name').disabled = false; log('物語データを�
   .catch(e => { log(`✕ 物語データを読み込めません ${e.message}`); toast('物語データを読み込めませんでした。ひらき直してください'); });
 // 直近2回の物語で使った場面は、なるべく使わない（同じ話に見えないように）
 const recentScenes = [];
+let lastType = null; // 同じ流れの型が続かないように
 
 $('rate').value = settings.rate; $('rateV').textContent = (+settings.rate).toFixed(1);
 $('rate').oninput = () => { settings.rate = reader.rate = +$('rate').value; $('rateV').textContent = reader.rate.toFixed(1); saveSettings(); };
@@ -287,9 +288,11 @@ $('start').onclick = startReveal;
 // ---------- MG-S04 めくりと物語 ----------
 function startReveal() {
   st.picks = resolvePicks(st.board, st.sel);
-  st.story = buildStory({ audience: settings.audience, name: st.name, picks: st.picks, order: settings.order, avoid: new Set(recentScenes.flat()) });
+  st.story = buildStory({ audience: settings.audience, name: st.name, picks: st.picks, order: settings.order, avoid: new Set(recentScenes.flat()), avoidType: lastType });
   recentScenes.push(st.story.used); if (recentScenes.length > 2) recentScenes.shift();
-  log(`生成 companion=${st.story.companion} 行数=${st.story.lines.length}`);
+  lastType = st.story.type;
+  $('intro').textContent = st.story.intro;
+  log(`生成 型=${st.story.type} 場面=${st.story.stages.join('→')} companion=${st.story.companion}`);
   $('board-btns').hidden = true;
   $('guide').innerHTML = '';
   renderBoard();
@@ -311,7 +314,7 @@ function readAll() {
   const summary = picksSummary(settings.audience, st.picks);
   const items = [
     ...summary.map((text, i) => ({ text, onStart: () => mark('picks', i) })),
-    { text: settings.audience === 'kids' ? 'では、おはなしを よむね。' : 'それでは、物語のはじまりです。', onStart: () => mark('picks', null) },
+    { text: st.story.intro, onStart: () => mark('picks', null) },
     ...st.story.lines.map((l, i) => ({ text: l.text, onStart: () => mark('story', i) })),
   ];
   reader.speak(items).then(() => mark('story', null));
