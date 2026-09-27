@@ -17,8 +17,9 @@ const example = () => ({ bars: 4, gridStep: 1, notes: [
 ] });
 let state = { pattern: example(), cursor: 0, revision: 0 }, candidate = null, captured = null, capturedOriginal = null;
 let ctx, transport, capture, serial = 0, phase = 'idle', raf, lastFrame = 0, maxFrameGapMs = 0, lastBar = -1;
-const record = { prototype: 'ML-T01-v6', timestamp: new Date().toISOString(), userAgent: navigator.userAgent, playback: null, capture: null };
+const record = { prototype: 'ML-T01-v7', timestamp: new Date().toISOString(), userAgent: navigator.userAgent, playback: null, capture: null };
 const keyChoices = { score: null, capture: null };
+const displayOctaves = { score: 0, capture: 0 };
 function drawPattern(kind, pattern) {
   const inferred = inferSignature(pattern.notes), fifths = keyChoices[kind] ?? inferred.fifths;
   const label = $(`${kind}-key-label`);
@@ -27,7 +28,9 @@ function drawPattern(kind, pattern) {
   label.dataset.fifths = String(fifths);
   record.scoreSignatures ??= {};
   record.scoreSignatures[kind] = { fifths, source };
-  renderScore($(kind === 'score' ? 'score' : 'capture-score'), pattern, { fifths });
+  record.displayOctaves = { ...displayOctaves };
+  $(`${kind}-octave-label`).textContent = displayOctaves[kind]>0?'表示：1オクターブ上（実音は譜面より1オクターブ下）':displayOctaves[kind]<0?'表示：1オクターブ下（実音は譜面より1オクターブ上）':'表示：原音の高さ';
+  renderScore($(kind === 'score' ? 'score' : 'capture-score'), pattern, { fifths, displayOctave: displayOctaves[kind] });
   updateKeyButtons();
 }
 function updateKeyButtons() {
@@ -36,6 +39,11 @@ function updateKeyButtons() {
     $(`${kind}-key-flat`).disabled = phase !== 'idle' || fifths <= -7;
     $(`${kind}-key-sharp`).disabled = phase !== 'idle' || fifths >= 7;
     $(`${kind}-key-auto`).disabled = phase !== 'idle' || keyChoices[kind] === null;
+    for(const [name,value] of [['up',1],['original',0],['down',-1]]){
+      const button=$(`${kind}-octave-${name}`);
+      button.disabled=phase !== 'idle';
+      button.setAttribute('aria-pressed',String(displayOctaves[kind]===value));
+    }
   }
 }
 const labels = { idle: '準備できました', preparing: '音とマイクの準備中', playing: '再生中・停止はボタンで', 'count-in': '8拍のカウント中', recording: '4小節を取り込み中', analyzing: '端末内で解析中' };
@@ -123,6 +131,28 @@ async function play(pattern = state.pattern, preview = false) {
 function showReport() {
   $('metrics').textContent = JSON.stringify({ ...record, conditions: $('conditions').value, captureCandidate: captured, capture: record.capture ? { ...record.capture, frames: { count: record.capture.frames.length, pitched: record.capture.frames.filter(f => f.kind === 'pitched').length, unknown: record.capture.frames.filter(f => f.kind === 'unknown').length } } : null }, null, 2);
 }
+async function copyReport(event) {
+  const button=event.currentTarget;
+  showReport();
+  const text=$('metrics').textContent;
+  const buttons=[$('copy-report'),$('copy-capture-report')];
+  for(const node of buttons)node.disabled=true;
+  $('copy-status').textContent='コピー中…';
+  try {
+    await navigator.clipboard.writeText(text);
+    button.textContent='コピーしました';
+    $('copy-status').textContent='記録をコピーしました。そのまま貼り付けできます。';
+    $('copy-fallback').hidden=true;
+  } catch {
+    button.textContent='記録をコピー';
+    $('copy-status').textContent='コピーできませんでした。選択した記録を手動でコピーしてください。';
+    $('copy-fallback').hidden=false;
+    $('copy-text').value=text; $('copy-text').focus(); $('copy-text').select();
+    $('copy-text').setSelectionRange(0,text.length);
+  } finally {
+    for(const node of buttons)node.disabled=false;
+  }
+}
 $('play').onclick = () => play(); $('stop').onclick = () => { if (transport?.active) record.playback = { ...record.playback, ...transport.metrics, maxFrameGapMs, stoppedAtTick: transport.position(), reason: 'USER_STOP' }; stop(); showReport(); };
 $('capture').onclick = async () => {
   stop(); const request = serial; captured = null; capturedOriginal = null; $('review').hidden = true; setPhase('preparing');
@@ -151,7 +181,7 @@ $('align-start').onclick = () => {
   $('align-start').textContent = record.captureAlignmentTicks ? '頭の休符を戻す' : '頭の休符を詰める';
   drawPattern('capture', captured); showReport();
 };
-$('adopt').onclick = () => { if (!captured) return; keyChoices.score = keyChoices.capture; state = { pattern: structuredClone(captured), cursor: 0, revision: state.revision + 1 }; candidate = null; captured = null; $('review').hidden = true; draw(); };
+$('adopt').onclick = () => { if (!captured) return; keyChoices.score = keyChoices.capture; displayOctaves.score = displayOctaves.capture; state = { pattern: structuredClone(captured), cursor: 0, revision: state.revision + 1 }; candidate = null; captured = null; $('review').hidden = true; draw(); };
 $('discard').onclick = () => { captured = null; $('review').hidden = true; };
 $('example').onclick = () => { state = { pattern: example(), cursor: 0, revision: state.revision + 1 }; candidate = null; draw(); };
 $('empty').onclick = () => { state = { pattern: { bars: 4, gridStep: 2, notes: [] }, cursor: 0, revision: state.revision + 1 }; candidate = null; draw(); };
@@ -162,6 +192,15 @@ $('confirm').onclick = () => { const result = commitNote(state, candidate); if (
 $('cancel').onclick = () => { candidate = null; draw(); };
 $('undo').onclick = () => { if (candidate) return; state = undo(state); draw(); };
 $('report').onclick = showReport;
+$('copy-report').onclick = copyReport;
+$('copy-capture-report').onclick = copyReport;
+for(const kind of ['score','capture'])for(const [name,value] of [['up',1],['original',0],['down',-1]]){
+  $(`${kind}-octave-${name}`).onclick=()=>{
+    const pattern=kind==='score'?state.pattern:captured;
+    if(!pattern || phase!=='idle')return;
+    displayOctaves[kind]=value; drawPattern(kind,pattern); showReport();
+  };
+}
 for (const kind of ['score','capture']) for (const [suffix,delta] of [['flat',-1],['sharp',1],['auto',null]]) {
   $(`${kind}-key-${suffix}`).onclick = () => {
     const pattern = kind === 'score' ? state.pattern : captured;

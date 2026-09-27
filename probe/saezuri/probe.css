@@ -2,3 +2,4 @@ body{margin:0;background:#faf7f0;color:#443b36;font-size:16px}main{max-width:900
 
 header .bird-preview{display:block;width:144px;height:144px;object-fit:contain;margin:12px 0}
 #capture-position{font-size:1.3rem;font-weight:700;padding:12px;border-radius:10px;background:#f0ebf8;min-height:1.6em}
+button[aria-pressed=true]{border:2px solid #77599b;background:#ded5ef}

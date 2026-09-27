@@ -64,7 +64,7 @@ const base = process.env.SAEZURI_BASE || 'http://127.0.0.1:8000';
   assert.ok(captureReport.capture.frames.count > 0);
   assert.equal(captureReport.captureOptions.boundaryMode, 'energy-gated');
   assert.equal(captureReport.captureOptions.windowSize, 1024);
-  assert.equal(captureReport.prototype, 'ML-T01-v6');
+  assert.equal(captureReport.prototype, 'ML-T01-v7');
   assert.equal(captureReport.captureOptions.noteMode, 'sustain');
   assert.equal(captureReport.captureOptions.smoothingMs, 80);
   assert.equal(captureReport.capture.recordCount, true);
@@ -80,12 +80,18 @@ const base = process.env.SAEZURI_BASE || 'http://127.0.0.1:8000';
   assert.equal(await page.locator('#score-key-label').getAttribute('data-fifths'),mainKey);
   const candidateReport=JSON.parse(await page.locator('#metrics').innerText());
   assert.deepEqual(candidateReport.captureCandidate.notes,captureReport.capture.notes);
+  await page.locator('#capture-octave-up').click();
+  const raisedReport=JSON.parse(await page.locator('#metrics').innerText());
+  assert.deepEqual(raisedReport.captureCandidate.notes,captureReport.capture.notes);
+  assert.equal(raisedReport.displayOctaves.capture,1);
+  assert.equal(raisedReport.displayOctaves.score,0);
   await page.locator('#align-start').click();
   const alignedReport=JSON.parse(await page.locator('#metrics').innerText());
   assert.equal(alignedReport.captureCandidate.notes[0].startTick,0);
   assert.ok(alignedReport.capture.notes[0].startTick>0);
   await page.locator('#adopt').click();
   assert.equal(await page.locator('#score-key-label').getAttribute('data-fifths'),selectedKey);
+  assert.equal(await page.locator('#score-octave-up').getAttribute('aria-pressed'),'true');
   const workerBoundaries = await page.evaluate(async () => {
    const results = [];
    for (const boundaryMode of ['window-start','energy-gated']) {
