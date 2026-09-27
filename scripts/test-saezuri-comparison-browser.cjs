@@ -63,7 +63,7 @@ const base = process.env.SAEZURI_BASE || 'http://127.0.0.1:8000';
     assert.ok((await page.locator('#analysis-comparison').innerText()).length > 0);
     const scoreRows = () => page.locator('#score [data-note-id]').evaluateAll(nodes => nodes.map(n => [n.dataset.noteId, n.dataset.startTick, n.dataset.midi]));
     const originalScore = await scoreRows();
-    await page.locator('details summary').click();
+    await page.locator('#analysis-options summary').click();
     await page.locator('#tempo').fill('180');
     await page.locator('#note-mode').selectOption('detail');
     await page.locator('#smoothing').selectOption('0');
@@ -103,7 +103,7 @@ const base = process.env.SAEZURI_BASE || 'http://127.0.0.1:8000';
 
     const report = JSON.parse(await page.locator('#metrics').innerText());
     const expected = await page.evaluate(() => window.comparisonExpected);
-    assert.equal(report.prototype, 'ML-T01-v12');
+    assert.equal(report.prototype, 'ML-T01-v13');
     assert.ok(report.capture.samples > 0);
     assert.deepEqual(report.capture.analysisComparison, expected.analysisComparison);
     assert.deepEqual(report.captureCandidate.notes, expected.notes);

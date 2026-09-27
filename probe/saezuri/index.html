@@ -38,9 +38,9 @@
   <p>音高をならしてから最も近い半音にし、開始・長さを16分単位に丸めます。ドンカマの実測が成功すれば推定補正を置き換えます。追加補正はどちらにも加算します（この端末に保存）。実測の初回比較では追加補正を0にしてください。</p>
   <p>「長音を保つ」は揺れをならしながら、短くても安定した別の音は分けます。歌い出しの短い半音ずれは後続の長音へまとめます。「細かい変化も拾う」でも比較できます。「ならし：なし」ではこの抑制もOFFになります。設定は次の取り込みに反映します。</p>
   <button id="comparison-settings">今回の比較設定にする</button>
-  <p>半音交替の確認：カウントのあと、声を切らずにG／G♯を8分音符で交互に歌ってください。1回の入力から3通りの区切り方を自動比較します。試聴する候補は現在の設定の結果です。</p>
+  <p>1回の入力から3通りの区切り方を比較します。取り込んだあとで方式を選び、残したい音を確認・編集できます。</p>
   <p id="analysis-comparison" role="status">比較結果と、ならす前の音程・音量の数値を「記録をコピー」に含めます。音声は保存・送信しません。</p>
-  <details><summary>解析の比較条件（未確定）</summary><div class="fields">
+  <details id="analysis-options"><summary>解析の比較条件（未確定）</summary><div class="fields">
    <label>発音区間の方式 <select id="boundary-mode"><option value="energy-gated">短区間の無音判定（比較案）</option><option value="window-start">音高窓の先頭（旧方式）</option></select></label>
    <label>音高解析窓 <select id="window-size"><option value="4096">4096標本（従来）</option><option value="2048">2048標本（比較）</option><option value="1024">1024標本（比較・低音域が狭い）</option></select></label>
    <label><input id="adaptive-window" type="checkbox" checked> 短い解析窓でも音高を確認する</label>
@@ -50,9 +50,29 @@
    <p>前後が同じ音高でも、音量が落ちて発音し直した形跡があれば区切りを残します。無音は補いません。短窓の補助は4096標本・短区間の無音判定で使い、不明だった音高だけを確認します。環境雑音と有声の識別は継続検証中です。</p>
   </details>
   <button id="capture">カウントして取り込む</button>
+  <details><summary>過去の記録から元の取り込みを開く</summary>
+   <label>「記録をコピー」で取得したJSON<textarea id="capture-import-text" spellcheck="false" placeholder="ここに記録を貼り付けてください"></textarea></label>
+   <button id="capture-import-button">記録を読み込む</button><p id="capture-import-status" role="status"></p>
+   <p>端末内で読み込みます。v12以降の音程推移があれば、同じ入力の3方式を選べます。開くのは元の解析結果です。読み込むと、いま編集中の取り込み候補を置き換えます。</p>
+  </details>
   <div id="review" hidden><p>取り込み候補。元の音列はまだ変更していません。茶色は補完候補です。</p><p id="capture-key-label" role="status"></p><div class="fields"><button id="capture-key-flat">♭側へ</button><button id="capture-key-sharp">♯側へ</button><button id="capture-key-auto">自動推定に戻す</button></div>
    <p id="capture-octave-label" role="status"></p><div class="fields"><button id="capture-octave-up" aria-pressed="false">1オクターブ上に表示</button><button id="capture-octave-original" aria-pressed="true">原音表示</button><button id="capture-octave-down" aria-pressed="false">1オクターブ下に表示</button></div>
-   <div id="capture-score" class="score"></div><button id="align-start" disabled>頭の休符を詰める</button><button id="preview">候補を聴く</button><button id="adopt">試作の音列に採用</button><button id="discard">候補を捨てる</button><button id="copy-capture-report">記録をコピー</button></div>
+   <label>編集の出発点 <select id="capture-variant"><option value="current">現在の設定</option><option value="detail">細かい変化</option><option value="unsmoothed">ならしなし</option></select></label>
+   <p>方式ごとに編集を保持します。音符をタップするか、下の一覧で選んでください。タイでつながる音符は一つの音として編集します。</p>
+   <div id="capture-score" class="score"></div>
+   <div class="capture-editor"><label>選ぶ音 <select id="capture-note"></select></label>
+    <div class="fields"><label>音高（MIDI番号）<input id="capture-edit-midi" type="number" min="0" max="127" step="1"></label>
+     <label>開始位置（16分・1〜64）<input id="capture-edit-start" type="number" min="1" max="64" step="1"></label>
+     <label>長さ（16分の個数）<input id="capture-edit-length" type="number" min="1" max="64" step="1"></label>
+     <button id="capture-edit-replace">変更候補を作る</button><button id="capture-edit-delete">削除候補を作る</button></div>
+    <p>開始位置1が曲の頭、5が2拍目です。長さ4で4分音符になります。音高は1増減すると半音上下します。</p>
+    <div class="fields"><label>何個目の16分で区切るか<input id="capture-split-at" type="number" min="1" max="63" step="1" value="1"></label>
+     <button id="capture-edit-split">分割候補を作る</button><button id="capture-edit-merge">次の音と結合候補を作る</button></div>
+    <p>結合は休符を挟まない次の音まで。選んだ音の高さを残します。</p>
+    <p id="capture-edit-status" role="status"></p>
+    <div class="fields"><button id="capture-edit-confirm" disabled>この編集で確定</button><button id="capture-edit-cancel" disabled>編集候補をとりけす</button><button id="capture-edit-undo" disabled>編集をもどす</button></div>
+   </div>
+   <button id="align-start" disabled>頭の休符を詰める</button><button id="preview">候補を聴く</button><button id="adopt">試作の音列に採用</button><button id="discard">候補を捨てる</button><button id="copy-capture-report">記録をコピー</button></div>
  </section>
  <section><h2>測定記録</h2><p>機種・イヤホン・聞こえ方は追記してください。下の記録は数値と音符だけです。</p><label>実機条件・所感 <textarea id="conditions" placeholder="端末名、ブラウザ、イヤホン有無、声域、ずれ・誤検出など"></textarea></label><button id="report">記録を表示</button><button id="copy-report">記録をコピー</button><p id="copy-status" role="status"></p><label id="copy-fallback" hidden>手動コピー用の記録<textarea id="copy-text" readonly></textarea></label><pre id="metrics">まだ計測していません。</pre></section>
 </main>
