@@ -24,9 +24,9 @@ export class ProbeCapture {
       this.source.connect(this.node).connect(this.silent).connect(this.ctx.destination);
       const inputSettings = stream.getAudioTracks()[0]?.getSettings() || {};
       if(options.countSound){prepareShaker(this.ctx,false);prepareShaker(this.ctx,true);}
-      // Allow the OS input/output route to settle after opening the microphone.
+      // Give the singer a short preparation pause after opening the microphone.
       // Keep all counts and capture frames on the same audio-clock anchor.
-      const preparedAudioTime = this.ctx.currentTime, startLeadSeconds = 2;
+      const preparedAudioTime = this.ctx.currentTime, startLeadSeconds = 1;
       const anchor = preparedAudioTime + startLeadSeconds;
       this.timing = captureTiming({ anchor, tempo, sampleRate: this.ctx.sampleRate, baseLatency: this.ctx.baseLatency,
         outputLatency: this.ctx.outputLatency, inputLatency: inputSettings.latency, manualMs: options.manualMs || 0, audibleCount: !!options.countSound });
@@ -42,7 +42,7 @@ export class ProbeCapture {
       if (options.countSound) for (let i = 0; i < this.timing.countTimes.length; i++) {
         const beat = this.timing.countBeats[i];
         if (beat >= 8 && !options.recordCount) break;
-        this.counts.push(scheduleShaker(this.ctx, this.timing.countTimes[i], beat % 4 === 0));
+        this.counts.push(scheduleShaker(this.ctx, this.timing.countTimes[i], beat % 4 === 0, options.countVolume ?? 1));
       }
       this.onState('count-in');
       this.timer = setInterval(() => {

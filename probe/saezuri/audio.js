@@ -28,7 +28,7 @@ export function scheduleVoice(ctx, output, { midi, time, duration, instrument = 
 
 export class ProbeTransport {
   constructor(ctx, onStop) { this.ctx = ctx; this.onStop = onStop; this.serial = 0; this.voices = new Set(); this.active = false; }
-  start(notes, { tempo = 120, totalTicks = 64, instrument = 'piano', lead = 0.35, ahead = 0.15, countSound = false } = {}) {
+  start(notes, { tempo = 120, totalTicks = 64, instrument = 'piano', lead = 0.35, ahead = 0.15, countSound = false, countVolume = 1 } = {}) {
     this.stop(false);
     if (this.ctx.state !== 'running') throw new Error('AUDIO_NOT_READY');
     const serial = this.serial;
@@ -51,7 +51,7 @@ export class ProbeTransport {
         const time = this.anchor + tickSeconds(countTick, tempo);
         if (time > now + ahead) break;
         if (time < now - 0.04) return this.stop(true, 'SCHEDULER_LATE');
-        const stop = scheduleShaker(this.ctx, Math.max(now,time), countTick % 16 === 0);
+        const stop = scheduleShaker(this.ctx, Math.max(now,time), countTick % 16 === 0, countVolume);
         this.voices.add({stop, end:time+0.05});
         countTick += 4; this.metrics.countEvents++;
       }

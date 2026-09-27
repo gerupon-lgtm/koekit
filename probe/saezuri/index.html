@@ -13,6 +13,7 @@
    <label>開始猶予 <select id="lead"><option value="0.35">350ms</option><option value="0.5">500ms</option></select></label>
    <label>先読み <select id="ahead"><option value="0.15">150ms</option><option value="0.1">100ms</option><option value="0.2">200ms</option></select></label>
    <label><input id="play-count" type="checkbox" checked> 試聴中のカウント（小節頭を強く）</label>
+   <label>ドンカマ音量（準備・録音・試聴共通） <select id="count-volume"><option value="0.5">小</option><option value="1" selected>中（これまで）</option><option value="2">大</option></select></label>
   </div><button id="play">ならべた音を聴く</button><p id="position">1小節・1拍</p><div id="beats" aria-hidden="true"><i>1</i><i>2</i><i>3</i><i>4</i></div>
  </section>
  <section><h2>2. 音符モデルと五線譜</h2><p>8分／16分・休符・小節またぎ・加線の比較用。長音は拍ごとにタイ分割する暫定表示です。</p>
@@ -24,7 +25,7 @@
   <p id="score-octave-label" role="status"></p><div class="fields"><button id="score-octave-up" aria-pressed="false">1オクターブ上に表示</button><button id="score-octave-original" aria-pressed="true">原音表示</button><button id="score-octave-down" aria-pressed="false">1オクターブ下に表示</button></div>
   <p>全体の音高と長さから調号を推定します。同じ調号の長調・短調は併記します。ボタンで調号を変えても、再生する音は変わりません。</p><div id="score" class="score"></div>
  </section>
- <section><h2>3. ハナウタを取り込む</h2><p>マイクの準備後に2秒待ち、2分音符×2 → 4分音符×4（計8拍）、そのあと4小節を取り込みます。録音・試聴の小節頭は高く強いシェーカー、通常拍は低いシェーカーで知らせます。</p>
+ <section><h2>3. ハナウタを取り込む</h2><p>マイクの準備後に1秒待ち、2分音符×2 → 4分音符×4（計8拍）、そのあと4小節を取り込みます。録音・試聴の小節頭は高く強いシェーカー、通常拍は低いシェーカーで知らせます。</p>
   <div class="fields"><button id="mic" aria-pressed="true">マイク ON</button><label><input type="checkbox" id="count-sound" checked> カウント音</label><label><input type="checkbox" id="record-count" checked> 録音中もシェーカーで拍を刻む</label><label><input type="checkbox" id="processing"> OSの音声処理を要求</label></div>
   <p>短いシェーカー音を使い、解析時にその高音域を抑えます。スピーカーからの混入が気になる場合はイヤホンを使うか、カウント音をOFFにしてください。</p>
   <p id="capture-position">カウント待ち</p>
