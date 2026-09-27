@@ -58,15 +58,21 @@
   <div id="review" hidden><p>音を選ぶ → 直す → 流れを聴く → まとめてオッケー。点線は仮の変更、茶色は補完候補です。</p><p id="capture-key-label" role="status"></p><div class="fields"><button id="capture-key-flat">♭側へ</button><button id="capture-key-sharp">♯側へ</button><button id="capture-key-auto">自動推定に戻す</button></div>
    <p id="capture-octave-label" role="status"></p><div class="fields"><button id="capture-octave-up" aria-pressed="false">1オクターブ上に表示</button><button id="capture-octave-original" aria-pressed="true">原音表示</button><button id="capture-octave-down" aria-pressed="false">1オクターブ下に表示</button></div>
    <label>編集の出発点 <select id="capture-variant"><option value="current">現在の設定</option><option value="detail">細かい変化</option><option value="unsmoothed">ならしなし</option></select></label>
-   <p>方式ごとに編集を保持します。音符をタップするか、下の一覧で選んでください。タイでつながる音符は一つの音として編集します。</p>
-    <div class="fields edit-toolbar"><button id="capture-previous">← まえ</button><button id="capture-next">つぎ →</button><button id="capture-pitch-up">↑ たかく</button><button id="capture-pitch-down">↓ ひくく</button><button id="preview">流れを聴く</button></div>
-   <div id="capture-score" class="score"></div>
+   <p>方式ごとに編集を保持します。「10ばん」のように声で番号を指定するか、番号のブロックや音符をタップして直接選べます。選んだ音を譜面の中央に表示します。タイでつながる音符は一つの音として編集します。</p>
+   <div id="capture-note-panel">
+   <div class="edit-toolbar">
+    <p id="capture-selection" role="status" aria-live="polite">音を選んでください</p>
+    <div class="note-navigation"><button id="capture-first">さいしょ</button><button id="capture-previous">← まえ</button><button id="capture-next">つぎ →</button><button id="capture-last">さいご</button></div>
+    <div class="note-actions"><button id="capture-pitch-up">↑ たかく</button><button id="capture-pitch-down">↓ ひくく</button><button id="preview">流れを聴く</button></div>
+   </div>
    <div id="capture-blocks" aria-label="音のブロック一覧"></div>
+   <div id="capture-score" class="score" aria-label="選んだ音の五線譜。上下左右にスクロールできます" tabindex="0"></div>
+   </div>
    <div class="capture-editor"><label>選ぶ音 <select id="capture-note"></select></label>
 
     <p>高さは1回で半音ずつ動きます。</p>
     <label><input id="edit-voice" type="checkbox"> 声でも操作する（端末内認識）</label><p id="edit-voice-status" role="status">音声操作OFF</p>
-    <p>「たかく／あげる」「ひくく／さげる」「つぎ」「まえ」「きく」「オッケー」「もどす」「とりけし」。最初の利用時は認識モデルを読み込みます。</p>
+    <p>「たかく／あげる」「ひくく／さげる」「○ばん」「つぎ」「まえ」「さいしょ」「さいご」「きく」「オッケー」「もどす」「とりけし」。最初の利用時は認識モデルを読み込みます。</p>
     <details id="capture-edit-details"><summary>長さ・位置・分割などの詳しい編集</summary>
     <div class="fields"><label>音高（MIDI番号）<input id="capture-edit-midi" type="number" min="0" max="127" step="1"></label>
      <label>開始位置（16分・1〜64）<input id="capture-edit-start" type="number" min="1" max="64" step="1"></label>

@@ -2,6 +2,7 @@ import { openEditSession, stageEdit, selectEditNote, confirmEditSession, cancelE
 import { analyzeFrames, quantizeSegments } from './analyzer.js';
 import { decodePitchTrace } from './analysis-comparison.js';
 import { pitchName } from './score.js';
+import { orderedNotes, selectionTarget } from './note-selection.js';
 
 const clone = value => value == null ? value : structuredClone(value);
 const labels = { current: '現在の設定', detail: '細かい変化', unsmoothed: 'ならしなし' };
@@ -29,7 +30,7 @@ export class CaptureEditorView {
     for (const id of ['capture-variant', 'capture-note', 'capture-edit-midi', 'capture-edit-start',
       'capture-edit-length', 'capture-split-at', 'capture-edit-replace', 'capture-edit-delete',
       'capture-edit-split', 'capture-edit-merge', 'capture-edit-confirm', 'capture-edit-cancel',
-      'capture-edit-undo', 'capture-edit-status', 'capture-score', 'capture-pitch-up', 'capture-pitch-down', 'capture-previous', 'capture-next', 'capture-blocks']) {
+      'capture-edit-undo', 'capture-edit-status', 'capture-score', 'capture-pitch-up', 'capture-pitch-down', 'capture-previous', 'capture-next', 'capture-first', 'capture-last', 'capture-selection', 'capture-blocks']) {
       this._elements[id] = document.getElementById(id);
       if (!this._elements[id]) throw new Error(`CAPTURE_EDITOR_ELEMENT: ${id}`);
     }
@@ -45,7 +46,7 @@ export class CaptureEditorView {
     this._elements['capture-edit-confirm'].addEventListener('click', () => this._confirm());
     this._elements['capture-edit-cancel'].addEventListener('click', () => this._cancel());
     this._elements['capture-edit-undo'].addEventListener('click', () => this._undo());
-    for (const command of ['up','down','previous','next']) this._elements[`capture-${command === 'up' || command === 'down' ? 'pitch-' : ''}${command}`].onclick = () => this.command(command);
+    for (const command of ['up','down','previous','next','first','last']) this._elements[`capture-${command === 'up' || command === 'down' ? 'pitch-' : ''}${command}`].onclick = () => this.command(command);
     this._elements['capture-blocks'].onclick = event => { const note=event.target.closest('[data-note-id]'); if(note) this._select(note.dataset.noteId); };
     this._render(true);
   }
@@ -169,6 +170,7 @@ export class CaptureEditorView {
     if (next.code) return;
     this._active.session=next;
     this._emit(false);
+    this._revealSelection();
   }
 
   command(command) {
@@ -176,9 +178,14 @@ export class CaptureEditorView {
     if(command==='confirm') return this._confirm();
     if(command==='undo') return this._undo();
     if(command==='cancel') return this._cancel();
-    const notes=this._active.state.pattern.notes, index=notes.findIndex(n=>n.id===this._active.state.selectedNoteId), note=notes[index];
+    const notes=orderedNotes(this._active.state.pattern.notes), index=notes.findIndex(n=>n.id===this._active.state.selectedNoteId), note=notes[index];
     if(!note) return;
-    if(command==='next' || command==='previous') return this._select(notes[Math.max(0,Math.min(notes.length-1,index+(command==='next'?1:-1)))].id);
+    if(['first','last','next','previous'].includes(command) || command.startsWith('select:')) {
+      const target=selectionTarget(notes,note.id,command);
+      if(target) return this._select(target);
+      this._status('その番号の音はありません。ブロックの番号を確認してください。');
+      return;
+    }
     if(command==='up' || command==='down') this._stage({type:'replace',noteId:note.id,midi:note.midi+(command==='up'?1:-1),startTick:note.startTick,durationTick:note.durationTick});
   }
 
@@ -223,8 +230,12 @@ export class CaptureEditorView {
     elements['capture-variant'].value = this.variant;
     elements['capture-variant'].disabled = locked || this.pending;
     for (const option of elements['capture-variant'].options) option.disabled = !this._variants.has(option.value);
-    const notes = active?.state.pattern.notes ?? [];
+    const notes = orderedNotes(active?.state.pattern.notes ?? []);
     const selected = notes.find(note => note.id === active?.state.selectedNoteId);
+    const selectedIndex=notes.indexOf(selected);
+    elements['capture-selection'].textContent=selected
+      ? `${selectedIndex+1} / ${notes.length} ばんめの音・${Math.floor(selected.startTick/16)+1}小節目・${pitchName(selected.midi)}`
+      : '音がありません';
     if (fields) {
       elements['capture-note'].replaceChildren();
       for (const [index, note] of notes.entries()) {
@@ -240,19 +251,50 @@ export class CaptureEditorView {
       elements['capture-split-at'].value = selected ? Math.max(1, Math.floor(selected.durationTick / 2)) : '';
     }
     for (const id of ['capture-note', 'capture-edit-midi', 'capture-edit-start', 'capture-edit-length',
-      'capture-split-at', 'capture-edit-replace', 'capture-edit-delete', 'capture-edit-split', 'capture-edit-merge', 'capture-pitch-up', 'capture-pitch-down', 'capture-next', 'capture-previous']) {
+      'capture-split-at', 'capture-edit-replace', 'capture-edit-delete', 'capture-edit-split', 'capture-edit-merge', 'capture-pitch-up', 'capture-pitch-down', 'capture-next', 'capture-previous', 'capture-first', 'capture-last']) {
       elements[id].disabled = locked || !selected;
     }
+    for(const id of ['capture-first','capture-previous']) elements[id].disabled ||= selectedIndex<=0;
+    for(const id of ['capture-last','capture-next']) elements[id].disabled ||= selectedIndex===notes.length-1;
     elements['capture-edit-confirm'].disabled = locked || (this.accepted && !this.pending);
     elements['capture-edit-cancel'].disabled = this._busy || !this.pending;
     elements['capture-edit-undo'].disabled = locked || !active?.session.history.length;
-    const blocks=elements['capture-blocks']; blocks.replaceChildren();
+    const blocks=elements['capture-blocks'], focusedId=blocks.contains(document.activeElement)?document.activeElement.dataset.noteId:null;
+    const scrollLeft=blocks.scrollLeft;
+    blocks.replaceChildren();
     for(const [i,note] of notes.entries()) {
-      const button=document.createElement('button');button.dataset.noteId=note.id;button.textContent=`${i+1} ${pitchName(note.midi)}`;
+      const button=document.createElement('button');button.dataset.noteId=note.id;
+      const number=document.createElement('strong');number.textContent=String(i+1);
+      const pitch=document.createElement('span');pitch.textContent=pitchName(note.midi);
+      button.append(number,pitch);
       button.setAttribute('aria-pressed',String(note.id===selected?.id));button.disabled=locked;
+      button.setAttribute('aria-label',`${i+1}ばんめの音 ${pitchName(note.midi)}`);
       button.style.borderTopWidth=`${4+Math.min(24,note.midi-Math.min(...notes.map(n=>n.midi)))*2}px`; blocks.append(button);
     }
+    blocks.scrollLeft=scrollLeft;
+    if(focusedId) [...blocks.children].find(button=>button.dataset.noteId===focusedId)?.focus({preventScroll:true});
     this._highlight();
+    if(this.isOpen) queueMicrotask(()=>{if(this.isOpen) this._revealSelection();});
+  }
+
+  _revealSelection() {
+    const score=this._elements['capture-score'];
+    const selected=score.querySelector('[data-editor-selected="true"]');
+    if(!selected) return;
+    // Move the score's own viewport, so selecting a late note does not send
+    // the controls off the phone screen. Use the head, not the whole tie group.
+    const head=selected.querySelector('ellipse') ?? selected;
+    const bounds=head.getBoundingClientRect(), viewport=score.getBoundingClientRect();
+    score.scrollTo({left:score.scrollLeft+bounds.left-viewport.left-(score.clientWidth-bounds.width)/2,
+      top:score.scrollTop+bounds.top-viewport.top-(score.clientHeight-bounds.height)/2,behavior:'instant'});
+    const blocks=this._elements['capture-blocks'];
+    const block=[...blocks.children].find(button=>button.dataset.noteId===this._active.state.selectedNoteId);
+    if(block) blocks.scrollLeft+=block.getBoundingClientRect().left-blocks.getBoundingClientRect().left-(blocks.clientWidth-block.offsetWidth)/2;
+    const visibleHead=head.getBoundingClientRect(), footer=document.querySelector('footer').getBoundingClientRect();
+    const toolbar=document.querySelector('.edit-toolbar').getBoundingClientRect();
+    if(visibleHead.top<Math.max(0,toolbar.bottom) || visibleHead.bottom>footer.top) {
+      document.getElementById('capture-note-panel').scrollIntoView({block:'start',behavior:'instant'});
+    }
   }
 
   _highlight() {

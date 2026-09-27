@@ -9,3 +9,14 @@ button[aria-pressed=true]{border:2px solid #77599b;background:#ded5ef}
 #capture-blocks{display:flex;gap:8px;overflow:auto;padding:8px 0}#capture-blocks button{flex:0 0 auto;min-width:64px;border-top-color:#baa7d4}#capture-score .capture-note-draft{outline:2px dashed #b06018;outline-offset:5px}#capture-edit-confirm,#preview{background:#d9ebd5;border-color:#64865b}#capture-edit-details{margin:16px 0}#capture-edit-details summary{cursor:pointer;padding:10px}
 
 .edit-toolbar{position:sticky;top:0;z-index:3;background:#fffaf2;border:1px solid #ded0ba;border-radius:10px;padding:6px;gap:6px}.edit-toolbar button{font-size:14px;padding:7px;min-height:44px;margin:0}
+
+#capture-selection{margin:0 0 6px;font-weight:700;color:#503069;font-size:15px;line-height:1.5}
+.note-navigation,.note-actions{display:grid;gap:6px}.note-navigation{grid-template-columns:repeat(4,minmax(0,1fr))}.note-actions{grid-template-columns:repeat(3,minmax(0,1fr));margin-top:6px}
+#capture-blocks{position:relative;scroll-behavior:auto}#capture-blocks button[aria-pressed=true]{background:#624383;color:white;box-shadow:0 0 0 2px #624383;outline-offset:2px}
+#capture-score{height:280px;max-height:42svh;min-height:150px;border:1px solid #d9cfe5;border-radius:10px;overscroll-behavior:contain;scroll-behavior:auto;margin:6px 0}
+#capture-score [data-editor-selected=true] ellipse{fill:#c34a16;stroke:#c34a16;stroke-width:3}
+@media(max-height:480px){#capture-score{height:170px;min-height:120px}.edit-toolbar{position:static}}
+
+#capture-blocks button{display:flex;flex-direction:column;align-items:center;gap:2px}#capture-blocks strong{font-size:21px;line-height:1.1}#capture-blocks span{font-size:12px}
+
+@media(min-width:600px) and (max-height:480px){#capture-note-panel{display:grid;grid-template-columns:minmax(250px,1fr) minmax(0,1fr);gap:8px;align-items:start}#capture-note-panel .edit-toolbar{grid-column:1;grid-row:1}#capture-blocks{grid-column:1;grid-row:2;max-width:100%}#capture-score{grid-column:2;grid-row:1 / 3;height:230px;max-height:64svh}}
