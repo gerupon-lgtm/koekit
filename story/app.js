@@ -92,11 +92,12 @@ function closeModal(kind, resume = true) {
 // 共通案内帯と、区間で実際に受け付ける語の一覧。読み上げ中は声を促さない。
 function paintCue(id, word, action, touch, words = '') {
   const speaking = canSpeak();
+  $(id).classList.toggle('is-reading', reader.busy);
   setVoiceGuide($(id), reader.busy || modal ? '' : word,
-    reader.busy ? 'よみあげちゅう。タッチでも すすめるよ' : action, touch);
+    reader.busy ? 'よみあげちゅう\nタッチでも すすめるよ' : action, touch);
   $(id + '-words').textContent = speaking && words ? `いえること：${words}` : '';
   if (id === 'guide' && !speaking) {
-    $(id + '-words').textContent = reader.busy ? 'よみあげちゅう\nタッチでも すすめるよ' : 'カードや ボタンを\nタッチで えらぼう';
+    $(id + '-words').textContent = reader.busy ? '' : 'カードや ボタンを\nタッチで えらぼう';
   }
 }
 

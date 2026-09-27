@@ -179,6 +179,12 @@ main:has(#s-start:not([hidden])) { padding-inline: 16px; padding-bottom: max(8px
 #guide.voice-guide { min-height: 68px; margin: 6px auto; }
 #guide.voice-guide strong { font-size: 18px; }
 #guide.voice-guide span { font-size: 16px; }
+.voice-guide.is-reading strong { white-space: pre; font-size: 18px; }
+/* 意味のまとまりで2行に固定し、括弧だけの折り返しを防ぐ。 */
+#board-btns #start { padding-block: 6px; }
+#start .action-label, #start .action-detail { display: block; white-space: nowrap; }
+#start .action-label { font-size: 18px; line-height: 22px; }
+#start .action-detail { font-size: 14px; line-height: 20px; }
 #guide-words { display: block; min-height: 48px; font-size: 15px; line-height: 24px; white-space: pre-line; margin: 4px 0 0; }
 #s-board:has(#board-btns:not([hidden])) .heard { display: block; min-height: 22px; line-height: 22px; }
 #s-board:has(#board-btns[hidden]) #guide-words { display: none; }
