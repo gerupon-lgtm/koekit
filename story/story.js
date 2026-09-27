@@ -1,5 +1,6 @@
 // 盤面版の組み立て（画面に依存しない部分）— 基本設計6節
 import { SETS, ROW_KEYS, STAGES } from './story-data.js';
+export { loadSets } from './story-data.js';
 
 export const MAX_PER_ROW = 3; // 1行で選べる上限（要件B区分）
 const TOTAL = STAGES.length;
@@ -67,65 +68,85 @@ function fill(tpl, vars) {
   return tpl.replace(/\{(\w+)\}/g, (_, k) => vars[k] ?? '');
 }
 
-function pickCards(set, order, rnd) {
+// 場面カードを選ぶ。avoid（直前の物語で使った "段階:番号"）はなるべく避ける
+function pickCards(set, order, rnd, avoid) {
+  const fresh = (refs) => { const f = refs.filter(r => !avoid.has(r.stage + ':' + r.idx)); return f.length ? f : refs; };
   if (order === 'mechakucha') {
     const all = [];
     set.scenes.forEach((list, stage) => list.forEach((tpl, idx) => all.push({ stage, idx, tpl })));
-    return shuffle(all, rnd).slice(0, TOTAL);
+    return shuffle(fresh(all), rnd).slice(0, TOTAL);
   }
-  return set.scenes.map((list, stage) => { const idx = randInt(list.length, rnd); return { stage, idx, tpl: list[idx] }; });
+  return set.scenes.map((list, stage) => {
+    const refs = fresh(list.map((tpl, idx) => ({ stage, idx, tpl })));
+    return refs[randInt(refs.length, rnd)];
+  });
 }
 
-const hasSlots = cards => cards.some(c => c.tpl.includes('{aite}')) && cards.some(c => c.tpl.includes('{mono}'));
+// 主人公・だれと・なにを が、物語のどこかに必ず出るようにする
+const hasSlots = cards => ['{name}', '{aite}', '{mono}'].every(k => cards.some(c => c.tpl.includes(k)));
 
 // 最後の手段：できごとの段階から「だれと」「なにを」を両方含むカードに差しかえる
 function ensureSlots(set, cards) {
   if (hasSlots(cards)) return cards;
   const list = set.scenes[1];
-  const idx = list.findIndex(t => t.includes('{aite}') && t.includes('{mono}'));
+  let idx = list.findIndex(t => ['{name}', '{aite}', '{mono}'].every(k => t.includes(k)));
+  if (idx < 0) idx = list.findIndex(t => t.includes('{aite}') && t.includes('{mono}'));
   const pos = cards.findIndex(c => c.stage === 1);
   const out = cards.slice();
   out[pos >= 0 ? pos : 1] = { stage: 1, idx, tpl: list[idx] };
   return out;
 }
 
+// つなぎ文を選ぶ（同じ物語の中では同じ文をなるべく繰り返さない）
+function pickShift(list, used, rnd) {
+  const cand = list.filter(t => !used.has(t));
+  const t = (cand.length ? cand : list)[randInt((cand.length ? cand : list).length, rnd)];
+  used.add(t);
+  return t;
+}
+
 // 物語の生成
-export function buildStory({ audience, name, picks, order = 'normal', rnd = Math.random }) {
+//  avoid：直前に使った場面（"段階:番号" の Set）。app 側が直近の物語ぶんを渡す
+export function buildStory({ audience, name, picks, order = 'normal', rnd = Math.random, avoid = new Set() }) {
   const set = SETS[audience];
   let cards = null;
   for (let attempt = 0; attempt < 200 && !cards; attempt++) {
-    const c = pickCards(set, order, rnd);
+    const c = pickCards(set, order, rnd, avoid);
     if (hasSlots(c)) cards = c;
   }
-  cards = ensureSlots(set, cards || pickCards(set, order, rnd));
+  cards = ensureSlots(set, cards || pickCards(set, order, rnd, avoid));
 
   const seq = { itsu: sequenceFor(picks.itsu.words, order, rnd), basho: sequenceFor(picks.basho.words, order, rnd) };
   const firstAite = cards.findIndex(c => c.tpl.includes('{aite}'));
   const plan = companionPlan(picks.aite.words, firstAite, order, rnd);
   const mono = picks.mono.words.join(set.join);
+  // 脇役・小道具・音は物語ごとに1つ選び、同じ物語の中では同じものが出る
+  const extras = {};
+  for (const [k, list] of Object.entries(set.extras)) extras[k] = list[randInt(list.length, rnd)];
 
   const lines = [];
   const last = { itsu: null, basho: null };
   const joined = new Set();
+  const usedShift = new Set();
   cards.forEach((c, i) => {
     const newcomers = [];
     picks.aite.words.forEach((w, j) => {
       if (plan.joinAt[j] <= i && !joined.has(j)) { if (i > 0) newcomers.push(w); joined.add(j); }
     });
     const aite = picks.aite.words.filter((_, j) => joined.has(j)).join(set.join);
-    const vars = { name, itsu: seq.itsu[i], basho: seq.basho[i], aite, mono };
+    const vars = { ...extras, name, itsu: seq.itsu[i], basho: seq.basho[i], aite, mono };
 
     for (const k of ['itsu', 'basho']) {
       const v = vars[k];
       if (v === last[k]) continue;
       const mentions = c.tpl.includes('{' + k + '}');
-      if (!(mentions && last[k] === null)) lines.push({ stage: null, text: fill(set.shift[k], vars), shift: true });
+      if (!(mentions && last[k] === null)) lines.push({ stage: null, text: fill(pickShift(set.shift[k], usedShift, rnd), vars), shift: true });
       last[k] = v;
     }
-    for (const w of newcomers) lines.push({ stage: null, text: fill(set.shift.aite, { ...vars, new: w }), shift: true });
+    for (const w of newcomers) lines.push({ stage: null, text: fill(pickShift(set.shift.aite, usedShift, rnd), { ...vars, new: w }), shift: true });
     lines.push({ stage: STAGES[c.stage], text: fill(c.tpl, vars), shift: false });
   });
-  return { lines, companion: plan.mode };
+  return { lines, companion: plan.mode, used: cards.map(c => c.stage + ':' + c.idx), extras };
 }
 
 // めくった結果の読み上げ文

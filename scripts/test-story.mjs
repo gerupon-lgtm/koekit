@@ -1,8 +1,12 @@
 // モノガタリズム（仮称）物語生成の自動検査（基本設計 MG-T01）
 // 実行: node scripts/test-story.mjs
+import { readFileSync } from 'node:fs';
 import { makeBoard, resolvePicks, buildStory, splitSentences, MAX_PER_ROW } from '../story/story.js';
-import { SETS, ROW_KEYS } from '../story/story-data.js';
+import { SETS, ROW_KEYS, STAGES, EXTRA_KEYS, loadSets } from '../story/story-data.js';
 import { parse, wordsFor } from '../story/vocabulary.js';
+
+// 画面と同じ JSON を読む
+await loadSets(path => JSON.parse(readFileSync(new URL(path, new URL('../story/story-data.js', import.meta.url)), 'utf8')));
 
 // 再現できる乱数（mulberry32）
 function seeded(seed) {
@@ -50,7 +54,13 @@ for (const audience of ['kids', 'adult']) {
       if (order === 'normal') {
         for (const k of ['itsu', 'basho']) {
           const ws = picks[k].words;
-          const pos = ws.map(w => all.indexOf(w));
+          // 他の言葉の一部として含まれる場合（うみ ⊂ うみのそこ）は、長い言葉を先に伏せてから探す
+          const pool = [...set.rows[k].pool.map(p => p.w), ...Object.values(set.extras).flat()]; // 例：うちゅう ⊂ うちゅうじん
+          const pos = ws.map(w => {
+            let t = all;
+            for (const longer of pool) if (longer !== w && longer.includes(w)) t = t.split(longer).join('＊'.repeat(longer.length));
+            return t.indexOf(w);
+          });
           for (let i = 1; i < pos.length; i++) if (pos[i] < pos[i - 1]) bad(`${k} が選んだ順に進まない`, ws.join('/'));
         }
         if (!st.lines[st.lines.length - 1].text.length) bad('最後の文が空');
@@ -65,10 +75,42 @@ for (const audience of ['kids', 'adult']) {
 for (const a of ['kids', 'adult']) {
   const S = SETS[a];
   if (!S.scenes[0].every(t => t.includes('{itsu}') && t.includes('{basho}'))) bad('はじまりの場面に いつ／どこで がない', a);
-  if (!S.scenes[1].some(t => t.includes('{aite}') && t.includes('{mono}'))) bad('できごとに だれと＋なにを を両方含む場面がない', a);
+  if (!S.scenes[1].some(t => ['{name}', '{aite}', '{mono}'].every(k => t.includes(k)))) bad('できごとに 主人公＋だれと＋なにを を含む場面がない', a);
   for (const k of ROW_KEYS) if (S.rows[k].pool.length < S.cols) bad('候補が列数より少ない', `${a}/${k}`);
   const words = ROW_KEYS.flatMap(k => S.rows[k].pool.map(p => p.w));
   if (new Set(words).size !== words.length) bad('盤面の言葉が重複', a);
+}
+
+// データの書き間違い：使える差しこみ語だけか、こども用に漢字がないか、量は足りているか
+for (const a of ['kids', 'adult']) {
+  const raw = JSON.parse(readFileSync(new URL(`../story/data/${a}.json`, import.meta.url), 'utf8'));
+  const sceneKeys = new Set(['name', ...ROW_KEYS, ...EXTRA_KEYS]);
+  const check = (text, allowed, where) => {
+    for (const m of text.matchAll(/\{(\w*)\}?/g)) if (!allowed.has(m[1]) || !m[0].endsWith('}')) bad(`使えない差しこみ語 {${m[1]}}`, `${a}/${where}: ${text}`);
+    if (/[{}]/.test(text.replace(/\{\w+\}/g, ''))) bad('かっこの閉じ忘れ', `${a}/${where}: ${text}`);
+  };
+  for (const st of STAGES) for (const t of raw.scenes[st]) check(t, sceneKeys, st);
+  for (const k of ['itsu', 'basho', 'aite']) for (const t of raw.shift[k]) check(t, new Set([...sceneKeys, 'new']), 'つなぎ文');
+  if (a === 'kids') {
+    const body = JSON.stringify({ ...raw, _説明: undefined });
+    const kanji = body.match(/[\u4e00-\u9fff]/g);
+    if (kanji) bad('こども用に漢字がある', [...new Set(kanji)].join(''));
+  }
+  for (const k of EXTRA_KEYS) if (!raw.extras?.[k]?.length) bad('差しこみ語の候補がない', `${a}/${k}`);
+  for (const k of ['itsu', 'basho', 'aite']) if (raw.shift[k].length < 5) bad('つなぎ文が少ない', `${a}/${k}`);
+  for (const st of STAGES) if (new Set(raw.scenes[st]).size !== raw.scenes[st].length) bad('同じ場面文が重複', `${a}/${st}`);
+}
+
+// 直前に使った場面は避ける
+{
+  const rnd = seeded(7);
+  const b = makeBoard('adult', rnd);
+  const p = resolvePicks(b, {}, rnd);
+  const first = buildStory({ audience: 'adult', name: '佐藤', picks: p, rnd });
+  for (let i = 0; i < 50; i++) {
+    const next = buildStory({ audience: 'adult', name: '佐藤', picks: p, rnd, avoid: new Set(first.used) });
+    if (next.used.some(u => first.used.includes(u))) { bad('直前の場面を避けていない', next.used); break; }
+  }
 }
 
 // おまかせ：何も選ばなければ各行1つ・印つき

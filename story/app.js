@@ -1,7 +1,7 @@
 // モノガタリズム（仮称）試作 — 画面と状態（基本設計4〜5節）
 // 声（端末内Vosk）とタッチの両方で同じ操作を行う。読み上げ中は聞き取りを止める。
 import { SETS, ROW_KEYS } from './story-data.js';
-import { makeBoard, resolvePicks, buildStory, picksSummary, MAX_PER_ROW } from './story.js';
+import { makeBoard, resolvePicks, buildStory, picksSummary, MAX_PER_ROW, loadSets } from './story.js';
 import { Reader } from './tts.js';
 import { StorySpeech } from './voice.js';
 import { wordsFor, parse } from './vocabulary.js';
@@ -64,6 +64,12 @@ function applySettings() {
 }
 applySettings();
 $('go-name').onclick = () => openName();
+// 物語データ（data/*.json）を読み込むまで「はじめる」を押せないようにする
+$('go-name').disabled = true;
+loadSets().then(() => { $('go-name').disabled = false; log('物語データを読み込みました'); })
+  .catch(e => { log(`✕ 物語データを読み込めません ${e.message}`); toast('物語データを読み込めませんでした。ひらき直してください'); });
+// 直近2回の物語で使った場面は、なるべく使わない（同じ話に見えないように）
+const recentScenes = [];
 
 $('rate').value = settings.rate; $('rateV').textContent = (+settings.rate).toFixed(1);
 $('rate').oninput = () => { settings.rate = reader.rate = +$('rate').value; $('rateV').textContent = reader.rate.toFixed(1); saveSettings(); };
@@ -281,7 +287,8 @@ $('start').onclick = startReveal;
 // ---------- MG-S04 めくりと物語 ----------
 function startReveal() {
   st.picks = resolvePicks(st.board, st.sel);
-  st.story = buildStory({ audience: settings.audience, name: st.name, picks: st.picks, order: settings.order });
+  st.story = buildStory({ audience: settings.audience, name: st.name, picks: st.picks, order: settings.order, avoid: new Set(recentScenes.flat()) });
+  recentScenes.push(st.story.used); if (recentScenes.length > 2) recentScenes.shift();
   log(`生成 companion=${st.story.companion} 行数=${st.story.lines.length}`);
   $('board-btns').hidden = true;
   $('guide').innerHTML = '';
