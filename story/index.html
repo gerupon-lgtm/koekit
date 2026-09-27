@@ -25,6 +25,7 @@
         <div class="seg" data-key="audience"><button data-v="kids">こども</button><button data-v="adult">おとな</button></div></div>
       <div class="row"><span class="lbl">よみあげ</span>
         <div class="seg" data-key="tts"><button data-v="on">ON</button><button data-v="off">OFF</button></div></div>
+      <div class="row" id="voice-row"><span class="lbl">よみあげの こえ</span><select id="voice" aria-label="よみあげの こえ"></select></div>
       <div class="row"><span class="lbl">ばめんの じゅんばん</span>
         <div class="seg" data-key="order"><button data-v="normal">ふつう</button><button data-v="mechakucha">めちゃくちゃ</button></div></div>
     </div>
@@ -32,8 +33,7 @@
     <p class="guide" id="start-guide"></p>
 
     <details class="panel small">
-      <summary>読み上げの設定</summary>
-      <div class="row"><span class="lbl">声</span><select id="voice"></select></div>
+      <summary>読み上げの速さ・ためし読み</summary>
       <div class="row"><span class="lbl">速さ <span id="rateV">1.0</span></span><input type="range" id="rate" min="0.6" max="1.4" step="0.1" value="1"></div>
       <button class="btn" id="tts-test">ためしに よむ</button>
     </details>

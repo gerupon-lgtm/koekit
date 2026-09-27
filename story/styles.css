@@ -105,3 +105,5 @@ body.kids ol.story li { font-size: 1.2rem; line-height: 1.9; }
 .heard { text-align: center; font-size: .8rem; color: var(--sel); min-height: 1.3em; margin: 2px 0 0; }
 .names + .guide .words, #name-guide .words { display: block; font-size: .78rem; color: var(--sub); }
 .intro { margin: 10px 0 6px; font-weight: bold; color: var(--accent); }
+#voice { width: 100%; padding: 10px 8px; border-radius: 10px; background: #fff; }
+#voice:disabled { opacity: .5; }

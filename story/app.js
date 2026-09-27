@@ -69,6 +69,9 @@ function applySettings() {
   document.body.classList.toggle('kids', settings.audience === 'kids');
   document.body.classList.toggle('adult', settings.audience === 'adult');
   reader.enabled = settings.tts === 'on';
+  // 読み上げOFFのときは声のメニューを使えなくする（表示は残す）
+  const vs = document.getElementById('voice');
+  if (vs) vs.disabled = settings.tts !== 'on' || !reader.available;
 }
 applySettings();
 $('go-name').onclick = () => openName();
@@ -83,7 +86,13 @@ let lastType = null; // 同じ流れの型が続かないように
 
 $('rate').value = settings.rate; $('rateV').textContent = (+settings.rate).toFixed(1);
 $('rate').oninput = () => { settings.rate = reader.rate = +$('rate').value; $('rateV').textContent = reader.rate.toFixed(1); saveSettings(); };
-$('voice').onchange = () => { settings.voice = reader.voiceURI = $('voice').value; saveSettings(); };
+// 声を選んだら、その声で短く試し読みする（読み上げONのとき）
+$('voice').onchange = () => {
+  settings.voice = reader.voiceURI = $('voice').value; saveSettings();
+  const v = reader.voices.find(x => x.voiceURI === reader.voiceURI);
+  log(`声を変更 ${v ? v.name : '既定'}`);
+  if (reader.enabled && reader.available) reader.speak([{ text: settings.audience === 'kids' ? 'この こえで よむね。' : 'この声で読みます。' }]);
+};
 $('tts-test').onclick = () => {
   if (!reader.available) { toast('この端末は よみあげに 対応していません'); return; }
   const was = reader.enabled; reader.enabled = true;
@@ -95,7 +104,7 @@ function paintVoices() {
   sel.innerHTML = reader.voices.length ? '' : '<option value="">（日本語の声なし・端末の既定）</option>';
   reader.voices.forEach(v => {
     const o = document.createElement('option');
-    o.value = v.voiceURI; o.textContent = `${v.name}${v.localService ? '（端末内）' : '（ネット経由の可能性）'}`;
+    o.value = v.voiceURI; o.textContent = `${v.name}${v.localService ? '（端末内）' : ''}`;
     sel.appendChild(o);
   });
   sel.value = reader.voiceURI;
