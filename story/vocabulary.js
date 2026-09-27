@@ -17,7 +17,7 @@ export const COMMANDS = {
 export function wordsFor(ctx) {
   if (ctx.type === 'name') return [...ctx.names, ...COMMANDS.omakase, ...(ctx.hasCand ? COMMANDS.ok : [])];
   if (ctx.type === 'row') return [...NUMBERS.slice(0, ctx.cols).flat(), ...COMMANDS.ok, ...COMMANDS.omakase, ...COMMANDS.back];
-  if (ctx.type === 'ready') return [...COMMANDS.start, ...COMMANDS.back];
+  if (ctx.type === 'ready') return [...COMMANDS.ok, ...COMMANDS.back]; // 最後の確定も「オッケー」（2026-09-27 発案者指示）
   if (ctx.type === 'after') return [...COMMANDS.next];
   return [];
 }

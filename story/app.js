@@ -149,6 +149,7 @@ $('name-omakase').onclick = () => {
 function openBoard() {
   st.board = makeBoard(settings.audience);
   st.sel = Object.fromEntries(ROW_KEYS.map(k => [k, []]));
+  cancelAuto();
   st.row = 0; st.cand = null; st.done = false; st.picks = null; st.story = null;
   $('who').textContent = `しゅじんこう：${st.name}`;
   $('story-area').hidden = true;
@@ -221,57 +222,58 @@ function paintGuide() {
   $('start').hidden = !st.done;
   $('back').disabled = !st.done && st.row === 0;
   if (st.done) {
-    g.innerHTML = `「スタート」で めくろう<span class="words">${canSpeak() ? 'いえること：スタート・もどる' : 'タッチで すすめてね'}</span>`;
+    g.innerHTML = `「オッケー」で めくろう<span class="words">${canSpeak() ? 'いえること：オッケー・もどる' : 'オッケー を タッチ'}</span>`;
     return;
   }
   const k = rowKey();
   const label = set.rows[k].label;
   const selected = st.sel[k];
   let main;
-  if (st.cand !== null) {
-    main = selected.includes(st.cand) ? `${st.cand + 1}ばんを はずす？ →「オッケー」` : `${st.cand + 1}ばんに する？ →「オッケー」`;
-  } else if (selected.length) {
-    main = selected.length >= MAX_PER_ROW ? `もう いっぱい（${MAX_PER_ROW}つまで）。「オッケー」で つぎへ` : `ほかも えらべるよ。おわりなら「オッケー」`;
-  } else {
-    main = `「${label}？」 ばんごうを えらんでね`;
-  }
-  g.innerHTML = `${main}<span class="words">${canSpeak() ? `いえること：${nums}・オッケー・おまかせ・もどる` : 'マスを タッチして「オッケー」'}</span>`;
+  if (selected.length >= MAX_PER_ROW) main = `${MAX_PER_ROW}つ えらんだよ。つぎへ すすむね`;
+  else if (selected.length) main = `${selected.map(i => i + 1).join('・')}ばん。ほかも えらべるよ。おわりなら「オッケー」`;
+  else main = `「${label}？」 ばんごうを えらんでね（${MAX_PER_ROW}つまで）`;
+  g.innerHTML = `${main}<span class="words">${canSpeak() ? `いえること：${nums}・オッケー・おまかせ・もどる` : 'マスを タッチ →「オッケー」で つぎへ'}</span>`;
 }
 
-// 番号の指定（タッチ・声で共通）→ 候補を光らせるだけ（2段階確定）
+// 番号の指定（タッチ・声で共通）：その場で選択／解除する（2026-09-27 発案者指示）。
+// 確定はカテゴリごとの「オッケー」（上限に達したら自動）と、最後の「スタート」。スタート前は「もどる」で直せる
+const AUTO_NEXT_MS = 700; // 上限に達してから次のカテゴリへ移るまでの間（選んだマスを見せるため）
+let autoTimer = null;
+function cancelAuto() { clearTimeout(autoTimer); autoTimer = null; }
 function chooseNumber(c) {
-  if (st.done || st.picks) return;
+  if (st.done || st.picks || autoTimer) return;
   const selected = st.sel[rowKey()];
-  if (!selected.includes(c) && selected.length >= MAX_PER_ROW) { st.cand = null; toast(`${MAX_PER_ROW}つまで だよ`); renderBoard(); return; }
-  st.cand = c;
+  const i = selected.indexOf(c);
+  if (i >= 0) selected.splice(i, 1);
+  else if (selected.length < MAX_PER_ROW) selected.push(c);
   renderBoard();
+  if (selected.length >= MAX_PER_ROW) {
+    const row = st.row;
+    autoTimer = setTimeout(() => { autoTimer = null; if (!st.done && !st.picks && st.row === row) nextRow(); }, AUTO_NEXT_MS);
+  }
 }
 
-// オッケー：候補あり→選択／解除。候補なし→この行はおわり
+// オッケー：このカテゴリはおわり（何も選んでいなければおまかせ）
 function confirm() {
   if (st.done) return;
-  const selected = st.sel[rowKey()];
-  if (st.cand !== null) {
-    const i = selected.indexOf(st.cand);
-    if (i >= 0) selected.splice(i, 1); else selected.push(st.cand);
-    st.cand = null;
-    renderBoard();
-    return;
-  }
+  cancelAuto();
   nextRow();
 }
 function nextRow() {
+  cancelAuto();
   st.cand = null;
   if (st.row < ROW_KEYS.length - 1) { st.row++; renderBoard(); promptRow(); }
-  else { st.done = true; renderBoard(); reader.speak([{ text: 'スタートで、めくろう。' }]); }
+  else { st.done = true; renderBoard(); reader.speak([{ text: 'オッケーで、めくろう。' }]); }
 }
 function omakase() {
   if (st.done) return;
+  cancelAuto();
   st.sel[rowKey()] = [];
   toast('おまかせ！');
   nextRow();
 }
 function back() {
+  cancelAuto();
   st.cand = null;
   if (st.done) { st.done = false; renderBoard(); promptRow(); return; }
   if (st.row > 0) { st.row--; renderBoard(); promptRow(); }
@@ -371,7 +373,7 @@ function handleText(raw, ctx) {
     else if (cmd.type === 'omakase') omakase();
     else if (cmd.type === 'back') back();
   } else if (ctx.type === 'ready') {
-    if (cmd.type === 'start') startReveal();
+    if (cmd.type === 'ok') startReveal();
     else if (cmd.type === 'back') back();
   } else if (ctx.type === 'after' && cmd.type === 'next') $('again').click();
 }

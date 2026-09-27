@@ -144,7 +144,7 @@ for (const a of ['kids', 'adult']) {
   eq('ご', row4, null); eq('ご', row5, { type: 'number', value: 4 });
   eq('オッケー', row4, { type: 'ok' }); eq('おーけー', row4, { type: 'ok' }); eq('おまかせ', row4, { type: 'omakase' }); eq('もどる', row4, { type: 'back' });
   eq('さん オッケー', row4, null); eq('スタート', row4, null); eq('[unk]', row4, null); eq('', row4, null);
-  eq('スタート', { type: 'ready' }, { type: 'start' }); eq('つぎ', { type: 'after' }, { type: 'next' });
+  eq('オッケー', { type: 'ready' }, { type: 'ok' }); eq('スタート', { type: 'ready' }, null); eq('もどる', { type: 'ready' }, { type: 'back' }); eq('つぎ', { type: 'after' }, { type: 'next' });
   eq('はな', name, { type: 'name', value: 'はな' }); eq('オッケー', name, null); eq('オッケー', { ...name, hasCand: true }, { type: 'ok' });
   for (const w of wordsFor(row5)) if (!w) bad('空の受付語');
 }
