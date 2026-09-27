@@ -17,7 +17,7 @@ const example = () => ({ bars: 4, gridStep: 1, notes: [
 ] });
 let state = { pattern: example(), cursor: 0, revision: 0 }, candidate = null, captured = null, capturedOriginal = null;
 let ctx, transport, capture, serial = 0, phase = 'idle', raf, lastFrame = 0, maxFrameGapMs = 0, lastBar = -1;
-const record = { prototype: 'ML-T01-v8', timestamp: new Date().toISOString(), userAgent: navigator.userAgent, playback: null, capture: null };
+const record = { prototype: 'ML-T01-v9', timestamp: new Date().toISOString(), userAgent: navigator.userAgent, playback: null, capture: null };
 const keyChoices = { score: null, capture: null };
 const displayOctaves = { score: 0, capture: 0 };
 function drawPattern(kind, pattern) {
@@ -110,7 +110,7 @@ function animate() {
   const bar = Math.floor(tick / 16), beat = Math.floor(tick / 4) % 4;
   if (capture?.active && Number.isFinite(capture.anchor)) {
     const countBeat = Math.floor((ctx.currentTime - capture.anchor) * capture.tempo / 60);
-    $('capture-position').textContent = countBeat < 0 ? 'カウント待ち' : countBeat < 8 ? `準備 ${countBeat + 1} / 8拍` : countBeat < 24 ? `録音 ${Math.floor((countBeat - 8) / 4) + 1} / 4小節・${(countBeat - 8) % 4 + 1}拍` : '取り込み・解析の完了待ち';
+    $('capture-position').textContent = countBeat < 0 ? `マイクの準備待ち・カウントまで${Math.ceil(capture.anchor-ctx.currentTime)}秒` : countBeat < 8 ? `準備 ${countBeat + 1} / 8拍` : countBeat < 24 ? `録音 ${Math.floor((countBeat - 8) / 4) + 1} / 4小節・${(countBeat - 8) % 4 + 1}拍` : '取り込み・解析の完了待ち';
   }
   $('position').textContent = `${bar + 1}小節・${beat + 1}拍`;
   [...$('beats').children].forEach((node, i) => node.classList.toggle('active', i === beat));

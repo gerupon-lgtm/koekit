@@ -24,9 +24,13 @@ export class ProbeCapture {
       this.source.connect(this.node).connect(this.silent).connect(this.ctx.destination);
       const inputSettings = stream.getAudioTracks()[0]?.getSettings() || {};
       if(options.countSound){prepareShaker(this.ctx,false);prepareShaker(this.ctx,true);}
-      const anchor = this.ctx.currentTime + 0.35;
+      // Allow the OS input/output route to settle after opening the microphone.
+      // Keep all counts and capture frames on the same audio-clock anchor.
+      const preparedAudioTime = this.ctx.currentTime, startLeadSeconds = 2;
+      const anchor = preparedAudioTime + startLeadSeconds;
       this.timing = captureTiming({ anchor, tempo, sampleRate: this.ctx.sampleRate, baseLatency: this.ctx.baseLatency,
         outputLatency: this.ctx.outputLatency, inputLatency: inputSettings.latency, manualMs: options.manualMs || 0, audibleCount: !!options.countSound });
+      this.timing.preparedAudioTime=preparedAudioTime;this.timing.startLeadSeconds=startLeadSeconds;
       this.anchor = anchor; this.tempo = tempo;
       this.startTime = this.timing.musicalStart;
       const acousticSync=!!options.acousticSync && !!options.countSound;
