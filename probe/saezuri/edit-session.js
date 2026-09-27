@@ -24,6 +24,11 @@ export function stageEdit(session, command) {
   if (proposal.code) return proposal;
   const next = commitNote(session.working, proposal);
   if (next.code) return next;
+  if(command.type==='delete' && command.noteId===session.working.selectedNoteId) {
+    const ordered=[...session.working.pattern.notes].sort((a,b)=>a.startTick-b.startTick);
+    const index=ordered.findIndex(note=>note.id===command.noteId);
+    next.selectedNoteId=ordered[index+1]?.id ?? ordered[index-1]?.id ?? null;
+  }
   return {...session, working:workingCopy(next), history:[...session.history, copy(session.working)]};
 }
 export function confirmEditSession(session) {

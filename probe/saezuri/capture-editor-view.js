@@ -180,6 +180,13 @@ export class CaptureEditorView {
     if(command==='cancel') return this._cancel();
     const notes=orderedNotes(this._active.state.pattern.notes), index=notes.findIndex(n=>n.id===this._active.state.selectedNoteId), note=notes[index];
     if(!note) return;
+    if(command==='delete') return this._stage({type:'delete',noteId:note.id});
+    if(command.startsWith('delete:')) {
+      const target=selectionTarget(notes,note.id,command.replace('delete:','select:'));
+      if(!target) {this._status('その番号の音はありません。ブロックの番号を確認してください。');return;}
+      this._active.session=selectEditNote(this._active.session,target);
+      return this._stage({type:'delete',noteId:target});
+    }
     if(['first','last','next','previous'].includes(command) || command.startsWith('select:')) {
       const target=selectionTarget(notes,note.id,command);
       if(target) return this._select(target);
@@ -193,7 +200,9 @@ export class CaptureEditorView {
     const next=stageEdit(this._active.session,command);
     if(next.code) {this._status(messages[next.code] ?? 'この変更はできません。');return;}
     this._active.session=next; this._active.edited=true;
-    this._status('仮の変更です。ほかの音も直せます。「流れを聴く」で確認してからオッケー。');
+    this._status(command.type==='delete'
+      ? '仮に消しました。その場所は休符になります。「もどす」で戻せます。確認してからオッケー。'
+      : '仮の変更です。ほかの音も直せます。「流れを聴く」で確認してからオッケー。');
     this._emit(false);
   }
 

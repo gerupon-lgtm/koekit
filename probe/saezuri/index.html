@@ -63,7 +63,7 @@
    <div class="edit-toolbar">
     <p id="capture-selection" role="status" aria-live="polite">音を選んでください</p>
     <div class="note-navigation"><button id="capture-first">さいしょ</button><button id="capture-previous">← まえ</button><button id="capture-next">つぎ →</button><button id="capture-last">さいご</button></div>
-    <div class="note-actions"><button id="capture-pitch-up">↑ たかく</button><button id="capture-pitch-down">↓ ひくく</button><button id="preview">流れを聴く</button></div>
+    <div class="note-actions"><button id="capture-pitch-up">↑ たかく</button><button id="capture-pitch-down">↓ ひくく</button><button id="preview">流れを聴く</button><button id="capture-edit-delete">けす</button></div>
    </div>
    <div id="capture-blocks" aria-label="音のブロック一覧"></div>
    <div id="capture-score" class="score" aria-label="選んだ音の五線譜。上下左右にスクロールできます" tabindex="0"></div>
@@ -72,12 +72,12 @@
 
     <p>高さは1回で半音ずつ動きます。</p>
     <label><input id="edit-voice" type="checkbox"> 声でも操作する（端末内認識）</label><p id="edit-voice-status" role="status">音声操作OFF</p>
-    <p>「たかく／あげる」「ひくく／さげる」「○ばん」「つぎ」「まえ」「さいしょ」「さいご」「きく」「オッケー」「もどす」「とりけし」。最初の利用時は認識モデルを読み込みます。</p>
+    <p>「たかく／あげる」「ひくく／さげる」「○ばん」「つぎ」「まえ」「さいしょ」「さいご」「きく」「オッケー」「けす」「もどす」「とりけし」。「9ばん けす」と続けても指定できます。最初の利用時は認識モデルを読み込みます。</p>
     <details id="capture-edit-details"><summary>長さ・位置・分割などの詳しい編集</summary>
     <div class="fields"><label>音高（MIDI番号）<input id="capture-edit-midi" type="number" min="0" max="127" step="1"></label>
      <label>開始位置（16分・1〜64）<input id="capture-edit-start" type="number" min="1" max="64" step="1"></label>
      <label>長さ（16分の個数）<input id="capture-edit-length" type="number" min="1" max="64" step="1"></label>
-     <button id="capture-edit-replace">変更候補を作る</button><button id="capture-edit-delete">削除候補を作る</button></div>
+     <button id="capture-edit-replace">変更候補を作る</button></div>
     <p>開始位置1が曲の頭、5が2拍目です。長さ4で4分音符になります。音高は1増減すると半音上下します。</p>
     <div class="fields"><label>何個目の16分で区切るか<input id="capture-split-at" type="number" min="1" max="63" step="1" value="1"></label>
      <button id="capture-edit-split">分割候補を作る</button><button id="capture-edit-merge">次の音と結合候補を作る</button></div>

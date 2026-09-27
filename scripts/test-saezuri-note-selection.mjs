@@ -19,3 +19,9 @@ test('numbers accept exact kana/kanji/numeric words but not unrelated sentences'
   assert.ok(EDIT_WORDS.includes('十 番'));assert.ok(EDIT_WORDS.includes('二 十 一 番 目'));
   assert.equal(EDIT_WORDS.includes('10番'),false);
 });
+test('delete accepts selected-note and numbered commands without interpreting unrelated speech',()=>{
+ for(const text of ['けす','消す','ケス']) assert.equal(parseEditCommand(text),'delete');
+ for(const text of ['9ばん けす','九 番 消す','９番目けす','きゅうばんけす']) assert.equal(parseEditCommand(text),'delete:9');
+ for(const text of ['9ばんけさない','消すかも','65番消す','全部消す']) assert.equal(parseEditCommand(text),null);
+ assert.ok(EDIT_WORDS.includes('九 番 消す'));
+});

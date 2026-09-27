@@ -21,7 +21,7 @@ const example = () => ({ bars: 4, gridStep: 1, notes: [
 ] });
 let state = { pattern: example(), cursor: 0, revision: 0 }, candidate = null, captured = null, capturedOriginal = null;
 let ctx, transport, capture, serial = 0, phase = 'idle', raf, lastFrame = 0, maxFrameGapMs = 0, lastBar = -1;
-const record = { prototype: 'ML-T01-v15', timestamp: new Date().toISOString(), userAgent: navigator.userAgent, playback: null, capture: null };
+const record = { prototype: 'ML-T01-v16', timestamp: new Date().toISOString(), userAgent: navigator.userAgent, playback: null, capture: null };
 const keyChoices = { score: null, capture: null };
 const displayOctaves = { score: 0, capture: 0 };
 const captureAlignments = new Map();

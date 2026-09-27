@@ -28,6 +28,18 @@ const base=process.env.SAEZURI_BASE || 'http://127.0.0.1:8000';
   const say=word=>page.evaluate(word=>window.recognizers.at(-1).events.result({result:{text:word}}),word);
   const report=async()=>{await page.evaluate(()=>document.querySelector('#report').click());return JSON.parse(await page.locator('#metrics').innerText());};
   const initial=(await report()).captureCandidate.notes;
+  await say('9ばん');await say('けす');
+  let deletion=await report();
+  assert.equal(deletion.captureEditing.editCandidate.notes.some(n=>n.id==='n9'),false);
+  assert.equal(deletion.captureEditing.selectedNoteId,'n10');
+  assert.deepEqual(deletion.captureCandidate.notes,initial);
+  assert.deepEqual(deletion.captureEditing.editCandidate.notes.find(n=>n.id==='n10'),initial[9]);
+  await say('もどす');assert.equal((await report()).captureEditing.pending,false);
+  await say('九 番 消す');assert.equal((await report()).captureEditing.editCandidate.notes.length,15);
+  await say('もどす');assert.equal((await report()).captureEditing.pending,false);
+  await say('17番消す');assert.equal((await report()).captureEditing.pending,false);
+  assert.equal((await report()).captureEditing.undoDepth,0);
+
   const inViewport=()=>page.evaluate(()=>{
     const score=document.querySelector('#capture-score'),head=score.querySelector('[data-editor-selected=true] ellipse');
     const a=score.getBoundingClientRect(),b=head.getBoundingClientRect();
@@ -56,6 +68,7 @@ const base=process.env.SAEZURI_BASE || 'http://127.0.0.1:8000';
   assert.equal(r.captureEditing.editCandidate.notes[1].midi,initial[1].midi-1);
   await say('きく');await page.waitForFunction(()=>document.querySelector('#status').dataset.state==='playing');
   assert.equal(await page.evaluate(()=>window.recognizers.at(-1).removed),true);
+  await say('けす');assert.equal((await report()).captureEditing.editCandidate.notes.length,16);
   await say('オッケー');assert.equal((await report()).captureEditing.pending,true,'stale results during playback ignored');
   await page.locator('#stop').click();await listening();
   await say('オッケー');assert.equal((await report()).captureEditing.pending,false);
@@ -83,8 +96,8 @@ const base=process.env.SAEZURI_BASE || 'http://127.0.0.1:8000';
   assert.equal(await page.evaluate(()=>window.streams.length),before);
   await page.setViewportSize({width:390,height:844});
   await page.locator('#capture-pitch-up').click();await page.locator('#capture-score').scrollIntoViewIfNeeded();
-  await page.screenshot({path:'.local-tools/saezuri-v15-editor.png'});
+  await page.screenshot({path:'.local-tools/saezuri-v16-editor.png'});
   assert.deepEqual(errors,[]);
-  console.log(JSON.stringify({result:'PASS',base,sharedVoskAdapter:true,voiceCommands:'numbered jump / first / last / aliases / preview / confirm / undo / cancel',mobileNavigation:'selected head visible at 320 / 390 / 844 / 1280 widths',gates:'playback, mic off, end, cancelled startup',actualSpeechAccuracy:'not tested'}));
+  console.log(JSON.stringify({result:'PASS',base,sharedVoskAdapter:true,voiceCommands:'numbered jump / first / last / selected and numbered delete / aliases / preview / confirm / undo / cancel',mobileNavigation:'selected head visible at 320 / 390 / 844 / 1280 widths',gates:'playback, mic off, end, cancelled startup',actualSpeechAccuracy:'not tested'}));
  } finally {await browser.close();}
 })().catch(e=>{console.error(e);process.exitCode=1;});

@@ -44,3 +44,11 @@ test('delete all can be undone while empty draft remains a valid preview',()=>{
  const reverted=undoEditSession(s); assert.equal(reverted.working.pattern.notes.length,1); assert.equal(reverted.working.selectedNoteId,'b');
  assert.equal(confirmEditSession(s).confirmed.notes.length,0);
 });
+test('deleting a selected note leaves a rest, selects its neighbour, and undo restores it',()=>{
+ const original=pattern();original.notes.push({id:'c',midi:67,startTick:8,durationTick:4});
+ const s=selectEditNote(openEditSession(original),'b');
+ const removed=stageEdit(s,{type:'delete',noteId:'b'});
+ assert.deepEqual(removed.working.pattern.notes.map(n=>[n.id,n.startTick]),[['a',0],['c',8]]);
+ assert.equal(removed.working.selectedNoteId,'c');assert.deepEqual(removed.confirmed,original);
+ const restored=undoEditSession(removed);assert.deepEqual(restored.working.pattern,original);assert.equal(restored.working.selectedNoteId,'b');
+});
