@@ -1,8 +1,12 @@
 // モノガタリズム（仮称）試作 — 画面と状態（基本設計4〜5節）
-// 声での入力（MG-T04）は次の段階。いまはタッチで同じ流れを確かめる。
+// 声（端末内Vosk）とタッチの両方で同じ操作を行う。読み上げ中は聞き取りを止める。
 import { SETS, ROW_KEYS } from './story-data.js';
 import { makeBoard, resolvePicks, buildStory, picksSummary, MAX_PER_ROW } from './story.js';
 import { Reader } from './tts.js';
+import { StorySpeech } from './voice.js';
+import { wordsFor, parse } from './vocabulary.js';
+import { microphoneEnabled, onMicrophoneChange } from '../src/speech/microphone.js';
+import { setMicState } from '../src/ui/micstate.js';
 
 const $ = id => document.getElementById(id);
 const NUM_WORDS = ['いち', 'に', 'さん', 'よん', 'ご'];
@@ -38,8 +42,9 @@ function show(screen) {
   st.screen = screen;
   for (const id of ['start', 'name', 'board']) $('s-' + id).hidden = id !== (screen === 'story' ? 'board' : screen);
   window.scrollTo(0, 0);
+  syncVoice();
 }
-function home() { reader.stop(); show('start'); }
+function home() { reader.stop(); show('start'); syncVoice(); }
 document.querySelectorAll('[data-home]').forEach(b => (b.onclick = home));
 
 // ---------- MG-S01 はじめ ----------
@@ -117,9 +122,12 @@ function openName() {
 function paintName() {
   $('names').querySelectorAll('button').forEach(b => b.classList.toggle('cand', b.textContent === st.nameCand));
   $('name-ok').disabled = !st.nameCand;
-  $('name-guide').innerHTML = st.nameCand
+  const speak = canSpeak();
+  $('name-guide').innerHTML = (st.nameCand
     ? `「${esc(st.nameCand)}」で いい？ →「オッケー」`
-    : 'なまえを えらんでね';
+    : (speak ? 'なまえを いってね' : 'なまえを えらんでね'))
+    + `<span class="words">${speak ? 'いえること：なまえ・おまかせ' + (st.nameCand ? '・オッケー' : '') : 'タッチで えらんでね'}</span>`;
+  syncVoice();
 }
 $('name-ok').onclick = () => { if (st.nameCand) { st.name = st.nameCand; openBoard(); } };
 $('name-omakase').onclick = () => {
@@ -191,6 +199,7 @@ function renderBoard() {
     box.appendChild(row);
   });
   paintGuide();
+  syncVoice();
 }
 
 function paintGuide() {
@@ -203,7 +212,7 @@ function paintGuide() {
   $('start').hidden = !st.done;
   $('back').disabled = !st.done && st.row === 0;
   if (st.done) {
-    g.innerHTML = '「スタート」で めくろう<span class="words">いえること：スタート・もどる</span>';
+    g.innerHTML = `「スタート」で めくろう<span class="words">${canSpeak() ? 'いえること：スタート・もどる' : 'タッチで すすめてね'}</span>`;
     return;
   }
   const k = rowKey();
@@ -217,7 +226,7 @@ function paintGuide() {
   } else {
     main = `「${label}？」 ばんごうを えらんでね`;
   }
-  g.innerHTML = `${main}<span class="words">いえること：${nums}・オッケー・おまかせ・もどる</span>`;
+  g.innerHTML = `${main}<span class="words">${canSpeak() ? `いえること：${nums}・オッケー・おまかせ・もどる` : 'マスを タッチして「オッケー」'}</span>`;
 }
 
 // 番号の指定（タッチ・声で共通）→ 候補を光らせるだけ（2段階確定）
@@ -280,6 +289,7 @@ function startReveal() {
   $('story').innerHTML = st.story.lines.map((l, i) => `<li data-i="${i}" class="${l.shift ? 'shift' : ''}">${esc(l.text)}</li>`).join('');
   $('story-area').hidden = false;
   setTimeout(() => readAll(), 900); // めくりの演出が終わってから読む
+  syncVoice();
 }
 function mark(listId, i) {
   document.querySelectorAll('#picks li, #story li').forEach(li => li.classList.remove('reading'));
@@ -304,10 +314,69 @@ $('read').onclick = () => {
 $('stop').onclick = () => { reader.stop(); mark('story', null); };
 $('again').onclick = () => { reader.stop(); openName(); };
 
+// ---------- 声の入力（MG-T04） ----------
+let micState = 'idle';
+const canSpeak = () => microphoneEnabled() && micState !== 'denied';
+const speech = new StorySpeech({
+  method: new URLSearchParams(location.search).get('speech'),
+  onText: (raw, ctx) => { if (microphoneEnabled() && !document.hidden) handleText(raw, ctx); },
+  onState: state => {
+    const was = micState; micState = state;
+    setMicState($('mic-state'), null, state);
+    $('mic-notice').hidden = state !== 'denied';
+    if ((was === 'denied') !== (state === 'denied')) repaint();
+  },
+});
+// いまの画面で受け付ける区間。読み上げ中・はじめ画面は受け付けない
+function voiceContext() {
+  if (reader.busy) return null;
+  if (st.screen === 'name') return { type: 'name', names: SETS[settings.audience].names, hasCand: !!st.nameCand };
+  if (st.screen !== 'board') return null;
+  if (st.picks) return { type: 'after' };
+  if (st.done) return { type: 'ready' };
+  return { type: 'row', cols: st.board.cols, row: st.row };
+}
+function syncVoice() {
+  const ctx = voiceContext();
+  if (!ctx || !microphoneEnabled()) { speech.close(); return; }
+  speech.open(wordsFor(ctx), ctx, JSON.stringify(ctx));
+}
+function handleText(raw, ctx) {
+  const now = voiceContext();
+  if (!now || JSON.stringify(now) !== JSON.stringify(ctx)) return; // 区間が変わった後に届いた結果は捨てる
+  const cmd = parse(raw, ctx);
+  log(`きこえた「${raw}」→ ${cmd ? cmd.type + (cmd.value != null ? ':' + cmd.value : '') : '（なし）'}`);
+  if (!cmd) return; // 登録外の発話・雑音は何もしない
+  $('heard').textContent = `きこえた：${raw}`;
+  clearTimeout(heardTimer); heardTimer = setTimeout(() => ($('heard').textContent = ''), 2500);
+  if (ctx.type === 'name') {
+    if (cmd.type === 'name') { st.nameCand = cmd.value; paintName(); }
+    else if (cmd.type === 'ok') $('name-ok').click();
+    else if (cmd.type === 'omakase') $('name-omakase').click();
+  } else if (ctx.type === 'row') {
+    if (cmd.type === 'number') chooseNumber(cmd.value);
+    else if (cmd.type === 'ok') confirm();
+    else if (cmd.type === 'omakase') omakase();
+    else if (cmd.type === 'back') back();
+  } else if (ctx.type === 'ready') {
+    if (cmd.type === 'start') startReveal();
+    else if (cmd.type === 'back') back();
+  } else if (ctx.type === 'after' && cmd.type === 'next') $('again').click();
+}
+let heardTimer;
+function repaint() {
+  if (st.screen === 'name') paintName();
+  if (st.screen === 'board' && st.board) paintGuide();
+}
+reader.on(e => { if (e.type === 'busy') syncVoice(); });
+onMicrophoneChange(() => { repaint(); syncVoice(); });
+document.addEventListener('visibilitychange', () => { if (document.hidden) speech.close(); else syncVoice(); });
+$('mic-retry').onclick = () => { speech.retry(); syncVoice(); };
+
 // ---------- 共通 ----------
 function esc(t) { return String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
 let toastTimer;
 function toast(msg) { const el = $('toast'); el.textContent = msg; el.classList.add('show'); clearTimeout(toastTimer); toastTimer = setTimeout(() => el.classList.remove('show'), 1500); }
 
 // 開発確認用（声の入力をつなぐときの入口にもなる）
-window.__story = { st, chooseNumber, confirm, omakase, back, startReveal };
+window.__story = { st, chooseNumber, confirm, omakase, back, startReveal, handleText, voiceContext };

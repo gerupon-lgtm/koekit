@@ -2,6 +2,7 @@
 // 実行: node scripts/test-story.mjs
 import { makeBoard, resolvePicks, buildStory, splitSentences, MAX_PER_ROW } from '../story/story.js';
 import { SETS, ROW_KEYS } from '../story/story-data.js';
+import { parse, wordsFor } from '../story/vocabulary.js';
 
 // 再現できる乱数（mulberry32）
 function seeded(seed) {
@@ -70,6 +71,20 @@ for (const audience of ['kids', 'adult']) {
 {
   const s = splitSentences('「あした、いこう。ね」といいました。すごい！');
   if (s.length !== 2) bad('文分割', s);
+}
+
+// 声の照合（基本設計4節）：1発話1語、区間外の語・続けて言った語は何もしない
+{
+  const row4 = { type: 'row', cols: 4, row: 0 }, row5 = { type: 'row', cols: 5, row: 0 };
+  const name = { type: 'name', names: SETS.kids.names, hasCand: false };
+  const eq = (raw, ctx, want) => { const got = JSON.stringify(parse(raw, ctx)); if (got !== JSON.stringify(want)) bad(`照合 ${raw}/${ctx.type}`, got); };
+  eq('いち', row4, { type: 'number', value: 0 }); eq('し', row4, { type: 'number', value: 3 }); eq('よん', row4, { type: 'number', value: 3 });
+  eq('ご', row4, null); eq('ご', row5, { type: 'number', value: 4 });
+  eq('オッケー', row4, { type: 'ok' }); eq('おーけー', row4, { type: 'ok' }); eq('おまかせ', row4, { type: 'omakase' }); eq('もどる', row4, { type: 'back' });
+  eq('さん オッケー', row4, null); eq('スタート', row4, null); eq('[unk]', row4, null); eq('', row4, null);
+  eq('スタート', { type: 'ready' }, { type: 'start' }); eq('つぎ', { type: 'after' }, { type: 'next' });
+  eq('はな', name, { type: 'name', value: 'はな' }); eq('オッケー', name, null); eq('オッケー', { ...name, hasCand: true }, { type: 'ok' });
+  for (const w of wordsFor(row5)) if (!w) bad('空の受付語');
 }
 
 if (stats.together === 0 || stats.join === 0) bad('だれとの2形が両方出ていない', stats);
