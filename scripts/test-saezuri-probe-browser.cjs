@@ -5,6 +5,19 @@ const base = process.env.SAEZURI_BASE || 'http://127.0.0.1:8000';
  const browser = await chromium.launch({ channel: 'chrome', headless: true, args: ['--autoplay-policy=no-user-gesture-required', '--use-fake-device-for-media-stream', '--use-fake-ui-for-media-stream'] });
  try {
   const context = await browser.newContext({ viewport: { width: 390, height: 844 }, serviceWorkers: 'block', permissions: ['microphone'] });
+  // The fake microphone's changing noise isn't a melody fixture. Supply a
+  // deterministic tone to the real analysis worker for candidate UI checks.
+  await context.addInitScript(()=>{
+   const NativeWorker=window.Worker;
+   window.Worker=class extends NativeWorker {
+    postMessage(data,transfer){
+     if(data.samples && data.options?.windowSize===1024){
+      for(let i=0;i<data.samples.length;i++)data.samples[i]=i<data.sampleRate*.125?0:.2*Math.sin(2*Math.PI*440*i/data.sampleRate);
+     }
+     super.postMessage(data,transfer);
+    }
+   };
+  });
   const page = await context.newPage(), errors = [], external = [];
   page.on('pageerror', e => errors.push(e.message));
   page.on('request', r => { if (!r.url().startsWith(base) && !r.url().startsWith('data:')) external.push(r.url()); });
@@ -51,7 +64,7 @@ const base = process.env.SAEZURI_BASE || 'http://127.0.0.1:8000';
   assert.ok(captureReport.capture.frames.count > 0);
   assert.equal(captureReport.captureOptions.boundaryMode, 'energy-gated');
   assert.equal(captureReport.captureOptions.windowSize, 1024);
-  assert.equal(captureReport.prototype, 'ML-T01-v5');
+  assert.equal(captureReport.prototype, 'ML-T01-v6');
   assert.equal(captureReport.captureOptions.noteMode, 'sustain');
   assert.equal(captureReport.captureOptions.smoothingMs, 80);
   assert.equal(captureReport.capture.recordCount, true);
@@ -59,6 +72,20 @@ const base = process.env.SAEZURI_BASE || 'http://127.0.0.1:8000';
   assert.ok(captureReport.capture.timing.correctionSeconds >= 0.08);
   assert.equal(captureReport.captureOptions.manualMs,80);
   assert.equal(await page.evaluate(()=>localStorage.getItem('saezuri.capture.manualMs')),'80');
+  assert.ok(captureReport.capture.notes.length>0);
+  const mainKey=await page.locator('#score-key-label').getAttribute('data-fifths');
+  const captureKey=Number(await page.locator('#capture-key-label').getAttribute('data-fifths'));
+  await page.locator(captureKey<7?'#capture-key-sharp':'#capture-key-flat').click();
+  const selectedKey=await page.locator('#capture-key-label').getAttribute('data-fifths');
+  assert.equal(await page.locator('#score-key-label').getAttribute('data-fifths'),mainKey);
+  const candidateReport=JSON.parse(await page.locator('#metrics').innerText());
+  assert.deepEqual(candidateReport.captureCandidate.notes,captureReport.capture.notes);
+  await page.locator('#align-start').click();
+  const alignedReport=JSON.parse(await page.locator('#metrics').innerText());
+  assert.equal(alignedReport.captureCandidate.notes[0].startTick,0);
+  assert.ok(alignedReport.capture.notes[0].startTick>0);
+  await page.locator('#adopt').click();
+  assert.equal(await page.locator('#score-key-label').getAttribute('data-fifths'),selectedKey);
   const workerBoundaries = await page.evaluate(async () => {
    const results = [];
    for (const boundaryMode of ['window-start','energy-gated']) {
@@ -98,6 +125,12 @@ const base = process.env.SAEZURI_BASE || 'http://127.0.0.1:8000';
   assert.equal(await page.locator('#score [data-note-id]').count(), 1);
   await page.locator('#undo').click();
   assert.equal(await page.locator('#score [data-note-id]').count(), 0);
+  // Pin C for the explicit C-sharp -> C-natural accidental check.
+  while(Number(await page.locator('#score-key-label').getAttribute('data-fifths'))!==0){
+   const fifths=Number(await page.locator('#score-key-label').getAttribute('data-fifths'));
+   await page.locator(fifths>0?'#score-key-flat':'#score-key-sharp').click();
+  }
+  await page.locator('#score-key-sharp').click(); await page.locator('#score-key-flat').click();
   for (const pitch of ['61', '60']) {
    await page.locator('#pitch').selectOption(pitch);
    await page.locator('#propose').click(); await page.locator('#confirm').click();

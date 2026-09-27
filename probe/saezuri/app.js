@@ -4,6 +4,7 @@ import { ProbeTransport } from './audio.js';
 import { ProbeCapture } from './capture.js';
 import { renderScore, pitchName } from './score.js';
 import { alignCaptureStart } from './capture-support.js';
+import { inferSignature, signature } from './key-signature.js';
 const $ = id => document.getElementById(id);
 const example = () => ({ bars: 4, gridStep: 1, notes: [
   { id: 'low', midi: 48, startTick: 0, durationTick: 4 },
@@ -16,7 +17,27 @@ const example = () => ({ bars: 4, gridStep: 1, notes: [
 ] });
 let state = { pattern: example(), cursor: 0, revision: 0 }, candidate = null, captured = null, capturedOriginal = null;
 let ctx, transport, capture, serial = 0, phase = 'idle', raf, lastFrame = 0, maxFrameGapMs = 0, lastBar = -1;
-const record = { prototype: 'ML-T01-v5', timestamp: new Date().toISOString(), userAgent: navigator.userAgent, playback: null, capture: null };
+const record = { prototype: 'ML-T01-v6', timestamp: new Date().toISOString(), userAgent: navigator.userAgent, playback: null, capture: null };
+const keyChoices = { score: null, capture: null };
+function drawPattern(kind, pattern) {
+  const inferred = inferSignature(pattern.notes), fifths = keyChoices[kind] ?? inferred.fifths;
+  const label = $(`${kind}-key-label`);
+  const source = keyChoices[kind] !== null ? '手動' : inferred.estimated ? '推定' : '未推定・調号なし';
+  label.textContent = `調号：${source} — ${signature(fifths).label}${keyChoices[kind] === null && inferred.alternatives.length ? '（ほかの調号の可能性もあります）' : ''}`;
+  label.dataset.fifths = String(fifths);
+  record.scoreSignatures ??= {};
+  record.scoreSignatures[kind] = { fifths, source };
+  renderScore($(kind === 'score' ? 'score' : 'capture-score'), pattern, { fifths });
+  updateKeyButtons();
+}
+function updateKeyButtons() {
+  for(const kind of ['score','capture']){
+    const fifths = Number($(`${kind}-key-label`).dataset.fifths || 0);
+    $(`${kind}-key-flat`).disabled = phase !== 'idle' || fifths <= -7;
+    $(`${kind}-key-sharp`).disabled = phase !== 'idle' || fifths >= 7;
+    $(`${kind}-key-auto`).disabled = phase !== 'idle' || keyChoices[kind] === null;
+  }
+}
 const labels = { idle: '準備できました', preparing: '音とマイクの準備中', playing: '再生中・停止はボタンで', 'count-in': '8拍のカウント中', recording: '4小節を取り込み中', analyzing: '端末内で解析中' };
 function setPhase(next, message) {
   phase = next; $('status').dataset.state = next; $('status').textContent = message || labels[next];
@@ -25,9 +46,10 @@ function setPhase(next, message) {
   $('capture').disabled = next !== 'idle' || !microphoneEnabled();
   $('confirm').disabled = next !== 'idle' || !candidate || !!candidate.code;
   $('cancel').disabled = next !== 'idle' || !candidate;
+  updateKeyButtons();
 }
 function draw() {
-  renderScore($('score'), state.pattern);
+  drawPattern('score', state.pattern);
   $('remaining').textContent = `入力位置 ${state.cursor / 4}拍目・残り ${(state.pattern.bars * 16 - state.cursor) / 4}拍`;
   $('candidate').textContent = !candidate ? '候補なし' : candidate.code ? `置けません：${candidate.code}${candidate.details?.shortageBeats ? `（${candidate.details.shortageBeats}拍超過）` : ''}` : `候補：${$('pitch').value === 'rest' ? 'やすみ' : pitchName(Number($('pitch').value))} ${Number($('duration').value) / 4}拍 → オッケーで確定`;
   setPhase(phase);
@@ -52,7 +74,7 @@ async function prepare() {
       record.captureAlignmentTicks = 0; $('align-start').textContent = '頭の休符を詰める';
       $('capture-position').textContent = '取り込み完了';
       $('review').hidden = !captured;
-      if (captured) renderScore($('capture-score'), captured);
+      if (captured) drawPattern('capture', captured);
       setPhase('idle', captured ? '候補を試聴して確認してください' : 'ほとんど音を検出できませんでした。カウントからやり直してください。');
       showReport();
     });
@@ -105,6 +127,8 @@ $('play').onclick = () => play(); $('stop').onclick = () => { if (transport?.act
 $('capture').onclick = async () => {
   stop(); const request = serial; captured = null; capturedOriginal = null; $('review').hidden = true; setPhase('preparing');
   record.timestamp = new Date().toISOString(); record.capture = null; record.captureAlignmentTicks = 0;
+  keyChoices.capture = null;
+  if (record.scoreSignatures) delete record.scoreSignatures.capture;
   $('capture-position').textContent = 'カウント待ち';
   try {
     const tempo = tempoValue(); await prepare(); if (request !== serial) return;
@@ -125,9 +149,9 @@ $('align-start').onclick = () => {
   record.captureAlignmentTicks = record.captureAlignmentTicks ? 0 : capturedOriginal.notes[0].startTick;
   captured = record.captureAlignmentTicks ? alignCaptureStart(capturedOriginal, record.captureOptions.tempo) : structuredClone(capturedOriginal);
   $('align-start').textContent = record.captureAlignmentTicks ? '頭の休符を戻す' : '頭の休符を詰める';
-  renderScore($('capture-score'), captured); showReport();
+  drawPattern('capture', captured); showReport();
 };
-$('adopt').onclick = () => { if (!captured) return; state = { pattern: structuredClone(captured), cursor: 0, revision: state.revision + 1 }; candidate = null; captured = null; $('review').hidden = true; draw(); };
+$('adopt').onclick = () => { if (!captured) return; keyChoices.score = keyChoices.capture; state = { pattern: structuredClone(captured), cursor: 0, revision: state.revision + 1 }; candidate = null; captured = null; $('review').hidden = true; draw(); };
 $('discard').onclick = () => { captured = null; $('review').hidden = true; };
 $('example').onclick = () => { state = { pattern: example(), cursor: 0, revision: state.revision + 1 }; candidate = null; draw(); };
 $('empty').onclick = () => { state = { pattern: { bars: 4, gridStep: 2, notes: [] }, cursor: 0, revision: state.revision + 1 }; candidate = null; draw(); };
@@ -138,6 +162,14 @@ $('confirm').onclick = () => { const result = commitNote(state, candidate); if (
 $('cancel').onclick = () => { candidate = null; draw(); };
 $('undo').onclick = () => { if (candidate) return; state = undo(state); draw(); };
 $('report').onclick = showReport;
+for (const kind of ['score','capture']) for (const [suffix,delta] of [['flat',-1],['sharp',1],['auto',null]]) {
+  $(`${kind}-key-${suffix}`).onclick = () => {
+    const pattern = kind === 'score' ? state.pattern : captured;
+    if (!pattern || phase !== 'idle') return;
+    keyChoices[kind] = delta === null ? null : Math.max(-7,Math.min(7,Number($(`${kind}-key-label`).dataset.fifths)+delta));
+    drawPattern(kind, pattern); showReport();
+  };
+}
 document.addEventListener('visibilitychange', () => { if (document.hidden) stop('画面が隠れたため中断しました（試作の動作）'); });
 addEventListener('pagehide', () => { stop(); ctx?.close(); });
 try { const saved = localStorage.getItem('saezuri.capture.manualMs'); if (saved !== null && Number.isFinite(Number(saved)) && Number(saved)>=-200 && Number(saved)<=400) $('timing-adjust').value = saved; } catch {}

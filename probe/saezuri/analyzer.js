@@ -54,7 +54,8 @@ export function detectPitch(samples, sampleRate, { rmsFloor = 0.008, threshold =
 // sustained changes form notes, whose pitch is averaged BEFORE semitone rounding.
 function smoothPitches(frames, endSeconds, smoothingMs, tempo, noteMode) {
   const data = frames.map(f => ({ ...f, origin: 'detected' }));
-  if (!smoothingMs) return data;
+  const onsetCorrections = [];
+  if (!smoothingMs) return { data, onsetCorrections };
   const radius = smoothingMs / 2000;
   const hold = Math.min(smoothingMs * 0.00075, 60 / (tempo * 4) * 0.5);
   for (let first = 0; first < data.length;) {
@@ -126,13 +127,31 @@ function smoothPitches(frames, endSeconds, smoothingMs, tempo, noteMode) {
       } else pending=-1;
     }
     apply(start,last);
+    if (sustain) {
+      // A short semitone offset at a voiced onset may be the singer settling
+      // into the held note. Use its longer stable body as the pitch reference.
+      // Stay inside this pitched run: never consume silence or an unknown gap.
+      let attackEnd = first + 1;
+      while (attackEnd < last && data[attackEnd].midi === data[first].midi) attackEnd++;
+      if (attackEnd < last) {
+        let stableEnd = attackEnd + 1;
+        while (stableEnd < last && data[stableEnd].midi === data[attackEnd].midi) stableEnd++;
+        const attackSeconds = data[attackEnd].time - data[first].time;
+        const stableSeconds = (data[stableEnd]?.time ?? endSeconds) - data[attackEnd].time;
+        const fromMidi = data[first].midi, toMidi = data[attackEnd].midi;
+        if (Math.abs(fromMidi-toMidi) === 1 && attackSeconds <= 0.3 && stableSeconds >= Math.max(0.3, attackSeconds * 1.5)) {
+          for (let i = first; i < attackEnd; i++) data[i].midi = toMidi;
+          onsetCorrections.push({ start: data[first].time, end: data[attackEnd].time, fromMidi, toMidi });
+        }
+      }
+    }
     first=last;
   }
-  return data;
+  return { data, onsetCorrections };
 }
 
 export function analyzeFrames(frames, { endSeconds, maxGapSeconds = 0.15, minDetectedRatio = 0.1, smoothingMs = 0, tempo = 120, noteMode = 'detail' } = {}) {
-  const data = smoothPitches(frames, endSeconds, smoothingMs, tempo, noteMode);
+  const { data, onsetCorrections } = smoothPitches(frames, endSeconds, smoothingMs, tempo, noteMode);
   let detected = 0, nonSilent = 0;
   for (let i = 0; i < data.length; i++) {
     const span = Math.max(0, Math.min(endSeconds, data[i + 1]?.time ?? endSeconds) - data[i].time);
@@ -140,7 +159,7 @@ export function analyzeFrames(frames, { endSeconds, maxGapSeconds = 0.15, minDet
     if (data[i].kind === 'pitched') detected += span;
   }
   const ratio = nonSilent ? detected / nonSilent : 0;
-  if (!detected || ratio < minDetectedRatio) return { empty: true, ratio, segments: [], unknownSeconds: nonSilent - detected };
+  if (!detected || ratio < minDetectedRatio) return { empty: true, ratio, segments: [], unknownSeconds: nonSilent - detected, onsetCorrections: [] };
   for (let i = 0; i < data.length; i++) {
     if (data[i].kind !== 'unknown') continue;
     const start = i;
@@ -164,7 +183,7 @@ export function analyzeFrames(frames, { endSeconds, maxGapSeconds = 0.15, minDet
       }
     } else segments.push({ start: frame.time, end, midi, origin: frame.origin, completedRanges: frame.origin === 'completed' ? [{ start: frame.time, end }] : [] });
   });
-  return { empty: false, ratio, segments, unknownSeconds: nonSilent - detected };
+  return { empty: false, ratio, segments, unknownSeconds: nonSilent - detected, onsetCorrections };
 }
 
 export function quantizeSegments(segments, tempo, endTick = 64) {

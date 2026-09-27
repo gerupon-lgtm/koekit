@@ -7,21 +7,23 @@ const base = process.env.SAEZURI_BASE || 'http://127.0.0.1:8000';
   const page=await browser.newPage({viewport:{width:390,height:844}}), errors=[];
   page.on('pageerror',e=>errors.push(e.message));
   await page.goto(base+'/probe/saezuri/');
+  await page.locator('#score svg').first().waitFor();
   // Exercise the actual worker's default and explicit comparison options.
   const modes=await page.evaluate(async()=>{
    const results={};
-   for(const noteMode of [undefined,'sustain','detail']) {
+   for(const scenario of [undefined,'sustain','detail','onset']) {
+    const noteMode=scenario==='onset'?'sustain':scenario;
     let phase=0;
     const samples=Float32Array.from({length:96000},(_,i)=>{
-     const midi=54.2+.85*Math.sin(2*Math.PI*5*i/48000+1.1);
+     const midi=scenario==='onset'?(i<12000?55:54):54.2+.85*Math.sin(2*Math.PI*5*i/48000+1.1);
      phase+=2*Math.PI*440*2**((midi-69)/12)/48000;
      return .2*Math.sin(phase)+.05*Math.sin(2*phase);
     });
-    results[noteMode??'default']=await new Promise((resolve,reject)=>{
+    results[scenario??'default']=await new Promise((resolve,reject)=>{
      const worker=new Worker('./worker.js',{type:'module'});
      const timeout=setTimeout(()=>{worker.terminate();reject(new Error('worker timeout'));},10000);
      worker.onerror=e=>{clearTimeout(timeout);worker.terminate();reject(new Error(e.message));};
-     worker.onmessage=({data})=>{clearTimeout(timeout);worker.terminate();resolve(data.notes.map(n=>[n.startTick,n.durationTick,n.midi]));};
+     worker.onmessage=({data})=>{clearTimeout(timeout);worker.terminate();if(scenario==='onset')results.onsetCorrections=data.onsetCorrections;resolve(data.notes.map(n=>[n.startTick,n.durationTick,n.midi]));};
      worker.postMessage({samples,sampleRate:48000,tempo:120,sessionId:1,options:{smoothingMs:80,noteMode}},[samples.buffer]);
     });
    }
@@ -30,6 +32,9 @@ const base = process.env.SAEZURI_BASE || 'http://127.0.0.1:8000';
   assert.deepEqual(modes.default,[[0,16,54]]);
   assert.deepEqual(modes.sustain,modes.default);
   assert.ok(modes.detail.length>1);
+  assert.deepEqual(modes.onset,[[0,16,54]]);
+  assert.equal(modes.onsetCorrections[0].fromMidi,55);
+  assert.equal(modes.onsetCorrections[0].toMidi,54);
   const result=await page.evaluate(async()=>{
    const {ProbeCapture}=await import('./capture.js');
    const {setMicrophoneEnabled}=await import('../../src/speech/microphone.js');
