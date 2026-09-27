@@ -1,5 +1,5 @@
 import { microphoneEnabled, onMicrophoneChange } from '../../src/speech/microphone.js';
-import { captureTiming, scheduleShaker } from './capture-support.js';
+import { captureTiming, scheduleShaker, prepareShaker } from './capture-support.js';
 export class ProbeCapture {
   constructor(ctx, onState, onResult) {
     this.ctx = ctx; this.onState = onState; this.onResult = onResult; this.serial = 0; this.counts = [];
@@ -23,13 +23,18 @@ export class ProbeCapture {
       this.silent = this.ctx.createGain(); this.silent.gain.value = 0;
       this.source.connect(this.node).connect(this.silent).connect(this.ctx.destination);
       const inputSettings = stream.getAudioTracks()[0]?.getSettings() || {};
+      if(options.countSound){prepareShaker(this.ctx,false);prepareShaker(this.ctx,true);}
       const anchor = this.ctx.currentTime + 0.35;
       this.timing = captureTiming({ anchor, tempo, sampleRate: this.ctx.sampleRate, baseLatency: this.ctx.baseLatency,
         outputLatency: this.ctx.outputLatency, inputLatency: inputSettings.latency, manualMs: options.manualMs || 0, audibleCount: !!options.countSound });
       this.anchor = anchor; this.tempo = tempo;
       this.startTime = this.timing.musicalStart;
-      this.endTime = this.timing.endFrame / this.ctx.sampleRate;
-      this.node.port.postMessage({ type: 'start', startFrame: this.timing.startFrame, endFrame: this.timing.endFrame });
+      const acousticSync=!!options.acousticSync && !!options.countSound;
+      const captureStartFrame=acousticSync?Math.round((anchor-.1)*this.ctx.sampleRate):this.timing.startFrame;
+      const captureEndFrame=acousticSync?Math.round((this.timing.musicalStart+16*60/tempo+Math.max(1.2,this.timing.correctionSeconds))*this.ctx.sampleRate):this.timing.endFrame;
+      this.timing.captureStartFrame=captureStartFrame;this.timing.captureEndFrame=captureEndFrame;
+      this.endTime = captureEndFrame / this.ctx.sampleRate;
+      this.node.port.postMessage({ type: 'start', startFrame: captureStartFrame, endFrame: captureEndFrame });
       if (options.countSound) for (let i = 0; i < this.timing.countTimes.length; i++) {
         const beat = this.timing.countBeats[i];
         if (beat >= 8 && !options.recordCount) break;
@@ -53,9 +58,9 @@ export class ProbeCapture {
           worker.terminate(); this.worker = null; this.active = false;
           const { deviceId, groupId, ...diagnosticSettings } = inputSettings;
           this.onResult({ ...result, inputSettings: diagnosticSettings, processing: options.processing, countSound: options.countSound,
-            recordCount: options.recordCount, timing: this.timing });
+            recordCount: options.recordCount, timing: result.timing || this.timing });
         };
-        worker.postMessage({ samples: data.samples, sampleRate: data.sampleRate, tempo, sessionId, options }, [data.samples.buffer]);
+        worker.postMessage({ samples: data.samples, sampleRate: data.sampleRate, tempo, sessionId, options, timing: this.timing, acousticSync }, [data.samples.buffer]);
       };
     } catch (error) {
       stream?.getTracks().forEach(t => t.stop());

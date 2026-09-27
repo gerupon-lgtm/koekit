@@ -28,10 +28,13 @@
   <div class="fields"><button id="mic" aria-pressed="true">マイク ON</button><label><input type="checkbox" id="count-sound" checked> カウント音</label><label><input type="checkbox" id="record-count" checked> 録音中もシェーカーで拍を刻む</label><label><input type="checkbox" id="processing"> OSの音声処理を要求</label></div>
   <p>短いシェーカー音を使い、解析時にその高音域を抑えます。スピーカーからの混入が気になる場合はイヤホンを使うか、カウント音をOFFにしてください。</p>
   <p id="capture-position">カウント待ち</p>
+  <label><input type="checkbox" id="acoustic-sync" checked> 録ったドンカマでタイミングを合わせる（試作）</label>
+  <p>カウントから端末内で録り、ドンカマを4回以上確認できたら実測で補正します。まずスピーカー・OS音声処理OFFでお試しください。イヤホンなどで検出できなければ従来の推定補正を使います。音声は保存・送信しません。</p>
+  <p id="acoustic-status" role="status">ドンカマの実測はまだありません。</p>
   <div class="fields"><label>音の区切り <select id="note-mode"><option value="sustain">長音を保つ（ハナウタ）</option><option value="detail">細かい変化も拾う（従来）</option></select></label>
   <label>音高のならし <select id="smoothing"><option value="80">標準（80ms）</option><option value="120">強め（120ms）</option><option value="0">なし（比較用）</option></select></label>
   <label>タイミング追加補正（ms）<input id="timing-adjust" type="number" min="-200" max="400" step="10" value="0"></label></div>
-  <p>音高をならしてから最も近い半音にし、開始・長さを16分単位に丸めます。入出力遅延は端末の推定値で補正。まだ遅れる場合は追加補正を＋方向へ調整してください（この端末に保存）。</p>
+  <p>音高をならしてから最も近い半音にし、開始・長さを16分単位に丸めます。ドンカマの実測が成功すれば推定補正を置き換えます。追加補正はどちらにも加算します（この端末に保存）。実測の初回比較では追加補正を0にしてください。</p>
   <p>「長音を保つ」は小さな揺れで音を分けず、歌い出しの短い半音のずれも後続の長音にまとめます。意図した短い半音の動きは「細かい変化も拾う」で比較してください。「ならし：なし」ではこの抑制もOFFになります。設定は次の取り込みに反映します。</p>
   <details><summary>解析の比較条件（未確定）</summary><div class="fields">
    <label>発音区間の方式 <select id="boundary-mode"><option value="energy-gated">短区間の無音判定（比較案）</option><option value="window-start">音高窓の先頭（旧方式）</option></select></label>

@@ -53,7 +53,7 @@ export function filterCaptureSamples(samples, sampleRate) {
 }
 
 const shakerBuffers = new WeakMap();
-export function scheduleShaker(ctx, time, accent = false) {
+export function prepareShaker(ctx, accent = false) {
   if (!shakerBuffers.has(ctx)) shakerBuffers.set(ctx, new Map());
   const cache = shakerBuffers.get(ctx);
   if (!cache.has(accent)) {
@@ -61,7 +61,10 @@ export function scheduleShaker(ctx, time, accent = false) {
     const buffer = ctx.createBuffer(1, data.length, ctx.sampleRate);
     buffer.copyToChannel(data, 0); cache.set(accent, buffer);
   }
-  const buffer = cache.get(accent);
+  return cache.get(accent);
+}
+export function scheduleShaker(ctx, time, accent = false) {
+  const buffer = prepareShaker(ctx, accent);
   const node = ctx.createBufferSource(); node.buffer = buffer; node.connect(ctx.destination);
   node.start(time); node.onended = () => node.disconnect();
   return () => { try { node.stop(); } catch {} node.disconnect(); };
