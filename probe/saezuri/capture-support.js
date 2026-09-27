@@ -14,8 +14,8 @@ export function captureTiming({ anchor, tempo, sampleRate, baseLatency, outputLa
 // detector's voice band. Speaker nonlinearities can still produce lower energy.
 export function shakerSamples(sampleRate, accent = false) {
   const size = Math.round(sampleRate * (accent ? 0.04 : 0.02)), buffer = new Float32Array(size);
-  const low = Math.min(accent ? 6500 : 8500, sampleRate * (accent ? 0.30 : 0.36));
-  const high = Math.min(accent ? 8500 : 10500, sampleRate * (accent ? 0.36 : 0.44));
+  const low = Math.min(accent ? 8500 : 6500, sampleRate * (accent ? 0.36 : 0.30));
+  const high = Math.min(accent ? 10500 : 8500, sampleRate * (accent ? 0.44 : 0.36));
   let seed = 7243;
   for (let n = 0; n < 48; n++) {
     seed = (1664525 * seed + 1013904223) >>> 0;

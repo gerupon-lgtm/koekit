@@ -16,7 +16,7 @@ const example = () => ({ bars: 4, gridStep: 1, notes: [
 ] });
 let state = { pattern: example(), cursor: 0, revision: 0 }, candidate = null, captured = null, capturedOriginal = null;
 let ctx, transport, capture, serial = 0, phase = 'idle', raf, lastFrame = 0, maxFrameGapMs = 0, lastBar = -1;
-const record = { prototype: 'ML-T01-v4', timestamp: new Date().toISOString(), userAgent: navigator.userAgent, playback: null, capture: null };
+const record = { prototype: 'ML-T01-v5', timestamp: new Date().toISOString(), userAgent: navigator.userAgent, playback: null, capture: null };
 const labels = { idle: '準備できました', preparing: '音とマイクの準備中', playing: '再生中・停止はボタンで', 'count-in': '8拍のカウント中', recording: '4小節を取り込み中', analyzing: '端末内で解析中' };
 function setPhase(next, message) {
   phase = next; $('status').dataset.state = next; $('status').textContent = message || labels[next];
@@ -99,7 +99,7 @@ async function play(pattern = state.pattern, preview = false) {
   } catch (error) { if (request === serial) stop(error.message); }
 }
 function showReport() {
-  $('metrics').textContent = JSON.stringify({ ...record, conditions: $('conditions').value, capture: record.capture ? { ...record.capture, frames: { count: record.capture.frames.length, pitched: record.capture.frames.filter(f => f.kind === 'pitched').length, unknown: record.capture.frames.filter(f => f.kind === 'unknown').length } } : null }, null, 2);
+  $('metrics').textContent = JSON.stringify({ ...record, conditions: $('conditions').value, captureCandidate: captured, capture: record.capture ? { ...record.capture, frames: { count: record.capture.frames.length, pitched: record.capture.frames.filter(f => f.kind === 'pitched').length, unknown: record.capture.frames.filter(f => f.kind === 'unknown').length } } : null }, null, 2);
 }
 $('play').onclick = () => play(); $('stop').onclick = () => { if (transport?.active) record.playback = { ...record.playback, ...transport.metrics, maxFrameGapMs, stoppedAtTick: transport.position(), reason: 'USER_STOP' }; stop(); showReport(); };
 $('capture').onclick = async () => {

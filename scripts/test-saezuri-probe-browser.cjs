@@ -51,7 +51,7 @@ const base = process.env.SAEZURI_BASE || 'http://127.0.0.1:8000';
   assert.ok(captureReport.capture.frames.count > 0);
   assert.equal(captureReport.captureOptions.boundaryMode, 'energy-gated');
   assert.equal(captureReport.captureOptions.windowSize, 1024);
-  assert.equal(captureReport.prototype, 'ML-T01-v4');
+  assert.equal(captureReport.prototype, 'ML-T01-v5');
   assert.equal(captureReport.captureOptions.noteMode, 'sustain');
   assert.equal(captureReport.captureOptions.smoothingMs, 80);
   assert.equal(captureReport.capture.recordCount, true);

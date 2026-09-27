@@ -19,6 +19,24 @@ test('bar-head shaker is longer and stronger than ordinary beats',()=>{
  const peak=s=>s.reduce((p,x)=>Math.max(p,Math.abs(x)),0);
  assert.ok(peak(accent)>=peak(regular)*1.8);
 });
+
+for(const sr of [44100,48000]) test(`bar-head shaker uses the higher band, ordinary beats the lower band at ${sr}`,()=>{
+ const power=(samples,from,to)=>{
+  let total=0;
+  for(let hz=from;hz<=to;hz+=100){
+   let re=0,im=0;
+   for(let i=0;i<samples.length;i++){
+    re+=samples[i]*Math.cos(2*Math.PI*hz*i/sr);
+    im+=samples[i]*Math.sin(2*Math.PI*hz*i/sr);
+   }
+   total+=re*re+im*im;
+  }
+  return total;
+ };
+ const regular=shakerSamples(sr),accent=shakerSamples(sr,true);
+ assert.ok(power(accent,8600,10400)>power(accent,6600,8400)*10);
+ assert.ok(power(regular,6600,8400)>power(regular,8600,10400)*10);
+});
 test('unknown latency does not invent a measurement and explicit adjustment may be negative',()=>{
  const plan=captureTiming({anchor:1,tempo:180,sampleRate:44100,manualMs:-50});
  assert.equal(plan.correctionSeconds,-0.05);
