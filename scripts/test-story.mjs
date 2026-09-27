@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 import { makeBoard, resolvePicks, buildStory, splitSentences, MAX_PER_ROW } from '../story/story.js';
 import { SETS, ROW_KEYS, EXTRA_KEYS, FIRST_STAGE, LAST_STAGE, loadSets } from '../story/story-data.js';
 import { parse, wordsFor } from '../story/vocabulary.js';
+import { buildCoherentStory } from '../story/coherent-story.js';
 
 // 画面と同じ JSON を読む
 await loadSets(path => JSON.parse(readFileSync(new URL(path, new URL('../story/story-data.js', import.meta.url)), 'utf8')));
@@ -56,12 +57,26 @@ for (const audience of ['kids', 'adult']) {
       }
       // ふつう：いつ・どこでは選んだ順にだけ進む（戻らない）
       if (order === 'normal') {
+        const before = JSON.stringify({ picks, st });
+        const coherent = buildCoherentStory({ audience, name: set.names[0], picks, original: st });
+        const text = coherent.lines.map(line => line.text).join('');
+        if (/[{}]|undefined|null/.test(text)) bad('別版の置換漏れ', text);
+        for (const k of ROW_KEYS) for (const w of picks[k].words) if (!text.includes(w)) bad('別版から選んだ語が消えた', w);
+        if (!text.includes(set.names[0])) bad('別版に主人公がいない', audience);
+        if (audience === 'kids' && /[\u4e00-\u9fff]/.test(text)) bad('別版のこども用に漢字', text);
+        if (!/めでたし、めでたし。|おしまい。$/.test(coherent.lines.at(-1).text)) bad('別版の結末がない', text);
+        if (coherent.lines.filter(line => !line.shift).length !== 6) bad('別版の因果の段階が欠けた');
+        if (before !== JSON.stringify({ picks, st })) bad('別版が原作や選択を変更した');
+        if (n < 10 && JSON.stringify(coherent) !== JSON.stringify(buildCoherentStory({ audience, name: set.names[0], picks, original: st }))) bad('別版が切替のたび変化する');
         for (const k of ['itsu', 'basho']) {
           // 場面ごとの並び（seq）が、選んだ順にだけ進むこと。選んだ語はすべて並びに入ること
           const ws = picks[k].words;
           const order = st.seq[k].map(w => ws.indexOf(w));
           for (let i = 1; i < order.length; i++) if (order[i] < order[i - 1]) bad(`${k} が選んだ順に進まない`, st.seq[k].join('/'));
           for (const w of ws) if (!st.seq[k].includes(w)) bad(`${k} の語が並びに入らない`, w);
+          const otherOrder = coherent.seq[k].map(w => ws.indexOf(w));
+          for (let i = 1; i < otherOrder.length; i++) if (otherOrder[i] < otherOrder[i - 1]) bad(`別版の ${k} が逆戻りする`);
+          if (new Set(coherent.seq[k].slice(3)).size !== 1) bad(`別版の解決途中で ${k} が変わる`);
         }
         if (!st.lines[st.lines.length - 1].text.length) bad('最後の文が空');
         if (st.lines[0].shift) bad('ふつうで最初の文がつなぎ文', st.lines[0].text);
@@ -120,6 +135,18 @@ for (const a of ['kids', 'adult']) {
     const next = buildStory({ audience: 'adult', name: '佐藤', picks: p, rnd, avoid: new Set(first.used) });
     if (next.used.some(u => first.used.includes(u))) { bad('直前の場面を避けていない', next.used); break; }
   }
+}
+
+// 別版の生成は原作のランダム抽選系列を消費しない。
+{
+  const rnd = seeded(81), b = makeBoard('kids', rnd), picks = resolvePicks(b, {}, rnd);
+  const original = buildStory({ audience: 'kids', name: 'はな', picks, rnd });
+  const random = Math.random;
+  try {
+    Math.random = () => { throw new Error('別版が原作と同じ乱数を消費した'); };
+    buildCoherentStory({ audience: 'kids', name: 'はな', picks, original });
+  } catch (error) { bad(error.message); }
+  finally { Math.random = random; }
 }
 
 // おまかせ：何も選ばなければ各行1つ・印つき

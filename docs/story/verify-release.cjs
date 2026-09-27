@@ -21,7 +21,7 @@ const base = process.env.STORY_BASE || 'http://127.0.0.1:8124';
     assert.equal(await page.locator('.coming-soon a,.coming-soon button').count(), 0);
     await page.evaluate(() => navigator.serviceWorker.ready);
     await page.waitForFunction(() => !!navigator.serviceWorker.controller);
-    for (const file of ['/story/', '/story/data/kids.json', '/story/data/adult.json', '/story/assets/monogatarhythm.svg']) {
+    for (const file of ['/story/', '/story/data/kids.json', '/story/data/adult.json', '/story/assets/monogatarhythm.svg', '/story/coherent-story.js', '/story/coherent-scenes.js']) {
       assert.ok(await page.evaluate(async file => !!await caches.match(file), file), 'cached: ' + file);
     }
     await context.setOffline(true);
@@ -34,11 +34,16 @@ const base = process.env.STORY_BASE || 'http://127.0.0.1:8124';
     for (let i = 0; i < 4; i++) await page.locator('#ok').click();
     await page.locator('#start').click();
     assert.ok(await page.locator('#story li').count() >= 4);
+    const original = await page.locator('#story').innerText();
+    await page.locator('[data-story-version="coherent"]').click();
+    assert.notEqual(await page.locator('#story').innerText(), original);
+    await page.locator('[data-story-version="original"]').click();
+    assert.equal(await page.locator('#story').innerText(), original);
     assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
     await page.locator('#end').click();
     await page.locator('#home-link').click();
     assert.equal(await page.locator('.app-card').count(), 7);
     assert.deepEqual(errors, []);
-    console.log('PASS: ' + base + ' seven cards, coming-soon label, offline first story visit, touch creation, home return');
+    console.log('PASS: ' + base + ' seven cards, coming-soon label, offline first story visit, touch creation, two story versions, home return');
   } finally { await browser.close(); }
 })().catch(error => { console.error(error); process.exitCode = 1; });

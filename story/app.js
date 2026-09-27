@@ -2,6 +2,7 @@
 // 声（端末内Vosk）とタッチの両方で同じ操作を行う。読み上げ中は聞き取りを止める。
 import { SETS, ROW_KEYS } from './story-data.js';
 import { makeBoard, resolvePicks, buildStory, picksSummary, MAX_PER_ROW, loadSets } from './story.js';
+import { buildCoherentStory } from './coherent-story.js';
 import { Reader } from './tts.js';
 import { StorySpeech } from './voice.js';
 import { wordsFor, parse } from './vocabulary.js';
@@ -39,7 +40,7 @@ const st = {
   screen: 'start',
   name: '', nameCand: null,
   board: null, row: 0, cand: null, sel: null, done: false,
-  picks: null, story: null,
+  picks: null, story: null, originalStory: null, coherentStory: null, storyVersion: 'original',
 };
 let modal = null;
 let revealTimer = null;
@@ -220,6 +221,7 @@ function openBoard() {
   st.sel = Object.fromEntries(ROW_KEYS.map(k => [k, []]));
   cancelAuto();
   st.row = 0; st.cand = null; st.done = false; st.picks = null; st.story = null;
+  st.originalStory = st.coherentStory = null; st.storyVersion = 'original';
   $('who').textContent = `しゅじんこう：${st.name}`;
   $('story-area').hidden = true;
   $('board-btns').hidden = false;
@@ -378,22 +380,56 @@ function startReveal() {
   cancelAuto();
   st.picks = resolvePicks(st.board, st.sel);
   st.story = buildStory({ audience: settings.audience, name: st.name, picks: st.picks, order: settings.order, avoid: new Set(recentScenes.flat()), avoidType: lastType });
+  st.originalStory = st.story;
+  st.coherentStory = null;
+  st.storyVersion = 'original';
   recentScenes.push(st.story.used); if (recentScenes.length > 2) recentScenes.shift();
   lastType = st.story.type;
-  $('intro').textContent = st.story.intro;
   log(`生成 型=${st.story.type} 場面=${st.story.stages.join('→')} companion=${st.story.companion}`);
   $('board-btns').hidden = true;
   $('guide').innerHTML = '';
   renderBoard();
   const summary = picksSummary(settings.audience, st.picks);
   $('picks').innerHTML = summary.map((s, i) => `<li data-i="${i}">${esc(s)}</li>`).join('');
-  $('story').innerHTML = st.story.lines.map((l, i) => `<li data-i="${i}" class="${l.shift ? 'shift' : ''}">${esc(l.text)}</li>`).join('');
+  paintStory();
   $('story-area').hidden = false;
   paintNavigation();
   paintAfterGuide();
   scheduleRead(); // めくりの演出が終わってから読む
   syncVoice();
 }
+function paintStory() {
+  $('intro').textContent = st.story.intro;
+  $('story').innerHTML = st.story.lines.map((l, i) => `<li data-i="${i}" class="${l.shift ? 'shift' : ''}">${esc(l.text)}</li>`).join('');
+  $('story-switch').hidden = settings.order !== 'normal';
+  $('story-version-label').hidden = settings.order !== 'normal';
+  $('story-version-label').textContent = st.storyVersion === 'original' ? 'もとの おはなし' : 'すじの とおった おはなし';
+  document.querySelectorAll('[data-story-version]').forEach(button => {
+    button.setAttribute('aria-pressed', String(button.dataset.storyVersion === st.storyVersion));
+  });
+}
+function selectStoryVersion(version) {
+  if (st.screen !== 'board' || !st.picks || settings.order !== 'normal' || modal || version === st.storyVersion) return;
+  if (!['original', 'coherent'].includes(version)) return;
+  // 切替前の読み上げ・めくり後の予約を止め、同じ2本を行き来する。
+  clearTimeout(revealTimer); revealTimer = null;
+  reader.stop(); mark('story', null);
+  if (version === 'coherent' && !st.coherentStory) {
+    st.coherentStory = buildCoherentStory({ audience: settings.audience, name: st.name, picks: st.picks, original: st.originalStory });
+  }
+  st.storyVersion = version;
+  st.story = version === 'original' ? st.originalStory : st.coherentStory;
+  paintStory(); paintAfterGuide();
+  scrollToStory();
+  speakStory([
+    { text: st.story.intro, pauseAfter: 800 },
+    ...st.story.lines.map((line, i) => ({ text: line.text, onStart: () => mark('story', i) })),
+  ]);
+  syncVoice();
+}
+document.querySelectorAll('[data-story-version]').forEach(button => {
+  button.onclick = () => selectStoryVersion(button.dataset.storyVersion);
+});
 function scheduleRead() {
   clearTimeout(revealTimer);
   const story = st.story;
