@@ -32,7 +32,7 @@ const base=process.env.SAEZURI_BASE||'http://127.0.0.1:8000';
    await page.locator('#capture').click();assert.equal(await page.locator('#acoustic-sync').isDisabled(),true);
    await page.waitForFunction(()=>document.querySelector('#status').dataset.state==='idle',null,{timeout:25000});
    const report=JSON.parse(await page.locator('#metrics').innerText());
-   assert.equal(report.prototype,'ML-T01-v19');
+   assert.equal(report.prototype,'ML-T01-v22');
    assert.equal(report.capture.acousticTiming.status,omitCount?'unavailable':'measured');
    assert.match(await page.locator('#acoustic-status').innerText(),omitCount?/従来の推定補正/:/220ms/);
    assert.equal(report.capture.notes[0].startTick,0);assert.equal(report.capture.notes[0].midi,57);

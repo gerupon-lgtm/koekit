@@ -35,6 +35,11 @@ export class EditVoice {
   constructor({createInput,onCommand,onStatus}) {
     Object.assign(this,{createInput,onCommand,onStatus});
     this.input=null; this.active=false; this.loading=false; this.epoch=0;
+    this.words=EDIT_WORDS;this.parse=parseEditCommand;
+  }
+  configure(words=EDIT_WORDS,parse=parseEditCommand) {
+    if(this.words===words && this.parse===parse) return;
+    this.setActive(false,{release:true});this.words=words;this.parse=parse;
   }
   setActive(active, {release=false}={}) {
     if (!active) {
@@ -51,7 +56,7 @@ export class EditVoice {
     const epoch=++this.epoch;
     const input=this.input ??= this.createInput();
     const current=()=>this.active && this.epoch===epoch && this.input===input;
-    const result=raw=>{ if(current()) { const command=parseEditCommand(raw); if(command) this.onCommand(command); } };
+    const result=raw=>{ if(current()) { const command=this.parse(raw); if(command) this.onCommand(command); } };
     const fail=()=>{ if(current()) {this.setActive(false,{release:true}); this.onStatus?.('error');} };
     const end=()=>{
       if(!current()) return;
@@ -62,7 +67,7 @@ export class EditVoice {
     input.on('result',result); input.on('error',fail); input.on('end',end);
     this.detach=()=>{input.off('result',result); input.off('error',fail); input.off('end',end);};
     this.onStatus?.('loading');
-    Promise.resolve().then(()=>current() && input.start(EDIT_WORDS)).then(()=>{
+    Promise.resolve().then(()=>current() && input.start(this.words)).then(()=>{
       if(current()) {this.loading=false;this.onStatus?.('listening');}
     }).catch(fail);
   }

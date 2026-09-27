@@ -39,3 +39,12 @@ test('unexpected end resumes only if the editing interval remains open',async()=
  f.events.get('end')();f.controller.setActive(false,{release:true});await flush();
  assert.equal(f.controller.active,false);assert.equal(f.controller.input,null);
 });
+
+test('switching input vocabulary drops stale results and applies the new parser only after restart',async()=>{
+ const f=fixture();f.controller.setActive(true);await flush();const stale=f.events.get('result');
+ const words=['ド 一'];f.controller.configure(words,text=>text==='ド 一'?{type:'note',midi:60,durationTick:4}:null);
+ stale('オッケー');assert.deepEqual(f.commands,[]);assert.equal(f.input.disposed,1);
+ f.controller.setActive(true);await flush();f.events.get('result')('ド 一');
+ assert.deepEqual(f.commands,[{type:'note',midi:60,durationTick:4}]);
+ f.controller.setActive(false,{release:true});
+});

@@ -1,4 +1,5 @@
-import { proposeEdit, validateNotes } from '../../saezuri/document.js';
+import { proposeEdit, validateNotes, resizePattern } from '../../saezuri/document.js';
+import {validateAccompaniment} from '../../saezuri/music/accompaniment.js';
 export { commitNote, undo } from '../../saezuri/document.js';
 
 const error = code => ({code, details:{}});
@@ -29,10 +30,25 @@ function proposePattern(state, pattern, cursor) {
 export function proposeCaptureEdit(state, command) {
   const invalid = validateNotes(state?.pattern);
   if (invalid) return invalid;
-  if (!command || !['replace','delete','split','merge-next','transpose'].includes(command.type)) return error('COMMAND_UNKNOWN');
+  if (!command || !['replace','delete','split','merge-next','transpose','resize','key','accompaniment'].includes(command.type)) return error('COMMAND_UNKNOWN');
   if (command.type === 'replace' || command.type === 'delete') return proposeEdit(state, command);
 
   const pattern = structuredClone(state.pattern);
+  if(command.type==='accompaniment') {
+    const invalid=validateAccompaniment(command.value);
+    if(invalid) return invalid;
+    pattern.accompaniment=structuredClone(command.value);
+    return proposePattern(state,pattern,state.cursor);
+  }
+  if(command.type==='resize') {
+    const resized=resizePattern(state,command.bars,{copy:!!command.copy,confirmed:true});
+    return resized.code?resized:proposePattern(state,resized.pattern,resized.cursor);
+  }
+  if(command.type==='key') {
+    if(!['C','Am'].includes(command.key)) return error('KEY_INVALID');
+    pattern.key={tonicPitchClass:command.key==='Am'?9:0,mode:command.key==='Am'?'minor':'major'};
+    return proposePattern(state,pattern,state.cursor);
+  }
   if (command.type === 'transpose') {
     if (!Number.isInteger(command.semitones)) return error('NOTE_PITCH');
     if (!pattern.notes.length) return error('NOTE_NOT_FOUND');

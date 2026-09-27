@@ -29,6 +29,28 @@ button[aria-pressed=true]{border:2px solid #77599b;background:#ded5ef}
 #capture-blocks.is-playing button[aria-pressed=true]{background:#ede9f7;color:#44345d;box-shadow:none;border:1px solid #a99bb8}
 #capture-blocks button[data-playing=note]{background:#b44b20!important;color:#fff!important;box-shadow:0 0 0 2px #b44b20!important;opacity:1}
 .editor-focus #capture-score svg{width:100%;max-width:100%;height:auto}
+#composer-panel{border:1px solid #d9cfe5;background:#faf8fd;border-radius:10px;padding:8px;margin:8px 0}
+#composer-panel p{font-size:13px;margin:5px 0;line-height:1.4}
+#composer-position{font-weight:bold}
+.composer-values{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.composer-values label{font-size:13px}.composer-values input,.composer-values select{width:100%;min-height:44px;padding:6px}
+#composer-keys{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;margin:6px 0}
+#composer-keys button{min-height:44px;margin:0;padding:5px}
+#composer-beats{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:2px;margin:6px 0}
+#composer-beats button{font-size:12px;padding:2px;min-height:44px}
+.composer-replace{display:flex;flex-direction:row;align-items:center;font-size:13px}
+.editor-focus.manual-composer #capture-note-panel{display:flex;flex-direction:column}
+.manual-composer #capture-blocks{order:0}
+.manual-composer #capture-score{order:1;height:180px;max-height:30svh}
+.editor-focus.manual-composer .edit-toolbar{order:2;position:static}
+.manual-composer #composer-panel{margin:6px 0;padding:6px}
+.manual-composer #composer-position,.manual-composer #composer-candidate{margin:4px 0;font-size:13px}
+.manual-composer #capture-selection{margin:3px 0}
+.manual-composer .note-navigation button{min-height:36px;font-size:12px}
+#image-settings{font-size:13px;border:1px solid #ddd3e6;border-radius:8px;padding:0 6px;margin:6px 0}
+#image-settings select{width:100%;min-width:0;min-height:44px}
+.composer-voice-hint{font-size:12px;margin:4px 0;color:#655570}
+.manual-composer[data-composer-view="score"] #capture-blocks,.manual-composer[data-composer-view="blocks"] #capture-score{display:none}
 
 /* Editing-first presentation; the technical layout remains available for comparison. */
 .editor-focus main{max-width:1000px;padding:12px 12px 100px}

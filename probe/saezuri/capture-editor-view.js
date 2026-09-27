@@ -3,6 +3,7 @@ import { analyzeFrames, quantizeSegments } from './analyzer.js';
 import { decodePitchTrace } from './analysis-comparison.js';
 import { pitchName } from './score.js';
 import { orderedNotes, selectionTarget } from './note-selection.js';
+import {proposeEntry,confirmEntry,cancelEntry,moveEntryCursor,entryPreview} from './entry-session.js';
 
 const clone = value => value == null ? value : structuredClone(value);
 const labels = { current: '現在の設定', detail: '細かい変化', unsmoothed: 'ならしなし' };
@@ -10,7 +11,10 @@ const messages = {
   NOTE_NOT_FOUND: '編集する音符を選んでください。',
   NOTE_PITCH: '音高は0〜127の整数で指定してください。',
   NOTE_GRID: '開始位置と長さは16分音符単位の整数で指定してください。',
-  NOTE_OVERFLOW: '4小節の終わりを超えています。開始位置か長さを調整してください。',
+  NOTE_OVERFLOW: '最後の小節を超えています。開始位置か長さを調整してください。',
+  ENTRY_PITCH:'ド〜うえうえドの白鍵から選んでください。',
+  ENTRY_REST_REPLACE:'音を休符にするときは「けす」を使ってください。',
+  DRAFT_PENDING:'仮の編集をオッケーで確定するか、戻してから音を追加してください。',
   NOTE_OVERLAP: 'ほかの音符と重なります。開始位置か長さを調整してください。',
   NOTE_SPLIT: '分ける位置は、音符の先頭と末尾の間で指定してください。',
   NOTE_NEXT_NOT_FOUND: 'つなぐ次の音符がありません。',
@@ -57,8 +61,31 @@ export class CaptureEditorView {
 
   get _active() { return this._variants.get(this._variant); }
   get pattern() { return clone(this._active?.session.confirmed ?? null); }
-  get previewPattern() { return clone(this._active?.state.pattern ?? null); }
-  get pending() { return hasDraftChanges(this._active?.session); }
+  get previewPattern() { return this._active ? clone(entryPreview(this._active.session)) : null; }
+  get pending() { return !!this.entry || hasDraftChanges(this._active?.session); }
+  get entry() {return this._active?.session.entry ?? null;}
+  get cursor() {return this._active?.state.cursor ?? 0;}
+  get selectedNoteId() {return this._active?.state.selectedNoteId ?? null;}
+
+  inputNote(input) {
+    if(this._busy || !this.isOpen) return;
+    const next=proposeEntry(this._active.session,input);
+    if(next.code) {this._status(messages[next.code]??next.code);return;}
+    this._active.session=next;
+    const problem=next.entry.proposal;
+    this._status(problem.code==='NOTE_OVERFLOW'?`${problem.details.shortageBeats===.5?'はんぱく':`${problem.details.shortageBeats}拍`}たりません。長さを直してください。`:problem.code?(messages[problem.code]??problem.code):'候補です。聴いてからオッケーで確定します。');
+    this._emit(false);
+  }
+  moveCursor(tick) {
+    if(this._busy || !this.isOpen) return;
+    const next=moveEntryCursor(this._active.session,tick);
+    if(next.code) {this._status(messages[next.code]??next.code);return;}
+    this._active.session=next;this._emit(false);
+  }
+  changeStructure(command) {
+    if(this._busy || !this.isOpen || this.entry) return;
+    this._stage(command);
+  }
   get edited() { return !!this._active?.edited; }
   get accepted() { return !!this._active?.session.accepted; }
   get isOpen() { return !!this._active && !this._active.session.closed; }
@@ -143,6 +170,7 @@ export class CaptureEditorView {
       variant: this.variant,
       selectedNoteId: this._active?.state.selectedNoteId ?? null,
       revision: this._active?.state.revision ?? 0,
+      inputCursor:this.cursor, inputCandidate:this.entry?clone(this.entry.input):null, inputError:this.entry?.proposal.code??null,
       edited: this.edited,
       pending: this.pending,
       accepted:this.accepted, closed:!this.isOpen, undoDepth:this._active?.session.history.length ?? 0,
@@ -170,11 +198,12 @@ export class CaptureEditorView {
 
   _select(noteId) {
     if (this._busy || !this.isOpen) return;
+    if(this.entry) {this._status('入力候補を確定するか取り消してから、編集する音を選んでください。');return;}
     const next = selectEditNote(this._active.session,noteId);
     if (next.code) return;
     this._active.session=next;
     this._emit(false);
-    this._revealSelection();
+    this._revealSelection(true);
   }
 
   command(command) {
@@ -182,6 +211,7 @@ export class CaptureEditorView {
     if(command==='confirm') return this._confirm();
     if(command==='undo') return this._undo();
     if(command==='cancel') return this._cancel();
+    if(this.entry) {this._status('入力候補を確定するか取り消してください。');return;}
     const notes=orderedNotes(this._active.state.pattern.notes), index=notes.findIndex(n=>n.id===this._active.state.selectedNoteId), note=notes[index];
     if(!note) return;
     if(command==='delete') return this._stage({type:'delete',noteId:note.id});
@@ -201,6 +231,7 @@ export class CaptureEditorView {
   }
 
   _stage(command) {
+    if(this.entry) {this._status('入力候補を確定するか取り消してください。');return;}
     const next=stageEdit(this._active.session,command);
     if(next.code) {this._status(messages[next.code] ?? 'この変更はできません。');return;}
     this._active.session=next; this._active.edited=true;
@@ -221,18 +252,22 @@ export class CaptureEditorView {
 
   _confirm() {
     if(this._busy || !this.isOpen) return;
-    this._active.session=confirmEditSession(this._active.session);
-    this._status('まとめて確定しました。続けて編集できます。履歴は「おわり」まで残ります。');
+    const adding=!!this.entry;
+    const next=adding?confirmEntry(this._active.session):confirmEditSession(this._active.session);
+    if(next.code) {this._status(messages[next.code]??next.code);return;}
+    this._active.session=next;this._active.edited=true;
+    this._status(adding?'追加を確定しました。次の音を入力できます。':'まとめて確定しました。続けて編集できます。履歴は「おわり」まで残ります。');
     this._emit(false,true,true);
   }
 
   _cancel() {
     if(this._busy || !this.isOpen || !this.pending) return;
-    this._active.session=cancelEditSession(this._active.session);
+    this._active.session=this.entry?cancelEntry(this._active.session):cancelEditSession(this._active.session);
     this._status('最後に確定した音列へ戻しました。'); this._emit(false);
   }
 
   _undo() {
+    if(!this._busy && this.isOpen && this.entry) return this._cancel();
     if(this._busy || !this.isOpen || !this._active.session.history.length) return;
     this._active.session=undoEditSession(this._active.session);
     this._status('ひとつ戻しました。仮の音列を確認してオッケーで確定してください。'); this._emit(false);
@@ -244,6 +279,7 @@ export class CaptureEditorView {
     elements['capture-variant'].disabled = locked || this.pending;
     for (const option of elements['capture-variant'].options) option.disabled = !this._variants.has(option.value);
     const notes = orderedNotes(active?.state.pattern.notes ?? []);
+    if(active) for(const id of ['capture-edit-start','capture-edit-length','capture-split-at']) elements[id].max=String(active.state.pattern.bars*16);
     for (const button of this._transposeButtons) {
       const step=Number(button.dataset.transpose);
       button.disabled=locked || !notes.length || notes.some(n=>n.midi+step<0 || n.midi+step>127);
@@ -273,20 +309,20 @@ export class CaptureEditorView {
     }
     for(const id of ['capture-first','capture-previous']) elements[id].disabled ||= selectedIndex<=0;
     for(const id of ['capture-last','capture-next']) elements[id].disabled ||= selectedIndex===notes.length-1;
-    elements['capture-edit-confirm'].disabled = locked || (this.accepted && !this.pending);
+    elements['capture-edit-confirm'].disabled = locked || !!this.entry?.proposal.code || (this.accepted && !this.pending);
     elements['capture-edit-cancel'].disabled = this._busy || !this.pending;
-    elements['capture-edit-undo'].disabled = locked || !active?.session.history.length;
+    elements['capture-edit-undo'].disabled = locked || (!this.entry && !active?.session.history.length);
     const blocks=elements['capture-blocks'], focusedId=blocks.contains(document.activeElement)?document.activeElement.dataset.noteId:null;
     const scrollLeft=blocks.scrollLeft;
     blocks.replaceChildren();
-    for(const [i,note] of notes.entries()) {
+    for(const [i,note] of orderedNotes(this.previewPattern?.notes??[]).entries()) {
       const button=document.createElement('button');button.dataset.noteId=note.id;
       const number=document.createElement('strong');number.textContent=String(i+1);
       const pitch=document.createElement('span');pitch.textContent=pitchName(note.midi);
       button.append(number,pitch);
-      button.setAttribute('aria-pressed',String(note.id===selected?.id));button.disabled=locked;
+      button.setAttribute('aria-pressed',String(note.id===selected?.id));button.disabled=locked || !notes.some(n=>n.id===note.id);
       button.setAttribute('aria-label',`${i+1}ばんめの音 ${pitchName(note.midi)}`);
-      button.style.borderTopWidth=`${4+Math.min(24,note.midi-Math.min(...notes.map(n=>n.midi)))*2}px`; blocks.append(button);
+      button.style.borderTopWidth=`${4+Math.min(24,note.midi-Math.min(...(this.previewPattern?.notes??[]).map(n=>n.midi)))*2}px`; blocks.append(button);
     }
     blocks.scrollLeft=scrollLeft;
     if(focusedId) [...blocks.children].find(button=>button.dataset.noteId===focusedId)?.focus({preventScroll:true});
@@ -294,8 +330,10 @@ export class CaptureEditorView {
     if(this.isOpen) queueMicrotask(()=>{if(this.isOpen) this._revealSelection();});
   }
 
-  _revealSelection() {
+  _revealSelection(explicit=false) {
     if(this._playbackKey!=null) return;
+    const manual=this._active?.state.pattern.source==='manual';
+    if(manual && !explicit) return;
     const score=this._elements['capture-score'];
     const selected=score.querySelector('[data-editor-selected="true"]');
     if(!selected) return;
@@ -311,7 +349,7 @@ export class CaptureEditorView {
     if(block) blocks.scrollLeft+=block.getBoundingClientRect().left-blocks.getBoundingClientRect().left-(blocks.clientWidth-block.offsetWidth)/2;
     const visibleHead=head.getBoundingClientRect(), footer=document.querySelector('footer').getBoundingClientRect();
     const toolbar=document.querySelector('.edit-toolbar').getBoundingClientRect();
-    if(visibleHead.top<Math.max(0,toolbar.bottom) || visibleHead.bottom>footer.top) {
+    if(!manual && !document.body.classList.contains('melody-app') && (visibleHead.top<Math.max(0,toolbar.bottom) || visibleHead.bottom>footer.top)) {
       document.getElementById('capture-note-panel').scrollIntoView({block:'start',behavior:'instant'});
     }
   }
@@ -340,7 +378,7 @@ export class CaptureEditorView {
       this._render(false);return;
     }
     if(!this.isOpen) return;
-    const notes=orderedNotes(this._active.state.pattern.notes);
+    const notes=orderedNotes(entryPreview(this._active.session).notes);
     const index=notes.findIndex(n=>n.startTick<=tick && tick<n.startTick+n.durationTick);
     const note=notes[index], bar=Math.min(this._active.state.pattern.bars-1,Math.floor(tick/16));
     const fragment=[...score.querySelectorAll('[data-start-tick]')].find(n=>Number(n.dataset.startTick)<=tick && tick<Number(n.dataset.startTick)+Number(n.dataset.durationTick));
