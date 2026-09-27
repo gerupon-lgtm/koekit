@@ -3,57 +3,59 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#f7f3ea">
-<title>モノガタリズム（仮称）試作</title>
+<meta name="theme-color" content="#faf5ed">
+<title>モノガタリズム</title>
+<link rel="manifest" href="../manifest.json">
+<link rel="icon" href="../assets/icons/koekit-192.png">
+<link rel="apple-touch-icon" href="../assets/icons/koekit-180.png">
 <script type="module" src="../sw-register.js"></script>
+<link rel="stylesheet" href="../src/ui/menu-controls.css">
 <link rel="stylesheet" href="../src/ui/mic-toggle.css">
+<link rel="stylesheet" href="../src/ui/voice-guide.css">
 <link rel="stylesheet" href="./styles.css">
 <script type="module" src="../src/ui/mic-toggle.js"></script>
 </head>
 <body class="kids">
-<main>
-  <div class="micbar">
-    <div id="mic-notice" class="note" role="status" hidden><span>こえを使えません。タッチであそべます。</span><button class="btn ghost" id="mic-retry">こえを再試行</button></div>
+<main id="app">
+  <header class="toolbar">
+    <a id="home-link" class="icon menu-home" href="../" aria-label="コエキット トップへ"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 3l9 8h-2.5v9h-5.5v-6h-2v6H5.5v-9H3z"/></svg></a>
+    <button id="nav-back" class="icon" aria-label="もどる" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
+    <button id="quit" class="icon" aria-label="おはなしを おわる" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 4H4v16h6m0-8h11m-5-5 5 5-5 5"/></svg></button>
+    <button id="help-open" class="icon menu-help" aria-label="つかいかた">？</button>
     <button type="button" id="mic-state" class="mic-state" aria-label="マイク：オン"><svg class="mic" viewBox="0 0 24 24"><g class="body"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M6 11a6 6 0 0 0 12 0M12 17v4M8 21h8" fill="none" stroke="currentColor" stroke-width="2"/></g><path class="slash" d="m3 3 18 18"/></svg></button>
-  </div>
+  </header>
+  <div id="mic-notice" class="note" role="status" hidden><span>こえを つかえません。タッチで あそべます。</span><button class="btn ghost" id="mic-retry">もういちど つなぐ</button></div>
   <!-- MG-S01 はじめ -->
   <section id="s-start" class="screen">
-    <h1>モノガタリズム<small>（仮称・試作）</small></h1>
+    <h1><img class="wordmark" src="./assets/monogatarhythm.svg" alt="モノガタリズム" width="937" height="196"></h1>
     <p class="lead">カードをえらんで、おはなしをつくろう。</p>
-    <div class="panel">
+    <div class="menu-options">
       <div class="row"><span class="lbl">モード</span>
         <div class="seg" data-key="audience"><button data-v="kids">こども</button><button data-v="adult">おとな</button></div></div>
       <div class="row"><span class="lbl">よみあげ</span>
         <div class="seg" data-key="tts"><button data-v="on">ON</button><button data-v="off">OFF</button></div></div>
-      <div class="row" id="voice-row"><span class="lbl">よみあげの こえ</span><select id="voice" aria-label="よみあげの こえ"></select></div>
       <div class="row"><span class="lbl">ばめんの じゅんばん</span>
         <div class="seg" data-key="order"><button data-v="normal">ふつう</button><button data-v="mechakucha">めちゃくちゃ</button></div></div>
+      <div class="row" id="voice-row"><label class="lbl" for="voice">よみあげの こえ</label><select id="voice" aria-label="よみあげの こえ"></select></div>
     </div>
-    <button class="main" id="go-name">はじめる（オッケー）</button>
-    <p class="guide" id="start-guide"></p>
+    <div class="menu-actions">
+      <div class="guide" id="start-guide"></div><p class="voice-options" id="start-guide-words"></p>
+      <button class="main" id="go-name">はじめる</button>
+    </div>
 
     <details class="panel small">
-      <summary>読み上げの速さ・ためし読み</summary>
-      <div class="row"><span class="lbl">速さ <span id="rateV">1.0</span></span><input type="range" id="rate" min="0.6" max="1.4" step="0.1" value="1"></div>
+      <summary>よむ はやさ・ためしよみ</summary>
+      <div class="row"><label class="lbl" for="rate">はやさ <span id="rateV">1.0</span></label><input type="range" id="rate" min="0.6" max="1.4" step="0.1" value="1"></div>
       <button class="btn" id="tts-test">ためしに よむ</button>
-    </details>
-    <details class="panel small" id="diag">
-      <summary>読み上げの検証（オフライン確認用）</summary>
-      <p id="status"></p>
-      <p>手順：①オンラインで一度ひらく ②機内モードにする ③ひらき直して「ためしに よむ」→下の記録を確認</p>
-      <table><thead><tr><th>声</th><th>言語</th><th>端末内</th></tr></thead><tbody id="voices"></tbody></table>
-      <pre class="log" id="log"></pre>
-      <div class="btns"><button class="btn" id="copy-log">記録をコピー</button></div>
     </details>
     <footer class="title-footer"><span id="ver"></span>© 2026 SIKUMI LAB</footer>
   </section>
 
   <!-- MG-S02 なまえ -->
   <section id="s-name" class="screen" hidden>
-    <div class="top"><button class="btn ghost" data-home>はじめへ</button></div>
     <h2>だれの おはなし？</h2>
     <div class="names" id="names"></div>
-    <p class="guide" id="name-guide"></p>
+    <div class="guide" id="name-guide"></div><p class="voice-options" id="name-guide-words"></p>
     <div class="btns">
       <button class="btn" id="name-omakase">おまかせ</button>
       <button class="btn ok" id="name-ok">オッケー</button>
@@ -62,9 +64,9 @@
 
   <!-- MG-S03 ばん ／ MG-S04 おはなし -->
   <section id="s-board" class="screen" hidden>
-    <div class="top"><button class="btn ghost" data-home>はじめへ</button><span class="who" id="who"></span></div>
+    <div class="top"><span class="who" id="who"></span></div>
     <div class="board" id="board"></div>
-    <p class="guide" id="guide"></p>
+    <div class="guide" id="guide"></div><p class="voice-options" id="guide-words"></p>
     <p class="heard" id="heard" aria-live="polite"></p>
     <div class="btns" id="board-btns">
       <button class="btn" id="back">もどる</button>
@@ -76,17 +78,38 @@
       <ul class="picks" id="picks"></ul>
       <p class="intro" id="intro"></p>
       <ol class="story" id="story"></ol>
+      <div class="guide" id="after-guide"></div><p class="voice-options" id="after-guide-words"></p>
       <div class="btns">
         <button class="btn dark" id="read">▶ よみあげ</button>
         <button class="btn" id="stop">■ とめる</button>
-        <button class="btn ok" id="again">つぎ</button>
       </div>
-      <div class="btns"><button class="btn" id="end">おわり（はじめへ）</button></div>
-      <p class="guide" id="after-guide"></p>
+      <div class="result-actions"><button class="btn green" id="again">つぎの おはなし</button><button class="btn subtle" id="end">おわり</button></div>
     </div>
   </section>
 </main>
-<div class="toast" id="toast"></div>
+<dialog id="help-dialog" class="menu-help-dialog" aria-labelledby="help-title">
+  <h2 id="help-title">あそびかた</h2>
+  <ol class="help-steps">
+    <li>しゅじんこうの なまえを えらんで「オッケー」。</li>
+    <li>「いつ・どこで・だれと・なにを」の ばんごうを えらぼう。ひとつの だんで 3つまで。</li>
+    <li>おなじ ばんごうを もういちど えらぶと とりけし。「オッケー」で つぎの だんへ。3つ えらぶと じどうで すすむよ。</li>
+    <li>えらばずに「オッケー」なら おまかせ。さいごの「オッケー」で めくると、おはなしが はじまるよ。</li>
+  </ol>
+  <p>こえは ひとことずつ。よんでいる あいだは こえを おやすみ。ぜんぶ タッチでも あそべるよ。</p>
+  <p>めくる までは「もどる」で なおせるよ。よみおわったら「つぎ」で つぎの おはなし、「おわり」で はじめへ。</p>
+  <button id="help-close">とじる</button>
+  <details class="panel small diagnostics" id="diag">
+    <summary>保護者向け：読み上げの検証</summary>
+    <p id="status"></p><p>オンラインで一度ひらき、機内モードでひらき直して「ためしに よむ」。この画面で記録を確認できます。</p>
+    <table><thead><tr><th>声</th><th>言語</th><th>端末内</th></tr></thead><tbody id="voices"></tbody></table>
+    <pre class="log" id="log"></pre><button class="btn" id="copy-log">記録をコピー</button>
+  </details>
+</dialog>
+<dialog id="exit-dialog" class="menu-help-dialog" aria-labelledby="exit-title">
+  <h2 id="exit-title">はじめに もどる？</h2><p>えらんだ カードは リセットされるよ。</p>
+  <div class="result-actions"><button class="btn green" id="exit-continue">つづける</button><button class="btn subtle" id="exit-confirm">おわり</button></div>
+</dialog>
+<div class="toast" id="toast" role="status"></div>
 <script type="module" src="./app.js"></script>
 </body>
 </html>

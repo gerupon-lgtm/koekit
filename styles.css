@@ -459,7 +459,7 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--color-primary);
 .doubutsu .memory-level-list { gap: 12px; max-height: 368px; }
 .doubutsu .level-picker .unlock-hint { margin-top: auto; }
 
-/* トップだけ：5作品の入口を画面高へ配分。個別アプリのCSSには波及しない。 */
+/* トップだけ：従来5作品時のカード寸法を維持。追加作品は自然に縦スクロールする。 */
 .page:has(.app-card.delivery) .app-list {gap:10px;}
 .page:has(.app-card.delivery) .app-card {min-height:clamp(76px,calc((100svh - 324px) / 5),116px);padding:6px 18px;}
 .page:has(.app-card.delivery) .app-card .wordmark {height:clamp(38px,6svh,60px);}
@@ -477,3 +477,9 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--color-primary);
   .page:has(.app-card.delivery) .app-desc {font-size:11px;}
   .page:has(.app-card.delivery) .family-note {font-size:11px;margin:6px 0 2px;}
 }
+
+/* 2026-09-27：モノガタリズムの入口とサエズリズムの予告。個別作品には適用しない。 */
+.page .app-card.story .app-name {width:min(305px,100%);}
+.page .app-card.coming-soon {border-color:#d5d0e5;background:#f8f7fc;box-shadow:none;}
+.page .app-card.coming-soon:active {transform:none;}
+.page .app-status {display:inline-block;padding:2px 12px;border-radius:999px;background:#e7e1f2;color:#574773;font-size:12px;font-weight:700;line-height:1.7;}

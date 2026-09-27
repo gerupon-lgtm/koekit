@@ -1,0 +1,627 @@
+[
+  {
+    "viewport": "320x568",
+    "app": "ピタリズム",
+    "logo": {
+      "x": 64,
+      "y": 8,
+      "width": 192,
+      "height": 52.40625
+    },
+    "paintedLogo": {
+      "width": 191.97799744897958,
+      "height": 52.40625
+    },
+    "caption": null,
+    "menu": {
+      "x": 16,
+      "y": 108.40625,
+      "width": 288,
+      "height": 374.1875
+    },
+    "overflow": false
+  },
+  {
+    "viewport": "320x568",
+    "app": "メモリズム",
+    "logo": {
+      "x": 64,
+      "y": 8,
+      "width": 192,
+      "height": 52.40625
+    },
+    "paintedLogo": {
+      "width": 191.97799744897958,
+      "height": 52.40625
+    },
+    "caption": null,
+    "menu": {
+      "x": 16,
+      "y": 108.40625,
+      "width": 288,
+      "height": 374.1875
+    },
+    "overflow": false
+  },
+  {
+    "viewport": "320x568",
+    "app": "イロドリズム",
+    "logo": {
+      "x": 46,
+      "y": 58,
+      "width": 228,
+      "height": 56
+    },
+    "paintedLogo": {
+      "width": 228,
+      "height": 55.92991239048811
+    },
+    "caption": {
+      "x": 16,
+      "y": 122,
+      "width": 288,
+      "height": 24
+    },
+    "menu": {
+      "x": 16,
+      "y": 158,
+      "width": 288,
+      "height": 280
+    },
+    "overflow": false
+  },
+  {
+    "viewport": "320x568",
+    "app": "ジントリズム",
+    "logo": {
+      "x": 58,
+      "y": 58,
+      "width": 204,
+      "height": 50
+    },
+    "paintedLogo": {
+      "width": 203.8265306122449,
+      "height": 50
+    },
+    "caption": {
+      "x": 16,
+      "y": 112,
+      "width": 288,
+      "height": 21
+    },
+    "menu": {
+      "x": 16,
+      "y": 141,
+      "width": 288,
+      "height": 316.140625
+    },
+    "overflow": false
+  },
+  {
+    "viewport": "320x568",
+    "app": "モノガタリズム",
+    "logo": {
+      "x": 20,
+      "y": 58,
+      "width": 280,
+      "height": 50
+    },
+    "paintedLogo": {
+      "width": 239.03061224489795,
+      "height": 50
+    },
+    "caption": {
+      "x": 12,
+      "y": 112,
+      "width": 296,
+      "height": 24
+    },
+    "menu": {
+      "x": 12,
+      "y": 146,
+      "width": 296,
+      "height": 223.171875
+    },
+    "overflow": false
+  },
+  {
+    "viewport": "390x664",
+    "app": "ピタリズム",
+    "logo": {
+      "x": 64,
+      "y": 16,
+      "width": 262,
+      "height": 71.515625
+    },
+    "paintedLogo": {
+      "width": 261.9807079081633,
+      "height": 71.515625
+    },
+    "caption": null,
+    "menu": {
+      "x": 16,
+      "y": 147.515625,
+      "width": 358,
+      "height": 394.1875
+    },
+    "overflow": false
+  },
+  {
+    "viewport": "390x664",
+    "app": "メモリズム",
+    "logo": {
+      "x": 64,
+      "y": 16,
+      "width": 262,
+      "height": 71.515625
+    },
+    "paintedLogo": {
+      "width": 261.9807079081633,
+      "height": 71.515625
+    },
+    "caption": null,
+    "menu": {
+      "x": 16,
+      "y": 147.515625,
+      "width": 358,
+      "height": 394.1875
+    },
+    "overflow": false
+  },
+  {
+    "viewport": "390x664",
+    "app": "イロドリズム",
+    "logo": {
+      "x": 45,
+      "y": 58,
+      "width": 300,
+      "height": 74
+    },
+    "paintedLogo": {
+      "width": 300,
+      "height": 73.59198998748435
+    },
+    "caption": {
+      "x": 16,
+      "y": 142,
+      "width": 358,
+      "height": 24
+    },
+    "menu": {
+      "x": 16,
+      "y": 182,
+      "width": 358,
+      "height": 280
+    },
+    "overflow": false
+  },
+  {
+    "viewport": "390x664",
+    "app": "ジントリズム",
+    "logo": {
+      "x": 45,
+      "y": 58,
+      "width": 300,
+      "height": 74
+    },
+    "paintedLogo": {
+      "width": 300,
+      "height": 73.59198998748435
+    },
+    "caption": {
+      "x": 16,
+      "y": 142,
+      "width": 358,
+      "height": 24
+    },
+    "menu": {
+      "x": 16,
+      "y": 182,
+      "width": 358,
+      "height": 316.140625
+    },
+    "overflow": false
+  },
+  {
+    "viewport": "390x664",
+    "app": "モノガタリズム",
+    "logo": {
+      "x": 55,
+      "y": 58,
+      "width": 280,
+      "height": 50
+    },
+    "paintedLogo": {
+      "width": 239.03061224489795,
+      "height": 50
+    },
+    "caption": {
+      "x": 16,
+      "y": 112,
+      "width": 358,
+      "height": 24
+    },
+    "menu": {
+      "x": 16,
+      "y": 146,
+      "width": 358,
+      "height": 223.171875
+    },
+    "overflow": false
+  },
+  {
+    "viewport": "390x780",
+    "app": "ピタリズム",
+    "logo": {
+      "x": 16,
+      "y": 58,
+      "width": 358,
+      "height": 97.71875
+    },
+    "paintedLogo": {
+      "width": 357.9697066326531,
+      "height": 97.71875
+    },
+    "caption": null,
+    "menu": {
+      "x": 16,
+      "y": 229,
+      "width": 358,
+      "height": 406.1875
+    },
+    "overflow": false
+  },
+  {
+    "viewport": "390x780",
+    "app": "メモリズム",
+    "logo": {
+      "x": 16,
+      "y": 58,
+      "width": 358,
+      "height": 97.71875
+    },
+    "paintedLogo": {
+      "width": 357.9697066326531,
+      "height": 97.71875
+    },
+    "caption": null,
+    "menu": {
+      "x": 16,
+      "y": 229,
+      "width": 358,
+      "height": 406.1875
+    },
+    "overflow": false
+  },
+  {
+    "viewport": "390x780",
+    "app": "イロドリズム",
+    "logo": {
+      "x": 16,
+      "y": 58,
+      "width": 358,
+      "height": 93
+    },
+    "paintedLogo": {
+      "width": 358,
+      "height": 87.81977471839801
+    },
+    "caption": {
+      "x": 16,
+      "y": 176,
+      "width": 358,
+      "height": 24
+    },
+    "menu": {
+      "x": 16,
+      "y": 229,
+      "width": 358,
+      "height": 356
+    },
+    "overflow": false
+  },
+  {
+    "viewport": "390x780",
+    "app": "ジントリズム",
+    "logo": {
+      "x": 45,
+      "y": 58,
+      "width": 300,
+      "height": 74
+    },
+    "paintedLogo": {
+      "width": 300,
+      "height": 73.59198998748435
+    },
+    "caption": {
+      "x": 16,
+      "y": 142,
+      "width": 358,
+      "height": 24
+    },
+    "menu": {
+      "x": 16,
+      "y": 182,
+      "width": 358,
+      "height": 326.140625
+    },
+    "overflow": false
+  },
+  {
+    "viewport": "390x780",
+    "app": "モノガタリズム",
+    "logo": {
+      "x": 25,
+      "y": 58,
+      "width": 340,
+      "height": 74
+    },
+    "paintedLogo": {
+      "width": 340,
+      "height": 71.1205976520811
+    },
+    "caption": {
+      "x": 16,
+      "y": 142,
+      "width": 358,
+      "height": 24
+    },
+    "menu": {
+      "x": 16,
+      "y": 182,
+      "width": 358,
+      "height": 320.5625
+    },
+    "overflow": false
+  },
+  {
+    "viewport": "390x844",
+    "app": "ピタリズム",
+    "logo": {
+      "x": 16,
+      "y": 58,
+      "width": 358,
+      "height": 97.71875
+    },
+    "paintedLogo": {
+      "width": 357.9697066326531,
+      "height": 97.71875
+    },
+    "caption": null,
+    "menu": {
+      "x": 16,
+      "y": 229,
+      "width": 358,
+      "height": 462.1875
+    },
+    "overflow": false
+  },
+  {
+    "viewport": "390x844",
+    "app": "メモリズム",
+    "logo": {
+      "x": 16,
+      "y": 58,
+      "width": 358,
+      "height": 97.71875
+    },
+    "paintedLogo": {
+      "width": 357.9697066326531,
+      "height": 97.71875
+    },
+    "caption": null,
+    "menu": {
+      "x": 16,
+      "y": 229,
+      "width": 358,
+      "height": 462.1875
+    },
+    "overflow": false
+  },
+  {
+    "viewport": "390x844",
+    "app": "イロドリズム",
+    "logo": {
+      "x": 16,
+      "y": 58,
+      "width": 358,
+      "height": 93
+    },
+    "paintedLogo": {
+      "width": 358,
+      "height": 87.81977471839801
+    },
+    "caption": {
+      "x": 16,
+      "y": 176,
+      "width": 358,
+      "height": 24
+    },
+    "menu": {
+      "x": 16,
+      "y": 229,
+      "width": 358,
+      "height": 356
+    },
+    "overflow": false
+  },
+  {
+    "viewport": "390x844",
+    "app": "ジントリズム",
+    "logo": {
+      "x": 16,
+      "y": 58,
+      "width": 358,
+      "height": 93
+    },
+    "paintedLogo": {
+      "width": 358,
+      "height": 87.81977471839801
+    },
+    "caption": {
+      "x": 16,
+      "y": 176,
+      "width": 358,
+      "height": 24
+    },
+    "menu": {
+      "x": 16,
+      "y": 229,
+      "width": 358,
+      "height": 456.140625
+    },
+    "overflow": false
+  },
+  {
+    "viewport": "390x844",
+    "app": "モノガタリズム",
+    "logo": {
+      "x": 16,
+      "y": 58,
+      "width": 358,
+      "height": 93
+    },
+    "paintedLogo": {
+      "width": 358,
+      "height": 74.88580576307363
+    },
+    "caption": {
+      "x": 16,
+      "y": 176,
+      "width": 358,
+      "height": 24
+    },
+    "menu": {
+      "x": 16,
+      "y": 229,
+      "width": 358,
+      "height": 329.5625
+    },
+    "overflow": false
+  },
+  {
+    "viewport": "768x1024",
+    "app": "ピタリズム",
+    "logo": {
+      "x": 194,
+      "y": 58,
+      "width": 380,
+      "height": 103.71875
+    },
+    "paintedLogo": {
+      "width": 379.94929846938777,
+      "height": 103.71875
+    },
+    "caption": null,
+    "menu": {
+      "x": 174,
+      "y": 229,
+      "width": 420,
+      "height": 462.1875
+    },
+    "overflow": false
+  },
+  {
+    "viewport": "768x1024",
+    "app": "メモリズム",
+    "logo": {
+      "x": 194,
+      "y": 58,
+      "width": 380,
+      "height": 103.71875
+    },
+    "paintedLogo": {
+      "width": 379.94929846938777,
+      "height": 103.71875
+    },
+    "caption": null,
+    "menu": {
+      "x": 174,
+      "y": 229,
+      "width": 420,
+      "height": 462.1875
+    },
+    "overflow": false
+  },
+  {
+    "viewport": "768x1024",
+    "app": "イロドリズム",
+    "logo": {
+      "x": 194,
+      "y": 58,
+      "width": 380,
+      "height": 93
+    },
+    "paintedLogo": {
+      "width": 379.11734693877554,
+      "height": 93
+    },
+    "caption": {
+      "x": 80,
+      "y": 176,
+      "width": 608,
+      "height": 24
+    },
+    "menu": {
+      "x": 174,
+      "y": 229,
+      "width": 420,
+      "height": 356
+    },
+    "overflow": false
+  },
+  {
+    "viewport": "768x1024",
+    "app": "ジントリズム",
+    "logo": {
+      "x": 194,
+      "y": 58,
+      "width": 380,
+      "height": 93
+    },
+    "paintedLogo": {
+      "width": 379.11734693877554,
+      "height": 93
+    },
+    "caption": {
+      "x": 90,
+      "y": 176,
+      "width": 588,
+      "height": 24
+    },
+    "menu": {
+      "x": 174,
+      "y": 229,
+      "width": 420,
+      "height": 384.140625
+    },
+    "overflow": false
+  },
+  {
+    "viewport": "768x1024",
+    "app": "モノガタリズム",
+    "logo": {
+      "x": 174,
+      "y": 58,
+      "width": 420,
+      "height": 93
+    },
+    "paintedLogo": {
+      "width": 420,
+      "height": 87.85485592315902
+    },
+    "caption": {
+      "x": 90,
+      "y": 176,
+      "width": 588,
+      "height": 24
+    },
+    "menu": {
+      "x": 174,
+      "y": 229,
+      "width": 420,
+      "height": 329.5625
+    },
+    "overflow": false
+  }
+]
