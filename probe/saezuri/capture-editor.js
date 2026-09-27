@@ -29,10 +29,16 @@ function proposePattern(state, pattern, cursor) {
 export function proposeCaptureEdit(state, command) {
   const invalid = validateNotes(state?.pattern);
   if (invalid) return invalid;
-  if (!command || !['replace','delete','split','merge-next'].includes(command.type)) return error('COMMAND_UNKNOWN');
+  if (!command || !['replace','delete','split','merge-next','transpose'].includes(command.type)) return error('COMMAND_UNKNOWN');
   if (command.type === 'replace' || command.type === 'delete') return proposeEdit(state, command);
 
   const pattern = structuredClone(state.pattern);
+  if (command.type === 'transpose') {
+    if (!Number.isInteger(command.semitones)) return error('NOTE_PITCH');
+    if (!pattern.notes.length) return error('NOTE_NOT_FOUND');
+    for (const note of pattern.notes) note.midi += command.semitones;
+    return proposePattern(state, pattern, state.cursor);
+  }
   const index = pattern.notes.findIndex(note => note.id === command.noteId);
   if (index < 0) return error('NOTE_NOT_FOUND');
   const note = pattern.notes[index];

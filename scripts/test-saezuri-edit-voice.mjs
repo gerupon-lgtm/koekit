@@ -1,7 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {EditVoice,parseEditCommand} from '../probe/saezuri/edit-voice.js';
+import {EditVoice,parseEditCommand,EDIT_WORDS} from '../probe/saezuri/edit-voice.js';
 const flush=()=>new Promise(resolve=>setImmediate(resolve));
+test('confirmation grammar includes the shipped model katakana tokens',()=>{
+ for(const word of ['オッケー','オーケー']) {
+  assert.ok(EDIT_WORDS.includes(word)); assert.equal(parseEditCommand(word),'confirm');
+ }
+});
 function fixture(pending=false) {
  let resolve; const events=new Map(), commands=[], status=[];
  const input={stops:0,disposed:0,on(k,f){events.set(k,f);},off(k,f){if(events.get(k)===f) events.delete(k);},

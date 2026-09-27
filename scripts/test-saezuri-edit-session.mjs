@@ -3,6 +3,25 @@ import assert from 'node:assert/strict';
 import { openEditSession, stageEdit, selectEditNote, confirmEditSession, cancelEditSession, undoEditSession, endEditSession, hasDraftChanges } from '../probe/saezuri/edit-session.js';
 const pattern = () => ({bars:4,gridStep:1,notes:[{id:'a',midi:60,startTick:0,durationTick:4},{id:'b',midi:64,startTick:4,durationTick:4}]});
 const move = (s,id,midi) => stageEdit(selectEditNote(s,id),{type:'replace',noteId:id,midi,startTick:id==='a'?0:4,durationTick:4});
+test('transpose stages every pitch, preserves timing and metadata, and undoes as one operation',()=>{
+ const original=pattern();original.notes[0].origin='detected';
+ const s=selectEditNote(openEditSession(original),'b');
+ const transposed=stageEdit(s,{type:'transpose',semitones:12});
+ assert.equal(transposed.code,undefined);
+ assert.deepEqual(transposed.working.pattern.notes,original.notes.map(n=>({...n,midi:n.midi+12})));
+ assert.deepEqual(transposed.confirmed,original);assert.equal(transposed.history.length,1);
+ assert.equal(transposed.working.selectedNoteId,'b');
+ assert.deepEqual(undoEditSession(transposed).working.pattern,original);
+ const down=stageEdit(transposed,{type:'transpose',semitones:-1});
+ assert.deepEqual(confirmEditSession(down).confirmed.notes.map(n=>n.midi),[71,75]);
+});
+test('transpose rejects an out-of-range group atomically, without clipping intervals',()=>{
+ const original=pattern();original.notes[1].midi=120;
+ const s=openEditSession(original),before=structuredClone(s);
+ assert.equal(stageEdit(s,{type:'transpose',semitones:12}).code,'NOTE_PITCH');
+ assert.equal(stageEdit(s,{type:'transpose',semitones:.5}).code,'NOTE_PITCH');
+ assert.deepEqual(s,before);
+});
 test('multiple draft changes accumulate without replacing the confirmed pattern or source',()=>{
  const original=pattern(), first=openEditSession(original), a=move(first,'a',61), b=move(a,'b',65);
  assert.deepEqual(original,pattern()); assert.deepEqual(b.confirmed,pattern());

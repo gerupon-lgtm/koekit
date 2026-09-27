@@ -46,6 +46,10 @@ export class CaptureEditorView {
     this._elements['capture-edit-confirm'].addEventListener('click', () => this._confirm());
     this._elements['capture-edit-cancel'].addEventListener('click', () => this._cancel());
     this._elements['capture-edit-undo'].addEventListener('click', () => this._undo());
+    this._transposeButtons = [...document.querySelectorAll('[data-transpose]')];
+    for (const button of this._transposeButtons) button.onclick = () => {
+      if (!this._busy && this.isOpen) this._stage({type:'transpose',semitones:Number(button.dataset.transpose)});
+    };
     for (const command of ['up','down','previous','next','first','last']) this._elements[`capture-${command === 'up' || command === 'down' ? 'pitch-' : ''}${command}`].onclick = () => this.command(command);
     this._elements['capture-blocks'].onclick = event => { const note=event.target.closest('[data-note-id]'); if(note) this._select(note.dataset.noteId); };
     this._render(true);
@@ -240,6 +244,10 @@ export class CaptureEditorView {
     elements['capture-variant'].disabled = locked || this.pending;
     for (const option of elements['capture-variant'].options) option.disabled = !this._variants.has(option.value);
     const notes = orderedNotes(active?.state.pattern.notes ?? []);
+    for (const button of this._transposeButtons) {
+      const step=Number(button.dataset.transpose);
+      button.disabled=locked || !notes.length || notes.some(n=>n.midi+step<0 || n.midi+step>127);
+    }
     const selected = notes.find(note => note.id === active?.state.selectedNoteId);
     const selectedIndex=notes.indexOf(selected);
     elements['capture-selection'].textContent=selected

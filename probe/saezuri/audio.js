@@ -1,17 +1,19 @@
 // ML-T01 only: locally synthesized comparison voices, not approved instrument assets.
 import { tickSeconds } from '../../saezuri/document.js';
-import { scheduleShaker } from './capture-support.js';
+import { schedulePlaybackCount, COUNT_STYLES } from './playback-count.js';
 export function scheduleVoice(ctx, output, { midi, time, duration, instrument = 'piano', gain = 0.16 }) {
-  const harmonics = { sine: [1], piano: [1, 0.35, 0.16, 0.08], wood: [1, 0, 0.12], soft: [1, 0.12, 0.04] }[instrument];
+  // A sustained, band-limited saw-like lead, synthesized locally.
+  const harmonics = { sine: [1], piano: [1, 0.35, 0.16, 0.08], wood: [1, 0, 0.12], soft: [1, 0.12, 0.04],
+    lead: Array.from({length:10},(_,i)=>1/(i+1)) }[instrument];
   if (!harmonics) throw new Error('INSTRUMENT_UNKNOWN');
   const envelope = ctx.createGain();
   envelope.connect(output);
   envelope.gain.setValueAtTime(0, time);
   envelope.gain.linearRampToValueAtTime(gain, time + 0.008);
-  envelope.gain.exponentialRampToValueAtTime(Math.max(0.001, gain * (instrument === 'wood' ? 0.02 : 0.25)), time + Math.max(0.016, duration));
+  envelope.gain.exponentialRampToValueAtTime(Math.max(0.001, gain * (instrument === 'wood' ? 0.02 : instrument === 'lead' ? .8 : 0.25)), time + Math.max(0.016, duration));
   envelope.gain.linearRampToValueAtTime(0, time + duration + 0.06);
   const oscillators = harmonics.map((amplitude, i) => {
-    if (!amplitude) return null;
+    if (!amplitude || 440 * 2 ** ((midi - 69) / 12) * (i + 1) >= ctx.sampleRate/2) return null;
     const oscillator = ctx.createOscillator(), level = ctx.createGain();
     oscillator.frequency.value = 440 * 2 ** ((midi - 69) / 12) * (i + 1);
     level.gain.value = amplitude / harmonics.reduce((a,b) => a+b,0);
@@ -21,15 +23,17 @@ export function scheduleVoice(ctx, output, { midi, time, duration, instrument = 
     oscillator.onended = () => { oscillator.disconnect(); level.disconnect(); };
     return oscillator;
   }).filter(Boolean);
-  const last = oscillators.at(-1), cleanup = last.onended;
-  last.onended = () => { cleanup(); envelope.disconnect(); };
+  const last = oscillators.at(-1);
+  if (last) {const cleanup=last.onended;last.onended=()=>{cleanup();envelope.disconnect();};}
+  else envelope.disconnect();
   return () => { envelope.disconnect(); for (const node of oscillators) { try { node.stop(); } catch {} } };
 }
 
 export class ProbeTransport {
   constructor(ctx, onStop) { this.ctx = ctx; this.onStop = onStop; this.serial = 0; this.voices = new Set(); this.active = false; }
-  start(notes, { tempo = 120, totalTicks = 64, instrument = 'piano', lead = 0.35, ahead = 0.15, countSound = false, countVolume = 1 } = {}) {
+  start(notes, { tempo = 120, totalTicks = 64, instrument = 'piano', lead = 0.35, ahead = 0.15, countSound = false, countVolume = 1, countStyle = 'rim' } = {}) {
     this.stop(false);
+    if (!COUNT_STYLES.includes(countStyle)) throw new Error('COUNT_STYLE_UNKNOWN');
     if (this.ctx.state !== 'running') throw new Error('AUDIO_NOT_READY');
     const serial = this.serial;
     this.anchor = this.ctx.currentTime + lead;
@@ -51,8 +55,8 @@ export class ProbeTransport {
         const time = this.anchor + tickSeconds(countTick, tempo);
         if (time > now + ahead) break;
         if (time < now - 0.04) return this.stop(true, 'SCHEDULER_LATE');
-        const stop = scheduleShaker(this.ctx, Math.max(now,time), countTick % 16 === 0, countVolume);
-        this.voices.add({stop, end:time+0.05});
+        const stop = schedulePlaybackCount(this.ctx, Math.max(now,time), countTick % 16 === 0, countVolume, countStyle);
+        this.voices.add({stop, end:time+0.15});
         countTick += 4; this.metrics.countEvents++;
       }
       while (index < queue.length) {
