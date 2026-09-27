@@ -27,5 +27,6 @@ const base=process.env.SAEZURI_BASE||'http://127.0.0.1:8014';
  for(const [width,height] of [[320,568],[390,844],[844,390],[1280,800]]){await page.setViewportSize({width,height});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,`samples ${width}`);}
  await page.setViewportSize({width:390,height:844});await page.screenshot({path:'.local-tools/saezuri-v23-samples.png'});
  await click('samples-back');await click('new-manual');await click('discard-confirm');assert.equal(await page.locator('#capture-blocks button').count(),0);assert.equal(await page.locator('#learning-guide').isVisible(),false);
+ await page.locator('#melody-create [data-screen-back]').click();await click('new-tutorial');await click('discard-confirm');await page.locator('[data-pitch="0"]').click();await click('capture-edit-confirm');await click('screen-settings');await click('adopt');await click('home-create');await click('new-manual');assert.equal(await page.locator('#learning-guide').isVisible(),false,'ended lesson must not reappear in free creation');
  assert.deepEqual(errors,[]);console.log('PASS learning: real tutorial operations, 4 presets, non-destructive audition, copy editing, backing, registration, switch guards and 4 widths');
 }finally{await browser.close();}})().catch(e=>{console.error(e);process.exitCode=1;});

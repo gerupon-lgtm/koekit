@@ -42,7 +42,7 @@ export class MelodyLearning {
  sync(phase){
   $('new-tutorial').disabled=this.shell.busy;
   for(const b of $('practice-list').querySelectorAll('button'))b.disabled=this.shell.busy;
-  const editor=this.shell.editor,show=this.active&&editor.isOpen;
+  const editor=this.shell.editor;if(this.active&&!editor.isOpen)this.end();const show=this.active&&editor.isOpen;
   $('learning-guide').hidden=!show;this.clearHighlight();if(!show)return;
   const notes=editor.previewPattern?.notes??[];
   if(notes[0]?.midi!==62)this.heard=false;
