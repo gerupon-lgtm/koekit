@@ -7,6 +7,10 @@ import { StorySpeech } from './voice.js';
 import { wordsFor, parse } from './vocabulary.js';
 import { microphoneEnabled, onMicrophoneChange } from '../src/speech/microphone.js';
 import { setMicState } from '../src/ui/micstate.js';
+import { ScreenAwake } from '../src/ui/screenawake.js';
+
+// 遊んでいる間（なまえ・ばん・おはなし）は画面を消さない。はじめ画面では解除（共通部品、デリバリズムと同じ）
+const screenAwake = new ScreenAwake();
 
 const $ = id => document.getElementById(id);
 const NUM_WORDS = ['いち', 'に', 'さん', 'よん', 'ご'];
@@ -41,6 +45,7 @@ const st = {
 function show(screen) {
   st.screen = screen;
   for (const id of ['start', 'name', 'board']) $('s-' + id).hidden = id !== (screen === 'story' ? 'board' : screen);
+  screenAwake.setActive(screen !== 'start');
   window.scrollTo(0, 0);
   syncVoice();
 }
@@ -309,20 +314,27 @@ function mark(listId, i) {
   document.querySelectorAll('#picks li, #story li').forEach(li => li.classList.remove('reading'));
   if (i === null) return;
   const li = document.querySelector(`#${listId} li[data-i="${i}"]`);
-  li?.classList.add('reading');
-  li?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  if (!li) return;
+  li.classList.add('reading');
+  // 読んでいる行が画面に見えていれば動かさない（見出しへのスクロールを邪魔しないため）
+  const r = li.getBoundingClientRect();
+  if (r.top < 0 || r.bottom > innerHeight) li.scrollIntoView({ block: 'center', behavior: 'smooth' });
 }
 function readAll() {
+  if (!reader.enabled || !reader.available) scrollToStory(); // 読み上げなしのときも物語まで移動する
   const summary = picksSummary(settings.audience, st.picks);
   const items = [
     ...summary.map((text, i) => ({ text, onStart: () => mark('picks', i) })),
-    { text: st.story.intro, onStart: () => mark('picks', null) },
+    { text: st.story.intro, onStart: () => { mark('picks', null); scrollToStory(); } },
     ...st.story.lines.map((l, i) => ({ text: l.text, onStart: () => mark('story', i) })),
   ];
   reader.speak(items).then(() => mark('story', null));
 }
+// 物語の読み上げに入ったら、物語の見出しが画面の上に来るまでスクロールする
+function scrollToStory() { $('intro').scrollIntoView({ block: 'start', behavior: 'smooth' }); }
 $('read').onclick = () => {
   if (!reader.enabled) { toast('よみあげは OFF です（はじめの画面で ON）'); return; }
+  scrollToStory();
   reader.speak(st.story.lines.map((l, i) => ({ text: l.text, onStart: () => mark('story', i) }))).then(() => mark('story', null));
 };
 $('stop').onclick = () => { reader.stop(); mark('story', null); };
