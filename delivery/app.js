@@ -208,7 +208,7 @@ function help(){
   );
   openDialog('あそびかた','',actions,{onVoice:back,helpLayout:true});
   const body=$('dialog-body');
-  body.append(node('p','①「みぎ2」などを いれる\n② しじを みて「オッケー」\n③ にもつを おうちへ とどけよう！'));
+  body.append(node('p','① とどけさきまでの しじを ぜんぶ いれる\n② しじを みて「オッケー」\n③ にもつを おうちへ とどけよう！'));
   body.append(node('p',DELIVERY_GUIDE));
   for(const [label,text] of [
     ['しじの なおしかた', '「2ばん」→「した1」で いいなおせるよ。\nもどす：さいごの しじを けす\nやりなおし：しじを ぜんぶ けす\nヒントは なんかいでも つかえるよ。'],
