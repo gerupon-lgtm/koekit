@@ -15,12 +15,30 @@ function shuffle(arr, rnd) {
   return a;
 }
 
-// 盤面：各行の候補から cols 個を裏向きで並べる
-export function makeBoard(audience, rnd = Math.random) {
+// 直近2話で使った材料を避け、残った候補を均等にシャッフルする。
+// 将来プールが小さくなった場合は、古い話の制限から緩めて枚数を確保する。
+export function makeBoard(audience, rnd = Math.random, recentCards = []) {
   const set = SETS[audience];
   const rows = {};
-  for (const k of ROW_KEYS) rows[k] = shuffle(set.rows[k].pool, rnd).slice(0, set.cols);
+  for (const k of ROW_KEYS) {
+    const pool = set.rows[k].pool, history = recentCards.slice(-2).map(game => game[k] || []);
+    let available;
+    do {
+      const avoid = new Set(history.flat());
+      available = pool.filter((_, id) => !avoid.has(id));
+      if (available.length >= set.cols || !history.length) break;
+      history.shift();
+    } while (true);
+    rows[k] = shuffle(available, rnd).slice(0, set.cols);
+  }
   return { audience, cols: set.cols, rows };
+}
+
+// 保存する材料ID。めくる前のキャンセルでは履歴を消費しない。
+export function cardIds(audience, picks) {
+  return Object.fromEntries(ROW_KEYS.map(k => [k,
+    picks[k].words.map(word => SETS[audience].rows[k].pool.findIndex(item => item.w === word)).filter(id => id >= 0),
+  ]));
 }
 
 // 選択を確定：selections は { itsu: [列番号（選んだ順）], ... }

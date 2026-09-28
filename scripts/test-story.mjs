@@ -1,7 +1,7 @@
 // モノガタリズム（仮称）物語生成の自動検査（基本設計 MG-T01）
 // 実行: node scripts/test-story.mjs
 import { readFileSync } from 'node:fs';
-import { makeBoard, resolvePicks, buildStory, splitSentences, MAX_PER_ROW } from '../story/story.js';
+import { makeBoard, resolvePicks, cardIds, buildStory, splitSentences, MAX_PER_ROW } from '../story/story.js';
 import { SETS, ROW_KEYS, EXTRA_KEYS, FIRST_STAGE, LAST_STAGE, loadSets } from '../story/story-data.js';
 import { parse, wordsFor } from '../story/vocabulary.js';
 import { buildCoherentStory } from '../story/coherent-story.js';
@@ -326,6 +326,43 @@ for (const a of ['kids', 'adult']) for (const t of Object.keys(SETS[a].types)) i
     prev = st.type;
   }
 }
+// 材料の直近2話回避：複数選択・おまかせ・保存復元・両対象の分離。
+for (const audience of ['kids', 'adult']) {
+  let replay = cleanReplay({});
+  const rnd = seeded(721), seen = Object.fromEntries(ROW_KEYS.map(k => [k, new Set()]));
+  for (let i = 0; i < 300; i++) {
+    const prior = replay[audience].cards, board = makeBoard(audience, rnd, prior);
+    for (const k of ROW_KEYS) {
+      const forbidden = new Set(prior.flatMap(game => game[k]));
+      if (new Set(board.rows[k]).size !== board.cols) bad('材料の盤面内重複', k);
+      for (const item of board.rows[k]) {
+        const id = SETS[audience].rows[k].pool.indexOf(item);
+        if (forbidden.has(id)) bad('直近2話の材料が盤面に再登場', `${audience}/${k}/${id}`);
+      }
+    }
+    const sel = i % 2 ? Object.fromEntries(ROW_KEYS.map(k => [k, [2, 0, 1]])) : {};
+    const picks = resolvePicks(board, sel, rnd), ids = cardIds(audience, picks);
+    if (i % 2 && JSON.stringify(picks.mono.idx) !== '[2,0,1]') bad('手動選択を変更した', picks.mono);
+    for (const k of ROW_KEYS) for (const id of ids[k]) seen[k].add(id);
+    replay[audience].cards = [...prior, ids].slice(-2);
+    replay = cleanReplay(JSON.parse(JSON.stringify(replay)));
+    if (replay[audience === 'kids' ? 'adult' : 'kids'].cards.length) bad('年齢別の材料履歴が混ざった', audience);
+  }
+  for (const k of ROW_KEYS) if (seen[k].size !== SETS[audience].rows[k].pool.length) bad('材料が永続的に除外された', `${audience}/${k}`);
+}
+{
+  const raw = cleanReplay({ kids: { cards: [null, { mono: [1, 1, -1, '2', 2.5, 9000, 2, 3, 4] }] } });
+  if (JSON.stringify(raw.kids.cards[1].mono) !== '[1,2,3]') bad('材料履歴の正規化', raw);
+  const pool = SETS.kids.rows.mono.pool;
+  try {
+    SETS.kids.rows.mono.pool = pool.slice(0, 5);
+    const board = makeBoard('kids', () => 0, [{ mono: [0, 1, 2] }, { mono: [3] }]);
+    if (board.rows.mono.length !== 4 || board.rows.mono.includes(pool[3])) bad('古い制限から緩められない', board.rows.mono);
+    const smallest = makeBoard('kids', () => 0, [{ mono: [0, 1, 2] }, { mono: [3, 4] }]);
+    if (smallest.rows.mono.length !== 4) bad('候補不足で盤面が欠ける', smallest.rows.mono);
+  } finally { SETS.kids.rows.mono.pool = pool; }
+}
+console.log('材料履歴: 各対象300話、複数選択・保存復元・候補不足・全候補再登場を確認');
 console.log(`runs=${runs} together=${stats.together} join=${stats.join}`);
 console.log('型の出現', JSON.stringify(typeCount));
 if (fail) { console.error(`失敗 ${fail} 件`); process.exit(1); }

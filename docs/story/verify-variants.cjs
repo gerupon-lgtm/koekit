@@ -89,11 +89,21 @@ const base = process.env.STORY_BASE || 'http://127.0.0.1:8124';
     await p.locator('[data-key="tts"] [data-v="off"]').click();
     for (const audience of ['kids', 'adult']) {
       await p.locator(`[data-v="${audience}"]`).click();
-      let previousType = null, previousIntro = null;
+      let previousType = null, previousIntro = null, previousCards = [];
       for (let i = 0; i < 8; i++) {
         await reveal();
         const raw = await p.locator('#story').innerText();
         const originalHistory = await p.evaluate(a => JSON.parse(localStorage.getItem('koekit.story.settings')).replay[a], audience);
+        const boardIds = await p.evaluate(async () => {
+          const { SETS } = await import('/story/story-data.js');
+          const board = window.__story.st.board;
+          return Object.fromEntries(Object.entries(board.rows).map(([k, items]) => [k, items.map(it => SETS[board.audience].rows[k].pool.indexOf(it))]));
+        });
+        for (const prior of previousCards) for (const [key, ids] of Object.entries(prior)) {
+          assert.ok(ids.every(id => !boardIds[key].includes(id)), 'recent materials excluded even after reload');
+        }
+        previousCards = originalHistory.cards;
+        assert.ok(previousCards.length > 0 && previousCards.length <= 2);
         assert.notEqual(originalHistory.type, previousType);
         previousType = originalHistory.type;
         await coherent.click();

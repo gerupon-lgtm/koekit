@@ -1,7 +1,7 @@
 // モノガタリズム — 画面と状態（基本設計4〜5節）
 // 声（端末内Vosk）とタッチの両方で同じ操作を行う。読み上げ中は聞き取りを止める。
 import { SETS, ROW_KEYS } from './story-data.js';
-import { makeBoard, resolvePicks, buildStory, picksSummary, MAX_PER_ROW, loadSets } from './story.js';
+import { makeBoard, resolvePicks, cardIds, buildStory, picksSummary, MAX_PER_ROW, loadSets } from './story.js';
 import { buildCoherentStory } from './coherent-story.js';
 import { cleanReplay, remember } from './variety.js';
 import { Reader } from './tts.js';
@@ -218,7 +218,7 @@ $('name-omakase').onclick = () => {
 
 // ---------- MG-S03 ばん ----------
 function openBoard() {
-  st.board = makeBoard(settings.audience);
+  st.board = makeBoard(settings.audience, Math.random, settings.replay[settings.audience].cards);
   st.sel = Object.fromEntries(ROW_KEYS.map(k => [k, []]));
   cancelAuto();
   st.row = 0; st.cand = null; st.done = false; st.picks = null; st.story = null;
@@ -381,6 +381,7 @@ function startReveal() {
   cancelAuto();
   st.picks = resolvePicks(st.board, st.sel);
   const replay = settings.replay[settings.audience];
+  replay.cards = [...replay.cards, cardIds(settings.audience, st.picks)].slice(-2);
   st.story = buildStory({ audience: settings.audience, name: st.name, picks: st.picks, order: settings.order,
     avoid: new Set(replay.scenes.flat()), avoidType: replay.type, history: replay.original });
   st.originalStory = st.story;

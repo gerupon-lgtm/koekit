@@ -1,4 +1,5 @@
 // 保存するのは候補IDだけ。本文・名前・音声は保存しない。
+import { ROW_KEYS } from './story-data.js';
 export const HISTORY_LIMIT = 240;
 export function cleanHistory(value) {
   return Array.isArray(value) ? value.filter(id => typeof id === 'string' && id.length < 120).slice(-HISTORY_LIMIT) : [];
@@ -39,6 +40,9 @@ export function cleanReplay(value) {
     result[audience] = {
       original: cleanHistory(raw?.original), alternate: cleanHistory(raw?.alternate),
       scenes: Array.isArray(raw?.scenes) ? raw.scenes.slice(-2).map(list => cleanHistory(list).slice(-8)) : [],
+      cards: Array.isArray(raw?.cards) ? raw.cards.slice(-2).map(game => Object.fromEntries(ROW_KEYS.map(key => [key,
+        Array.isArray(game?.[key]) ? [...new Set(game[key].filter(id => Number.isInteger(id) && id >= 0 && id < 4096))].slice(0, 3) : [],
+      ]))) : [],
       type: typeof raw?.type === 'string' && raw.type.length < 40 ? raw.type : null,
     };
   }
