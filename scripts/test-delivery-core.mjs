@@ -48,7 +48,7 @@ assert.equal(s.commandIndex,0); // successful excess sequence is discarded
 s=execute(input(createSession(stage({stepLimit:3}),{difficulty:'hard'}),[['right',2],['down',2]]));
 assert.equal(s.phase,'failed');assert.equal(s.failureCode,'STEP_LIMIT');assert.equal(retry(s).runtime.usedSteps,0);assert.deepEqual(retry(s).sequence,[]);
 const checkpointStage=stage({size:5,destination:24,packages:[{id:'a',cell:4},{id:'b',cell:20}],stepLimit:40});
-s=execute(input(createSession(checkpointStage,{difficulty:'easy'}),[['right',4],['down',4],['left',4]]));
+s=execute(input(createSession(checkpointStage,{difficulty:'easy'}),[['right',4],['down',4]]));
 assert.equal(s.phase,'editing');assert.equal(s.runtime.usedSteps,8);assert.equal(s.runtime.deliveredMask,1);assert.deepEqual(s.sequence,[]);
 const tightEasy=execute(input(createSession({...checkpointStage,stepLimit:8},{difficulty:'easy'}),[['right',4],['down',4]]));
 assert.equal(tightEasy.phase,'failed');assert.equal(tightEasy.failureCode,'STEP_LIMIT');

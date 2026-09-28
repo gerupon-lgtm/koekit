@@ -20,6 +20,7 @@ export function validateSession(value){
     if(value.reviewTutorial!=null&&typeof value.reviewTutorial!=='boolean')return false;
   }
   if(value.sequence.some(c=>!c||!['up','down','left','right'].includes(c.direction)||!Number.isInteger(c.count)||c.count<1||c.count>999))return false;
+  if(value.checkpointSequence!=null&&(!Array.isArray(value.checkpointSequence)||value.checkpointSequence.some(c=>!c||!['up','down','left','right'].includes(c.direction)||!Number.isInteger(c.count)||c.count<1||c.count>999)))return false;
   if(!Number.isInteger(value.commandIndex)||value.commandIndex<0||value.commandIndex>value.sequence.length||!Number.isInteger(value.commandOffset)||value.commandOffset<0)return false;
   const command=value.sequence[value.commandIndex];if(command?value.commandOffset>=command.count:value.commandOffset!==0)return false;
   if(['executing','paused'].includes(value.phase)&&!command)return false;

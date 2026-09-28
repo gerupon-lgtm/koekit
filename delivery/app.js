@@ -1,7 +1,7 @@
 import { LEVELS, TITLES, PLAYBACK } from './config.js';
 import { createSession, editSequence, startExecution, advance, retry, resumeSession, remainingSteps, markLevelCleared, highestTitle, allLevelsCleared } from './run.js';
 import { parseUtterance, vocabulary } from './commands.js';
-import { BASIC_STAGE, ADDITIONAL_STAGE, tutorialNeeded, completeTutorial } from './tutorial.js';
+import { BASIC_STAGE, ADDITIONAL_STAGE, DELIVERY_GUIDE, ADDITIONAL_GUIDE, tutorialNeeded, completeTutorial } from './tutorial.js';
 import { DeliveryStorage } from './storage.js';
 import { SearchClient } from './search.js';
 import { mountEditor } from './editor.js';
@@ -45,7 +45,7 @@ function renderLevels(){$('level-list').replaceChildren();for(const level of LEV
   b.classList.toggle('completed',cleared);b.setAttribute('aria-label',`レベル ${level.id}・${level.size}かける${level.size}・にもつ${level.packageCount}こ${cleared?'・クリアずみ':''}`);
   if(cleared){const mark=node('span','✓','clear-mark');mark.setAttribute('aria-hidden','true');b.append(mark)}$('level-list').append(b);
 }}
-function openDialog(title,text,actions,{word='オッケー',onVoice}={}){pause();speech.close();$('dialog-title').textContent=title;$('dialog-body').textContent=text;$('dialog-actions').replaceChildren();dialogContext={onVoice};for(const action of actions){const b=node('button',action.label,`big ${action.color||'subtle'}`);b.onclick=()=>{speech.close();$('dialog').close();dialogContext=null;action.run()};$('dialog-actions').append(b)}$('dialog').showModal();setVoiceGuide($('dialog-voice-guide'),onVoice?word:'',onVoice?'で すすむ':'ボタンで えらぼう');if(onVoice)speech.open(['オッケー','オーケー','つぎ','おわり'],'dialog',`dialog-${epoch}`)}
+function openDialog(title,text,actions,{word='オッケー',onVoice,compact=false}={}){pause();$('dialog').classList.toggle('tutorial-intro',compact);speech.close();$('dialog-title').textContent=title;$('dialog-body').textContent=text;$('dialog-actions').replaceChildren();dialogContext={onVoice};for(const action of actions){const b=node('button',action.label,`big ${action.color||'subtle'}`);b.onclick=()=>{speech.close();$('dialog').close();dialogContext=null;action.run()};$('dialog-actions').append(b)}$('dialog').showModal();setVoiceGuide($('dialog-voice-guide'),onVoice?word:'',onVoice?'で すすむ':'ボタンで えらぼう');if(onVoice)speech.open(['オッケー','オーケー','つぎ','おわり'],'dialog',`dialog-${epoch}`)}
 function closeDialog(){speech.close();$('dialog').close();dialogContext=null;syncVoice();}
 function requestStart(level=1,{reviewTutorial=null}={}){
   const start=()=>{conflict=false;const saved=readSaved();if(saved){const r=storage.endSession(saved.sessionId,sessionRevision);if(r.ok)sessionRevision=r.revision;else{notice('前のプレイを更新できません。新しいプレイは開始していません。');return}}beginNormal(level,0,{reviewTutorial})};
@@ -56,7 +56,13 @@ async function beginNormal(level,stageIndex=0,{reviewTutorial=null}={}){
   const needed=reviewTutorial||tutorialNeeded(progress,difficulty,level);
   if(needed){const stage=needed==='basic'?BASIC_STAGE:ADDITIONAL_STAGE;
     session=createSession(stage,{difficulty,source:'tutorial',level,stageIndex,tutorialType:needed,pendingStart:{level,stageIndex,difficulty},reviewTutorial:!!reviewTutorial});
-    saveSession();await enterStage();return;
+    saveSession();if(conflict)return;
+    if(needed==='additional'){
+      setScreen('game');paintGame();
+      const start=()=>{speech.close();$('dialog').close();dialogContext=null;void enterStage()};
+      openDialog('わけても まとめても OK！',ADDITIONAL_GUIDE,[{label:'れんしゅうする',color:'green',run:start}],{onVoice:start,compact:true});
+    }else await enterStage();
+    return;
   }
   pendingPrepare={level,stageIndex};setScreen('preparing');$('preparing-message').textContent='みちを じゅんびちゅう…';$('prepare-retry').hidden=true;
   const token=epoch;
@@ -75,8 +81,8 @@ async function enterStage(){
   busy=false;paintGame();syncVoice();
 }
 function tutorialText(){if(!session?.tutorialType)return '';if(session.tutorialType==='basic')return ['まずは「した 1」。方向と歩数をひとつずつ入れよう。','つぎは「みぎ 2」。にもつは自動でひろうよ。','さいごに「した 1」。おうちに届けよう。','表をみて「オッケー」。4歩で届けよう。'][Math.min(session.sequence.length,3)];
-  if(session.runtime.deliveredMask)return '2こ とどけたね！ のこりを「ひだり 1 → みぎ 1」で届けよう。';
-  return session.difficulty==='easy'?'2こまで持てるよ。「みぎ 4」で3こ目を通りすぎて配達。つぎに取りにもどろう。':'2こまで持てるよ。「みぎ 4 → ひだり 1 → みぎ 1」。2回の配達をまとめて入れよう。';}
+  if(session.runtime.deliveredMask)return session.phase==='editing'?'おうちで しじが おわったので とまったよ。「ひだり1・みぎ1」で のこりを とどけよう。':'とどけたよ。つづきの しじで のこりを とどけよう。';
+  return '2こまで はこべるよ。「みぎ4」で おとどけ。「ひだり1・みぎ1」も いれると つづけて はこぶよ。';}
 function paintGame(){if(!session)return;const s=session;
   $('game').classList.toggle('large-grid',s.stageSnapshot.size>=5);
   renderStepOptions(s.stageSnapshot.size);
@@ -137,7 +143,7 @@ async function execute(){if(!session||busy||hint||conflict||!['editing','paused'
     if(session.phase==='cleared')event=session.source==='normal'&&session.stageIndex===2?'award':'clear';
     else if(session.phase==='failed')event='failure';else if(events.includes('deliver'))event='delivery';else if(events.includes('pickup'))event='pickup';
     if(events.includes('full'))$('input-status').textContent='りょうてが いっぱい！ このにもつは あとで。';
-    else if(events.includes('deliver'))$('input-status').textContent=session.phase==='cleared'?'ぜんぶ とどけたよ！':session.phase==='editing'?'とどけたよ！ つぎの しじを いれよう。':'とどけたよ！ のこりも とどけよう。';
+    else if(events.includes('deliver'))$('input-status').textContent=session.phase==='cleared'?'ぜんぶ とどけたよ！':session.phase==='editing'?'とどけて とまったよ。つぎの しじを いれよう。':'とどけたよ！ つづきの しじで すすむよ。';
     const duration=sound.play(event),interval=['cleared','failed'].includes(session.phase)?PLAYBACK.resultMs:events.includes('deliver')?PLAYBACK.deliveryMs:PLAYBACK.stepMs;
     await wait(Math.max(interval,duration+70));if(token!==epoch)return;
   }
@@ -158,7 +164,7 @@ function showResult(){if(!session)return;const failed=session.phase==='failed';
     $('failure-location').append(node('p',`${label}・${Math.floor(from/n)+1}ぎょう ${from%n+1}れつで とまったよ`),miniature);
   }else{
     $('result-heading').textContent=session.source==='tutorial'?'できた！':'ぜんぶ とどけた！';$('result-mark').textContent='✓';$('result-detail').textContent=`${session.runtime.usedSteps}歩で おとどけ。`;
-    if(session.source==='tutorial')saveProgress(completeTutorial(progress,session.tutorialType,session.difficulty));
+    if(session.source==='tutorial'){saveProgress(completeTutorial(progress,session.tutorialType,session.difficulty));if(session.tutorialType==='additional')$('result-detail').textContent='わけても まとめても おとどけできるね！';}
     if(session.source==='normal'&&session.stageIndex===2){const wasComplete=allLevelsCleared(progress,session.difficulty);saveProgress(markLevelCleared(progress,session));if(allLevelsCleared(progress,session.difficulty)&&(!wasComplete||session.level===4))session={...session,allClearReady:true};const award=TITLES.find(t=>t.level===session.level);$('result-mark').innerHTML=medalMarkup(award.medal);$('result-heading').textContent=award.title;$('result-detail').textContent=session.level===4?'レベル4 たっせい！ 3めん とどけたね。':'3めん クリア！ つぎのレベルへ。';if(!session.awardShown)session={...session,awardShown:true};}
     if(session.allClearReady)$('result-detail').textContent='ぜんぶの レベルを クリア！';
     saveSession();
@@ -193,7 +199,7 @@ function endPlay(){stopAsync();hint=null;$('toast').hidden=true;if(session){cons
 function openEditor(){stopAsync();setScreen('editor-screen');editor?.dispose();editor=mountEditor($('editor-host'),{storage,search:editorSearch,onClose:showTitle,onPlay:(stages,options)=>requestCustom(stages,options),onSpeechContext:context=>{editorVoice=context;if(screen==='editor-screen')syncVoice()}})}
 function requestCustom(stages,options){const start=()=>{stopAsync();const saved=readSaved();if(saved){const r=storage.endSession(saved.sessionId,sessionRevision);if(!r.ok){notice('前のプレイを更新できません。新しいプレイは開始していません。');setScreen('editor-screen');syncVoice();return}sessionRevision=r.revision}conflict=false;previewReturn=options.onReturn;session=createSession(stages[0],{difficulty,source:'custom',stageIndex:0,orderedStageSnapshots:clone(stages),preview:!!options.preview,editorSnapshot:options.preview?editor?.getState():null});saveSession();hint=null;void enterStage()};const saved=readSaved();if(saved)openDialog('今のつづきを 置きかえる？','作った面と称号は残ります。',[{label:'あそぶ',color:'green',run:start},{label:'もどる',run:()=>{setScreen('editor-screen');syncVoice()}}]);else start()}
 function returnToEditor(){stopAsync();const snapshot=session?.editorSnapshot;if(session){const r=storage.endSession(session.sessionId,sessionRevision);if(r.ok)sessionRevision=r.revision;else notice('つづきの削除を保存できませんでした。')}session=null;if(editor&&previewReturn){setScreen('editor-screen');previewReturn();syncVoice()}else{openEditor();editor.restorePreview(snapshot)}}
-function help(){const back=()=>{closeDialog();if(screen==='game')paintGame();syncVoice()};const actions=[{label:'とじる',color:'green',run:back}];if(screen==='title')actions.push({label:'はじめの れんしゅう',run:()=>requestStart(1,{reviewTutorial:'basic'})},{label:'2かい はいたつの れんしゅう',run:()=>requestStart(3,{reviewTutorial:'additional'})});openDialog('デリバリズムの あそびかた','① 方向と歩数を ひとつずつ入れる\n② 表の順番をみて「オッケー」\n③ にもつを おうちへ とどけよう！\n\n「2ばん」で行を選んで、しじを言いなおせるよ。\nもどす：最後の1行／やりなおし：表をぜんぶ消す\n\nやさしい：届けるたびに 次のしじ。\nむずかしい：ぜんぶのしじを まとめて。\nヒントは 何回でもつかえるよ。\n\nマイクを使わなくても、ぜんぶタッチであそべます。',actions,{onVoice:back})}
+function help(){const back=()=>{closeDialog();if(screen==='game')paintGame();syncVoice()};const actions=[{label:'とじる',color:'green',run:back}];if(screen==='title')actions.push({label:'はじめの れんしゅう',run:()=>requestStart(1,{reviewTutorial:'basic'})},{label:'2かい はいたつの れんしゅう',run:()=>requestStart(3,{reviewTutorial:'additional'})});openDialog('デリバリズムの あそびかた','① 方向と歩数を ひとつずつ入れる\n② 表の順番をみて「オッケー」\n③ にもつを おうちへ とどけよう！\n\n「2ばん」で行を選んで、しじを言いなおせるよ。\nもどす：最後の1行／やりなおし：表をぜんぶ消す\n\n'+DELIVERY_GUIDE+'\nわけても、まとめて いれても OK！\n\nやさしい：ほすうに ゆとり。しっぱいしたら さいごの はいたつから。\nむずかしい：ほすうは すくなめ。しっぱいしたら めんの はじめから。\nヒントは 何回でもつかえるよ。\n\nマイクを使わなくても、ぜんぶタッチであそべます。',actions,{onVoice:back})}
 const actions={new:()=>requestStart(),title:showTitle,resume,editor:openEditor,help,
   add:()=>{const before=session;dispatchCommand({type:'move',direction,count:Number($('step-count').value)});if(session!==before)$('step-count').value='1';},undo:()=>dispatchCommand({type:'undo'}),reset:()=>dispatchCommand({type:'reset'}),execute,continue:execute,retry:retryPlay,next:nextStage,end:endPlay,hint:showHint,hintNext:()=>showHint(true),hintClose:closeHint,previewReturn:returnToEditor,
   skipTutorial:()=>{if(!$('skip-tutorial').hidden)endPlay()},prepareRetry:()=>beginNormal(pendingPrepare.level,pendingPrepare.stageIndex),

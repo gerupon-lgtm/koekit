@@ -27,7 +27,7 @@ export const remainingSteps = session => session.stageSnapshot.stepLimit-session
 export function startExecution(session) {
   if(session.phase==='paused')return {...session,phase:'executing',revision:session.revision+1};
   if(session.phase!=='editing'||session.sequence.length===0)return session;
-  return {...session,phase:'executing',selectedIndex:null,commandIndex:0,commandOffset:0,revision:session.revision+1};
+  return {...session,...(session.difficulty==='easy'?{checkpointSequence:clone(session.sequence)}:{}),phase:'executing',selectedIndex:null,commandIndex:0,commandOffset:0,revision:session.revision+1};
 }
 export function advance(session) {
   if(session.phase!=='executing')return {session,events:[]};
@@ -39,17 +39,21 @@ export function advance(session) {
   if(s.commandOffset>=command.count){s.commandIndex++;s.commandOffset=0;}
   // Every actual partial delivery becomes the easy-mode retry checkpoint,
   // including delivery on the final allowed step. Its spent budget is retained.
-  const deliveryBoundary=s.difficulty==='easy'&&result.status!=='cleared'&&result.events.some(e=>e.type==='deliver');
-  if(deliveryBoundary)s.checkpoint={...s.runtime};
+  const deliveryBoundary=result.status!=='cleared'&&result.events.some(e=>e.type==='deliver');
+  if(deliveryBoundary&&s.difficulty==='easy'){
+    s.checkpoint={...s.runtime};
+    s.checkpointSequence=clone(s.sequence.slice(s.commandIndex));
+    if(s.checkpointSequence.length)s.checkpointSequence[0].count-=s.commandOffset;
+  }
   if(result.status==='cleared'){s.phase='cleared';s.sequence=[];s.commandIndex=0;s.commandOffset=0;}
   else if(s.stageSnapshot.stepLimit!=null&&s.runtime.usedSteps>=s.stageSnapshot.stepLimit){s.phase='failed';s.failureCode='STEP_LIMIT';result.events.push({type:'failure',code:s.failureCode});}
-  else if(deliveryBoundary){s.sequence=[];s.commandIndex=0;s.commandOffset=0;s.phase='editing';}
+  else if(deliveryBoundary&&s.commandIndex>=s.sequence.length){s.sequence=[];s.commandIndex=0;s.commandOffset=0;s.phase='editing';}
   else if(s.commandIndex>=s.sequence.length){s.phase='failed';s.failureCode='SEQUENCE_EXHAUSTED';result.events.push({type:'failure',code:s.failureCode});}
   s.revision++;return {session:s,events:result.events};
 }
 export function retry(session) {
   if(session.phase!=='failed')return session;
-  return {...clone(session),runtime:session.difficulty==='easy'?{...session.checkpoint}:initialRuntime(session.stageSnapshot),sequence:session.difficulty==='easy'?clone(session.sequence):[],commandIndex:0,commandOffset:0,selectedIndex:null,phase:'editing',failureCode:null,revision:session.revision+1};
+  return {...clone(session),runtime:session.difficulty==='easy'?{...session.checkpoint}:initialRuntime(session.stageSnapshot),sequence:session.difficulty==='easy'?clone(session.checkpointSequence??session.sequence):[],commandIndex:0,commandOffset:0,selectedIndex:null,phase:'editing',failureCode:null,revision:session.revision+1};
 }
 export const resumeSession = session => ({...clone(session),selectedIndex:null,phase:session.phase==='executing'?'paused':session.phase});
 export function markLevelCleared(progress,session) {
