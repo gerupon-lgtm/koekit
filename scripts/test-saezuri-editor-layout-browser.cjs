@@ -61,7 +61,7 @@ const base=process.env.SAEZURI_BASE||'http://127.0.0.1:8014';
   await page.evaluate(()=>{navigator.clipboard.writeText=async()=>{throw Error('clipboard denied');};});
   await page.locator('#copy-capture-report').click();
   assert.equal(await page.locator('#copy-fallback').isVisible(),true);
-  assert.equal(JSON.parse(await page.locator('#copy-text').inputValue()).prototype,'ML-T01-v23');
+  assert.equal(JSON.parse(await page.locator('#copy-text').inputValue()).prototype,'ML-T01-v24');
   assert.equal(await page.locator('#technical-tools').getAttribute('open'),null);
   await page.locator('#editor-more > summary').click();assert.equal(await page.locator('#capture-octave-up').isVisible(),true);
   await page.locator('#capture-octave-up').click();assert.equal((await report()).captureEditing.pending,false);

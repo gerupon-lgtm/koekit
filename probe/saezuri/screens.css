@@ -43,9 +43,9 @@ body.melody-app{background:#faf5ed;color:#443b36}
 .melody-app.editor-focus .composer-values{gap:8px}
 .melody-app.editor-focus .composer-values label{font-size:12px;gap:2px}
 .melody-app.editor-focus .composer-values input,.melody-app.editor-focus .composer-values select{min-height:44px;padding:5px;font-size:16px}
-.melody-app.editor-focus #composer-keys{grid-template-columns:repeat(8,minmax(0,1fr));gap:2px;margin:6px 0}
-.melody-app.editor-focus #composer-keys button{min-height:48px;padding:4px 0;font-size:14px;background:#fff}
-.melody-app.editor-focus #composer-keys button:last-child{font-size:11px}
+.melody-app.editor-focus #composer-keys{grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:8px 0}
+.melody-app.editor-focus #composer-keys button{min-width:0;min-height:48px;padding:6px 2px;font-size:18px;background:#fff}
+.melody-app.editor-focus #composer-keys button:last-child{font-size:16px}
 .melody-app #composer-panel .composer-replace{font-size:12px;margin:4px 0}
 .melody-app .composer-voice-hint{display:none}
 .melody-app #composer-candidate{font-size:12px;margin:3px 0;line-height:1.4;min-height:17px}
@@ -134,11 +134,11 @@ body.melody-app{background:#faf5ed;color:#443b36}
 .melody-app.editor-focus #new-manual{background:#dce9d5;color:#30462e}
 .melody-app #learning-guide{background:#fff3d1;border-radius:14px;padding:8px 10px;margin:6px 0}
 .melody-app .learning-heading{display:flex;align-items:center;justify-content:space-between;gap:8px}
-.melody-app .learning-heading strong{font-size:13px}
-.melody-app.editor-focus #learning-close{font-size:12px;min-height:32px;margin:0;padding:4px 8px;background:transparent}
-.melody-app #learning-message{font-size:13px;line-height:1.5;margin:4px 0}
+.melody-app .learning-heading strong{font-size:16px}
+.melody-app.editor-focus #learning-close{font-size:14px;min-height:40px;margin:0;padding:4px 8px;background:transparent}
+.melody-app #learning-message{font-size:16px;line-height:1.5;margin:6px 0 0}
 .melody-app.editor-focus #learning-next{font-size:13px;min-height:40px;width:100%;margin:4px 0 0;background:#e7ddef}
-.melody-app [data-learning-target]{outline:3px solid #b07915!important;outline-offset:2px}
+.melody-app [data-learning-target]{outline:3px solid #b07915!important;outline-offset:-3px}
 .melody-app #practice-list{display:grid;gap:10px}
 .melody-app .practice-card{background:#fff;border-radius:16px;padding:12px}
 .melody-app .practice-card h3{margin:0;font-size:17px}
@@ -152,3 +152,7 @@ body.melody-app{background:#faf5ed;color:#443b36}
 @media(min-width:650px){.melody-app #practice-list{grid-template-columns:1fr 1fr}}
 
 .melody-app.editor-focus #capture-blocks button[aria-pressed=true]{color:#30462e}
+
+.melody-app #learning-action{display:block;font-size:20px;line-height:1.4;margin:4px 0;color:#493815;overflow-wrap:anywhere}
+.melody-app.learning-active:not(.learning-complete) .phrase-register,.melody-app.learning-active:not(.learning-complete) #after-keep{display:none}
+.melody-app.learning-active .composer-replace{display:none}
