@@ -1,7 +1,7 @@
 import { LEVELS, TITLES, PLAYBACK } from './config.js';
 import { createSession, editSequence, startExecution, advance, retry, resumeSession, remainingSteps, markLevelCleared, highestTitle, allLevelsCleared } from './run.js';
 import { parseUtterance, vocabulary } from './commands.js';
-import { BASIC_STAGE, ADDITIONAL_STAGE, DELIVERY_GUIDE, ADDITIONAL_GUIDE, tutorialNeeded, completeTutorial } from './tutorial.js';
+import { BASIC_STAGE, ADDITIONAL_STAGE, ADDITIONAL_GUIDE, tutorialNeeded, completeTutorial } from './tutorial.js';
 import { DeliveryStorage } from './storage.js';
 import { SearchClient } from './search.js';
 import { mountEditor } from './editor.js';
@@ -209,10 +209,20 @@ function help(){
   openDialog('あそびかた','',actions,{onVoice:back,helpLayout:true});
   const body=$('dialog-body');
   body.append(node('p','① とどけさきまでの しじを ぜんぶ いれる\n② しじを みて「オッケー」\n③ にもつを おうちへ とどけよう！'));
-  body.append(node('p',DELIVERY_GUIDE));
+  const key=node('div',undefined,'help-board-key');
+  for(const [file,text] of [
+    ['package.svg','にもつ：とおると ひろう'],
+    ['destination.svg','おうち：とおると とどける'],
+    ['obstacle.svg','いわ：とおれない']
+  ]){
+    const row=node('div'),img=node('img');
+    img.src=`../assets/delivery/${file}`;img.alt='';
+    row.append(img,node('span',text));key.append(row);
+  }
+  body.append(key);
   for(const [label,text] of [
     ['しじの なおしかた', '「2ばん」→「した1」で いいなおせるよ。\nもどす：さいごの しじを けす\nやりなおし：しじを ぜんぶ けす\nヒントは なんかいでも つかえるよ。'],
-    ['やさしい・むずかしい', 'やさしい：ほすうに ゆとり。\nしっぱいしたら さいごの はいたつから。\nむずかしい：ほすうは すくなめ。\nしっぱいしたら めんの はじめから。']
+    ['はいたつの ルール', 'にもつは 2こまで はこべるよ。\nとどけたときに しじが おわれば とまるよ。\nつづきの しじが あれば すすむよ。\n\nやさしい：ほすうに ゆとり。\nしっぱいしたら さいごの はいたつから。\nむずかしい：ほすうは すくなめ。\nしっぱいしたら めんの はじめから。']
   ]){
     const details=node('details');
     details.append(node('summary',label),node('p',text));

@@ -254,3 +254,7 @@ dialog{border:0;border-radius:24px;background:var(--bg);color:var(--ink);width:m
 #dialog.help-dialog .voice-guide span{font-size:14px}
 #dialog.help-dialog .stack{gap:6px;margin:6px 0 0}
 #dialog.help-dialog .big{min-height:44px;padding:6px;font-size:15px}
+
+#dialog.help-dialog .help-board-key{display:grid;gap:4px;margin:0 0 8px}
+#dialog.help-dialog .help-board-key>div{display:flex;align-items:center;gap:8px;min-height:28px}
+#dialog.help-dialog .help-board-key img{width:28px;height:28px;object-fit:contain;flex-shrink:0}
