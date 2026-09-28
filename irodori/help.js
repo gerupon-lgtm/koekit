@@ -37,7 +37,7 @@ export function createHelp({ onOpen, onClose }) {
       <p>こえでも <b>「ほぞん」「もどす」</b>。<br>おしまいは <b>「やめる」「おわり」</b>。</p>
       <p class="ir-help-note">この ブラウザに <b>12こ</b>まで のこせるよ。<br>とちゅうの えは「かきかけを つづける」へ。<br>※ サイトの データを けすと、えも きえるよ。</p>
     </section>
-    <button class="ir-help-done">つくりはじめる</button>`;
+    <button class="ir-help-done menu-help-dismiss" type="button">とじる</button>`;
   document.body.append(dialog);
   const select = key => {
     dialog.querySelectorAll('[data-help-tab]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.helpTab === key)));
@@ -56,7 +56,6 @@ export function createHelp({ onOpen, onClose }) {
     show(screen) {
       if (dialog.open) return;
       select(screen === 'list' || screen === 'preview' ? 'save' : 'paint');
-      dialog.querySelector('.ir-help-done').textContent = screen === 'make' ? 'つくりはじめる' : 'わかった';
       onOpen();
       dialog.showModal();
     },

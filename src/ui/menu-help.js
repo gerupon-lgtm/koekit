@@ -24,7 +24,7 @@ const touch = document.createElement('p');
 touch.textContent = 'きめる ときも、チェックの ボタンを おせるよ。';
 dialog.append(touch);
 const close = document.createElement('button');
-close.textContent = 'とじる'; close.autofocus = true;
+close.textContent = 'とじる'; close.className = 'menu-help-dismiss'; close.type = 'button'; close.autofocus = true;
 close.addEventListener('click', () => dialog.close());
 dialog.append(close);
 // 既存のイベントとIDを保ち、計測パネルへの入口をヘルプ内へ移す。
