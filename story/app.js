@@ -148,7 +148,7 @@ $('tts-test').onclick = () => {
   if (!reader.available) { toast('この端末は よみあげに 対応していません'); return; }
   const was = reader.enabled; reader.enabled = true;
   log(`ためし読み online=${navigator.onLine}`);
-  reader.speak([{ text: 'むかしむかし、あるところに。これは、よみあげの ためしです。' }]).then(() => { reader.enabled = was; });
+  reader.speak([{ text: 'むかしむかし、あるところに。これは、よみあげのテストです。' }]).then(() => { reader.enabled = was; });
 };
 function paintVoices() {
   const sel = $('voice');
