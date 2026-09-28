@@ -6,15 +6,15 @@ const base=process.env.SAEZURI_BASE||'http://127.0.0.1:8014';
  for(const [width,height] of [[320,568],[360,800],[390,844],[412,915],[844,390],[1280,800]]){
   await page.setViewportSize({width,height});
   const layout=await page.locator('#composer-keys').evaluate(n=>[...n.children].map(b=>{const r=b.getBoundingClientRect(),s=getComputedStyle(b);return {x:r.x,y:r.y,right:r.right,bottom:r.bottom,width:r.width,height:r.height,overflow:b.scrollWidth>b.clientWidth,outline:parseFloat(s.outlineWidth),offset:parseFloat(s.outlineOffset)};}));
-  assert.ok(layout[1].x-layout[0].right>=7.9,`card gap at ${width}`);
-  assert.ok(layout.every(r=>r.width>=48&&r.height>=48&&!r.overflow),`readable touch targets ${width}`);
+  assert.ok(layout[1].x-layout[0].right>=3.9,`card gap at ${width}`);
+  assert.ok(layout.every(r=>r.width>=37&&r.height>=48&&!r.overflow),`readable touch targets ${width}`);
   assert.ok(layout[0].outline+layout[0].offset<=0,`guide stays inside card ${width}`);
-  assert.ok(layout[4].y>=layout[0].bottom+7.9,`two rows ${width}`);
+  assert.equal(layout.length,7);assert.ok(layout.every(r=>Math.abs(r.y-layout[0].y)<1),`single row ${width}`);
   assert.ok(await page.locator('#learning-action').evaluate(n=>parseFloat(getComputedStyle(n).fontSize)>=20));
   assert.ok(await page.locator('#learning-message').evaluate(n=>parseFloat(getComputedStyle(n).fontSize)>=16));
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,`viewport ${width}`);
  }
- await page.setViewportSize({width:390,height:844});await page.screenshot({path:'.local-tools/saezuri-v24-tutorial.png',fullPage:true});
+ await page.setViewportSize({width:390,height:844});await page.screenshot({path:'.local-tools/saezuri-v25-tutorial.png',fullPage:true});
  assert.equal(await page.locator('.phrase-register').isVisible(),false,'hide registration only while tutorial is in progress');
  await page.locator('[data-pitch="0"]').click();assert.match(await page.locator('#learning-action').textContent(),/オッケー/);await page.locator('#capture-edit-confirm').click();assert.match(await page.locator('#learning-action').textContent(),/ミ/);
  await page.locator('#learning-close').click();assert.equal(await page.locator('.phrase-register').isVisible(),true);

@@ -43,9 +43,9 @@ body.melody-app{background:#faf5ed;color:#443b36}
 .melody-app.editor-focus .composer-values{gap:8px}
 .melody-app.editor-focus .composer-values label{font-size:12px;gap:2px}
 .melody-app.editor-focus .composer-values input,.melody-app.editor-focus .composer-values select{min-height:44px;padding:5px;font-size:16px}
-.melody-app.editor-focus #composer-keys{grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:8px 0}
-.melody-app.editor-focus #composer-keys button{min-width:0;min-height:48px;padding:6px 2px;font-size:18px;background:#fff}
-.melody-app.editor-focus #composer-keys button:last-child{font-size:16px}
+.melody-app.editor-focus #composer-keys{grid-template-columns:repeat(7,minmax(0,1fr));gap:4px;margin:8px 0}
+.melody-app.editor-focus #composer-keys button{min-width:0;min-height:48px;padding:6px 0;font-size:16px;background:#fff}
+
 .melody-app #composer-panel .composer-replace{font-size:12px;margin:4px 0}
 .melody-app .composer-voice-hint{display:none}
 .melody-app #composer-candidate{font-size:12px;margin:3px 0;line-height:1.4;min-height:17px}
@@ -89,8 +89,8 @@ body.melody-app{background:#faf5ed;color:#443b36}
 .melody-app #sequence-count{font-weight:400;margin-left:8px}
 .melody-app.editor-focus footer{font-size:12px;padding:6px 12px}
 .melody-app.editor-focus footer button{min-height:40px;font-size:14px}
-@media(max-width:350px){.melody-app.editor-focus main{padding-inline:8px}.melody-app.editor-focus #composer-keys{grid-template-columns:repeat(4,minmax(0,1fr))}.melody-app #melody-home h1{margin:4px 0}.melody-app .home-caption{margin-bottom:14px}.melody-app .home-menu{gap:10px}}
-@media(min-width:650px){.melody-app.editor-focus #capture-note-panel{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}.melody-app.editor-focus #capture-score{grid-column:1;grid-row:1;height:230px}.melody-app.editor-focus #capture-blocks{grid-column:1;grid-row:2}.melody-app.editor-focus .edit-toolbar{grid-column:2;grid-row:1/3}.melody-app.editor-focus #composer-keys{grid-template-columns:repeat(4,1fr)}.melody-app .phrase-register{max-width:400px;margin-left:auto}.melody-app #sequence-line{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media(max-width:350px){.melody-app.editor-focus main{padding-inline:8px}.melody-app.editor-focus #composer-keys{grid-template-columns:repeat(7,minmax(0,1fr))}.melody-app #melody-home h1{margin:4px 0}.melody-app .home-caption{margin-bottom:14px}.melody-app .home-menu{gap:10px}}
+@media(min-width:650px){.melody-app.editor-focus #capture-note-panel{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}.melody-app.editor-focus #capture-score{grid-column:1;grid-row:1;height:230px}.melody-app.editor-focus #capture-blocks{grid-column:1;grid-row:2}.melody-app.editor-focus .edit-toolbar{grid-column:2;grid-row:1/3}.melody-app.editor-focus #composer-keys{grid-template-columns:repeat(7,minmax(0,1fr))}.melody-app .phrase-register{max-width:400px;margin-left:auto}.melody-app #sequence-line{grid-template-columns:repeat(4,minmax(0,1fr))}}
 
 /* Editing controls follow delivery/styles.css button/seg and irodori/styles.css ir-icon.
    Scoped here so the shared apps and the legacy technical layout stay independent. */
@@ -156,3 +156,18 @@ body.melody-app{background:#faf5ed;color:#443b36}
 .melody-app #learning-action{display:block;font-size:20px;line-height:1.4;margin:4px 0;color:#493815;overflow-wrap:anywhere}
 .melody-app.learning-active:not(.learning-complete) .phrase-register,.melody-app.learning-active:not(.learning-complete) #after-keep{display:none}
 .melody-app.learning-active .composer-replace{display:none}
+
+#composer-lengths{display:none}
+.melody-app #composer-lengths{display:block;min-width:0;border:0;padding:0;margin:0 0 4px}
+.melody-app #composer-lengths legend{font-size:13px;padding:0;margin-bottom:3px}
+.melody-app #composer-length-buttons{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.melody-app.editor-focus #composer-length-buttons button{display:flex;align-items:center;justify-content:center;gap:3px;min-width:0;min-height:52px;margin:0;padding:4px 2px;background:#fff;font-size:13px}
+.melody-app #composer-length-buttons svg{width:26px;height:36px;flex-shrink:0}
+.melody-app.editor-focus #composer-length-buttons button[aria-pressed=true]{background:#e0eddf;box-shadow:inset 0 0 0 2px #6d9791;color:#30462e}
+.melody-app #composer-other-lengths{font-size:12px;margin-top:4px}
+.melody-app #composer-other-lengths summary{cursor:pointer;padding:4px 0}
+.melody-app #composer-other-lengths select{width:100%}
+.melody-app .duration-number{display:none}
+.melody-app.editor-focus #composer-rest{align-self:end;min-height:44px;margin:0;background:#e7ddef;font-size:14px}
+
+.melody-app.learning-active:not(.learning-complete) #composer-other-lengths{display:none}

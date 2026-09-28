@@ -8,14 +8,16 @@ export class MelodyScreens {
  constructor({editor,onStop,onNavigate,onPlay,onDiscard,onOpenPattern,onAudition}) {
   Object.assign(this,{editor,onStop,onNavigate,onPlay,onDiscard,onOpenPattern,onAudition});
   this.screen='home';this.sequence=emptySequence();this.proposal=null;this.selected=null;this.mode='input';this.busy=false;
-  document.body.classList.add('melody-app');document.title='サエズリズム';
+  document.body.classList.add('melody-app');
+  document.querySelector('#composer-panel .composer-values').append(document.querySelector('[data-pitch="7"]'));
+  document.querySelector('[data-pitch="7"]').id='composer-rest';document.title='サエズリズム';
   document.querySelector('main > header').hidden=true;
   const main=document.querySelector('main');
   const home=document.createElement('section');home.id='melody-home';home.className='melody-screen';
   home.innerHTML=`<nav class="home-nav"><a class="menu-home" href="../../" aria-label="コエキットへ"><svg viewBox="0 0 24 24"><path d="M12 3l9 8h-2.5v9h-5.5v-6h-2v6H5.5v-9H3z"/></svg></a><button class="menu-help" id="melody-help" aria-label="つかいかた">？</button></nav>
    <h1><img src="../../assets/brand/saezurhythm.svg" alt="サエズリズム"></h1><p class="home-caption">こえと タッチで、メロディーを つくろう。</p>
    <div class="home-menu"><button id="home-create">つくる<small>音をならべて、ひとつのフレーズに</small></button><button id="home-connect">つなげる<small>フレーズをならべて、長い曲に</small></button><button id="home-resume" hidden>つづきから</button></div>
-   <p class="session-note">このタブの中で試せます。再読み込みすると作業は消えます。</p><p class="home-credit">試作 v24　© 2026 SIKUMI LAB</p>`;
+   <p class="session-note">このタブの中で試せます。再読み込みすると作業は消えます。</p><p class="home-credit">試作 v25　© 2026 SIKUMI LAB</p>`;
   const choose=document.createElement('section');choose.id='melody-choose';choose.className='melody-screen';
   choose.innerHTML='<div class="screen-heading"><button data-screen-back>← トップ</button><h2 tabindex="-1">つくる</h2></div><p>どこから はじめる？</p><div id="creation-choices"></div><p id="choose-notice" role="status"></p><button id="choose-resume" hidden>つづきから</button>';
   const create=document.createElement('div');create.id='melody-create';create.className='melody-screen';
