@@ -5,6 +5,7 @@ import { makeBoard, resolvePicks, buildStory, splitSentences, MAX_PER_ROW } from
 import { SETS, ROW_KEYS, EXTRA_KEYS, FIRST_STAGE, LAST_STAGE, loadSets } from '../story/story-data.js';
 import { parse, wordsFor } from '../story/vocabulary.js';
 import { buildCoherentStory } from '../story/coherent-story.js';
+import { COHERENT_PLOTS, COHERENT_ENDINGS } from '../story/coherent-scenes.js';
 
 // 画面と同じ JSON を読む
 await loadSets(path => JSON.parse(readFileSync(new URL(path, new URL('../story/story-data.js', import.meta.url)), 'utf8')));
@@ -18,6 +19,7 @@ function seeded(seed) {
 let fail = 0, runs = 0;
 const stats = { together: 0, join: 0 };
 const typeCount = {};
+const coherentCount = {};
 const bad = (msg, ctx) => { fail++; if (fail <= 10) console.error('NG:', msg, ctx ?? ''); };
 
 for (const audience of ['kids', 'adult']) {
@@ -59,6 +61,8 @@ for (const audience of ['kids', 'adult']) {
       if (order === 'normal') {
         const before = JSON.stringify({ picks, st });
         const coherent = buildCoherentStory({ audience, name: set.names[0], picks, original: st });
+        const plotKey = `${audience}/${coherent.family}/${coherent.plot}`;
+        coherentCount[plotKey] = (coherentCount[plotKey] || 0) + 1;
         const text = coherent.lines.map(line => line.text).join('');
         if (/[{}]|undefined|null/.test(text)) bad('別版の置換漏れ', text);
         for (const k of ROW_KEYS) for (const w of picks[k].words) if (!text.includes(w)) bad('別版から選んだ語が消えた', w);
@@ -84,6 +88,35 @@ for (const audience of ['kids', 'adult']) {
       for (const l of st.lines) if (!splitSentences(l.text).length) bad('文分割が空', l.text);
     }
   }
+}
+
+// 新しい展開もすべて抽選されること。未選択の文も含めて、差し込み語・表記・重複を検査。
+const coherentStages = ['problem', 'clue', 'action', 'resolution'];
+for (const audience of ['kids', 'adult']) {
+  let combinations = 0, plots = 0;
+  const allowed = new Set(['name', 'itsu', 'basho', 'aite', 'mono', ...EXTRA_KEYS]);
+  const checkTemplates = (texts, where) => {
+    if (!texts.length || new Set(texts).size !== texts.length) bad('別版の候補が空または重複', where);
+    for (const text of texts) {
+      if (audience === 'kids' && /[\u4e00-\u9fff]/.test(text)) bad('別版のこども用候補に漢字', where);
+      const body = text.replace(/\{(\w+)\}/g, (_, key) => {
+        if (!allowed.has(key)) bad('別版に未定義の差し込み語', `${where}/${key}`);
+        return '';
+      });
+      if (/[{}]/.test(body)) bad('別版の候補にかっこの閉じ忘れ', where);
+    }
+  };
+  checkTemplates(COHERENT_ENDINGS[audience], `${audience}/ending`);
+  for (const [family, candidates] of Object.entries(COHERENT_PLOTS)) {
+    if (new Set(candidates.map(p => p.id)).size !== candidates.length) bad('別版の展開ID重複', family);
+    for (const plot of candidates) {
+      plots++;
+      if (!coherentCount[`${audience}/${family}/${plot.id}`]) bad('一度も出ない別版の展開', `${audience}/${family}/${plot.id}`);
+      for (const stage of coherentStages) checkTemplates(plot[audience][stage], `${audience}/${plot.id}/${stage}`);
+      combinations += coherentStages.reduce((n, stage) => n * plot[audience][stage].length, COHERENT_ENDINGS[audience].length);
+    }
+  }
+  console.log(`another story ${audience}: plots=${plots}, template combinations=${combinations}`);
 }
 
 // データの約束：はじまりの場面は必ず「いつ」「どこで」を含む（ふつうで最初につなぎ文が来ないため）

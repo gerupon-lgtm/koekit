@@ -1,5 +1,5 @@
 // 同じ材料から作る別版。原作本文・選択・履歴・Math.random を変更しない。
-import { COHERENT_SCENES } from './coherent-scenes.js';
+import { COHERENT_PLOTS, COHERENT_ENDINGS } from './coherent-scenes.js';
 
 const FAMILIES = {
   'ぼうけん': 'adventure', '冒険': 'adventure',
@@ -24,8 +24,8 @@ export function buildCoherentStory({ audience, name, picks, original }) {
   const kids = audience === 'kids';
   const family = FAMILIES[original.type];
   if (!family) throw new Error('Unknown story type: ' + original.type);
-  const plot = COHERENT_SCENES[family][audience];
   const choose = choicesFor({ audience, name, picks, original });
+  const plot = choose(COHERENT_PLOTS[family]);
   const words = Object.fromEntries(['itsu', 'basho', 'aite', 'mono'].map(key => [key, picks[key].words.slice()]));
   const vars = { ...original.extras, name, aite: words.aite.join('と'), mono: words.mono.join('と') };
   const fill = text => text.replace(/\{(\w+)\}/g, (_, key) => {
@@ -36,11 +36,8 @@ export function buildCoherentStory({ audience, name, picks, original }) {
   const templates = [
     kids ? '{itsu}。{name}は、{basho}で{aite}といっしょにいました。てもとにあるのは、{mono}です。'
       : '{itsu}。{name}は、{basho}で{aite}と合流した。手元には、{mono}があった。',
-    ...['problem', 'clue', 'action', 'resolution'].map(key => choose(plot[key])),
-    kids ? choose(['{name}と{aite}は、かおをみあわせてわらいました。めでたし、めでたし。',
-      'こまったことがかいけつして、{name}たちはほっとしました。これで、おしまい。'])
-      : choose(['{name}と{aite}は、顔を見合わせて笑った。めでたし、めでたし。',
-        '困り事は片づき、{name}たちはようやく一息ついた。これにて、おしまい。']),
+    ...['problem', 'clue', 'action', 'resolution'].map(key => choose(plot[audience][key])),
+    choose(COHERENT_ENDINGS[audience]),
   ];
   // 移動・時間の切替は手がかり／行動に入る前まで。行動の結果が出る途中で場所を飛ばさない。
   const seq = Object.fromEntries(['itsu', 'basho'].map(key => [key,
@@ -61,5 +58,5 @@ export function buildCoherentStory({ audience, name, picks, original }) {
     lines.push({ stage: STAGES[i], shift: false, text: fill(template) });
   });
   return { lines, intro: kids ? 'もうひとつのおはなしです。' : '同じカードで、もうひとつのお話です。',
-    type: original.type, family, stages: STAGES.slice(), seq, extras: { ...original.extras }, companion: 'together' };
+    type: original.type, family, plot: plot.id, stages: STAGES.slice(), seq, extras: { ...original.extras }, companion: 'together' };
 }
