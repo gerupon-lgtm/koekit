@@ -60,6 +60,6 @@ export function buildCoherentStory({ audience, name, picks, original }) {
     }
     lines.push({ stage: STAGES[i], shift: false, text: fill(template) });
   });
-  return { lines, intro: kids ? 'すじのとおったおはなしです。' : '同じカードで、少し筋の通ったお話です。',
+  return { lines, intro: kids ? 'もうひとつのおはなしです。' : '同じカードで、もうひとつのお話です。',
     type: original.type, family, stages: STAGES.slice(), seq, extras: { ...original.extras }, companion: 'together' };
 }

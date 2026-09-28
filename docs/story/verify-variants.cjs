@@ -61,7 +61,7 @@ const base = process.env.STORY_BASE || 'http://127.0.0.1:8124';
     await p.waitForFunction(() => window.__story.voiceContext()?.type === 'after');
     const texts = await p.evaluate(() => window.spoken);
     assert.ok(texts.length > 4);
-    assert.equal(texts[0], '同じカードで、少し筋の通ったお話です。');
+    assert.equal(texts[0], '同じカードで、もうひとつのお話です。');
     assert.ok(!texts.some(text => /^今回は/.test(text)), 'old auto reading canceled');
     await p.waitForFunction(() => Math.abs(document.documentElement.scrollHeight - innerHeight - scrollY) < 3);
     // 読み上げ途中に切替を連打しても、表示中の版の発話だけが続く。

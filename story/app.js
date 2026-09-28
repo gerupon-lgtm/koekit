@@ -403,7 +403,7 @@ function paintStory() {
   $('story').innerHTML = st.story.lines.map((l, i) => `<li data-i="${i}" class="${l.shift ? 'shift' : ''}">${esc(l.text)}</li>`).join('');
   $('story-switch').hidden = settings.order !== 'normal';
   $('story-version-label').hidden = settings.order !== 'normal';
-  $('story-version-label').textContent = st.storyVersion === 'original' ? 'もとの おはなし' : 'すじの とおった おはなし';
+  $('story-version-label').textContent = st.storyVersion === 'original' ? 'もとの おはなし' : 'もうひとつの おはなし';
   document.querySelectorAll('[data-story-version]').forEach(button => {
     button.setAttribute('aria-pressed', String(button.dataset.storyVersion === st.storyVersion));
   });
