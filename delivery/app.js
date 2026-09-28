@@ -45,7 +45,7 @@ function renderLevels(){$('level-list').replaceChildren();for(const level of LEV
   b.classList.toggle('completed',cleared);b.setAttribute('aria-label',`レベル ${level.id}・${level.size}かける${level.size}・にもつ${level.packageCount}こ${cleared?'・クリアずみ':''}`);
   if(cleared){const mark=node('span','✓','clear-mark');mark.setAttribute('aria-hidden','true');b.append(mark)}$('level-list').append(b);
 }}
-function openDialog(title,text,actions,{word='オッケー',onVoice,compact=false}={}){pause();$('dialog').classList.toggle('tutorial-intro',compact);speech.close();$('dialog-title').textContent=title;$('dialog-body').textContent=text;$('dialog-actions').replaceChildren();dialogContext={onVoice};for(const action of actions){const b=node('button',action.label,`big ${action.color||'subtle'}`);b.onclick=()=>{speech.close();$('dialog').close();dialogContext=null;action.run()};$('dialog-actions').append(b)}$('dialog').showModal();setVoiceGuide($('dialog-voice-guide'),onVoice?word:'',onVoice?'で すすむ':'ボタンで えらぼう');if(onVoice)speech.open(['オッケー','オーケー','つぎ','おわり'],'dialog',`dialog-${epoch}`)}
+function openDialog(title,text,actions,{word='オッケー',onVoice,compact=false,helpLayout=false}={}){pause();$('dialog').classList.toggle('help-dialog',helpLayout);$('dialog').classList.toggle('tutorial-intro',compact);speech.close();$('dialog-title').textContent=title;$('dialog-body').textContent=text;$('dialog-actions').replaceChildren();dialogContext={onVoice};for(const action of actions){const b=node('button',action.label,`big ${action.color||'subtle'}`);b.onclick=()=>{speech.close();$('dialog').close();dialogContext=null;action.run()};$('dialog-actions').append(b)}$('dialog').showModal();setVoiceGuide($('dialog-voice-guide'),onVoice?word:'',onVoice?'で すすむ':'ボタンで えらぼう');if(onVoice)speech.open(['オッケー','オーケー','つぎ','おわり'],'dialog',`dialog-${epoch}`)}
 function closeDialog(){speech.close();$('dialog').close();dialogContext=null;syncVoice();}
 function requestStart(level=1,{reviewTutorial=null}={}){
   const start=()=>{conflict=false;const saved=readSaved();if(saved){const r=storage.endSession(saved.sessionId,sessionRevision);if(r.ok)sessionRevision=r.revision;else{notice('前のプレイを更新できません。新しいプレイは開始していません。');return}}beginNormal(level,0,{reviewTutorial})};
@@ -199,7 +199,28 @@ function endPlay(){stopAsync();hint=null;$('toast').hidden=true;if(session){cons
 function openEditor(){stopAsync();setScreen('editor-screen');editor?.dispose();editor=mountEditor($('editor-host'),{storage,search:editorSearch,onClose:showTitle,onPlay:(stages,options)=>requestCustom(stages,options),onSpeechContext:context=>{editorVoice=context;if(screen==='editor-screen')syncVoice()}})}
 function requestCustom(stages,options){const start=()=>{stopAsync();const saved=readSaved();if(saved){const r=storage.endSession(saved.sessionId,sessionRevision);if(!r.ok){notice('前のプレイを更新できません。新しいプレイは開始していません。');setScreen('editor-screen');syncVoice();return}sessionRevision=r.revision}conflict=false;previewReturn=options.onReturn;session=createSession(stages[0],{difficulty,source:'custom',stageIndex:0,orderedStageSnapshots:clone(stages),preview:!!options.preview,editorSnapshot:options.preview?editor?.getState():null});saveSession();hint=null;void enterStage()};const saved=readSaved();if(saved)openDialog('今のつづきを 置きかえる？','作った面と称号は残ります。',[{label:'あそぶ',color:'green',run:start},{label:'もどる',run:()=>{setScreen('editor-screen');syncVoice()}}]);else start()}
 function returnToEditor(){stopAsync();const snapshot=session?.editorSnapshot;if(session){const r=storage.endSession(session.sessionId,sessionRevision);if(r.ok)sessionRevision=r.revision;else notice('つづきの削除を保存できませんでした。')}session=null;if(editor&&previewReturn){setScreen('editor-screen');previewReturn();syncVoice()}else{openEditor();editor.restorePreview(snapshot)}}
-function help(){const back=()=>{closeDialog();if(screen==='game')paintGame();syncVoice()};const actions=[{label:'とじる',color:'green',run:back}];if(screen==='title')actions.push({label:'はじめの れんしゅう',run:()=>requestStart(1,{reviewTutorial:'basic'})},{label:'2かい はいたつの れんしゅう',run:()=>requestStart(3,{reviewTutorial:'additional'})});openDialog('デリバリズムの あそびかた','① 方向と歩数を ひとつずつ入れる\n② 表の順番をみて「オッケー」\n③ にもつを おうちへ とどけよう！\n\n「2ばん」で行を選んで、しじを言いなおせるよ。\nもどす：最後の1行／やりなおし：表をぜんぶ消す\n\n'+DELIVERY_GUIDE+'\nわけても、まとめて いれても OK！\n\nやさしい：ほすうに ゆとり。しっぱいしたら さいごの はいたつから。\nむずかしい：ほすうは すくなめ。しっぱいしたら めんの はじめから。\nヒントは 何回でもつかえるよ。\n\nマイクを使わなくても、ぜんぶタッチであそべます。',actions,{onVoice:back})}
+function help(){
+  const back=()=>{closeDialog();if(screen==='game')paintGame();syncVoice()};
+  const actions=[{label:'とじる',color:'green',run:back}];
+  if(screen==='title')actions.push(
+    {label:'はじめの れんしゅう',run:()=>requestStart(1,{reviewTutorial:'basic'})},
+    {label:'2かい はいたつの れんしゅう',run:()=>requestStart(3,{reviewTutorial:'additional'})}
+  );
+  openDialog('あそびかた','',actions,{onVoice:back,helpLayout:true});
+  const body=$('dialog-body');
+  body.append(node('p','①「みぎ2」などを いれる\n② しじを みて「オッケー」\n③ にもつを おうちへ とどけよう！'));
+  body.append(node('p',DELIVERY_GUIDE));
+  for(const [label,text] of [
+    ['しじの なおしかた', '「2ばん」→「した1」で いいなおせるよ。\nもどす：さいごの しじを けす\nやりなおし：しじを ぜんぶ けす\nヒントは なんかいでも つかえるよ。'],
+    ['やさしい・むずかしい', 'やさしい：ほすうに ゆとり。\nしっぱいしたら さいごの はいたつから。\nむずかしい：ほすうは すくなめ。\nしっぱいしたら めんの はじめから。']
+  ]){
+    const details=node('details');
+    details.append(node('summary',label),node('p',text));
+    body.append(details);
+  }
+  body.append(node('p','ぜんぶ タッチでも あそべるよ。','help-touch'));
+}
+
 const actions={new:()=>requestStart(),title:showTitle,resume,editor:openEditor,help,
   add:()=>{const before=session;dispatchCommand({type:'move',direction,count:Number($('step-count').value)});if(session!==before)$('step-count').value='1';},undo:()=>dispatchCommand({type:'undo'}),reset:()=>dispatchCommand({type:'reset'}),execute,continue:execute,retry:retryPlay,next:nextStage,end:endPlay,hint:showHint,hintNext:()=>showHint(true),hintClose:closeHint,previewReturn:returnToEditor,
   skipTutorial:()=>{if(!$('skip-tutorial').hidden)endPlay()},prepareRetry:()=>beginNormal(pendingPrepare.level,pendingPrepare.stageIndex),

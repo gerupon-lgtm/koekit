@@ -239,3 +239,18 @@ dialog{border:0;border-radius:24px;background:var(--bg);color:var(--ink);width:m
   .tutorial-note{margin:2px 0;padding:2px 8px}
   #failure-location .failure-board{width:110px}
 }
+
+/* ヘルプは基本操作を常設し、補足だけを開閉する。 */
+#dialog.help-dialog{padding:14px}
+#dialog.help-dialog h2{font-size:20px;line-height:1.4;margin:0 0 8px}
+#dialog.help-dialog #dialog-body{white-space:normal;font-size:15px;line-height:1.5}
+#dialog.help-dialog p{white-space:pre-line;margin:0 0 8px}
+#dialog.help-dialog details{border-top:1px solid var(--line)}
+#dialog.help-dialog summary{cursor:pointer;min-height:44px;padding:10px 2px;font-weight:700}
+#dialog.help-dialog summary:focus-visible{outline:3px solid #77599d;outline-offset:1px}
+#dialog.help-dialog .help-touch{margin:6px 0}
+#dialog.help-dialog .voice-guide{min-height:32px;margin:6px 0;padding:4px 6px;gap:4px}
+#dialog.help-dialog .voice-guide strong{font-size:18px}
+#dialog.help-dialog .voice-guide span{font-size:14px}
+#dialog.help-dialog .stack{gap:6px;margin:6px 0 0}
+#dialog.help-dialog .big{min-height:44px;padding:6px;font-size:15px}
