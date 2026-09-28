@@ -1,6 +1,7 @@
 // 盤面版の組み立て（画面に依存しない部分）— 基本設計6節
 // 物語は「型」（場面の並び）で作る。型・場面・つなぎ文などは story/data/*.json にある
 import { SETS, ROW_KEYS, FIRST_STAGE } from './story-data.js';
+import { varietyPicker } from './variety.js';
 export { loadSets } from './story-data.js';
 
 export const MAX_PER_ROW = 3; // 1行で選べる上限（要件B区分）
@@ -112,17 +113,11 @@ function ensureSlots(set, cards) {
 }
 
 // つなぎ文を選ぶ（同じ物語の中では同じ文をなるべく繰り返さない）
-function pickShift(list, used, rnd) {
-  const cand = list.filter(t => !used.has(t));
-  const t = pick(cand.length ? cand : list, rnd);
-  used.add(t);
-  return t;
-}
-
 // 物語の生成
 //  avoid：直前に使った場面（"場面:番号" の Set）、avoidType：直前の型。app 側が渡す
-export function buildStory({ audience, name, picks, order = 'normal', rnd = Math.random, avoid = new Set(), avoidType }) {
+export function buildStory({ audience, name, picks, order = 'normal', rnd = Math.random, avoid = new Set(), avoidType, history = [] }) {
   const set = SETS[audience];
+  const variety = varietyPicker(list => pick(list, rnd), history);
   const { type, stages } = chooseFlow(set, rnd, avoidType);
   const total = stages.length;
   let cards = null;
@@ -143,7 +138,6 @@ export function buildStory({ audience, name, picks, order = 'normal', rnd = Math
   const lines = [];
   const last = { itsu: null, basho: null };
   const joined = new Set();
-  const usedShift = new Set();
   cards.forEach((c, i) => {
     const newcomers = [];
     picks.aite.words.forEach((w, j) => {
@@ -156,13 +150,17 @@ export function buildStory({ audience, name, picks, order = 'normal', rnd = Math
       const v = vars[k];
       if (v === last[k]) continue;
       const mentions = c.tpl.includes('{' + k + '}');
-      if (!(mentions && last[k] === null)) lines.push({ stage: null, text: fill(pickShift(set.shift[k], usedShift, rnd), vars), shift: true });
+      if (!(mentions && last[k] === null)) lines.push({ stage: null, text: fill(variety.take('o/shift-' + k, set.shift[k], 4, true), vars), shift: true });
       last[k] = v;
     }
-    for (const w of newcomers) lines.push({ stage: null, text: fill(pickShift(set.shift.aite, usedShift, rnd), { ...vars, new: w }), shift: true });
+    for (const w of newcomers) lines.push({ stage: null, text: fill(variety.take('o/shift-aite', set.shift.aite, 3, true), { ...vars, new: w }), shift: true });
     lines.push({ stage: c.stage, text: fill(c.tpl, vars), shift: false });
   });
-  return { lines, companion: plan.mode, used: cards.map(ref), extras, type: type.name, intro: type.intro, stages, seq };
+  const intros = audience === 'kids'
+    ? [type.intro, `こんどは、${type.name}のおはなしだよ。`, `${type.name}のおはなしが、はじまるよ。`, `さて、どんな${type.name}になるのかな。`]
+    : [type.intro, `ここから始まるのは、${type.name}の物語です。`, `${type.name}の物語を、始めましょう。`, `さて、どんな${type.name}になるでしょうか。`];
+  return { lines, companion: plan.mode, used: cards.map(ref), extras, type: type.name,
+    intro: variety.take('o/intro', intros, 2), stages, seq, variety: variety.used };
 }
 
 // めくった結果の読み上げ文

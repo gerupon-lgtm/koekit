@@ -6,6 +6,9 @@ import { SETS, ROW_KEYS, EXTRA_KEYS, FIRST_STAGE, LAST_STAGE, loadSets } from '.
 import { parse, wordsFor } from '../story/vocabulary.js';
 import { buildCoherentStory } from '../story/coherent-story.js';
 import { COHERENT_PLOTS, COHERENT_ENDINGS } from '../story/coherent-scenes.js';
+import { NARRATIVE } from '../story/narrative.js';
+import { PLOT_VARIATION } from '../story/coherent-variation.js';
+import { remember, cleanReplay, varietyPicker, HISTORY_LIMIT } from '../story/variety.js';
 
 // 画面と同じ JSON を読む
 await loadSets(path => JSON.parse(readFileSync(new URL(path, new URL('../story/story-data.js', import.meta.url)), 'utf8')));
@@ -68,8 +71,15 @@ for (const audience of ['kids', 'adult']) {
         for (const k of ROW_KEYS) for (const w of picks[k].words) if (!text.includes(w)) bad('別版から選んだ語が消えた', w);
         if (!text.includes(set.names[0])) bad('別版に主人公がいない', audience);
         if (audience === 'kids' && /[\u4e00-\u9fff]/.test(text)) bad('別版のこども用に漢字', text);
-        if (!/めでたし、めでたし。|おしまい。$/.test(coherent.lines.at(-1).text)) bad('別版の結末がない', text);
-        if (coherent.lines.filter(line => !line.shift).length !== 6) bad('別版の因果の段階が欠けた');
+        if (coherent.lines.at(-1).stage !== 'おわり' || !coherent.lines.at(-1).text.endsWith('。')) bad('別版の結末がない', text);
+        if (coherent.endingStyle === 'cliche' && !/めでたし、めでたし。|おしまい。$/.test(coherent.lines.at(-1).text)) bad('別版の定番の締めがない');
+        const stages = coherent.stages;
+        if (stages.length < 5 || stages.length > 8 || stages[0] !== 'はじまり' || stages.at(-1) !== 'おわり') bad('別版の場面構成');
+        if (!(stages.indexOf('てがかり') < stages.indexOf('こうどう') && stages.indexOf('こうどう') < stages.indexOf('かいけつ'))) bad('別版の因果の順序');
+        if (coherent.companion === 'join') {
+          const joinAt = coherent.lines.findIndex(line => line.stage === 'なかま');
+          if (joinAt < 0 || joinAt >= coherent.lines.findIndex(line => line.stage === 'てがかり')) bad('別版の合流位置');
+        }
         if (before !== JSON.stringify({ picks, st })) bad('別版が原作や選択を変更した');
         if (n < 10 && JSON.stringify(coherent) !== JSON.stringify(buildCoherentStory({ audience, name: set.names[0], picks, original: st }))) bad('別版が切替のたび変化する');
         for (const k of ['itsu', 'basho']) {
@@ -80,7 +90,7 @@ for (const audience of ['kids', 'adult']) {
           for (const w of ws) if (!st.seq[k].includes(w)) bad(`${k} の語が並びに入らない`, w);
           const otherOrder = coherent.seq[k].map(w => ws.indexOf(w));
           for (let i = 1; i < otherOrder.length; i++) if (otherOrder[i] < otherOrder[i - 1]) bad(`別版の ${k} が逆戻りする`);
-          if (new Set(coherent.seq[k].slice(3)).size !== 1) bad(`別版の解決途中で ${k} が変わる`);
+          if (new Set(coherent.seq[k].slice(stages.indexOf('こうどう'))).size !== 1) bad(`別版の解決途中で ${k} が変わる`);
         }
         if (!st.lines[st.lines.length - 1].text.length) bad('最後の文が空');
         if (st.lines[0].shift) bad('ふつうで最初の文がつなぎ文', st.lines[0].text);
@@ -107,16 +117,104 @@ for (const audience of ['kids', 'adult']) {
     }
   };
   checkTemplates(COHERENT_ENDINGS[audience], `${audience}/ending`);
+  for (const [kind, texts] of Object.entries(NARRATIVE[audience])) checkTemplates(texts, `${audience}/narrative/${kind}`);
   for (const [family, candidates] of Object.entries(COHERENT_PLOTS)) {
     if (new Set(candidates.map(p => p.id)).size !== candidates.length) bad('別版の展開ID重複', family);
     for (const plot of candidates) {
       plots++;
       if (!coherentCount[`${audience}/${family}/${plot.id}`]) bad('一度も出ない別版の展開', `${audience}/${family}/${plot.id}`);
       for (const stage of coherentStages) checkTemplates(plot[audience][stage], `${audience}/${plot.id}/${stage}`);
+      const variation = PLOT_VARIATION[plot.id]?.[audience];
+      if (!variation || ['self', 'companion', 'beat', 'echo', 'after'].some(key => !variation[key])) bad('別版の追加展開の不足', plot.id);
+      else checkTemplates(Object.values(variation), `${audience}/${plot.id}/variation`);
       combinations += coherentStages.reduce((n, stage) => n * plot[audience][stage].length, COHERENT_ENDINGS[audience].length);
     }
   }
-  console.log(`another story ${audience}: plots=${plots}, template combinations=${combinations}`);
+  console.log(`another story ${audience}: plots=${plots}, legacy base combinations=${combinations}, varied introductions/discovery/structure/endings`);
+}
+
+// 長く遊び、端末保存→復元を挟んでも直近候補を避ける。原作と別版の履歴は分離する。
+for (const audience of ['kids', 'adult']) {
+  let replay = cleanReplay(null);
+  const rnd = seeded(audience === 'kids' ? 812 : 813);
+  const formats = new Set(), sources = new Set(), ends = new Set(), sizes = new Set(), casts = new Set(), timing = new Set();
+  let originalIntro = '', alternateIntro = '';
+  const checkHistory = (before, used) => {
+    const prior = [...before];
+    for (const id of used) {
+      const prefix = id.slice(0, id.lastIndexOf('/') + 1);
+      const last = prior.filter(old => old.startsWith(prefix)).at(-1);
+      if (last === id) bad('直近と同じ候補を再使用', id);
+      prior.push(id);
+    }
+  };
+  for (let i = 0; i < 120; i++) {
+    const h = replay[audience], board = makeBoard(audience, rnd);
+    const picks = resolvePicks(board, Object.fromEntries(ROW_KEYS.map(k => [k, [0, 1, 2]])), rnd);
+    const original = buildStory({ audience, name: SETS[audience].names[0], picks, rnd, history: h.original, avoid: new Set(h.scenes.flat()), avoidType: h.type });
+    if (h.type === original.type || original.intro === originalIntro) bad('原作の紹介が直前と同じ');
+    checkHistory(h.original, original.variety);
+    originalIntro = original.intro;
+    h.original = remember(h.original, original.variety);
+    h.scenes = [...h.scenes, original.used].slice(-2); h.type = original.type;
+    const before = JSON.stringify({ original, picks, originalHistory: h.original });
+    const args = { audience, name: SETS[audience].names[0], picks, original, history: h.alternate };
+    const alt = buildCoherentStory(args);
+    if (JSON.stringify(alt) !== JSON.stringify(buildCoherentStory(args))) bad('同じ入力と履歴で別版が変わる');
+    if (before !== JSON.stringify({ original, picks, originalHistory: h.original })) bad('別版が原作の履歴を変更');
+    checkHistory(h.alternate, alt.variety);
+    if (alternateIntro === alt.intro) bad('別版の紹介が直前と同じ');
+    alternateIntro = alt.intro;
+    const shifts = alt.variety.filter(id => id.startsWith('a/shift-'));
+    if (new Set(shifts).size !== shifts.length) bad('同じ別版で同じ転換文を使った');
+    h.alternate = remember(h.alternate, alt.variety);
+    formats.add(alt.format); sources.add(alt.clueSource); ends.add(alt.endingStyle); sizes.add(alt.stages.length); casts.add(alt.companion);
+    timing.add(JSON.stringify(alt.seq));
+    replay = cleanReplay(JSON.parse(JSON.stringify(replay)));
+    if (h.original.length > HISTORY_LIMIT || h.alternate.length > HISTORY_LIMIT) bad('履歴が上限を超えた');
+  }
+  if (formats.size !== 3 || sources.size !== 3 || ends.size !== 3 || casts.size !== 2 || sizes.size < 3) bad('別版の変化が出現しない', { formats: [...formats], sources: [...sources], ends: [...ends], sizes: [...sizes], casts: [...casts] });
+  console.log(`replay ${audience}: 120 stories with reload, formats=${formats.size}, clue sources=${sources.size}, endings=${ends.size}, casts=${casts.size}, lengths=${[...sizes].sort().join('/')}`);
+}
+{
+  const broken = cleanReplay({ kids: { original: [null, 3, 'valid'], scenes: [null], alternate: 'bad', type: {} }, adult: null });
+  if (broken.kids.original.join() !== 'valid' || broken.kids.alternate.length || broken.kids.type !== null) bad('破損した履歴を復元できない');
+  const p = varietyPicker(list => list[0], ['only/0']);
+  if (p.take('only', ['one']) !== 'one') bad('候補が1件のときに選べない');
+}
+// 「かめ」と「たしかめ」のような部分一致を避け、独立した識別語で登場順を確認。
+{
+  let joins = 0;
+  const rnd = seeded(930);
+  for (let i = 0; i < 100; i++) {
+    const audience = i % 2 ? 'adult' : 'kids';
+    const picks = resolvePicks(makeBoard(audience, rnd), {}, rnd);
+    picks.aite.words = ['トモダチア', 'トモダチイ'];
+    const original = buildStory({ audience, name: '主人公', picks, rnd });
+    const alt = buildCoherentStory({ audience, name: '主人公', picks, original });
+    if (alt.companion !== 'join') continue;
+    joins++;
+    const at = alt.lines.findIndex(line => line.stage === 'なかま');
+    const early = alt.lines.slice(0, at).map(line => line.text).join('');
+    if (picks.aite.words.some(word => early.includes(word))) bad('合流前に仲間を参照した');
+    if (picks.aite.words.some(word => !alt.lines[at].text.includes(word))) bad('合流文で全仲間を紹介しなかった');
+  }
+  if (joins < 10) bad('合流パターンの検証不足');
+}
+
+// 同じジャンルの4展開を、直近履歴が残る間は一巡するまで再使用しない。
+for (const audience of ['kids', 'adult']) {
+  const rnd = seeded(1930), picks = resolvePicks(makeBoard(audience, rnd), {}, rnd);
+  const base = buildStory({ audience, name: SETS[audience].names[0], picks, rnd });
+  for (const type of Object.keys(SETS[audience].types)) {
+    let history = [];
+    const plots = new Set();
+    for (let i = 0; i < 4; i++) {
+      const alt = buildCoherentStory({ audience, name: SETS[audience].names[0], picks, original: { ...base, type }, history });
+      plots.add(alt.plot); history = remember(history, alt.variety);
+    }
+    if (plots.size !== 4) bad('同じジャンルで4展開を読む前に再選択した', `${audience}/${type}`);
+  }
 }
 
 // データの約束：はじまりの場面は必ず「いつ」「どこで」を含む（ふつうで最初につなぎ文が来ないため）

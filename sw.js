@@ -12,7 +12,7 @@
 // BUILD は scripts/stamp-cache.cjs が各デプロイ前に一意な値へ置換する。
 
 const VERSION = '0.1.0';            // version.json と一致（scripts/check-version 対象）
-const BUILD = 'v0.1.0-20260928104718-3c4e9db';         // ← scripts/stamp-cache.cjs がデプロイ毎に置換
+const BUILD = 'v0.1.0-20260928111216-b7961b7';         // ← scripts/stamp-cache.cjs がデプロイ毎に置換
 const APP_CACHE = 'koekit-app-' + BUILD;
 const STATIC_CACHE = 'koekit-static-v2'; // 大きい静的資産（vosk.js等）。中身を変えたときだけ版を上げる
 
@@ -20,6 +20,7 @@ const STATIC_CACHE = 'koekit-static-v2'; // 大きい静的資産（vosk.js等�
 const SHELL = [
   './story/', './story/index.html', './story/styles.css', './story/app.js',
   './story/story.js', './story/story-data.js', './story/coherent-story.js', './story/coherent-scenes.js',
+  './story/variety.js', './story/narrative.js', './story/coherent-variation.js',
   './story/tts.js', './story/voice.js', './story/vocabulary.js',
   './story/data/kids.json', './story/data/adult.json', './story/assets/monogatarhythm.svg',
   './assets/brand/saezurhythm.svg', './version.json',

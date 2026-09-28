@@ -61,7 +61,7 @@ const base = process.env.STORY_BASE || 'http://127.0.0.1:8124';
     await p.waitForFunction(() => window.__story.voiceContext()?.type === 'after');
     const texts = await p.evaluate(() => window.spoken);
     assert.ok(texts.length > 4);
-    assert.equal(texts[0], '同じカードで、もうひとつのお話です。');
+    assert.equal(texts[0], await p.locator('#intro').innerText());
     assert.ok(!texts.some(text => /^今回は/.test(text)), 'old auto reading canceled');
     await p.waitForFunction(() => Math.abs(document.documentElement.scrollHeight - innerHeight - scrollY) < 3);
     // 読み上げ途中に切替を連打しても、表示中の版の発話だけが続く。
@@ -85,6 +85,31 @@ const base = process.env.STORY_BASE || 'http://127.0.0.1:8124';
     await p.locator('#end').click(); await reveal();
     assert.equal(await original.getAttribute('aria-pressed'), 'true', 'new story starts with original');
     await p.locator('#end').click();
+    // 実際のリロードを挟み、両対象の履歴が残ること・原作と別版が混ざらないことを確認。
+    await p.locator('[data-key="tts"] [data-v="off"]').click();
+    for (const audience of ['kids', 'adult']) {
+      await p.locator(`[data-v="${audience}"]`).click();
+      let previousType = null, previousIntro = null;
+      for (let i = 0; i < 8; i++) {
+        await reveal();
+        const raw = await p.locator('#story').innerText();
+        const originalHistory = await p.evaluate(a => JSON.parse(localStorage.getItem('koekit.story.settings')).replay[a], audience);
+        assert.notEqual(originalHistory.type, previousType);
+        previousType = originalHistory.type;
+        await coherent.click();
+        const intro = await p.locator('#intro').innerText();
+        assert.notEqual(intro, previousIntro); previousIntro = intro;
+        const saved = await p.evaluate(() => localStorage.getItem('koekit.story.settings'));
+        const history = JSON.parse(saved).replay[audience];
+        assert.deepEqual(history.original, originalHistory.original, 'alternate does not consume original history');
+        assert.ok(history.alternate.length > 0 && history.alternate.length <= 240);
+        await original.click(); assert.equal(await p.locator('#story').innerText(), raw);
+        await coherent.click();
+        assert.equal(await p.evaluate(() => localStorage.getItem('koekit.story.settings')), saved, 'cached switches do not record new history');
+        await p.reload(); await p.waitForFunction(() => window.__story && !document.getElementById('go-name').disabled);
+        assert.deepEqual(await p.evaluate(a => JSON.parse(localStorage.getItem('koekit.story.settings')).replay[a], audience), history);
+      }
+    }
     assert.deepEqual(errors, []);
     console.log('PASS: two fixed variants, all materials/cards preserved, 320/390/768px, both audiences, chaotic mode unchanged, reading cancellation and completion');
   } finally { await browser.close(); }

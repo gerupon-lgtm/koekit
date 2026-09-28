@@ -3,6 +3,7 @@
 import { SETS, ROW_KEYS } from './story-data.js';
 import { makeBoard, resolvePicks, buildStory, picksSummary, MAX_PER_ROW, loadSets } from './story.js';
 import { buildCoherentStory } from './coherent-story.js';
+import { cleanReplay, remember } from './variety.js';
 import { Reader } from './tts.js';
 import { StorySpeech } from './voice.js';
 import { wordsFor, parse } from './vocabulary.js';
@@ -20,6 +21,7 @@ const SETTINGS_KEY = 'koekit.story.settings';
 // ---------- 設定（端末内に保存。失敗しても既定値で動く） ----------
 const settings = { audience: 'kids', tts: 'on', order: 'normal', rate: 1, voice: '', voiceName: '' };
 try { Object.assign(settings, JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}')); } catch { /* 既定値 */ }
+settings.replay = cleanReplay(settings.replay);
 const saveSettings = () => { try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); } catch { /* 保存できなくても続行 */ } };
 
 // ---------- 検証用の記録 ----------
@@ -131,8 +133,7 @@ let setsReady = false;
 loadSets().then(() => { setsReady = true; $('go-name').disabled = false; log('物語データを読み込みました'); paintStartGuide(); syncVoice(); })
   .catch(e => { log(`✕ 物語データを読み込めません ${e.message}`); toast('物語データを読み込めませんでした。ひらき直してください'); });
 // 直近2回の物語で使った場面は、なるべく使わない（同じ話に見えないように）
-const recentScenes = [];
-let lastType = null; // 同じ流れの型が続かないように
+// 原作と別版の履歴は別々。切替で別版を見ることが原作の候補選択に影響しない。
 
 $('rate').value = settings.rate; $('rateV').textContent = (+settings.rate).toFixed(1);
 $('rate').oninput = () => { settings.rate = reader.rate = +$('rate').value; $('rateV').textContent = reader.rate.toFixed(1); saveSettings(); };
@@ -379,12 +380,16 @@ $('start').onclick = startReveal;
 function startReveal() {
   cancelAuto();
   st.picks = resolvePicks(st.board, st.sel);
-  st.story = buildStory({ audience: settings.audience, name: st.name, picks: st.picks, order: settings.order, avoid: new Set(recentScenes.flat()), avoidType: lastType });
+  const replay = settings.replay[settings.audience];
+  st.story = buildStory({ audience: settings.audience, name: st.name, picks: st.picks, order: settings.order,
+    avoid: new Set(replay.scenes.flat()), avoidType: replay.type, history: replay.original });
   st.originalStory = st.story;
   st.coherentStory = null;
   st.storyVersion = 'original';
-  recentScenes.push(st.story.used); if (recentScenes.length > 2) recentScenes.shift();
-  lastType = st.story.type;
+  replay.scenes.push(st.story.used); if (replay.scenes.length > 2) replay.scenes.shift();
+  replay.type = st.story.type;
+  replay.original = remember(replay.original, st.story.variety);
+  saveSettings();
   log(`生成 型=${st.story.type} 場面=${st.story.stages.join('→')} companion=${st.story.companion}`);
   $('board-btns').hidden = true;
   $('guide').innerHTML = '';
@@ -415,7 +420,10 @@ function selectStoryVersion(version) {
   clearTimeout(revealTimer); revealTimer = null;
   reader.stop(); mark('story', null);
   if (version === 'coherent' && !st.coherentStory) {
-    st.coherentStory = buildCoherentStory({ audience: settings.audience, name: st.name, picks: st.picks, original: st.originalStory });
+    const replay = settings.replay[settings.audience];
+    st.coherentStory = buildCoherentStory({ audience: settings.audience, name: st.name, picks: st.picks, original: st.originalStory, history: replay.alternate });
+    replay.alternate = remember(replay.alternate, st.coherentStory.variety);
+    saveSettings();
   }
   st.storyVersion = version;
   st.story = version === 'original' ? st.originalStory : st.coherentStory;
