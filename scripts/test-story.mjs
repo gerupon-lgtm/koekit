@@ -8,7 +8,8 @@ import { buildCoherentStory } from '../story/coherent-story.js';
 import { COHERENT_PLOTS, COHERENT_ENDINGS } from '../story/coherent-scenes.js';
 import { NARRATIVE } from '../story/narrative.js';
 import { PLOT_VARIATION } from '../story/coherent-variation.js';
-import { remember, cleanReplay, varietyPicker, HISTORY_LIMIT } from '../story/variety.js';
+import { PLOT_BRANCHES } from '../story/coherent-branches.js';
+import { remember, rememberRepertoire, cleanReplay, varietyPicker, repertoirePicker, HISTORY_LIMIT, REPERTOIRE_LIMIT } from '../story/variety.js';
 
 // 画面と同じ JSON を読む
 await loadSets(path => JSON.parse(readFileSync(new URL(path, new URL('../story/story-data.js', import.meta.url)), 'utf8')));
@@ -103,7 +104,7 @@ for (const audience of ['kids', 'adult']) {
 // 新しい展開もすべて抽選されること。未選択の文も含めて、差し込み語・表記・重複を検査。
 const coherentStages = ['problem', 'clue', 'action', 'resolution'];
 for (const audience of ['kids', 'adult']) {
-  let combinations = 0, plots = 0;
+  let plots = 0;
   const allowed = new Set(['name', 'itsu', 'basho', 'aite', 'mono', ...EXTRA_KEYS]);
   const checkTemplates = (texts, where) => {
     if (!texts.length || new Set(texts).size !== texts.length) bad('別版の候補が空または重複', where);
@@ -124,13 +125,18 @@ for (const audience of ['kids', 'adult']) {
       plots++;
       if (!coherentCount[`${audience}/${family}/${plot.id}`]) bad('一度も出ない別版の展開', `${audience}/${family}/${plot.id}`);
       for (const stage of coherentStages) checkTemplates(plot[audience][stage], `${audience}/${plot.id}/${stage}`);
-      const variation = PLOT_VARIATION[plot.id]?.[audience];
+      const variation = (plot.variation || PLOT_VARIATION[plot.id])?.[audience];
       if (!variation || ['self', 'companion', 'beat', 'echo', 'after'].some(key => !variation[key])) bad('別版の追加展開の不足', plot.id);
       else checkTemplates(Object.values(variation), `${audience}/${plot.id}/variation`);
-      combinations += coherentStages.reduce((n, stage) => n * plot[audience][stage].length, COHERENT_ENDINGS[audience].length);
+      for (const route of PLOT_BRANCHES[plot.id] || []) {
+        for (const stage of ['clue', 'action', 'resolution']) checkTemplates(route[audience][stage], `${audience}/${plot.id}/${route.id}/${stage}`);
+        checkTemplates(Object.values(route.variation[audience]), `${audience}/${plot.id}/${route.id}/variation`);
+        if (route[audience].problem) bad('分岐で共通の問題を変更', route.id);
+      }
     }
   }
-  console.log(`another story ${audience}: plots=${plots}, legacy base combinations=${combinations}, varied introductions/discovery/structure/endings`);
+  if (plots !== 40) bad('別版の筋数が40ではない', plots);
+  console.log(`another story ${audience}: plots=${plots}, branching plots=5, total routes=50`);
 }
 
 // 長く遊び、端末保存→復元を挟んでも直近候補を避ける。原作と別版の履歴は分離する。
@@ -158,7 +164,7 @@ for (const audience of ['kids', 'adult']) {
     h.original = remember(h.original, original.variety);
     h.scenes = [...h.scenes, original.used].slice(-2); h.type = original.type;
     const before = JSON.stringify({ original, picks, originalHistory: h.original });
-    const args = { audience, name: SETS[audience].names[0], picks, original, history: h.alternate };
+    const args = { audience, name: SETS[audience].names[0], picks, original, history: h.alternate, repertoire: h.repertoire };
     const alt = buildCoherentStory(args);
     if (JSON.stringify(alt) !== JSON.stringify(buildCoherentStory(args))) bad('同じ入力と履歴で別版が変わる');
     if (before !== JSON.stringify({ original, picks, originalHistory: h.original })) bad('別版が原作の履歴を変更');
@@ -168,6 +174,7 @@ for (const audience of ['kids', 'adult']) {
     const shifts = alt.variety.filter(id => id.startsWith('a/shift-'));
     if (new Set(shifts).size !== shifts.length) bad('同じ別版で同じ転換文を使った');
     h.alternate = remember(h.alternate, alt.variety);
+    h.repertoire = rememberRepertoire(h.repertoire, alt.repertoire);
     formats.add(alt.format); sources.add(alt.clueSource); ends.add(alt.endingStyle); sizes.add(alt.stages.length); casts.add(alt.companion);
     timing.add(JSON.stringify(alt.seq));
     replay = cleanReplay(JSON.parse(JSON.stringify(replay)));
@@ -202,19 +209,83 @@ for (const audience of ['kids', 'adult']) {
   if (joins < 10) bad('合流パターンの検証不足');
 }
 
-// 同じジャンルの4展開を、直近履歴が残る間は一巡するまで再使用しない。
+// 初回はジャンル内の未登場8筋を優先。一巡後も直近2筋を避け、抽選の余地を残す。
 for (const audience of ['kids', 'adult']) {
   const rnd = seeded(1930), picks = resolvePicks(makeBoard(audience, rnd), {}, rnd);
   const base = buildStory({ audience, name: SETS[audience].names[0], picks, rnd });
   for (const type of Object.keys(SETS[audience].types)) {
-    let history = [];
+    let history = [], repertoire = [];
     const plots = new Set();
-    for (let i = 0; i < 4; i++) {
-      const alt = buildCoherentStory({ audience, name: SETS[audience].names[0], picks, original: { ...base, type }, history });
+    for (let i = 0; i < 8; i++) {
+      const alt = buildCoherentStory({ audience, name: SETS[audience].names[0], picks, original: { ...base, type }, history, repertoire });
       plots.add(alt.plot); history = remember(history, alt.variety);
+      repertoire = rememberRepertoire(repertoire, alt.repertoire);
     }
-    if (plots.size !== 4) bad('同じジャンルで4展開を読む前に再選択した', `${audience}/${type}`);
+    if (plots.size !== 8) bad('同じジャンルで8展開を読む前に再選択した', `${audience}/${type}`);
   }
+}
+
+// 50ルートを指定する履歴を作り、各ルートの発見方法・結末を実際に生成する。
+// 異なる分岐の行動や解決が混ざらないことを、描かれた文章で検査。
+for (const audience of ['kids', 'adult']) {
+  const rnd = seeded(audience === 'kids' ? 9011 : 9012), outcomes = new Set();
+  const types = { adventure: ['ぼうけん', '冒険'], mystery: ['なぞとき', '謎解き'], mishap: ['ハプニング', 'ハプニング'], wonder: ['ふしぎ', '不思議'], journey: ['ながいぼうけん', '長い一日'] };
+  let routes = 0;
+  for (const [family, plots] of Object.entries(COHERENT_PLOTS)) for (const plot of plots) {
+    for (const route of [{ id: 'base' }, ...(PLOT_BRANCHES[plot.id] || [])]) {
+      routes++;
+      const sources = new Set(), endings = new Set();
+      const repertoire = [
+        ...plots.filter(p => p.id !== plot.id).map(p => `plot/${family}/${p.id}`),
+        ...[{ id: 'base' }, ...(PLOT_BRANCHES[plot.id] || [])].filter(r => r.id !== route.id).map(r => `route/${plot.id}/${r.id}`),
+      ];
+      for (let i = 0; i < 60; i++) {
+        const picks = resolvePicks(makeBoard(audience, rnd), Object.fromEntries(ROW_KEYS.map(k => [k, i % 2 ? [0, 1, 2] : [0]])), rnd);
+        const name = SETS[audience].names[i % SETS[audience].names.length];
+        const original = buildStory({ audience, name, picks, rnd });
+        original.type = types[family][audience === 'kids' ? 0 : 1];
+        const alt = buildCoherentStory({ audience, name, picks, original, repertoire });
+        if (alt.plot !== plot.id || alt.route !== route.id) bad('未登場の筋・ルートを優先しない', `${plot.id}/${route.id}`);
+        const scenes = { ...plot[audience], ...route[audience] };
+        const vars = { ...original.extras, name, mono: picks.mono.words.join('と'), aite: picks.aite.words.join('と') };
+        const render = text => text.replace(/\{(\w+)\}/g, (_, key) => vars[key]);
+        for (const [stage, key] of [['こうどう', 'action'], ['かいけつ', 'resolution']]) {
+          if (!scenes[key].map(render).includes(alt.lines.find(line => line.stage === stage).text)) bad('分岐の因果が混線', `${plot.id}/${route.id}/${stage}`);
+        }
+        const extra = (route.variation || plot.variation || PLOT_VARIATION[plot.id])[audience];
+        const clue = alt.lines.find(line => line.stage === 'てがかり').text;
+        const expectedClues = alt.clueSource === 'advice' ? scenes.clue : [extra[alt.clueSource]];
+        if (!expectedClues.map(render).includes(clue)) bad('別ルートの手がかりを使用', `${plot.id}/${route.id}`);
+        if (alt.outcome !== 'solved' && alt.endingStyle === 'cliche' && ![0, 3].map(j => render(COHERENT_ENDINGS[audience][j])).includes(alt.lines.at(-1).text)) bad('未解決の話を解決済みとして終了', plot.id);
+        const body = alt.lines.map(line => line.text).join('');
+        for (const key of ROW_KEYS) for (const word of picks[key].words) if (!body.includes(word)) bad('ルートから選択材料が消えた', `${plot.id}/${route.id}/${word}`);
+        if (audience === 'kids' && /[\u4e00-\u9fff]/.test(body)) bad('追加ルートに漢字', route.id);
+        sources.add(alt.clueSource); endings.add(alt.endingStyle); outcomes.add(alt.outcome);
+      }
+      if (sources.size !== 3 || endings.size !== 3) bad('ルートの発見・結末の検証不足', `${plot.id}/${route.id}`);
+    }
+  }
+  if (routes !== 50 || outcomes.size !== 3) bad('ルート数・決着の種類不足', { routes, outcomes: [...outcomes] });
+  console.log(`routes ${audience}: 50 routes x 60 stories, all discovery/endings, matched clue/action/resolution`);
+}
+
+{
+  const options = Array.from({ length: 8 }, (_, id) => ({ id: String(id) }));
+  const history = options.map(o => 'plot/test/' + o.id);
+  let tickets;
+  repertoirePicker(list => { tickets = list; return list[0]; }, history).take('plot/test', options);
+  const counts = Object.fromEntries(options.map(o => [o.id, tickets.filter(t => t.value.id === o.id).length]));
+  if (counts['6'] || counts['7'] || new Set(tickets.map(t => t.value.id)).size !== 6 || counts['0'] <= counts['5']) bad('直近回避・古い候補の重み・選択肢6本の維持', counts);
+  const unseen = repertoirePicker(list => list[0], history.slice(1)).take('plot/test', options);
+  if (unseen.id !== '0') bad('未登場候補を優先しない');
+  const one = repertoirePicker(list => list[0], ['test/x']).take('test', [{ id: 'x' }]);
+  if (one.id !== 'x') bad('単一候補で抽選が停止');
+  const h = cleanReplay({ kids: { repertoire: [...Array(180).fill('plot/test/0'), null, 3] } }).kids.repertoire;
+  if (h.length !== REPERTOIRE_LIMIT || h.some(id => typeof id !== 'string')) bad('筋履歴の正規化・上限', h);
+  const migrated = cleanReplay({ adult: { alternate: ['a/plot-adventure/1', 'a/intro/0', 'a/plot-journey/0', 'a/plot-bogus/3'] } });
+  if (migrated.adult.repertoire.join() !== 'plot/adventure/rain-shelter,route/rain-shelter/base,plot/journey/delivery,route/delivery/base' || migrated.kids.repertoire.length) bad('旧履歴の対象別移行', migrated);
+  const explicit = cleanReplay({ adult: { alternate: ['a/plot-adventure/1'], repertoire: [] } });
+  if (explicit.adult.repertoire.length) bad('既存の新履歴を旧履歴で上書き');
 }
 
 // データの約束：はじまりの場面は必ず「いつ」「どこで」を含む（ふつうで最初につなぎ文が来ないため）

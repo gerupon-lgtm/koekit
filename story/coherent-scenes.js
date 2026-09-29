@@ -1,6 +1,8 @@
 // 原作とは別の、原因と解決が対応する場面セット。語彙データ／原作の抽選は変更しない。
 // 各組は problem → clue → action → resolution の順で使用する。
 // 同じ段階の候補は、どれを選んでも前後の前提が成立するように書く。
+import { EXTRA_PLOTS } from './coherent-expansion.js';
+
 export const COHERENT_SCENES = {
   adventure: {
     kids: {
@@ -209,8 +211,8 @@ export const COHERENT_ENDINGS = {
   ],
 };
 
-// 各ジャンルに4展開。別の展開の手がかりや解決を混ぜず、この単位で選ぶ。
-export const COHERENT_PLOTS = {
+// 既存の各4展開。追加分と合わせて各8展開にする。
+const BASE_PLOTS = {
   journey: [
     { id: 'delivery', ...COHERENT_SCENES.journey },
     {
@@ -812,3 +814,5 @@ export const COHERENT_PLOTS = {
     },
   ],
 };
+
+export const COHERENT_PLOTS = Object.fromEntries(Object.entries(BASE_PLOTS).map(([family, plots]) => [family, [...plots, ...EXTRA_PLOTS[family]]]));

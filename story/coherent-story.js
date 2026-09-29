@@ -2,7 +2,8 @@
 import { COHERENT_PLOTS, COHERENT_ENDINGS } from './coherent-scenes.js';
 import { NARRATIVE } from './narrative.js';
 import { PLOT_VARIATION } from './coherent-variation.js';
-import { varietyPicker } from './variety.js';
+import { varietyPicker, repertoirePicker } from './variety.js';
+import { PLOT_BRANCHES } from './coherent-branches.js';
 
 const FAMILIES = {
   'ぼうけん': 'adventure', '冒険': 'adventure',
@@ -21,15 +22,20 @@ function choicesFor(input) {
   };
 }
 
-export function buildCoherentStory({ audience, name, picks, original, history = [] }) {
+export function buildCoherentStory({ audience, name, picks, original, history = [], repertoire = [] }) {
   if (!['kids', 'adult'].includes(audience)) throw new Error('Unknown audience');
   const family = FAMILIES[original.type];
   if (!family) throw new Error('Unknown story type: ' + original.type);
   const choose = choicesFor({ audience, name, picks, original });
   const picker = varietyPicker(choose, history);
+  const plots = repertoirePicker(choose, repertoire);
   const take = (key, values, limit = 3, unique = false) => picker.take('a/' + key, values, limit, unique);
-  const plot = take('plot-' + family, COHERENT_PLOTS[family]);
-  const scenes = plot[audience], extra = PLOT_VARIATION[plot.id][audience], prose = NARRATIVE[audience];
+  const plot = plots.take('plot/' + family, COHERENT_PLOTS[family]);
+  const branches = PLOT_BRANCHES[plot.id];
+  const route = branches ? plots.take('route/' + plot.id, [{ id: 'base' }, ...branches], 1) : { id: 'base' };
+  const scenes = { ...plot[audience], ...route[audience] };
+  const extra = (route.variation || plot.variation || PLOT_VARIATION[plot.id])[audience], prose = NARRATIVE[audience];
+  const outcome = route.outcome || plot.outcome || 'solved';
   const words = Object.fromEntries(['itsu', 'basho', 'aite', 'mono'].map(key => [key, picks[key].words.slice()]));
   const vars = { ...original.extras, name, aite: words.aite.join('と'), mono: words.mono.join('と') };
   const fill = text => text.replace(/\{(\w+)\}/g, (_, key) => {
@@ -44,7 +50,9 @@ export function buildCoherentStory({ audience, name, picks, original, history = 
   const clueSource = take('clue-source', ['advice', 'self', 'companion'], 1);
   const clue = clueSource === 'advice' ? choose(scenes.clue) : extra[clueSource];
   const endingStyle = take('ending-style', ['cliche', 'echo', 'after'], 1);
-  const ending = endingStyle === 'cliche' ? take('ending', COHERENT_ENDINGS[audience], 2) : extra[endingStyle];
+  // 未解決・目的変更の話を「困り事は片づいた」で締めない。定番の終わり自体は残す。
+  const endings = outcome === 'solved' ? COHERENT_ENDINGS[audience] : [COHERENT_ENDINGS[audience][0], COHERENT_ENDINGS[audience][3]];
+  const ending = endingStyle === 'cliche' ? take(outcome === 'solved' ? 'ending' : 'ending-neutral', endings, 2) : extra[endingStyle];
   const templates = [];
   const add = (stage, text) => templates.push({ stage, text });
   if (format === 'incident') {
@@ -86,6 +94,6 @@ export function buildCoherentStory({ audience, name, picks, original, history = 
     lines.push({ stage: template.stage, shift: false, text: fill(template.text) });
   });
   return { lines, intro: take('intro', prose.intro, 2),
-    type: original.type, family, plot: plot.id, stages: templates.map(t => t.stage), seq,
+    type: original.type, family, plot: plot.id, route: route.id, outcome, repertoire: plots.used, stages: templates.map(t => t.stage), seq,
     extras: { ...original.extras }, companion, format, clueSource, endingStyle, variety: picker.used };
 }

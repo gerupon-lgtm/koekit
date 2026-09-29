@@ -21,7 +21,7 @@ const base = process.env.STORY_BASE || 'http://127.0.0.1:8124';
     assert.equal(await page.locator('.coming-soon a,.coming-soon button').count(), 0);
     await page.evaluate(() => navigator.serviceWorker.ready);
     await page.waitForFunction(() => !!navigator.serviceWorker.controller);
-    for (const file of ['/story/', '/story/data/kids.json', '/story/data/adult.json', '/story/assets/monogatarhythm.svg', '/story/coherent-story.js', '/story/coherent-scenes.js', '/story/variety.js', '/story/narrative.js', '/story/coherent-variation.js']) {
+    for (const file of ['/story/', '/story/data/kids.json', '/story/data/adult.json', '/story/assets/monogatarhythm.svg', '/story/coherent-story.js', '/story/coherent-scenes.js', '/story/variety.js', '/story/narrative.js', '/story/coherent-variation.js', '/story/coherent-expansion.js', '/story/coherent-branches.js']) {
       assert.ok(await page.evaluate(async file => !!await caches.match(file), file), 'cached: ' + file);
     }
     await context.setOffline(true);

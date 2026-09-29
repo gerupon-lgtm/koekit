@@ -3,7 +3,7 @@
 import { SETS, ROW_KEYS } from './story-data.js';
 import { makeBoard, resolvePicks, cardIds, buildStory, picksSummary, MAX_PER_ROW, loadSets } from './story.js';
 import { buildCoherentStory } from './coherent-story.js';
-import { cleanReplay, remember } from './variety.js';
+import { cleanReplay, remember, rememberRepertoire } from './variety.js';
 import { Reader } from './tts.js';
 import { StorySpeech } from './voice.js';
 import { wordsFor, parse } from './vocabulary.js';
@@ -422,8 +422,9 @@ function selectStoryVersion(version) {
   reader.stop(); mark('story', null);
   if (version === 'coherent' && !st.coherentStory) {
     const replay = settings.replay[settings.audience];
-    st.coherentStory = buildCoherentStory({ audience: settings.audience, name: st.name, picks: st.picks, original: st.originalStory, history: replay.alternate });
+    st.coherentStory = buildCoherentStory({ audience: settings.audience, name: st.name, picks: st.picks, original: st.originalStory, history: replay.alternate, repertoire: replay.repertoire });
     replay.alternate = remember(replay.alternate, st.coherentStory.variety);
+    replay.repertoire = rememberRepertoire(replay.repertoire, st.coherentStory.repertoire);
     saveSettings();
   }
   st.storyVersion = version;
