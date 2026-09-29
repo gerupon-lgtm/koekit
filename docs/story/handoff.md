@@ -1,6 +1,6 @@
 # モノガタリズム 実装引継ぎ
 
-2026-09-28 Codex更新。**正典は[要件定義書](../requirements-story.md)（v1.5）と[基本設計](design.md)（v1.8）**。本書は、現時点の状態と進め方だけをまとめる。本作専用の作業ルールは [`story/AGENTS.md`](../../story/AGENTS.md)。
+2026-09-29 Codex更新。**正典は[要件定義書](../requirements-story.md)（v1.5）と[基本設計](design.md)（v1.8）**。本書は、現時点の状態と進め方だけをまとめる。本作専用の作業ルールは [`story/AGENTS.md`](../../story/AGENTS.md)。
 
 ## 2026-09-29：身近な候補の追加と再分類
 
