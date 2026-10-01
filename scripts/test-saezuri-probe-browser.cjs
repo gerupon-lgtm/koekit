@@ -53,7 +53,7 @@ const base = process.env.SAEZURI_BASE || 'http://127.0.0.1:8000';
   await page.locator('#capture').click();
   assert.equal(await page.locator('#note-mode').isDisabled(),true);
   assert.equal(await page.locator('#adaptive-window').isDisabled(),true);
-  assert.equal(await page.locator('#count-volume').isDisabled(),true);
+  for(const id of ['count-volume','backing-volume','master-volume'])assert.equal(await page.locator('#'+id).isDisabled(),false,'audio levels remain adjustable while recording');
   await page.waitForFunction(() => document.querySelector('#status').dataset.state === 'count-in');
   await page.waitForFunction(() => document.querySelector('#capture-position').textContent.includes('マイクの準備待ち'));
   await page.locator('#mic').click();

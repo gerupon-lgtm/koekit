@@ -63,11 +63,11 @@ export function prepareShaker(ctx, accent = false) {
   }
   return cache.get(accent);
 }
-export function scheduleShaker(ctx, time, accent = false, volume = 1) {
-  if(![.5,1,2].includes(volume))throw new Error('COUNT_VOLUME');
+export function scheduleShaker(ctx, time, accent = false, volume = 1, output=ctx.destination) {
+  if(!Number.isFinite(volume)||volume<0||volume>2)throw new Error('COUNT_VOLUME');
   const buffer = prepareShaker(ctx, accent);
   const node = ctx.createBufferSource(), level=ctx.createGain();
-  node.buffer = buffer;level.gain.value=volume;node.connect(level).connect(ctx.destination);
+  node.buffer = buffer;level.gain.value=volume;node.connect(level).connect(output);
   const disconnect=()=>{node.disconnect();level.disconnect();};
   node.start(time); node.onended = disconnect;
   return () => { try { node.stop(); } catch {} disconnect(); };

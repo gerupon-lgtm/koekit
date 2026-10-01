@@ -2,8 +2,8 @@ import { microphoneEnabled, onMicrophoneChange } from '../../src/speech/micropho
 import { captureTiming, scheduleShaker, prepareShaker } from './capture-support.js';
 import {loopCaptureTiming} from './loop-timing.js';
 export class ProbeCapture {
-  constructor(ctx, onState, onResult) {
-    this.ctx = ctx; this.onState = onState; this.onResult = onResult; this.serial = 0; this.counts = [];
+  constructor(ctx, onState, onResult, mixer=null) {
+    this.ctx = ctx; this.onState = onState; this.onResult = onResult;this.mixer=mixer; this.serial = 0; this.counts = [];
     this.unsubscribe = onMicrophoneChange(enabled => { if (!enabled) this.cancel('MIC_DISABLED'); });
   }
   async connectInput(options,sessionId){
@@ -42,13 +42,14 @@ export class ProbeCapture {
       // Keep all counts and capture frames on the same audio-clock anchor.
       const preparedAudioTime = this.ctx.currentTime, startLeadSeconds = 1;
       const anchor = preparedAudioTime + startLeadSeconds;
+      const audibleCount=!!options.countSound&&(this.mixer?this.mixer.levels.count*this.mixer.levels.master>0:(options.countVolume??1)>0);
       this.timing = captureTiming({ anchor, tempo, sampleRate: this.ctx.sampleRate, baseLatency: this.ctx.baseLatency,
-        outputLatency: this.ctx.outputLatency, inputLatency: inputSettings.latency, manualMs: options.manualMs || 0, audibleCount: !!options.countSound });
+        outputLatency: this.ctx.outputLatency, inputLatency: inputSettings.latency, manualMs: options.manualMs || 0, audibleCount });
       if(options.loop)this.timing=loopCaptureTiming({musicalStart:options.loop.musicalStart,bars:options.loop.bars,tempo,sampleRate:this.ctx.sampleRate,baseLatency:this.ctx.baseLatency,outputLatency:this.ctx.outputLatency,inputLatency:inputSettings.latency,manualMs:options.manualMs||0});
       this.timing.preparedAudioTime=preparedAudioTime;this.timing.startLeadSeconds=options.loop?this.timing.musicalStart-preparedAudioTime:startLeadSeconds;
       this.anchor = options.loop?this.timing.musicalStart:anchor; this.tempo = tempo;
       this.startTime = this.timing.musicalStart;
-      const acousticSync=!options.loop && !!options.acousticSync && !!options.countSound;
+      const acousticSync=!options.loop && !!options.acousticSync && audibleCount;
       const captureStartFrame=acousticSync?Math.round((anchor-.1)*this.ctx.sampleRate):this.timing.startFrame;
       const captureEndFrame=acousticSync?Math.round((this.timing.musicalStart+16*60/tempo+Math.max(1.2,this.timing.correctionSeconds))*this.ctx.sampleRate):this.timing.endFrame;
       this.timing.captureStartFrame=captureStartFrame;this.timing.captureEndFrame=captureEndFrame;
@@ -57,7 +58,7 @@ export class ProbeCapture {
       if (options.countSound&&!options.loop) for (let i = 0; i < this.timing.countTimes.length; i++) {
         const beat = this.timing.countBeats[i];
         if (beat >= 8 && !options.recordCount) break;
-        this.counts.push(scheduleShaker(this.ctx, this.timing.countTimes[i], beat % 4 === 0, options.countVolume ?? 1));
+        this.counts.push(scheduleShaker(this.ctx, this.timing.countTimes[i], beat % 4 === 0, this.mixer?1:options.countVolume??1,this.mixer?.count??this.ctx.destination));
       }
       this.onState('count-in');
       this.timer = setInterval(() => {

@@ -1,5 +1,11 @@
 /* Suite menu language: wordmark, large purpose buttons, back/header and help. */
 body.melody-app{background:#faf5ed;color:#443b36}
+.volume-settings{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;grid-column:1/-1}
+.volume-settings>label{min-width:0;font-size:13px}
+.volume-settings select{width:100%;min-width:0}
+.melody-app.editor-focus .volume-settings>label:has(#count-volume){grid-column:auto}
+.melody-app.editor-focus .listen-settings label:has(#play-count-style){grid-column:span 4}
+.melody-app.editor-focus .listen-settings label:has(#play-count){grid-column:span 2}
 .melody-app.editor-focus main{max-width:760px;padding:8px 12px 90px}
 .melody-app .melody-screen{margin:0;padding:0;border:0;background:transparent;border-radius:0;min-width:0}
 .melody-app button{min-height:44px;touch-action:manipulation}

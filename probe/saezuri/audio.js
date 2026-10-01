@@ -45,7 +45,7 @@ function schedulePercussion(ctx,output,{time,duration,instrument,gain}){
  return ()=>{try{source.stop();}catch{}cleanup();};
 }
 export class ProbeTransport {
-  constructor(ctx, onStop) { this.ctx = ctx; this.onStop = onStop; this.serial = 0; this.voices = new Set(); this.active = false; }
+  constructor(ctx, onStop, mixer=null) { this.ctx = ctx; this.onStop = onStop; this.mixer=mixer;this.serial = 0; this.voices = new Set(); this.active = false; }
   start(notes, { tempo = 120, totalTicks = 64, instrument = 'piano', lead = 0.35, ahead = 0.15, countSound = false, countVolume = 1, countStyle = 'rim', accompaniment = [], loop = false } = {}) {
     this.stop(false);
     if (!COUNT_STYLES.includes(countStyle)) throw new Error('COUNT_STYLE_UNKNOWN');
@@ -71,7 +71,7 @@ export class ProbeTransport {
         const time = this.anchor + tickSeconds(countTick, tempo);
         if (time > now + ahead) break;
         if (time < now - 0.04) return this.stop(true, 'SCHEDULER_LATE');
-        const stop = schedulePlaybackCount(this.ctx, Math.max(now,time), countTick % 16 === 0, countVolume, countStyle);
+        const stop = schedulePlaybackCount(this.ctx, Math.max(now,time), countTick % 16 === 0, this.mixer?1:countVolume, countStyle,this.mixer?.count??this.ctx.destination);
         this.voices.add({stop, end:time+0.15});
         countTick += 4; this.metrics.countEvents++;
       }
@@ -81,7 +81,7 @@ export class ProbeTransport {
         if (time > now + ahead) break;
         if (time < now - 0.04) return this.stop(true, 'SCHEDULER_LATE');
         const duration = tickSeconds(note.durationTick, tempo);
-        const stop = scheduleVoice(this.ctx, this.ctx.destination, { midi: note.midi, time: Math.max(now, time), duration, instrument:note.accompaniment?note.instrument:instrument, gain:note.accompaniment?note.gain:.16 });
+        const stop = scheduleVoice(this.ctx, this.mixer?(note.accompaniment?this.mixer.backing:this.mixer.melody):this.ctx.destination, { midi: note.midi, time: Math.max(now, time), duration, instrument:note.accompaniment?note.instrument:instrument, gain:note.accompaniment?note.gain:.16 });
         this.voices.add({ stop, end: time + duration + 0.07 });
         index++; this.metrics[note.accompaniment?'accompanimentEvents':'events']++;
       }

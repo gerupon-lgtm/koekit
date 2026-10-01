@@ -19,6 +19,7 @@ import {MelodyScreens} from './screens.js';
 import {SongWorkflow} from './song-workflow.js';
 import {nextLoopHead} from './loop-timing.js';
 import {alignScreenHeadings} from './headings.js';
+import {VolumeControls,AudioMixer} from './volume.js';
 const compactEditor=setupEditorLayout();
 const $ = id => document.getElementById(id);
 const example = () => ({ bars: 4, gridStep: 1, notes: [
@@ -42,8 +43,10 @@ const editingExample = () => ({ bars: 4, gridStep: 1, notes: [
   { id: 'demo-7', midi: 59, startTick: 30, durationTick: 34 },
 ] });
 let state = { pattern: editingExample(), cursor: 0, revision: 0 }, candidate = null, captured = null, capturedOriginal = null;
-let ctx, transport, capture, serial = 0, phase = 'idle', raf, lastFrame = 0, maxFrameGapMs = 0, lastBar = -1, playbackPreview = false;
+let ctx, mixer, transport, capture, serial = 0, phase = 'idle', raf, lastFrame = 0, maxFrameGapMs = 0, lastBar = -1, playbackPreview = false;
 const record = { prototype: 'ML-T01-v25', workflowRevision:'2026-10-01',timestamp: new Date().toISOString(), userAgent: navigator.userAgent, playback: null, capture: null };
+const volumeControls=new VolumeControls({onChange(levels){mixer?.setLevels(levels);record.audioLevels=levels;if(transport?.active&&record.playback)record.playback.audioLevels=levels;showReport();}});
+record.audioLevels=volumeControls.value();
 const keyChoices = { score: null, capture: null };
 const displayOctaves = { score: 0, capture: 0 };
 const captureAlignments = new Map();
@@ -106,6 +109,7 @@ function setPhase(next, message) {
   phase = next; $('status').dataset.state = next; $('status').textContent = message || labels[next];
   for (const id of ['edit-score','tempo','instrument','length','lead','ahead','example','empty','propose','undo','capture','play','adopt','preview','discard','pitch','duration','count-sound','count-volume','record-count','play-count','play-count-style','smoothing','note-mode','timing-adjust','acoustic-sync','processing','boundary-mode','window-size','adaptive-window','rms','ratio','gap','comparison-settings','capture-import-button','capture-import-text']) $(id).disabled = next !== 'idle';
   $('align-start').disabled = next !== 'idle' || captureEditor.pending || captureEditor.edited || !capturedOriginal?.notes[0]?.startTick;
+  volumeControls.setBusy(next==='saving');
   $('adopt').disabled = next !== 'idle' || !captureEditor.accepted || captureEditor.pending;
   $('capture-import-button').disabled = next !== 'idle' || captureEditor.pending;
   captureEditor.setBusy(next !== 'idle');
@@ -153,12 +157,13 @@ async function prepare() {
   if (!ctx || ctx.state === 'closed') {
     capture?.unsubscribe();
     ctx = new AudioContext();
+    mixer=new AudioMixer(ctx,volumeControls.value());
     const ownedContext = ctx;
     transport = new ProbeTransport(ctx, (reason, metrics) => {
       record.playback = { ...record.playback, ...metrics, reason, maxFrameGapMs, endAudioTime: ctx.currentTime, finalTick: transport.totalTicks };
       stop(reason === 'ENDED' ? '再生がおわりました' : `再生停止：${reason}`); showReport();
-    });
-    capture = new ProbeCapture(ctx, next=>{if(next==='loop-ready')return;if(next==='analyzing'&&transport?.loop)transport.stop(false);setPhase(next);}, acceptCapture);
+    },mixer);
+    capture = new ProbeCapture(ctx, next=>{if(next==='loop-ready')return;if(next==='analyzing'&&transport?.loop)transport.stop(false);setPhase(next);}, acceptCapture,mixer);
     ctx.addEventListener('statechange', () => { if (ctx === ownedContext && ownedContext.state !== 'running' && phase !== 'idle' && phase !== 'preparing') stop('音声が中断しました。手動で再開してください。'); });
   }
   await ctx.resume();
@@ -231,6 +236,7 @@ async function play(pattern = state.pattern, preview = false, options={}) {
     }
     record.playback = { tempo, bars, instrument: $('instrument').value, sampleRate: ctx.sampleRate, baseLatency: ctx.baseLatency, outputLatency: ctx.outputLatency, notes: notes.length, draft:preview ? captureEditor.pending : !!candidate, pitches:notes.map(n=>n.midi), countSound: $('play-count').checked, countStyle: $('play-count-style').value, countVolume: Number($('count-volume').value) };
     const backing=options.backing??accompanimentEvents(pattern),accompaniment=[];
+    record.playback.audioLevels=volumeControls.value();
     for(let offset=0;offset<bars*16;offset+=pattern.bars*16) for(const note of backing) if(offset+note.startTick<bars*16) accompaniment.push({...note,startTick:offset+note.startTick});
     record.playback.accompaniment=pattern.accompaniment??null;
     transport.start(notes, { tempo, totalTicks: bars * 16, instrument: $('instrument').value, lead: Number($('lead').value), ahead: Number($('ahead').value), countSound: $('play-count').checked, countStyle: $('play-count-style').value, countVolume: Number($('count-volume').value),accompaniment });
@@ -431,7 +437,7 @@ if($('backing-loop'))$('backing-loop').onclick=async()=>{
     if(microphoneEnabled()){await capture.prepareLoop(options);if(request!==serial)return;}
     record.captureOptions={tempo,...options};
     transport.start([],{tempo,totalTicks:pattern.bars*16,accompaniment:accompanimentEvents(pattern),loop:true});
-    record.playback={tempo,bars:pattern.bars,notes:0,loop:true,accompaniment:pattern.accompaniment};
+    record.playback={tempo,bars:pattern.bars,notes:0,loop:true,accompaniment:pattern.accompaniment,audioLevels:volumeControls.value()};
     playbackPreview=false;setPhase('playing');lastFrame=0;animate();showReport();
   }catch(error){if(request===serial)stop(`ループを始められません：${error.message}`);}
 };

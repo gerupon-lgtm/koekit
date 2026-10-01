@@ -47,6 +47,7 @@ export class ImageControls {
  }
  value(){return structuredClone(this.editor.previewPattern?.accompaniment??fallback);}
  follow(tick){
+  if(!this.panel)return;
   const bar=tick==null?null:Math.floor(tick/16),row=this.$('chords');
   for(const b of row.children){const playing=Number(b.dataset.chordBar)===bar;b.toggleAttribute('data-playing',playing);if(playing)b.setAttribute('aria-current','true');else b.removeAttribute('aria-current');}
   if(bar!==this.playingBar&&bar!==null){const current=row.querySelector('[data-playing]');if(current)row.scrollLeft+=current.getBoundingClientRect().left-row.getBoundingClientRect().left-(row.clientWidth-current.offsetWidth)/2;}

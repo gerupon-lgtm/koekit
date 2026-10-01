@@ -24,9 +24,9 @@ export function percussionSamples(sampleRate, style, accent=false) {
   return samples;
 }
 
-export function schedulePlaybackCount(ctx,time,accent=false,volume=1,style='rim') {
+export function schedulePlaybackCount(ctx,time,accent=false,volume=1,style='rim',output=ctx.destination) {
   if (!COUNT_STYLES.includes(style)) throw new Error('COUNT_STYLE_UNKNOWN');
-  if (style==='shaker') return scheduleShaker(ctx,time,accent,volume);
+  if (style==='shaker') return scheduleShaker(ctx,time,accent,volume,output);
   let buffers=cache.get(ctx);
   if(!buffers) cache.set(ctx,buffers=new Map());
   const key=`${style}:${accent}`;
@@ -36,8 +36,8 @@ export function schedulePlaybackCount(ctx,time,accent=false,volume=1,style='rim'
     buffer.copyToChannel(samples,0); buffers.set(key,buffer);
   }
   const source=ctx.createBufferSource(),gain=ctx.createGain();
-  source.buffer=buffers.get(key);gain.gain.value=[.5,1,2].includes(volume)?volume:1;
-  source.connect(gain).connect(ctx.destination);
+  source.buffer=buffers.get(key);gain.gain.value=Number.isFinite(volume)&&volume>=0&&volume<=2?volume:1;
+  source.connect(gain).connect(output);
   const disconnect=()=>{source.disconnect();gain.disconnect();};
   source.onended=disconnect;source.start(time);
   return ()=>{try{source.stop();}catch{}disconnect();};
