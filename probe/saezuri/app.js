@@ -222,6 +222,9 @@ function animate() {
   if (bar !== lastBar) { lastBar = bar; record.lastBoundary = { bar: bar + 1, audioTime: ctx.currentTime, tick, wallTime: now }; }
   raf = requestAnimationFrame(animate);
 }
+function playbackSettings() {
+  return {lead:Number($('lead').value),ahead:Number($('ahead').value),countSound:$('play-count').checked,countStyle:$('play-count-style').value,countVolume:Number($('count-volume').value)};
+}
 async function play(pattern = state.pattern, preview = false, options={}) {
   if(candidate?.code && !preview) { $('status').textContent=`この候補は再生できません：${candidate.code}`; return; }
   if(candidate && !preview && !candidate.code) pattern=candidate.pattern;
@@ -239,7 +242,7 @@ async function play(pattern = state.pattern, preview = false, options={}) {
     record.playback.audioLevels=volumeControls.value();
     for(let offset=0;offset<bars*16;offset+=pattern.bars*16) for(const note of backing) if(offset+note.startTick<bars*16) accompaniment.push({...note,startTick:offset+note.startTick});
     record.playback.accompaniment=pattern.accompaniment??null;
-    transport.start(notes, { tempo, totalTicks: bars * 16, instrument: $('instrument').value, lead: Number($('lead').value), ahead: Number($('ahead').value), countSound: $('play-count').checked, countStyle: $('play-count-style').value, countVolume: Number($('count-volume').value),accompaniment });
+    transport.start(notes, { tempo, totalTicks: bars * 16, instrument: $('instrument').value,...playbackSettings(),accompaniment });
     playbackPreview=preview&&!options.sequence&&!options.standalone;
     if(options.sequence){record.playback.sequence=true;record.playback.draft=options.pending;}
     if(options.standalone){record.playback.previewSource='preset';record.playback.draft=false;}
@@ -436,8 +439,9 @@ if($('backing-loop'))$('backing-loop').onclick=async()=>{
     const options={processing:$('processing').checked,countSound:false,recordCount:false,acousticSync:false,countVolume:Number($('count-volume').value),windowSize:Number($('window-size').value),adaptiveWindow:$('adaptive-window').checked,boundaryMode:$('boundary-mode').value,rmsFloor:Number($('rms').value),minDetectedRatio:Number($('ratio').value),maxGapSeconds:Number($('gap').value),smoothingMs:Number($('smoothing').value),noteMode:$('note-mode').value,manualMs:Number($('timing-adjust').value)};
     if(microphoneEnabled()){await capture.prepareLoop(options);if(request!==serial)return;}
     record.captureOptions={tempo,...options};
-    transport.start([],{tempo,totalTicks:pattern.bars*16,accompaniment:accompanimentEvents(pattern),loop:true});
-    record.playback={tempo,bars:pattern.bars,notes:0,loop:true,accompaniment:pattern.accompaniment,audioLevels:volumeControls.value()};
+    const playback=playbackSettings();
+    transport.start([],{tempo,totalTicks:pattern.bars*16,...playback,accompaniment:accompanimentEvents(pattern),loop:true});
+    record.playback={tempo,bars:pattern.bars,notes:0,loop:true,...playback,accompaniment:pattern.accompaniment,audioLevels:volumeControls.value()};
     playbackPreview=false;setPhase('playing');lastFrame=0;animate();showReport();
   }catch(error){if(request===serial)stop(`ループを始められません：${error.message}`);}
 };

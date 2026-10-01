@@ -59,17 +59,19 @@ export class ProbeTransport {
     this.metrics = { events: 0, accompanimentEvents:0, countEvents: 0, maxTimerGapMs: 0, aheadMs: ahead * 1000, leadMs: lead * 1000 };
     const queue = [...notes.map(n=>({...n,accompaniment:false})),...accompaniment.map(n=>({...n,accompaniment:true}))].sort((a,b) => a.startTick - b.startTick);
     let index = 0, cycle = 0, countTick = 0, previous = performance.now();
-    const pump = () => {
+    const pump = (prime = false) => {
       if (serial !== this.serial) return;
       const wall = performance.now();
       this.metrics.maxTimerGapMs = Math.max(this.metrics.maxTimerGapMs, wall - previous);
       previous = wall;
       const now = this.ctx.currentTime;
+      // Queue the musical head before synchronous UI work can consume the lead.
+      const horizon = prime ? Math.max(now + ahead, this.anchor + ahead) : now + ahead;
       for (const voice of this.voices) if (voice.end < now) this.voices.delete(voice);
       if (this.ctx.state !== 'running') return this.stop(true, 'AUDIO_INTERRUPTED');
       while (countSound && (loop || countTick < totalTicks)) {
         const time = this.anchor + tickSeconds(countTick, tempo);
-        if (time > now + ahead) break;
+        if (time > horizon) break;
         if (time < now - 0.04) return this.stop(true, 'SCHEDULER_LATE');
         const stop = schedulePlaybackCount(this.ctx, Math.max(now,time), countTick % 16 === 0, this.mixer?1:countVolume, countStyle,this.mixer?.count??this.ctx.destination);
         this.voices.add({stop, end:time+0.15});
@@ -78,7 +80,7 @@ export class ProbeTransport {
       while (queue.length && (loop || index < queue.length)) {
         if(index===queue.length){index=0;cycle++;}
         const note = queue[index], time = this.anchor + tickSeconds(cycle*totalTicks+note.startTick, tempo);
-        if (time > now + ahead) break;
+        if (time > horizon) break;
         if (time < now - 0.04) return this.stop(true, 'SCHEDULER_LATE');
         const duration = tickSeconds(note.durationTick, tempo);
         const stop = scheduleVoice(this.ctx, this.mixer?(note.accompaniment?this.mixer.backing:this.mixer.melody):this.ctx.destination, { midi: note.midi, time: Math.max(now, time), duration, instrument:note.accompaniment?note.instrument:instrument, gain:note.accompaniment?note.gain:.16 });
@@ -88,7 +90,7 @@ export class ProbeTransport {
       if (!loop && now >= this.anchor + tickSeconds(totalTicks, tempo) + 0.08) this.stop(true, 'ENDED');
     };
     this.timer = setInterval(pump, 25);
-    pump();
+    pump(true);
   }
   position() {const tick=Math.max(0,(this.ctx.currentTime-this.anchor)*this.tempo*4/60);return this.active?(this.loop?tick%this.totalTicks:Math.min(this.totalTicks,tick)):0;}
   stop(notify = true, reason = 'STOPPED') {
