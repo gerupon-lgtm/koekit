@@ -1,6 +1,6 @@
 # サエズリズム 基本設計
 
-版：0.3／2026-10-01。状態：保存・再開、伴奏・個別コード・音色、4／8小節ループ録音をローカル実装。[実装記録](implementation-log.md)と[今回の検証](workflow-implementation-plan.md)参照。公開試作はv25のまま。実機音響・本アプリの全機能は未完了。
+版：0.3／2026-10-01。状態：保存・再開、伴奏・個別コード・音色、4／8小節ループ録音を実装し、依頼に従い既存試作URLへ公開した。[実装記録](implementation-log.md)、[今回の検証](workflow-implementation-plan.md)、[配信記録](preview-deployment.md)参照。診断のprototypeは互換用にv25を維持し、workflowRevisionで更新を識別する。実機音響・本アプリの全機能は未完了。
 要件の正典：[要件定義書v1.2](../requirements-melody.md)。今回の操作合意：[伴奏・制作・録音・保存仕様v0.3](accompaniment-workflow-spec.md)。共通規約：[実装ガイド](../implementation-guide.md)。人向け：[設計サマリ](summary.md)。実装入口：[handoff.md](handoff.md)。
 
 追加合意と現実装：音符なしの未確定コードは、再読み込み復元と保存枠の対象にしない。既存曲のコード編集はつくりかけとして保存する。初期10曲の上限は `saezuri/song-store.js` の `SONG_LIMIT` で一元管理する。コード変更は画面では1小節、データでは開始位置と長さのtick区間を持つ。後の1拍（4tick）／2拍（8tick）切替に備えた処理・保存形式とした。
