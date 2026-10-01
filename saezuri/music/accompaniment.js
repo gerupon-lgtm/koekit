@@ -49,7 +49,7 @@ export function recommendProgressions(pattern){
    const tones=CHORD_INTERVALS[segment.quality].map(n=>(n+segment.root)%12);
    for(const note of pattern.notes){const overlap=Math.max(0,Math.min(note.startTick+note.durationTick,segment.startTick+segment.durationTick)-Math.max(note.startTick,segment.startTick));score+=overlap*(tones.includes(note.midi%12)?2:-1);}
   }return {candidate,score,index};
- }).sort((a,b)=>b.score-a.score||a.index-b.index).slice(0,3).map(item=>item.candidate);
+ }).sort((a,b)=>b.score-a.score||a.index-b.index).slice(0,4).map(item=>item.candidate);
 }
 export function accompanimentEvents(pattern) {
  const value=pattern.accompaniment;

@@ -214,10 +214,11 @@ body.melody-app{background:#faf5ed;color:#443b36}
 .melody-app #backing-settings .composer-values{display:flex;gap:8px;margin:12px 0}
 .melody-app #backing-settings .composer-values label{flex:1;min-width:0}
 .melody-app #backing-settings label{margin:10px 0}
+.melody-app .backing-setting-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.melody-app .backing-setting-actions>button{margin:0}
 .melody-app .image-more{flex-wrap:wrap}
 .melody-app .suggestion-row{display:grid;grid-template-columns:1fr 1.5fr;gap:6px;margin:8px 0;border-bottom:1px solid #ddd4c5;padding-bottom:8px}
 .melody-app .suggestion-row p{grid-column:1/-1;margin:0;font-size:14px}
-.melody-app #progression-all-open{width:100%;margin:8px 0 0;font-size:14px}
 .melody-app .sheet-stop{position:sticky;bottom:0;display:flex;justify-content:center;margin-top:12px;padding-top:6px;background:#faf5ed}
 .melody-app .sheet-stop button{min-width:140px;margin:0}
 .melody-app #image-chords{grid-template-columns:none;grid-auto-flow:column;grid-auto-columns:calc(25% - 4px);overflow-x:auto;scroll-snap-type:x proximity;padding:2px 0}

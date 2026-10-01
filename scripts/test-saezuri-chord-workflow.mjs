@@ -18,7 +18,8 @@ test('recommendations preserve hand-edited harmonies and custom part sounds',()=
  const p=pattern();p.notes=[{midi:64,startTick:0,durationTick:16}];
  p.accompaniment.chords=[{startTick:16,durationTick:16,root:11,quality:'m7♭5',bass:1,manual:true}];
  p.accompaniment.sounds={chord:'lead',bass:'wood',drums:'none'};
- const suggestions=music.recommendProgressions(p);assert.equal(suggestions.length,3);
+ const suggestions=music.recommendProgressions(p);assert.equal(suggestions.length,4);
+ for(const mode of ['major','minor']){const candidates=music.recommendProgressions({...p,key:{mode,tonicPitchClass:mode==='minor'?9:0}});assert.deepEqual(new Set(candidates.map(v=>v.progression)),new Set(music.PROGRESSIONS[mode==='minor'?'Am':'C'].map(v=>v.id)));}
  for(const v of suggestions){assert.deepEqual(v.chords,p.accompaniment.chords);assert.deepEqual(v.sounds,p.accompaniment.sounds);}
  const eight={...p,bars:8};assert.equal(music.harmonicSegments(eight).at(-1).startTick,112);
 });

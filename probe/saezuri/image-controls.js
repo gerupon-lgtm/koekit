@@ -33,13 +33,13 @@ export class ImageControls {
   const loop=document.createElement('div');loop.className='loop-actions';loop.innerHTML='<button id="backing-loop">▶ 伴奏をループ</button><button id="loop-record" disabled>次の先頭から ハナウタ</button><p id="loop-hint" role="status"></p>';this.$('chords').after(loop);
   if(compact){
    const settings=document.createElement('dialog');settings.id='backing-settings';settings.className='backing-sheet';settings.setAttribute('aria-label','伴奏の設定');settings.innerHTML='<div class="screen-heading"><h2>伴奏の設定</h2><button id="backing-settings-close">とじる</button></div>';
-   settings.append(this.$('enabled').closest('label'),this.$('genre').closest('.composer-values'),this.$('progression').closest('label'),this.$('tempo'),this.$('sounds'));
+   const settingsActions=document.createElement('div');settingsActions.className='backing-setting-actions';settingsActions.append(this.$('tempo'),this.$('sounds'));
+   settings.append(this.$('enabled').closest('label'),this.$('genre').closest('.composer-values'),this.$('progression').closest('label'),settingsActions);
    document.querySelector('main').append(settings);this.settingsSheet=settings;
    const open=document.createElement('button');open.id='image-settings-open';open.textContent='伴奏の設定';open.onclick=()=>this.show(settings);this.$('suggest').before(open);
    const summary=document.createElement('p');summary.id='image-summary';this.$('chords').before(summary);
    $('backing-settings-close').onclick=()=>{this.onStop?.();settings.close();};settings.addEventListener('close',()=>this.onNavigate?.());
    const suggestions=document.createElement('dialog');suggestions.id='progression-suggestions';suggestions.className='backing-sheet';suggestions.setAttribute('aria-label','進行のおすすめ');suggestions.innerHTML='<div class="screen-heading"><h2>進行を くらべよう</h2><button id="progression-close">とじる</button></div>';suggestions.append(this.$('suggestions'));
-   const all=document.createElement('button');all.id='progression-all-open';all.textContent='4種類すべてから選ぶ';all.onclick=()=>{suggestions.close();this.show(settings);this.$('progression').focus();};suggestions.append(all);
    const stopRow=document.createElement('div');stopRow.className='sheet-stop';const stop=document.createElement('button');stop.id='progression-stop';stop.textContent='■ とめる';stop.onclick=()=>this.onStop?.();stopRow.append(stop);suggestions.append(stopRow);
    suggestions.addEventListener('close',()=>this.onNavigate?.());document.querySelector('main').append(suggestions);$('progression-close').onclick=()=>{this.onStop?.();suggestions.close();};this.suggestionsSheet=suggestions;
    const suggest=this.$('suggest').onclick;this.$('suggest').onclick=()=>{suggest();this.show(suggestions);};
