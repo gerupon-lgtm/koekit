@@ -1,5 +1,6 @@
 import {GENRES,CHORD_INTERVALS} from '../../saezuri/music/catalog.js';
 import {RHYTHMS,PROGRESSIONS,PRESETS,SOUNDS,SOUND_PRESETS,harmonicSegments,recommendProgressions} from '../../saezuri/music/accompaniment.js';
+import {setupPlaybackSheet} from './sheet-controls.js';
 const pitches=['C','C♯','D','E♭','E','F','F♯','G','A♭','A','B♭','B'];
 const suffix={major:'',minor:'m'};
 export const chordLabel=c=>`${pitches[c.root]}${suffix[c.quality]??c.quality}${c.bass===c.root?'':`/${pitches[c.bass]}`}`;
@@ -43,6 +44,8 @@ export class ImageControls {
    const stopRow=document.createElement('div');stopRow.className='sheet-stop';const stop=document.createElement('button');stop.id='progression-stop';stop.textContent='■ とめる';stop.onclick=()=>this.onStop?.();stopRow.append(stop);suggestions.append(stopRow);
    suggestions.addEventListener('close',()=>this.onNavigate?.());document.querySelector('main').append(suggestions);$('progression-close').onclick=()=>{this.onStop?.();suggestions.close();};this.suggestionsSheet=suggestions;
    const suggest=this.$('suggest').onclick;this.$('suggest').onclick=()=>{suggest();this.show(suggestions);};
+   setupPlaybackSheet(settings,{closeId:'backing-settings-close',stopId:'backing-settings-stop',onStop:()=>this.onStop?.()});
+   setupPlaybackSheet(suggestions,{closeId:'progression-close',stopId:'progression-stop',onStop:()=>this.onStop?.()});
   }
  }
  value(){return structuredClone(this.editor.previewPattern?.accompaniment??fallback);}
@@ -71,6 +74,8 @@ export class ImageControls {
   for(const part of ['chord','bass','drums'])$(`sound-${part}`).onchange=()=>{const value=this.value();value.sounds={...value.sounds,[part]:$(`sound-${part}`).value};this.editor.changeStructure({type:'accompaniment',value});};
   $('sounds-close').onclick=()=>s.close();s.addEventListener('close',()=>this.onNavigate?.());
   this.$('sounds').onclick=()=>{const value=this.value(),sounds={...SOUND_PRESETS[value.genre],...value.sounds};for(const part of ['chord','bass','drums'])$(`sound-${part}`).value=sounds[part];this.show(s);};
+  setupPlaybackSheet(d,{closeId:'chord-close',stopId:'chord-stop',onStop:()=>this.onStop?.()});
+  setupPlaybackSheet(s,{closeId:'sounds-close',stopId:'sounds-stop',onStop:()=>this.onStop?.()});
  }
  sheetChord(){return {startTick:this.bar*16,durationTick:16,root:Number($('chord-root').value),quality:$('chord-quality').value,bass:Number($('chord-bass').value),manual:true};}
  stageChord(){const value=this.value(),start=this.bar*16;value.enabled=true;value.chords=[...(value.chords??[]).filter(c=>c.startTick+c.durationTick<=start||c.startTick>=start+16),this.sheetChord()].sort((a,b)=>a.startTick-b.startTick);this.editor.changeStructure({type:'accompaniment',value});}
@@ -93,8 +98,8 @@ export class ImageControls {
   const row=this.$('chords');row.replaceChildren();const segments=harmonicSegments(pattern);
   for(let bar=0;bar<pattern.bars;bar++){const chord=segments.find(c=>c.startTick===bar*16),b=document.createElement('button');b.dataset.chordBar=bar;b.textContent=`${bar+1}：${chordLabel(chord)}`;b.setAttribute('aria-label',`${bar+1}小節目 ${chordLabel(chord)} を変更`);b.onclick=()=>this.openChord(bar);row.append(b);}
   for(const control of this.panel.querySelectorAll('input,select,button'))control.disabled=busy||!!this.editor.entry;
-  if(this.settingsSheet)for(const control of this.settingsSheet.querySelectorAll('input,select,button'))control.disabled=busy||!!this.editor.entry;
+  if(this.settingsSheet)for(const control of this.settingsSheet.querySelectorAll('input,select,button'))control.disabled=['backing-settings-close','backing-settings-stop'].includes(control.id)?false:busy||!!this.editor.entry;
   for(const control of this.$('suggestions').querySelectorAll('button'))control.disabled=busy;
-  for(const control of this.chordSheet.querySelectorAll('input,select,button'))control.disabled=busy;$('chord-stop').disabled=!busy;
+  for(const control of this.chordSheet.querySelectorAll('input,select,button'))control.disabled=['chord-close','chord-stop'].includes(control.id)?false:busy;
  }
 }

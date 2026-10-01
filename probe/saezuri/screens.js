@@ -1,6 +1,7 @@
 import {MelodyLearning} from './learning.js';
 import {emptySequence,keepPhrase,sequencePlayback,proposeSequence,commitSequence,undoPlacement} from './sequence-session.js';
 import {readCaptureReport} from './capture-report.js';
+import {setupPlaybackSheet} from './sheet-controls.js';
 const $=id=>document.getElementById(id);
 const button=(text,fn)=>{const b=document.createElement('button');b.type='button';b.textContent=text;b.onclick=fn;return b;};
 
@@ -49,6 +50,7 @@ export class MelodyScreens {
   $('sound-settings').append(document.querySelector('.listen-settings'));
   $('creation-settings').append($('composer-panel').querySelector('details'),document.querySelector('.quick-transpose'),$('editor-more'),document.querySelector('.editor-finish'),$('technical-tools'));
   dialog.append($('copy-status'),$('copy-fallback'));
+  setupPlaybackSheet(dialog,{closeId:'settings-close',stopId:'settings-stop',onStop,stopOnClose:false});
   $('settings-close').onclick=()=>dialog.close();dialog.addEventListener('close',()=>{onNavigate();});
   $('screen-settings').onclick=()=>this.openSettings();$('sequence-settings').onclick=()=>this.openSettings();
   $('melody-help').onclick=()=>{
