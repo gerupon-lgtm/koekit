@@ -22,9 +22,10 @@ export class MelodyScreens {
   choose.innerHTML='<div class="screen-heading"><button data-screen-back>← トップ</button><h2 tabindex="-1">つくる</h2></div><p>どこから はじめる？</p><div id="creation-choices"></div><p id="choose-notice" role="status"></p><button id="choose-resume" hidden>つづきから</button>';
   const create=document.createElement('div');create.id='melody-create';create.className='melody-screen';
   create.innerHTML='<div class="screen-heading"><button data-screen-back>← トップ</button><h2 tabindex="-1">つくる</h2><button id="screen-settings">設定</button></div><div id="creation-tabs" aria-label="操作"><button data-mode="input">音を置く</button><button data-mode="edit">音を直す</button><button data-mode="backing">伴奏</button></div>';
-  const shape=document.createElement('div');shape.id='phrase-shape';shape.setAttribute('aria-label','調と小節数');
-  const key=$('composer-key'),keyLabel=key.closest('label');for(const child of [...keyLabel.childNodes])if(child.nodeType===3)child.remove();keyLabel.prepend(document.createTextNode('調'));
-  for(const option of key.options){const value=option.value;option.value=value;option.textContent=value==='Am'?'短調（Am）':'長調（C）';}
+  const shape=document.createElement('div');shape.id='phrase-shape';shape.setAttribute('aria-label','ふんいきと小節数');
+  const key=$('composer-key'),keyLabel=key.closest('label');for(const child of [...keyLabel.childNodes])if(child.nodeType===3)child.remove();keyLabel.prepend(document.createTextNode('ふんいき'));
+  key.title='あかるめ：長調（C）／くらめ：短調（Am）';
+  for(const option of key.options){const value=option.value;option.value=value;option.textContent=value==='Am'?'くらめ':'あかるめ';}
   shape.append(keyLabel);const length=document.createElement('label');length.innerHTML='小節数<select id="phrase-bars"><option value="4">4小節</option><option value="8">8小節</option></select>';shape.append(length);
   create.querySelector('#creation-tabs').after(shape);const shapeHint=document.createElement('p');shapeHint.id='phrase-shape-hint';shapeHint.setAttribute('role','status');shape.after(shapeHint);
   length.querySelector('select').onchange=()=>editor.changeStructure({type:'resize',bars:Number($('phrase-bars').value)});
