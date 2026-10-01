@@ -1,0 +1,51 @@
+const {chromium}=require('../.local-tools/node_modules/playwright');
+const assert=require('node:assert/strict');
+(async()=>{
+ const browser=await chromium.launch({channel:'chrome',headless:true,args:['--autoplay-policy=no-user-gesture-required']});
+ try{
+ const context=await browser.newContext({viewport:{width:390,height:844},serviceWorkers:'block'});
+ const page=await context.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));
+ await page.goto((process.env.SAEZURI_BASE||'http://127.0.0.1:8014')+'/probe/saezuri/');
+ await page.locator('#home-create').click();await page.locator('#new-manual').click();
+ await page.locator('[data-pitch="0"]').click();
+ await page.waitForFunction(()=>document.querySelector('#song-status')?.dataset.saved==='true',{},{timeout:3000});
+ await page.reload();await page.locator('#home-songs').click();
+ await page.locator('[data-song-open]').click();await page.locator('#song-continue').click();
+ await page.locator('#report').evaluate(n=>n.click());
+ let report=JSON.parse(await page.locator('#metrics').textContent());
+ assert.equal(report.captureEditing.inputCandidate.midi,60);
+ assert.equal(report.captureEditing.undoDepth,0);
+ await page.locator('#capture-edit-confirm').click();await page.locator('#discard').click();
+ await page.locator('#melody-home').waitFor({state:'visible'});
+ await page.locator('#home-songs').click();
+ await page.locator('#tempo').evaluate(n=>n.value='180');await page.locator('.song-row button').filter({hasText:'▶ 聴く'}).click();await page.waitForFunction(()=>document.querySelector('#status').dataset.state==='playing');
+ await page.locator('#report').evaluate(n=>n.click());assert.equal(JSON.parse(await page.locator('#metrics').textContent()).playback.tempo,120,'library uses saved tempo');await page.locator('#song-list-stop').click();
+ await page.locator('.song-row button').filter({hasText:'コピー'}).click();await page.waitForFunction(()=>document.querySelectorAll('[data-song-open]').length===2);
+ await page.getByRole('button',{name:'わたしのきょく 1 のコピーをけす',exact:true}).click();await page.locator('#song-delete-confirm').click();await page.waitForFunction(()=>document.querySelectorAll('[data-song-open]').length===1);
+ await page.locator('[data-song-open]').click();
+ assert.equal(await page.locator('#song-resume').isVisible(),false);
+ await page.locator('[data-pitch="2"]').click();await page.locator('#discard').click();
+ await page.locator('#melody-home').waitFor({state:'visible'});await page.reload();
+ await page.locator('#home-songs').click();await page.locator('[data-song-open]').click();
+ await page.locator('#song-discard-draft').click();
+ await page.locator('#report').evaluate(n=>n.click());report=JSON.parse(await page.locator('#metrics').textContent());
+ assert.equal(report.captureEditing.pending,false);assert.equal(report.captureEditing.inputCandidate,null);
+ await page.locator('#discard').click();await page.locator('#melody-home').waitFor({state:'visible'});
+ const result=await page.evaluate(async()=>{
+  const {SongStore}=await import('/saezuri/song-store.js');const store=new SongStore({database:'test-songs',limit:2});
+  const a=await store.save('a',{title:'A'});await store.save('b',{title:'B'});
+  const error=async f=>{try{await f();return null;}catch(e){return e.code;}};
+  const full=await error(()=>store.save('c',{}));
+  const fullCopy=await error(()=>store.duplicate('b',1));
+  const writes=await Promise.allSettled([store.save('a',{title:'new'},a.revision),store.save('a',{title:'stale'},a.revision)]);
+  const current=await store.get('a');await store.remove('a',current.revision);
+  const resurrect=await error(()=>store.save('a',{},null));await store.save('c',{title:'C'});
+  const titles=(await store.list()).map(r=>r.title);await store.remove('c',1);const duplicate=await store.duplicate('b',1);await store.save(duplicate.id,{title:'copy edit'},duplicate.revision);
+  return {full,fullCopy,writes:writes.map(r=>r.status),resurrect,titles,original:(await store.get('b')).title};
+ });
+ assert.equal(result.full,'SONG_LIMIT');assert.deepEqual(result.writes,['fulfilled','rejected']);
+ assert.equal(result.resurrect,'SONG_DELETED');assert.deepEqual(result.titles.sort(),['B','C']);
+ assert.equal(result.fullCopy,'SONG_LIMIT');assert.equal(result.original,'B');
+ assert.deepEqual(errors,[]);console.log('song reload, draft discard, transaction limit/conflict/tombstone: PASS');
+ }finally{await browser.close();}
+})().catch(error=>{console.error(error);process.exitCode=1;});

@@ -17,11 +17,12 @@ export function readCaptureReport(text) {
     return {pattern:structuredClone(pattern),options:{tempo},importedFrom:{prototype:report.prototype,timestamp:report.timestamp,conditions:report.conditions}};
   }
   const capture = report?.capture, options = report?.captureOptions;
+  const bars=capture?.bars??4;
   if (!capture || !options || !Number.isFinite(options.tempo) || options.tempo < 60 || options.tempo > 180 ||
-      !Array.isArray(capture.notes) || capture.notes.length > 64 ||
+      !Array.isArray(capture.notes) || capture.notes.length > bars*16 ||
       capture.notes.some(note => typeof note?.id !== 'string') ||
-      validateNotes({ bars: 4, gridStep: 1, notes: capture.notes })) {
-    throw new Error('4小節の取り込み記録を読み込めません。元の記録を確認してください。');
+      validateNotes({ bars, gridStep: 1, notes: capture.notes })) {
+    throw new Error('4小節／8小節の取り込み記録を読み込めません。元の記録を確認してください。');
   }
   let frames = [];
   if (capture.analysisComparison) {
@@ -29,14 +30,14 @@ export function readCaptureReport(text) {
     if (!settings || !Array.isArray(comparison.variants) || comparison.variants.length !== 3 ||
         comparison.variants.some(variant => !['current', 'detail', 'unsmoothed'].includes(variant?.mode) || !Array.isArray(variant.notes)) ||
         settings.tempo !== options.tempo || !Number.isFinite(settings.endSeconds) ||
-        Math.abs(settings.endSeconds - 960 / options.tempo) > .01 ||
+        Math.abs(settings.endSeconds - bars*240 / options.tempo) > .01 ||
         ![0, 80, 120].includes(settings.smoothingMs) ||
         !Number.isFinite(settings.maxGapSeconds) || settings.maxGapSeconds < 0 || settings.maxGapSeconds > .5 ||
         !Number.isFinite(settings.minDetectedRatio) || settings.minDetectedRatio < 0 || settings.minDetectedRatio > 1) {
       throw new Error('比較条件を読み込めません。元の記録を確認してください。');
     }
     try { frames = decodePitchTrace(comparison.pitchTrace); } catch { throw new Error('音程推移を読み込めません。元の記録を確認してください。'); }
-    if (frames.length > 5000 || frames.some((frame, i) =>
+    if (frames.length > bars*1250 || frames.some((frame, i) =>
       !Number.isFinite(frame.time) || frame.time < 0 || frame.time > settings.endSeconds ||
       (i > 0 && frame.time <= frames[i - 1].time) ||
       !['pitched', 'silence', 'unknown'].includes(frame.kind) ||

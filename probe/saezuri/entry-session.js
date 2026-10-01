@@ -42,7 +42,8 @@ export function confirmEntry(session) {
   const {undoStack,...working}=next;
   const added=working.pattern.notes.find(n=>!session.working.pattern.notes.some(old=>old.id===n.id));
   working.selectedNoteId=session.entry.input.replaceNoteId ?? added?.id ?? session.working.selectedNoteId;
-  return {...session,working,confirmed:copy(working.pattern),entry:null,accepted:true,history:[...session.history,copy(session.working)]};
+  working.hasRest=!!session.working.hasRest || session.entry.input.midi===null;
+  return {...session,working,confirmed:copy(working.pattern),confirmedCursor:working.cursor,confirmedHasRest:working.hasRest,entry:null,accepted:true,history:[...session.history,copy(session.working)]};
 }
 
 export function cancelEntry(session) {return {...session,entry:null};}

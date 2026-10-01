@@ -1,0 +1,21 @@
+const {chromium}=require('../.local-tools/node_modules/playwright');const assert=require('node:assert/strict');
+(async()=>{const browser=await chromium.launch({channel:'chrome',headless:true,args:['--autoplay-policy=no-user-gesture-required','--use-fake-device-for-media-stream','--use-fake-ui-for-media-stream']});try{
+ const context=await browser.newContext({viewport:{width:390,height:844},permissions:['microphone'],serviceWorkers:'block'});const page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
+ await page.goto((process.env.SAEZURI_BASE||'http://127.0.0.1:8014')+'/probe/saezuri/');await page.locator('#home-create').click();await page.locator('#new-image').click();await page.locator('#capture-edit-confirm').click();
+ await page.locator('[data-mode="input"]').click();await page.locator('[data-pitch="0"]').click();await page.locator('#capture-edit-confirm').click();await page.locator('[data-mode="backing"]').click();
+ await page.locator('#backing-loop').click({timeout:3000});await page.locator('#loop-record').waitFor();await page.waitForFunction(()=>!document.querySelector('#loop-record').disabled);
+ const report=async()=>{await page.locator('#report').evaluate(n=>n.click());return JSON.parse(await page.locator('#metrics').textContent());};
+ let data=await report();assert.equal(data.playback.notes,0,'only backing while preparing retake');
+ await page.locator('#loop-record').click();await page.waitForFunction(()=>document.querySelector('#status').dataset.state==='count-in');
+ await page.locator('#stop').click();data=await report();assert.equal(data.captureCandidate.notes[0].midi,60,'cancel leaves old confirmed melody');
+ await page.locator('#backing-loop').click();await page.waitForFunction(()=>!document.querySelector('#loop-record').disabled);await page.locator('#loop-record').click();
+ await page.locator('#mic').click();assert.equal(await page.locator('#status').getAttribute('data-state'),'idle');data=await report();assert.equal(data.captureCandidate.notes[0].midi,60);
+ await page.locator('#mic').click();await page.locator('#screen-settings').click();await page.locator('#tempo').fill('180');await page.locator('#tempo').dispatchEvent('change');await page.locator('#creation-settings > details > summary').first().click();await page.locator('#composer-extend').click();await page.locator('#settings-close').click();await page.locator('#capture-edit-confirm').click();
+ await page.locator('#backing-loop').click();await page.waitForFunction(()=>!document.querySelector('#loop-record').disabled);
+ await page.locator('#loop-record').click();await page.waitForFunction(()=>document.querySelector('#status').dataset.state==='recording',{},{timeout:14000});
+ await page.waitForFunction(()=>document.querySelector('#status').dataset.state==='idle',{},{timeout:18000});data=await report();
+ assert.equal(data.capture.timing.bars,8);assert.equal(data.capture.samples,Math.round(data.capture.sampleRate*32/3));
+ assert.equal(data.captureEditing.pending,true);assert.equal(data.captureCandidate.notes[0].midi,60,'recording result waits for OK');
+ await page.locator('#capture-edit-undo').click();data=await report();assert.equal(data.captureEditing.pending,false);assert.equal(data.captureCandidate.notes[0].midi,60);
+ assert.deepEqual(errors,[]);console.log('loop reservation, cancellation, mic off, eight-bar capture and retake checkpoint: PASS');
+ }finally{await browser.close();}})().catch(e=>{console.error(e);process.exitCode=1;});

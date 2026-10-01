@@ -59,12 +59,13 @@ export function buildAnalysisComparison(frames, options, primary) {
     smoothingMs: options.smoothingMs ?? 80,
     maxGapSeconds: options.maxGapSeconds ?? .10,
     minDetectedRatio: options.minDetectedRatio ?? .1,
+    ...(options.totalTicks&&options.totalTicks!==64?{totalTicks:options.totalTicks}:{}),
   };
   const variants = [variant('current', sourceOptions, primary)];
   for (const [mode, smoothingMs] of [['detail', sourceOptions.smoothingMs], ['unsmoothed', 0]]) {
     const settings = {...sourceOptions, noteMode: 'detail', smoothingMs};
     const result = analyzeFrames(frames, settings), quantizationAdjustments = [];
-    const notes = quantizeSegments(result.segments, settings.tempo, 64, quantizationAdjustments);
+    const notes = quantizeSegments(result.segments, settings.tempo, settings.totalTicks??64, quantizationAdjustments);
     variants.push(variant(mode, settings, {result, notes, quantizationAdjustments}));
   }
   return {

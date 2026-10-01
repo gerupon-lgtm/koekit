@@ -19,10 +19,11 @@ self.onmessage = ({ data }) => {
   }
   const filtered = options.recordCount && options.countSound ? filterCaptureSamples(samples, sampleRate) : samples;
   const frames = analyzeSamples(filtered, sampleRate, options);
-  const analysisOptions = { endSeconds: samples.length / sampleRate, maxGapSeconds: options.maxGapSeconds ?? 0.1, minDetectedRatio: options.minDetectedRatio ?? 0.1, smoothingMs: options.smoothingMs ?? 80, noteMode: options.noteMode ?? 'sustain', tempo };
+  const totalTicks=(options.loop?.bars??4)*16;
+  const analysisOptions = { endSeconds: samples.length / sampleRate, maxGapSeconds: options.maxGapSeconds ?? 0.1, minDetectedRatio: options.minDetectedRatio ?? 0.1, smoothingMs: options.smoothingMs ?? 80, noteMode: options.noteMode ?? 'sustain', tempo,totalTicks };
   const result = analyzeFrames(frames, analysisOptions);
   const quantizationAdjustments = [];
-  const notes = quantizeSegments(result.segments, tempo, 64, quantizationAdjustments);
+  const notes = quantizeSegments(result.segments, tempo, totalTicks, quantizationAdjustments);
   const analysisDiagnostics = { shortWindowFrames: frames.filter(f=>f.pitchSource==='short-window').length, gapDecisions: result.gapDecisions, quantizationAdjustments };
   const comparisonStarted = performance.now();
   const analysisComparison = buildAnalysisComparison(frames, analysisOptions, { result, notes, quantizationAdjustments });

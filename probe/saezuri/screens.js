@@ -17,7 +17,7 @@ export class MelodyScreens {
   home.innerHTML=`<nav class="home-nav"><a class="menu-home" href="../../" aria-label="コエキットへ"><svg viewBox="0 0 24 24"><path d="M12 3l9 8h-2.5v9h-5.5v-6h-2v6H5.5v-9H3z"/></svg></a><button class="menu-help" id="melody-help" aria-label="つかいかた">？</button></nav>
    <h1><img src="../../assets/brand/saezurhythm.svg" alt="サエズリズム"></h1><p class="home-caption">こえと タッチで、メロディーを つくろう。</p>
    <div class="home-menu"><button id="home-create">つくる<small>音をならべて、ひとつのフレーズに</small></button><button id="home-connect">つなげる<small>フレーズをならべて、長い曲に</small></button><button id="home-resume" hidden>つづきから</button></div>
-   <p class="session-note">このタブの中で試せます。再読み込みすると作業は消えます。</p><p class="home-credit">試作 v25　© 2026 SIKUMI LAB</p>`;
+   <p class="session-note">このタブの中で試せます。再読み込みすると作業は消えます。</p><p class="home-credit">開発版 2026.10.01　© 2026 SIKUMI LAB</p>`;
   const choose=document.createElement('section');choose.id='melody-choose';choose.className='melody-screen';
   choose.innerHTML='<div class="screen-heading"><button data-screen-back>← トップ</button><h2 tabindex="-1">つくる</h2></div><p>どこから はじめる？</p><div id="creation-choices"></div><p id="choose-notice" role="status"></p><button id="choose-resume" hidden>つづきから</button>';
   const create=document.createElement('div');create.id='melody-create';create.className='melody-screen';
@@ -30,7 +30,7 @@ export class MelodyScreens {
   const chooseMic=button('マイク ON',()=>$('mic').click());chooseMic.id='choose-mic';$('creation-choices').prepend(chooseMic);
   $('new-manual').textContent='じゆうに つくる';$('new-image').textContent='イメージから つくる';$('capture').textContent='ハナウタで つくる';
   const sample=button('おためしを アレンジ',()=>this.go('samples'));sample.id='choose-example';source.querySelector('.source-actions').append(sample);
-  for(const id of ['new-manual','new-image']) $(id).addEventListener('click',()=>{if(!editor.pending){$('phrase-feedback').textContent='';this.go('create');this.setMode(id==='new-image'?'backing':'input');}});
+  // Creation opens its screen after the asynchronous storage-capacity check.
   // The recording button keeps its existing permission / start handler.
   $('capture').addEventListener('click',()=>this.go('create',{stop:false}));
   create.append($('edit-workspace'));
@@ -70,7 +70,7 @@ export class MelodyScreens {
   $('adopt').addEventListener('click',()=>{if(!editor.isOpen)this.go('home');});
   $('discard').onclick=()=>this.requestDiscard(()=>this.go('home'),true);
   create.querySelector('.screen-heading').append($('discard'));
-  this.icon($('discard'),'exit','やめる','作業を破棄して終了');
+  this.icon($('discard'),'exit','やめる','ほぞんして終了');
   this.icon($('screen-settings'),'settings','設定');this.icon($('sequence-settings'),'settings','設定');
   $('choose-resume').onclick=()=>this.go('create');
   const confirm=document.createElement('dialog');confirm.id='melody-discard';confirm.setAttribute('aria-labelledby','discard-title');
@@ -100,6 +100,7 @@ export class MelodyScreens {
   node.innerHTML=`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="${paths[type]}"/></svg><span>${label}</span>`;
  }
  requestDiscard(action,ending=false){
+  if(this.songWorkflow){this.songWorkflow.depart(action,ending);return;}
   if(this.discardDialog.open)return;
   if(!this.editor.isOpen&&!this.busy){action();return;}
   this.onStop();this.discardAction=action;
@@ -107,11 +108,13 @@ export class MelodyScreens {
   $('discard-message').textContent='今の音列・入力中の候補・もどす履歴は消えます。';
   this.discardDialog.showModal();this.onNavigate();$('discard-cancel').focus();
  }
- get allowsVoice(){return this.screen==='create'&&!this.dialog.open&&!this.discardDialog?.open;}
+ get allowsVoice(){return this.screen==='create'&&!document.querySelector('dialog[open]');}
  openSettings(){ $('creation-settings').hidden=this.screen!=='create';this.dialog.showModal();this.onNavigate();}
  go(screen,{history:push=true,stop=true}={}) {
+  if(this.phase==='saving')return;
   if(screen==='create'&&!this.editor.isOpen&&this.phase==='idle')screen='choose';
   if(stop)this.onStop();
+  for(const open of document.querySelectorAll('dialog[open]'))open.close();
   this.discardAction=null;this.discardDialog?.close();this.dialog.close();this.screen=screen;document.body.dataset.melodyScreen=screen;
   for(const [name,node] of Object.entries(this.screens))node.hidden=name!==screen;
   if(screen==='choose')$('editor-source').open=true;
@@ -131,19 +134,25 @@ export class MelodyScreens {
   $('capture').disabled=this.busy||$('mic').getAttribute('aria-pressed')!=='true';
   $('discard').disabled=!this.editor.isOpen&&!this.busy;
   $('choose-resume').hidden=!this.editor.isOpen;
-  $('choose-notice').textContent=this.editor.isOpen?'作業を残しています。別の作り方を選ぶと、破棄するか確認します。':'';
+  $('choose-notice').textContent=this.editor.isOpen?'作業を残しています。別の作り方を選ぶと、今の作業をほぞんします。':'';
   $('capture-position').hidden=!['preparing','count-in','recording','analyzing'].includes(phase);
   $('keep-phrase').disabled=this.busy||!this.editor.isOpen||this.editor.pending||!!this.proposal||!this.editor.pattern?.notes.length;
   if(this.proposal)$('phrase-feedback').textContent='つなげる画面の候補を確定か取消してから登録できます。';
   $('phrase-name').disabled=this.busy;
   for(const id of ['after-keep-connect','after-keep-more'])$(id).disabled=this.busy;
-  for(const b of document.querySelectorAll('[data-mode]'))b.disabled=this.busy||(b.dataset.mode!=='edit'&&!manual);
+  for(const b of document.querySelectorAll('[data-mode]'))b.disabled=this.busy||(b.dataset.mode==='input'&&!manual);
   document.body.dataset.createMode=this.mode;
   $('composer-candidate').hidden=!manual||this.mode!=='input';
   this.renderSequence();this.learning?.sync(phase);
  }
- keep() {
+  async keep() {
   if(this.busy||!this.editor.isOpen||this.editor.pending||this.proposal||!this.editor.pattern)return;
+    if(this.songWorkflow?.practice){
+     const pattern=JSON.stringify(this.editor.pattern);
+     if(!await this.songWorkflow.allowNew())return;
+     if(this.busy||this.editor.pending||this.proposal||pattern!==JSON.stringify(this.editor.pattern))return;
+     this.songWorkflow.practice=false;
+    }
   if(!this.editor.accepted)this.editor.command('confirm');
   const next=keepPhrase(this.sequence,this.editor.pattern,$('phrase-name').value);
   if(next.code)return;
@@ -179,6 +188,7 @@ export class MelodyScreens {
   this.ranges=sequencePlayback(draft).ranges??[];
   $('sequence-count').textContent=`${draft.placements.length} / 16 ・ ${(this.ranges.at(-1)?.end??0)/16}小節`;
   $('sequence-message').textContent=this.proposal?'仮の順番です。聴いてからオッケーで決めます。':'フレーズを選ぶと、最後に追加する候補になります。';
+  this.songWorkflow?.schedule();
  }
  follow(tick){if(this.screen!=='connect')return;const active=tick==null?null:this.ranges?.find(p=>p.start<=tick&&tick<p.end);
   if(this.playingId===active?.id)return;this.playingId=active?.id;

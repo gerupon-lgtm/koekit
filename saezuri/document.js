@@ -76,6 +76,7 @@ export function resizePattern(state, bars, { copy = false, confirmed = false } =
   if (bars === 8 && copy) next.notes.push(...next.notes.map(n => ({ ...n, id: `${n.id}-copy-${state.revision}`, startTick: n.startTick + 64 })));
   if (bars === 4) next.notes = next.notes.filter(n => n.startTick < 64).map(n => ({ ...n, durationTick: Math.min(n.durationTick, 64 - n.startTick) }));
   next.bars = bars;
+  if(next.accompaniment?.chords)next.accompaniment.chords=next.accompaniment.chords.filter(c=>c.startTick<bars*16).map(c=>({...c,durationTick:Math.min(c.durationTick,bars*16-c.startTick)}));
   const invalid = validateNotes(next);
   return invalid || changed(state, next, Math.min(state.cursor, bars * 16));
 }

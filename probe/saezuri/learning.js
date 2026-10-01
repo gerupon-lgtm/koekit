@@ -6,7 +6,7 @@ export class MelodyLearning {
   this.shell=shell;this.active=false;this.heard=false;this.lastStep=null;
   const actions=document.querySelector('.source-actions');
   const tutorial=document.createElement('button');tutorial.id='new-tutorial';tutorial.innerHTML='おてほんから つくる<small>① 案内にそって、操作をおぼえる</small>';
-  tutorial.onclick=()=>shell.requestDiscard(()=>this.start());
+  tutorial.onclick=()=>shell.requestDiscard(()=>this.start(),true);
   $('choose-example').innerHTML='おためしを アレンジ<small>② フレーズを選んで、じぶんの音に</small>';
   $('choose-example').onclick=()=>shell.go('samples');
   $('new-manual').innerHTML='じゆうに つくる<small>③ 空から、すきな音をならべる</small>';
@@ -23,7 +23,7 @@ export class MelodyLearning {
    const listen=document.createElement('button');listen.textContent='▶ 聴く';listen.dataset.practiceListen=p.id;
    listen.onclick=()=>shell.onAudition(practicePhrase(p.id));
    const edit=document.createElement('button');edit.textContent='これをアレンジ';edit.dataset.practiceEdit=p.id;
-   edit.onclick=()=>shell.requestDiscard(()=>{this.end();const item=practicePhrase(p.id);shell.onOpenPattern(item.pattern,'preset',item.tempo);shell.go('create');shell.setMode('edit');$('phrase-name').value=item.name+' アレンジ';});
+   edit.onclick=()=>this.openNew(()=>{this.end();const item=practicePhrase(p.id);shell.onOpenPattern(item.pattern,'preset',item.tempo);shell.go('create');shell.setMode('edit');$('phrase-name').value=item.name+' アレンジ';});
    row.append(listen,edit);card.append(title,desc,row);$('practice-list').append(card);
   }
   const guide=document.createElement('aside');guide.id='learning-guide';guide.hidden=true;guide.setAttribute('aria-label','おてほんの案内');
@@ -32,6 +32,7 @@ export class MelodyLearning {
   $('learning-close').onclick=()=>{this.end();this.sync(shell.phase);};
   $('learning-next').onclick=()=>shell.go('samples');
  }
+ openNew(action){this.shell.requestDiscard(async()=>{if(this.shell.songWorkflow&&!await this.shell.songWorkflow.allowNew())return;action();});}
  start(){
   this.active=true;this.heard=false;this.lastStep=null;
   $('composer-duration').value='1';$('composer-octave').value='0';$('composer-replace').checked=false;

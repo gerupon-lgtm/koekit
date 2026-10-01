@@ -35,7 +35,7 @@ export function proposeCaptureEdit(state, command) {
 
   const pattern = structuredClone(state.pattern);
   if(command.type==='accompaniment') {
-    const invalid=validateAccompaniment(command.value);
+    const invalid=validateAccompaniment(command.value,pattern.bars);
     if(invalid) return invalid;
     pattern.accompaniment=structuredClone(command.value);
     return proposePattern(state,pattern,state.cursor);

@@ -4,6 +4,7 @@ import { decodePitchTrace } from './analysis-comparison.js';
 import { pitchName } from './score.js';
 import { orderedNotes, selectionTarget } from './note-selection.js';
 import {proposeEntry,confirmEntry,cancelEntry,moveEntryCursor,entryPreview} from './entry-session.js';
+import {songCheckpoint,restoreCheckpoint} from './song-session.js';
 
 const clone = value => value == null ? value : structuredClone(value);
 const labels = { current: '現在の設定', detail: '細かい変化', unsmoothed: 'ならしなし' };
@@ -91,6 +92,16 @@ export class CaptureEditorView {
   get isOpen() { return !!this._active && !this._active.session.closed; }
   get variant() { return this._variant; }
 
+  checkpoint(existing=false) { return songCheckpoint(this._active?.session,{existing}); }
+  clearHistory(){for(const item of this._variants.values())item.session.history=[];}
+  restore(checkpoint,options={}) {
+    const session=restoreCheckpoint(checkpoint,options);
+    this._variants.clear();this._variant='current';
+    if(session){const item=this._makeVariant(session.confirmed);item.session=session;item.edited=true;this._variants.set('current',item);}
+    this._status(session?.entry||session?.working&&hasDraftChanges(session)?'つくりかけから再開しました。聴いてオッケーで確定します。':'きめたところから再開しました。');
+    this._emit(true);
+  }
+
   _makeVariant(pattern) {
     const session = openEditSession(pattern);
     if (session.code) throw new Error(session.code);
@@ -118,7 +129,8 @@ export class CaptureEditorView {
       this._emit(true);
       return;
     }
-    this._variants.set('current', this._makeVariant({ bars: 4, gridStep: 1, notes: clone(result.notes ?? []) }));
+    const bars=result.bars??captureOptions.loop?.bars??4;
+    this._variants.set('current', this._makeVariant({ bars, gridStep: 1, notes: clone(result.notes ?? []) }));
     const comparison = result.analysisComparison;
     let unavailable = false;
     if (comparison) {
@@ -135,8 +147,8 @@ export class CaptureEditorView {
         for (const mode of ['detail', 'unsmoothed']) {
           const analyzed = analyzeFrames(frames, { ...settings, noteMode: 'detail',
             smoothingMs: mode === 'unsmoothed' ? 0 : settings.smoothingMs });
-          const notes = quantizeSegments(analyzed.segments, settings.tempo);
-          this._variants.set(mode, this._makeVariant({ bars: 4, gridStep: 1, notes }));
+          const notes = quantizeSegments(analyzed.segments, settings.tempo,bars*16);
+          this._variants.set(mode, this._makeVariant({ bars, gridStep: 1, notes }));
         }
       } catch {
         this._variants.delete('detail');
@@ -147,6 +159,16 @@ export class CaptureEditorView {
     this._status(unavailable ? '比較用の音程推移を読み込めませんでした。現在の設定の候補を編集できます。'
       : '音を選んで直し、流れを聴いてから、まとめてオッケー。');
     this._emit(true);
+  }
+
+  stageRecording(result,captureOptions={}){
+    const previous=this._active?.session;
+    if(!previous){this.load(result,captureOptions);return;}
+    const replacement={...clone(previous.working.pattern),gridStep:1,source:'humming',notes:clone(result.notes??[])};
+    const candidate=this._makeVariant(replacement);
+    candidate.session={...clone(previous),working:{...candidate.session.working,revision:previous.working.revision+1},entry:null,history:[...previous.history,clone(previous.working)]};
+    this._variants.clear();this._variant='current';this._variants.set('current',candidate);
+    this._status('録り直しの候補です。きめたメロディーは残しています。聴いてオッケー。');this._emit(true);
   }
 
   // Alignment is allowed only before manual edits. Its immutable source remains
@@ -256,7 +278,8 @@ export class CaptureEditorView {
     const next=adding?confirmEntry(this._active.session):confirmEditSession(this._active.session);
     if(next.code) {this._status(messages[next.code]??next.code);return;}
     this._active.session=next;this._active.edited=true;
-    this._status(adding?'追加を確定しました。次の音を入力できます。':'まとめて確定しました。続けて編集できます。履歴は「おわり」まで残ります。');
+    this._active.session.confirmedCursor=this._active.session.working.cursor;
+    this._status(adding?'追加を確定しました。次の音を入力できます。':'まとめて確定しました。続けて編集できます。この作業中は「もどす」が使えます。');
     this._emit(false,true,true);
   }
 

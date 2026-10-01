@@ -45,7 +45,7 @@ const base=process.env.SAEZURI_BASE||'http://127.0.0.1:8014';
  }
  await page.setViewportSize({width:390,height:844});
  await page.locator('#melody-connect [data-screen-back]').click();await page.locator('#home-create').click();await page.locator('#new-image').click();if(await page.locator('#melody-discard').isVisible())await page.locator('#discard-confirm').click();
- assert.equal(await page.locator('#image-genre').isVisible(),true);await home();await page.locator('#home-create').click();
+ await page.locator('#image-settings-open').click();assert.equal(await page.locator('#image-genre').isVisible(),true);await page.locator('#backing-settings-close').click();await home();await page.locator('#home-create').click();
  await page.locator('#choose-mic').click();assert.equal(await page.locator('#capture').isDisabled(),true);
  await page.locator('#choose-mic').click();await page.locator('#capture').click();if(await page.locator('#melody-discard').isVisible())await page.locator('#discard-confirm').click();
  await page.waitForFunction(()=>document.querySelector('#status').dataset.state==='count-in');assert.equal(await page.locator('#capture-position').isVisible(),true);

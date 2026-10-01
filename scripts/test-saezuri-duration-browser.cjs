@@ -5,6 +5,7 @@ const base=process.env.SAEZURI_BASE||'http://127.0.0.1:8014';
  const report=async()=>{await page.evaluate(()=>document.querySelector('#report').click());return JSON.parse(await page.locator('#metrics').textContent());};
  const duration=value=>page.locator(`[data-duration="${value}"]`).click();
  await page.goto(base+'/probe/saezuri/');await page.locator('#home-create').click();await page.locator('#new-manual').click();
+ await page.locator('#composer-rest').waitFor({state:'visible'});
  assert.equal(await page.locator('#composer-duration').isVisible(),false);assert.equal(await page.locator('#composer-length-buttons svg').count(),4);assert.equal(await page.locator('#composer-rest').isVisible(),true);
  await duration(.5);assert.equal((await report()).captureEditing.pending,false);
  await page.locator('[data-pitch="0"]').click();let r=await report();assert.equal(r.captureEditing.inputCandidate.durationTick,2);assert.equal(r.captureCandidate.notes.length,0);

@@ -16,6 +16,8 @@ import {ENTRY_WORDS,parseEntryCommand} from './entry-voice.js';
 import {ImageControls} from './image-controls.js';
 import {accompanimentEvents} from '../../saezuri/music/accompaniment.js';
 import {MelodyScreens} from './screens.js';
+import {SongWorkflow} from './song-workflow.js';
+import {nextLoopHead} from './loop-timing.js';
 const compactEditor=setupEditorLayout();
 const $ = id => document.getElementById(id);
 const example = () => ({ bars: 4, gridStep: 1, notes: [
@@ -40,11 +42,11 @@ const editingExample = () => ({ bars: 4, gridStep: 1, notes: [
 ] });
 let state = { pattern: editingExample(), cursor: 0, revision: 0 }, candidate = null, captured = null, capturedOriginal = null;
 let ctx, transport, capture, serial = 0, phase = 'idle', raf, lastFrame = 0, maxFrameGapMs = 0, lastBar = -1, playbackPreview = false;
-const record = { prototype: 'ML-T01-v25', timestamp: new Date().toISOString(), userAgent: navigator.userAgent, playback: null, capture: null };
+const record = { prototype: 'ML-T01-v25', workflowRevision:'2026-10-01',timestamp: new Date().toISOString(), userAgent: navigator.userAgent, playback: null, capture: null };
 const keyChoices = { score: null, capture: null };
 const displayOctaves = { score: 0, capture: 0 };
 const captureAlignments = new Map();
-let voice, voiceTimer, composer, imageControls, shell;
+let voice, voiceTimer, composer, imageControls, shell, songWorkflow;
 function syncVoice() {
   if(!voice) return;
   if(captureEditor.previewPattern?.source==='manual') voice.configure(ENTRY_WORDS,parseEntryCommand);
@@ -69,6 +71,7 @@ const captureEditor = new CaptureEditorView({ onChange(change) {
   if (change.previewPattern) drawPattern('capture', change.previewPattern);
   setPhase(phase);
   showReport();
+  songWorkflow?.schedule();
 } });
 function drawPattern(kind, pattern) {
   const inferred = inferSignature(kind==='capture' ? (captured?.notes ?? pattern.notes) : pattern.notes), fifths = keyChoices[kind] ?? (pattern.source==='manual'?0:inferred.fifths);
@@ -98,6 +101,7 @@ function updateKeyButtons() {
 }
 const labels = { idle: '準備できました', preparing: '音とマイクの準備中', playing: '再生中・停止はボタンで', 'count-in': '8拍のカウント中', recording: '4小節を取り込み中', analyzing: '端末内で解析中' };
 function setPhase(next, message) {
+  $('stop').disabled=next==='saving';$('mic').disabled=next==='saving';
   phase = next; $('status').dataset.state = next; $('status').textContent = message || labels[next];
   for (const id of ['edit-score','tempo','instrument','length','lead','ahead','example','empty','propose','undo','capture','play','adopt','preview','discard','pitch','duration','count-sound','count-volume','record-count','play-count','play-count-style','smoothing','note-mode','timing-adjust','acoustic-sync','processing','boundary-mode','window-size','adaptive-window','rms','ratio','gap','comparison-settings','capture-import-button','capture-import-text']) $(id).disabled = next !== 'idle';
   $('align-start').disabled = next !== 'idle' || captureEditor.pending || captureEditor.edited || !capturedOriginal?.notes[0]?.startTick;
@@ -120,6 +124,11 @@ function setPhase(next, message) {
   syncVoice();
   updateKeyButtons();
   shell?.sync(next);
+  if($('backing-loop')){
+    $('backing-loop').disabled=next!=='idle'||!captureEditor.isOpen||captureEditor.pending||!captureEditor.previewPattern?.accompaniment?.enabled;
+    $('loop-record').disabled=next!=='playing'||!transport?.loop||!transport.active||!capture?.ready;
+    $('loop-hint').textContent=transport?.active&&transport.loop?(capture?.ready?'録音ボタンで、次の先頭から録ります。':capture?.active?'録音の予約中です。':'マイクを準備しています…'):!microphoneEnabled()?'ハナウタは マイクONにして使います。':'';
+  }
 }
 function draw() {
   drawPattern('score', state.pattern);
@@ -131,6 +140,7 @@ function stop(message = '停止しました。必要ならもう一度開始し�
   serial++; transport?.stop(false); capture?.cancel(); cancelAnimationFrame(raf);
   playbackPreview=false;captureEditor.followPlayback(null);
   shell?.follow(null);
+  imageControls?.follow(null);
   setPhase('idle', message);
 }
 async function prepare() {
@@ -142,7 +152,7 @@ async function prepare() {
       record.playback = { ...record.playback, ...metrics, reason, maxFrameGapMs, endAudioTime: ctx.currentTime, finalTick: transport.totalTicks };
       stop(reason === 'ENDED' ? '再生がおわりました' : `再生停止：${reason}`); showReport();
     });
-    capture = new ProbeCapture(ctx, setPhase, acceptCapture);
+    capture = new ProbeCapture(ctx, next=>{if(next==='loop-ready')return;if(next==='analyzing'&&transport?.loop)transport.stop(false);setPhase(next);}, acceptCapture);
     ctx.addEventListener('statechange', () => { if (ctx === ownedContext && ownedContext.state !== 'running' && phase !== 'idle' && phase !== 'preparing') stop('音声が中断しました。手動で再開してください。'); });
   }
   await ctx.resume();
@@ -162,7 +172,8 @@ function acceptCapture(result) {
         : acoustic?.status==='unavailable' ? 'ドンカマを安定して検出できませんでした。従来の推定補正を使用しました。'
         : 'ドンカマ実測OFF：従来の推定補正を使用しました。';
       captureAlignments.clear();
-      captureEditor.load(result, record.captureOptions);
+      if(record.captureOptions?.loop)captureEditor.stageRecording(result,record.captureOptions);
+      else captureEditor.load(result, record.captureOptions);
       $('capture-position').textContent = '取り込み完了';
       $('review').hidden = false;
       setPhase('idle', captured?.notes.length ? '候補を選んで試聴・編集してください' : 'ほとんど音を検出できませんでした。別の方式を確認するか、カウントからやり直してください。');
@@ -183,10 +194,17 @@ function animate() {
   const tick = transport.active ? transport.position() : Math.max(0, (ctx.currentTime - capture.startTime) * tempoValue() * 4 / 60);
   if(playbackPreview && transport.active && ctx.currentTime>=transport.anchor) captureEditor.followPlayback(tick);
   if(shell?.screen==='connect' && transport.active && ctx.currentTime>=transport.anchor)shell.follow(tick);
+  if(transport.active&&ctx.currentTime>=transport.anchor)imageControls?.follow(tick);
   const bar = Math.floor(tick / 16), beat = Math.floor(tick / 4) % 4;
   if (capture?.active && Number.isFinite(capture.anchor)) {
+    if(capture.timing?.mode==='loop-estimated'){
+      const remaining=Math.ceil((capture.startTime-ctx.currentTime)*capture.tempo/60);
+      const tick=Math.max(0,(ctx.currentTime-capture.startTime)*capture.tempo*4/60);
+      $('capture-position').textContent=remaining>0?`次の先頭から：${remaining} → 録音中`:`録音中 ${Math.min(capture.timing.bars,Math.floor(tick/16)+1)} / ${capture.timing.bars}小節`;
+    }else{
     const countBeat = Math.floor((ctx.currentTime - capture.anchor) * capture.tempo / 60);
     $('capture-position').textContent = countBeat < 0 ? `マイクの準備待ち・カウントまで${Math.ceil(capture.anchor-ctx.currentTime)}秒` : countBeat < 8 ? `準備 ${countBeat + 1} / 8拍` : countBeat < 24 ? `録音 ${Math.floor((countBeat - 8) / 4) + 1} / 4小節・${(countBeat - 8) % 4 + 1}拍` : '取り込み・解析の完了待ち';
+    }
   }
   $('position').textContent = `${bar + 1}小節・${beat + 1}拍`;
   [...$('beats').children].forEach((node, i) => node.classList.toggle('active', i === beat));
@@ -245,8 +263,12 @@ async function copyReport(event) {
 }
 $('play').onclick = () => play(); $('stop').onclick = () => { if (transport?.active) record.playback = { ...record.playback, ...transport.metrics, maxFrameGapMs, stoppedAtTick: transport.position(), reason: 'USER_STOP' }; stop(); showReport(); };
 $('capture').onclick = async () => {
+  const intent=++serial;
+  if(songWorkflow&&!await songWorkflow.allowNew())return;
+  if(intent!==serial)return;
   voice?.setActive(false,{release:true});
   stop(); const request = serial; captured = null; capturedOriginal = null; $('review').hidden = true; setPhase('preparing');
+  if(shell)shell.go('create',{stop:false});
   record.timestamp = new Date().toISOString(); record.capture = null; record.captureAlignmentTicks = 0; record.playback = null;
   delete record.importedFrom;
   captureAlignments.clear(); captureEditor.load(null);
@@ -296,7 +318,7 @@ $('comparison-settings').onclick = () => {
   $('status').textContent='比較設定にしました。カウントのあと、切らずにG／G♯を8分音符で交互に歌ってください。';
 };
 $('mic').onclick = () => setMicrophoneEnabled(!microphoneEnabled());
-function refreshMic(enabled) { $('mic').textContent = `マイク ${enabled ? 'ON' : 'OFF'}`; $('mic').setAttribute('aria-pressed', String(enabled)); if (!enabled && phase !== 'playing') stop('マイクOFF・タッチで操作できます'); setPhase(phase); }
+function refreshMic(enabled) { $('mic').textContent = `マイク ${enabled ? 'ON' : 'OFF'}`; $('mic').setAttribute('aria-pressed', String(enabled)); if (!enabled && (phase !== 'playing'||transport?.loop)) stop('マイクOFF・タッチで操作できます'); setPhase(phase); }
 onMicrophoneChange(refreshMic); refreshMic(microphoneEnabled());
 $('preview').onclick = () => captured && !captureEditor.entry?.proposal.code && play(captureEditor.previewPattern, true);
 $('align-start').onclick = () => {
@@ -373,10 +395,14 @@ document.addEventListener('visibilitychange', () => {
   if (document.hidden) stop('画面が隠れたため中断しました（試作の動作）');
   else syncVoice();
 });
-addEventListener('pagehide', () => { stop(); clearTimeout(voiceTimer);voice?.setActive(false,{release:true});captureEditor.load(null);ctx?.close(); });
+addEventListener('pagehide', () => { songWorkflow?.schedule();stop(); clearTimeout(voiceTimer);voice?.setActive(false,{release:true});captureEditor.clearHistory();ctx?.close(); });
+addEventListener('pageshow',event=>{if(event.persisted){shell?.go('home',{history:false});setPhase('idle');record.captureEditing=captureEditor.snapshot();showReport();}});
 try { const saved = localStorage.getItem('saezuri.capture.manualMs'); if (saved !== null && Number.isFinite(Number(saved)) && Number(saved)>=-200 && Number(saved)<=400) $('timing-adjust').value = saved; } catch {}
-function newComposition(withImage=false) {
+async function newComposition(withImage=false) {
   if(phase!=='idle' || captureEditor.pending) return;
+  const intent=++serial;
+  if(songWorkflow&&!await songWorkflow.allowNew())return;
+  if(intent!==serial||phase!=='idle')return;
   keyChoices.capture=null;displayOctaves.capture=0;
   const pattern=blankPattern();
   if(withImage)pattern.accompaniment={enabled:true,genre:'nursery',rhythm:'quarters',progression:'home'};
@@ -386,15 +412,38 @@ function newComposition(withImage=false) {
   record.captureOptions=null;delete record.importedFrom;record.timestamp=new Date().toISOString();
   setPhase('idle','音や休符を選び、オッケーで置いていきます。');focusEditor();showReport();
   if(imageControls?.panel)imageControls.panel.open=withImage;
+  if(shell){$('phrase-feedback').textContent='';$('after-keep').hidden=true;shell.go('create');shell.setMode(withImage?'backing':'input');}
 }
 composer=new ComposerControls({editor:captureEditor,onNew:()=>newComposition()});
-imageControls=new ImageControls({editor:captureEditor,onNew:()=>newComposition(true),onTempo:tempo=>{$('tempo').value=String(tempo);}});
+imageControls=new ImageControls({editor:captureEditor,onNew:()=>newComposition(true),onTempo:tempo=>{$('tempo').value=String(tempo);songWorkflow?.schedule();},onPreview:(pattern,standalone=false)=>play(pattern??captureEditor.previewPattern,true,{standalone}),onStop:()=>stop(),onNavigate:()=>setPhase(phase),compact:compactEditor&&new URLSearchParams(location.search).get('view')!=='editor'});
+if($('backing-loop'))$('backing-loop').onclick=async()=>{
+  if(phase!=='idle'||captureEditor.pending)return;
+  voice?.setActive(false,{release:true});stop();const request=serial;setPhase('preparing');
+  try{
+    const tempo=tempoValue(),pattern=captureEditor.pattern;await prepare();if(request!==serial)return;
+    const options={processing:$('processing').checked,countSound:false,recordCount:false,acousticSync:false,countVolume:Number($('count-volume').value),windowSize:Number($('window-size').value),adaptiveWindow:$('adaptive-window').checked,boundaryMode:$('boundary-mode').value,rmsFloor:Number($('rms').value),minDetectedRatio:Number($('ratio').value),maxGapSeconds:Number($('gap').value),smoothingMs:Number($('smoothing').value),noteMode:$('note-mode').value,manualMs:Number($('timing-adjust').value)};
+    if(microphoneEnabled()){await capture.prepareLoop(options);if(request!==serial)return;}
+    record.captureOptions={tempo,...options};
+    transport.start([],{tempo,totalTicks:pattern.bars*16,accompaniment:accompanimentEvents(pattern),loop:true});
+    record.playback={tempo,bars:pattern.bars,notes:0,loop:true,accompaniment:pattern.accompaniment};
+    playbackPreview=false;setPhase('playing');lastFrame=0;animate();showReport();
+  }catch(error){if(request===serial)stop(`ループを始められません：${error.message}`);}
+};
+if($('loop-record'))$('loop-record').onclick=async()=>{
+  if(phase!=='playing'||!transport?.loop||!capture?.ready)return;
+  const request=serial,tempo=transport.tempo,bars=transport.totalTicks/16;
+  const musicalStart=nextLoopHead({anchor:transport.anchor,now:ctx.currentTime,tempo,bars});
+  const options={...record.captureOptions,loop:{musicalStart,bars}};record.captureOptions=options;
+  try{await capture.start(tempo,options);if(request===serial){record.capture=null;showReport();}}
+  catch(error){if(request===serial)stop(`録音できません：${error.message}`);}
+};
 draw();
 const screenNavigation=compactEditor && new URLSearchParams(location.search).get('view')!=='editor';
 if(compactEditor&&!screenNavigation) $('edit-score').click();
 if(screenNavigation) {
   shell=new MelodyScreens({editor:captureEditor,onStop:()=>stop(),onNavigate:()=>setPhase(phase),
     onOpenPattern:(pattern,source,tempo)=>{
+      if(songWorkflow){songWorkflow.practice=source==='tutorial';if(songWorkflow.practice)songWorkflow.status('おてほんは ほぞん枠を使いません',false);}
       keyChoices.capture=null;displayOctaves.capture=0;captureAlignments.clear();$('tempo').value=String(tempo);
       captureEditor.openPattern(pattern);$('review').hidden=false;record.capture=null;record.captureOptions=null;record.playback=null;record.editingSource=source;delete record.importedFrom;
       record.timestamp=new Date().toISOString();if($('after-keep'))$('after-keep').hidden=true;setPhase('idle');showReport();
@@ -402,6 +451,11 @@ if(screenNavigation) {
     onAudition:item=>play(item.pattern,true,{standalone:true,tempo:item.tempo}),
     onDiscard:discardCurrent,onPlay:(data,pending)=>play(data.pattern,true,{sequence:true,backing:data.backing,pending}),
   });
+  songWorkflow=new SongWorkflow({editor:captureEditor,shell,onDiscard:discardCurrent,onAudition:(data,tempo)=>play(data.pattern,true,{tempo,backing:data.backing,standalone:true}),onSaving:saving=>setPhase(saving?'saving':'idle',saving?'ほぞんしています…':'準備できました'),onRestore:(checkpoint,settings)=>{
+    $('tempo').value=String(settings.tempo);$('instrument').value=settings.instrument;
+    captureEditor.restore(checkpoint);$('review').hidden=!captureEditor.isOpen;record.capture=null;record.editingSource='saved';setPhase('idle');
+  }});
+  shell.songWorkflow=songWorkflow;
   setPhase(phase);
 }
 if(compactEditor) {

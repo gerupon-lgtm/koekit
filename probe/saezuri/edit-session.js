@@ -12,7 +12,7 @@ export function openEditSession(pattern) {
   const state = createCaptureEditor(pattern);
   return state.code ? state : {confirmed:copy(pattern), working:workingCopy(state), history:[], accepted:false, closed:false};
 }
-export const hasDraftChanges = session => !!session && JSON.stringify(session.confirmed) !== JSON.stringify(session.working.pattern);
+export const hasDraftChanges = session => !!session && (JSON.stringify(session.confirmed) !== JSON.stringify(session.working.pattern) || !!session.confirmedHasRest !== !!session.working.hasRest);
 export function selectEditNote(session, noteId) {
   if (session.closed) return error('SESSION_CLOSED');
   if (!session.working.pattern.notes.some(n => n.id === noteId)) return error('NOTE_NOT_FOUND');
@@ -33,13 +33,13 @@ export function stageEdit(session, command) {
 }
 export function confirmEditSession(session) {
   if (session.closed) return error('SESSION_CLOSED');
-  return {...session, confirmed:copy(session.working.pattern), accepted:true};
+  return {...session, confirmed:copy(session.working.pattern),confirmedCursor:session.working.cursor,confirmedHasRest:!!session.working.hasRest, accepted:true};
 }
 export function cancelEditSession(session) {
   if (session.closed) return error('SESSION_CLOSED');
   if (!hasDraftChanges(session)) return session;
   return {...session, history:[...session.history, copy(session.working)],
-    working:workingCopy({...session.working, pattern:session.confirmed, revision:session.working.revision+1})};
+    working:workingCopy({...session.working, pattern:session.confirmed,hasRest:!!session.confirmedHasRest, revision:session.working.revision+1})};
 }
 export function undoEditSession(session) {
   if (session.closed) return error('SESSION_CLOSED');
