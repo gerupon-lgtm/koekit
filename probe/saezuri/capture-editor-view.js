@@ -1,11 +1,11 @@
-import { openEditSession, stageEdit, selectEditNote, confirmEditSession, cancelEditSession, undoEditSession, hasDraftChanges } from './edit-session.js?v=v0.1.0-20261001232933-0856715';
-import {canGenerateAccompaniment,stageAccompanimentCandidate} from './edit-session.js?v=v0.1.0-20261001232933-0856715';
-import { analyzeFrames, quantizeSegments } from './analyzer.js?v=v0.1.0-20261001232933-0856715';
-import { decodePitchTrace } from './analysis-comparison.js?v=v0.1.0-20261001232933-0856715';
-import { pitchName } from './score.js?v=v0.1.0-20261001232933-0856715';
-import { orderedNotes, selectionTarget } from './note-selection.js?v=v0.1.0-20261001232933-0856715';
-import {proposeEntry,confirmEntry,cancelEntry,moveEntryCursor,entryPreview} from './entry-session.js?v=v0.1.0-20261001232933-0856715';
-import {songCheckpoint,restoreCheckpoint} from './song-session.js?v=v0.1.0-20261001232933-0856715';
+import { openEditSession, stageEdit, selectEditNote, confirmEditSession, cancelEditSession, undoEditSession, hasDraftChanges } from './edit-session.js?v=v0.1.0-20261001233521-de8dc6d';
+import {canGenerateAccompaniment,stageAccompanimentCandidate} from './edit-session.js?v=v0.1.0-20261001233521-de8dc6d';
+import { analyzeFrames, quantizeSegments } from './analyzer.js?v=v0.1.0-20261001233521-de8dc6d';
+import { decodePitchTrace } from './analysis-comparison.js?v=v0.1.0-20261001233521-de8dc6d';
+import { pitchName } from './score.js?v=v0.1.0-20261001233521-de8dc6d';
+import { orderedNotes, selectionTarget } from './note-selection.js?v=v0.1.0-20261001233521-de8dc6d';
+import {proposeEntry,confirmEntry,cancelEntry,moveEntryCursor,entryPreview} from './entry-session.js?v=v0.1.0-20261001233521-de8dc6d';
+import {songCheckpoint,restoreCheckpoint} from './song-session.js?v=v0.1.0-20261001233521-de8dc6d';
 
 const clone = value => value == null ? value : structuredClone(value);
 const labels = { current: '現在の設定', detail: '細かい変化', unsmoothed: 'ならしなし' };
