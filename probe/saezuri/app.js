@@ -18,6 +18,7 @@ import {accompanimentEvents} from '../../saezuri/music/accompaniment.js';
 import {MelodyScreens} from './screens.js';
 import {SongWorkflow} from './song-workflow.js';
 import {nextLoopHead} from './loop-timing.js';
+import {alignScreenHeadings} from './headings.js';
 const compactEditor=setupEditorLayout();
 const $ = id => document.getElementById(id);
 const example = () => ({ bars: 4, gridStep: 1, notes: [
@@ -456,6 +457,7 @@ if(screenNavigation) {
     captureEditor.restore(checkpoint);$('review').hidden=!captureEditor.isOpen;record.capture=null;record.editingSource='saved';setPhase('idle');
   }});
   shell.songWorkflow=songWorkflow;
+  alignScreenHeadings();
   setPhase(phase);
 }
 if(compactEditor) {

@@ -4,9 +4,13 @@ body.melody-app{background:#faf5ed;color:#443b36}
 .melody-app .melody-screen{margin:0;padding:0;border:0;background:transparent;border-radius:0;min-width:0}
 .melody-app button{min-height:44px;touch-action:manipulation}
 .melody-app input:not([type=checkbox]),.melody-app select{font-size:16px}
-.melody-app .home-nav,.melody-app .screen-heading{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:50px}
-.melody-app .screen-heading h2{font-size:20px;margin:0;flex:1;text-align:center}
-.melody-app .screen-heading>button{font-size:14px;padding:8px 10px;margin:0;background:white}
+.melody-app .home-nav{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:50px}
+.melody-app .screen-heading{display:grid;grid-template-columns:var(--heading-side,0px) minmax(0,1fr) var(--heading-side,0px);align-items:center;gap:8px;min-height:50px}
+.melody-app h2,.melody-app h3{text-align:center}
+.melody-app .screen-heading h2{font-size:20px;margin:0;min-width:0;text-align:center}
+.melody-app .heading-actions{display:flex;align-items:center;gap:8px;width:max-content}
+.melody-app .heading-actions-end{justify-self:end}
+.melody-app .heading-actions>button{font-size:14px;padding:8px 10px;margin:0;background:white}
 .melody-app #melody-home{text-align:center;min-height:calc(100svh - 24px);display:flex;flex-direction:column}
 .melody-app #melody-home h1{margin:12px 0 0}
 .melody-app #melody-home h1 img{width:min(92%,390px);height:auto}
@@ -86,7 +90,8 @@ body.melody-app{background:#faf5ed;color:#443b36}
 .melody-app #sequence-confirm{background:#d9ebd5}.melody-app #sequence-preview{background:#d9ebd5}
 .melody-app #melody-connect h3{font-size:15px;margin:14px 0 6px}
 .melody-app #sequence-message,.melody-app #sequence-empty{font-size:14px;line-height:1.6}
-.melody-app #sequence-count{font-weight:400;margin-left:8px}
+.melody-app #melody-connect h3:has(#sequence-count){position:relative;min-height:28px}
+.melody-app #sequence-count{position:absolute;right:0;top:50%;transform:translateY(-50%);max-width:calc(50% - 60px);text-align:right;font-weight:400;line-height:1.2}
 .melody-app.editor-focus footer{font-size:12px;padding:6px 12px}
 .melody-app.editor-focus footer button{min-height:40px;font-size:14px}
 @media(max-width:350px){.melody-app.editor-focus main{padding-inline:8px}.melody-app.editor-focus #composer-keys{grid-template-columns:repeat(7,minmax(0,1fr))}.melody-app #melody-home h1{margin:4px 0}.melody-app .home-caption{margin-bottom:14px}.melody-app .home-menu{gap:10px}}
