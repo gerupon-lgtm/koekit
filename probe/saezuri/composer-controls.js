@@ -56,6 +56,7 @@ export class ComposerControls {
     const editor=this.editor,pattern=editor.previewPattern;
     this.create.disabled=busy || editor.pending;
     this.panel.hidden=!editor.isOpen || pattern?.source!=='manual';
+    this.$('key').value=pattern?.key?.mode==='minor'?'Am':'C';this.$('key').disabled=busy||!editor.isOpen||!!editor.entry;
     if(this.panel.hidden) return;
     const cursor=editor.cursor, entry=editor.entry;
     if(this.previousEntry && !entry) this.$('replace').checked=false;

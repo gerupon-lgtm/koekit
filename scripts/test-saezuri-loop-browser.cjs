@@ -11,7 +11,7 @@ const {chromium}=require('../.local-tools/node_modules/playwright');const assert
  await page.locator('#stop').click();data=await report();assert.equal(data.captureCandidate.notes[0].midi,60,'cancel leaves old confirmed melody');
  await page.locator('#backing-loop').click();await page.waitForFunction(()=>!document.querySelector('#loop-record').disabled);await page.locator('#loop-record').click();
  await page.locator('#mic').click();assert.equal(await page.locator('#status').getAttribute('data-state'),'idle');data=await report();assert.equal(data.captureCandidate.notes[0].midi,60);
- await page.locator('#mic').click();await page.locator('#screen-settings').click();await page.locator('#tempo').fill('180');await page.locator('#tempo').dispatchEvent('change');await page.locator('#creation-settings > details > summary').first().click();await page.locator('#composer-extend').click();await page.locator('#settings-close').click();await page.locator('#capture-edit-confirm').click();
+ await page.locator('#mic').click();await page.locator('#screen-settings').click();await page.locator('#tempo').fill('180');await page.locator('#tempo').dispatchEvent('change');await page.locator('#settings-close').click();await page.locator('#phrase-bars').selectOption('8');await page.locator('#capture-edit-confirm').click();
  await page.locator('#backing-loop').click();await page.waitForFunction(()=>!document.querySelector('#loop-record').disabled);
  await page.locator('#loop-record').click();await page.waitForFunction(()=>document.querySelector('#status').dataset.state==='recording',{},{timeout:14000});
  await page.waitForFunction(()=>document.querySelector('#status').dataset.state==='idle',{},{timeout:18000});data=await report();

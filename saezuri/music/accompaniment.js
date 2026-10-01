@@ -58,8 +58,8 @@ export function accompanimentEvents(pattern) {
  for(const segment of harmonicSegments(pattern)){
   const {startTick,durationTick,root,quality,bass}=segment;
   let chord=CHORD_INTERVALS[quality].map(x=>48+root+x);
-  // Choose a nearby octave for each voice rather than jumping root positions.
-  if(previous.length)chord=chord.map((midi,i)=>[midi-12,midi,midi+12].filter(n=>n>=45&&n<=79).sort((a,b)=>Math.abs(a-(previous[i]??60))-Math.abs(b-(previous[i]??60)))[0]);previous=chord;
+  // Keep chord voices above the bass while choosing nearby octaves.
+  chord=chord.map((midi,i)=>[midi-12,midi,midi+12].filter(n=>n>=53&&n<=79).sort((a,b)=>Math.abs(a-(previous[i]??midi))-Math.abs(b-(previous[i]??midi)))[0]);previous=chord;
   const push=(tick,length,midi,instrument,gain,part)=>events.push({startTick:startTick+tick,durationTick:Math.min(length,durationTick-tick),midi,instrument,gain,part});
   const bassTicks=value.genre==='rock'?[0,4,8,12]:value.genre==='ballad'?[0]:[0,8];
   for(const tick of bassTicks)if(tick<durationTick)push(tick,value.genre==='ballad'?14:7,36+bass,sounds.bass,.075,'bass');

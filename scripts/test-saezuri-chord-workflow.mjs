@@ -1,7 +1,20 @@
 import test from 'node:test';import assert from 'node:assert/strict';
 import * as music from '../saezuri/music/accompaniment.js';
 import {chordTones} from '../saezuri/music/catalog.js';
+import {CHORD_INTERVALS} from '../saezuri/music/catalog.js';
 const pattern=()=>({bars:4,key:{mode:'major',tonicPitchClass:0},notes:[],accompaniment:{enabled:true,genre:'pop',rhythm:'quarters',progression:'home'}});
+test('Am F C G keeps upper piano voices separate from the bass through four and eight bars',()=>{
+ for(const bars of [4,8])for(const rhythm of music.RHYTHMS){
+  const p={...pattern(),bars,key:{mode:'minor',tonicPitchClass:9}};p.accompaniment={...p.accompaniment,progression:'pop',rhythm:rhythm.id,sounds:{chord:'piano',bass:'sine',drums:'none'}};
+  const before=structuredClone(p),events=music.accompanimentEvents(p);
+  for(let bar=0;bar<bars;bar++){
+   const chord=events.filter(n=>n.part==='chord'&&n.startTick>=bar*16&&n.startTick<(bar+1)*16),bass=events.filter(n=>n.part==='bass'&&n.startTick===bar*16)[0];
+   assert.ok(chord.length&&chord.some(n=>n.midi>=60),'piano retains an upper voice in each bar');assert.ok(chord.every(n=>n.midi>=bass.midi+12),'piano does not merge into the bass register');
+   const [root,quality]=music.PROGRESSIONS.Am.find(v=>v.id==='pop').chords[bar%4];assert.deepEqual(new Set(chord.map(n=>n.midi%12)),new Set(CHORD_INTERVALS[quality].map(n=>(n+root)%12)),'voicing preserves the requested chord');
+  }
+  assert.deepEqual(p,before);
+ }
+});
 test('half diminished is distinct and permits a non-chord bass',()=>{
  assert.deepEqual(chordTones({root:11,quality:'m7♭5',bass:1}),{notes:[71,74,77,81],bass:37});
 });

@@ -37,6 +37,11 @@ body.melody-app{background:#faf5ed;color:#443b36}
 .melody-app #choose-notice{font-size:14px;color:#85430c}
 .melody-app #creation-tabs{display:flex;gap:5px;margin:8px 0}
 .melody-app #creation-tabs button{flex:1;padding:6px;font-size:14px;min-height:40px;margin:0}
+.melody-app #phrase-shape{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:4px 0 6px}
+.melody-app #phrase-shape label{display:flex;flex-direction:row;align-items:center;gap:4px;min-width:0;font-size:12px;white-space:nowrap}
+.melody-app #phrase-shape select{flex:1;min-width:0;min-height:44px;padding:5px;font-size:14px}
+.melody-app #phrase-shape-hint{margin:0 0 5px;font-size:12px;line-height:1.4;color:#704918}
+.melody-app #phrase-shape-hint:empty{display:none}
 .melody-app.editor-focus #edit-workspace{padding:0;margin:0;background:none;border:0}
 .melody-app.editor-focus .editor-voice{float:none;max-width:none;margin:4px 0;gap:6px;min-height:28px}
 .melody-app.editor-focus .editor-voice #mic{min-height:32px}

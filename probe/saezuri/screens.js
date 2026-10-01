@@ -22,6 +22,13 @@ export class MelodyScreens {
   choose.innerHTML='<div class="screen-heading"><button data-screen-back>← トップ</button><h2 tabindex="-1">つくる</h2></div><p>どこから はじめる？</p><div id="creation-choices"></div><p id="choose-notice" role="status"></p><button id="choose-resume" hidden>つづきから</button>';
   const create=document.createElement('div');create.id='melody-create';create.className='melody-screen';
   create.innerHTML='<div class="screen-heading"><button data-screen-back>← トップ</button><h2 tabindex="-1">つくる</h2><button id="screen-settings">設定</button></div><div id="creation-tabs" aria-label="操作"><button data-mode="input">音を置く</button><button data-mode="edit">音を直す</button><button data-mode="backing">伴奏</button></div>';
+  const shape=document.createElement('div');shape.id='phrase-shape';shape.setAttribute('aria-label','調と小節数');
+  const key=$('composer-key'),keyLabel=key.closest('label');for(const child of [...keyLabel.childNodes])if(child.nodeType===3)child.remove();keyLabel.prepend(document.createTextNode('調'));
+  for(const option of key.options){const value=option.value;option.value=value;option.textContent=value==='Am'?'短調（Am）':'長調（C）';}
+  shape.append(keyLabel);const length=document.createElement('label');length.innerHTML='小節数<select id="phrase-bars"><option value="4">4小節</option><option value="8">8小節</option></select>';shape.append(length);
+  create.querySelector('#creation-tabs').after(shape);const shapeHint=document.createElement('p');shapeHint.id='phrase-shape-hint';shapeHint.setAttribute('role','status');shape.after(shapeHint);
+  length.querySelector('select').onchange=()=>editor.changeStructure({type:'resize',bars:Number($('phrase-bars').value)});
+  $('composer-panel').querySelector('details>summary').textContent='入力位置・表示・コピー';
   const connect=document.createElement('section');connect.id='melody-connect';connect.className='melody-screen';
   connect.innerHTML='<div class="screen-heading"><button data-screen-back>← トップ</button><h2 tabindex="-1">つなげる</h2><button id="sequence-settings">音の設定</button></div><p id="sequence-empty">まだフレーズがありません。つくる画面で「フレーズにする」を押すと、ここで選べます。</p><button id="sequence-create">フレーズをつくる</button><h3>使うフレーズを選ぶ</h3><div id="phrase-shelf" aria-label="使えるフレーズ"></div><h3>ならべる順番 <small id="sequence-count"></small></h3><div id="sequence-line" aria-label="曲の順番"></div><div class="sequence-edit"><button id="sequence-left">← 前へ</button><button id="sequence-right">次へ →</button><button id="sequence-delete">はずす</button></div><p id="sequence-message" role="status">フレーズを選ぶと、最後に追加する候補になります。</p><div class="sequence-actions"><button id="sequence-preview">▶ 聴く</button><button id="sequence-confirm">オッケー</button><button id="sequence-undo">もどす</button></div>';
   main.append(home,choose,create,connect);
@@ -126,6 +133,10 @@ export class MelodyScreens {
  setMode(mode){this.mode=mode;if(mode==='backing')$('image-settings').open=true;document.body.dataset.createMode=mode;for(const b of document.querySelectorAll('[data-mode]'))b.setAttribute('aria-pressed',String(b.dataset.mode===mode));}
  sync(phase) {
   this.phase=phase;this.busy=phase!=='idle';
+  const pattern=this.editor.previewPattern;
+  $('phrase-bars').value=String(pattern?.bars??4);$('phrase-bars').disabled=this.busy||!this.editor.isOpen||!!this.editor.entry;
+  $('composer-key').value=pattern?.key?.mode==='minor'?'Am':'C';$('composer-key').disabled=this.busy||!this.editor.isOpen||!!this.editor.entry;
+  $('phrase-shape-hint').textContent=this.editor.pending&&this.editor.pattern?.bars===8&&pattern?.bars===4?'後半4小節を外す候補です。聴いて「オッケー」で決めよう。':'';
   const manual=this.editor.previewPattern?.source==='manual';
   if(!manual&&this.mode==='input')this.setMode('edit');
   $('home-resume').hidden=!this.editor.isOpen;
