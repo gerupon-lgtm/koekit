@@ -27,7 +27,8 @@ export class KeyboardControls {
    b.onkeydown=e=>{if([' ','Enter'].includes(e.key)&&!e.repeat){e.preventDefault();this.press(b,'key');}};
    b.onkeyup=e=>{if([' ','Enter'].includes(e.key)){e.preventDefault();if(this.held?.pointer==='key')this.release();}};b.onblur=()=>{if(this.held?.pointer==='key')this.release();};row.append(b);
   }
-  for(const b of row.children){const midi=Number(b.dataset.base)+this.octave*12;b.dataset.midi=midi;b.setAttribute('aria-label',`${pianoKeys(this.octave).find(k=>k.base===Number(b.dataset.base)).label} MIDI ${midi}`);}
+  const keys=pianoKeys(this.octave);
+  for(const b of row.children){const key=keys.find(k=>k.base===Number(b.dataset.base));b.dataset.midi=key.midi;b.toggleAttribute('data-reference',key.reference);b.setAttribute('aria-label',`${key.label} MIDI ${key.midi}`);}
   for(const b of this.panel.querySelectorAll('[data-keyboard-octave]'))b.setAttribute('aria-pressed',String(Number(b.dataset.keyboardOctave)===this.octave));
  }
  async press(button,pointer){

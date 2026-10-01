@@ -5,7 +5,8 @@ export function pianoKeys(octave=0){
  let white=0;
  return Array.from({length:16},(_,i)=>{
   const base=57+i,black=[1,3,6,8,10].includes(base%12);
-  const key={midi:base+12*octave,base,label:names[base%12],black,position:white,reference:base===60};
+  const midi=base+12*octave;
+  const key={midi,base,label:names[base%12],black,position:white,reference:midi===60};
   if(!black)white++;return key;
  });
 }
