@@ -1,10 +1,11 @@
-import { openEditSession, stageEdit, selectEditNote, confirmEditSession, cancelEditSession, undoEditSession, hasDraftChanges } from './edit-session.js?v=v0.1.0-20261001214550-9fb3c40';
-import { analyzeFrames, quantizeSegments } from './analyzer.js?v=v0.1.0-20261001214550-9fb3c40';
-import { decodePitchTrace } from './analysis-comparison.js?v=v0.1.0-20261001214550-9fb3c40';
-import { pitchName } from './score.js?v=v0.1.0-20261001214550-9fb3c40';
-import { orderedNotes, selectionTarget } from './note-selection.js?v=v0.1.0-20261001214550-9fb3c40';
-import {proposeEntry,confirmEntry,cancelEntry,moveEntryCursor,entryPreview} from './entry-session.js?v=v0.1.0-20261001214550-9fb3c40';
-import {songCheckpoint,restoreCheckpoint} from './song-session.js?v=v0.1.0-20261001214550-9fb3c40';
+import { openEditSession, stageEdit, selectEditNote, confirmEditSession, cancelEditSession, undoEditSession, hasDraftChanges } from './edit-session.js?v=v0.1.0-20261001232933-0856715';
+import {canGenerateAccompaniment,stageAccompanimentCandidate} from './edit-session.js?v=v0.1.0-20261001232933-0856715';
+import { analyzeFrames, quantizeSegments } from './analyzer.js?v=v0.1.0-20261001232933-0856715';
+import { decodePitchTrace } from './analysis-comparison.js?v=v0.1.0-20261001232933-0856715';
+import { pitchName } from './score.js?v=v0.1.0-20261001232933-0856715';
+import { orderedNotes, selectionTarget } from './note-selection.js?v=v0.1.0-20261001232933-0856715';
+import {proposeEntry,confirmEntry,cancelEntry,moveEntryCursor,entryPreview} from './entry-session.js?v=v0.1.0-20261001232933-0856715';
+import {songCheckpoint,restoreCheckpoint} from './song-session.js?v=v0.1.0-20261001232933-0856715';
 
 const clone = value => value == null ? value : structuredClone(value);
 const labels = { current: '現在の設定', detail: '細かい変化', unsmoothed: 'ならしなし' };
@@ -86,6 +87,15 @@ export class CaptureEditorView {
   changeStructure(command) {
     if(this._busy || !this.isOpen || this.entry) return;
     this._stage(command);
+  }
+  get canGenerateAccompaniment(){return !this._busy&&canGenerateAccompaniment(this._active?.session);}
+  get imageCandidate(){return !!this._active?.session.imageCandidate;}
+  stageImageAccompaniment(value){
+    if(!this.canGenerateAccompaniment)return false;
+    const next=stageAccompanimentCandidate(this._active.session,value);
+    if(next.code){this._status(messages[next.code]??next.code);return false;}
+    this._active.session=next;this._active.edited=true;
+    this._status('伴奏の候補です。聴いて、オッケーで決めよう。');this._emit(false);return true;
   }
   get edited() { return !!this._active?.edited; }
   get accepted() { return !!this._active?.session.accepted; }

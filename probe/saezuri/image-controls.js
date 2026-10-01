@@ -1,6 +1,7 @@
-import {GENRES,CHORD_INTERVALS} from '../../saezuri/music/catalog.js?v=v0.1.0-20261001214550-9fb3c40';
-import {RHYTHMS,PROGRESSIONS,PRESETS,SOUNDS,SOUND_PRESETS,harmonicSegments,recommendProgressions} from '../../saezuri/music/accompaniment.js?v=v0.1.0-20261001214550-9fb3c40';
-import {setupPlaybackSheet} from './sheet-controls.js?v=v0.1.0-20261001214550-9fb3c40';
+import {GENRES,CHORD_INTERVALS} from '../../saezuri/music/catalog.js?v=v0.1.0-20261001232933-0856715';
+import {RHYTHMS,PROGRESSIONS,PRESETS,SOUNDS,SOUND_PRESETS,harmonicSegments,recommendProgressions} from '../../saezuri/music/accompaniment.js?v=v0.1.0-20261001232933-0856715';
+import {setupPlaybackSheet} from './sheet-controls.js?v=v0.1.0-20261001232933-0856715';
+import {ImageModeControls} from './image-mode-controls.js?v=v0.1.0-20261001232933-0856715';
 const pitches=['C','C♯','D','E♭','E','F','F♯','G','A♭','A','B♭','B'];
 const suffix={major:'',minor:'m'};
 export const chordLabel=c=>`${pitches[c.root]}${suffix[c.quality]??c.quality}${c.bass===c.root?'':`/${pitches[c.bass]}`}`;
@@ -18,8 +19,10 @@ export class ImageControls {
   this.fill=(id,entries)=>fill(this.$(id),entries.map(v=>[v.id,v.label]));
   this.fill('genre',GENRES);this.fill('rhythm',RHYTHMS);
   for(const id of ['enabled','genre','rhythm','progression'])this.$(id).onchange=()=>{
-   const value={...this.value(),enabled:this.$('enabled').checked,genre:this.$('genre').value,rhythm:this.$('rhythm').value,progression:this.$('progression').value};
+   const old=this.value(),value={...old,enabled:this.$('enabled').checked,genre:this.$('genre').value,rhythm:this.$('rhythm').value,progression:this.$('progression').value||old.progression};
    if(id==='genre')Object.assign(value,{rhythm:PRESETS[value.genre].rhythm,progression:PRESETS[value.genre].progression});
+   if(value.imageChoice)value.manualSettings={...value.manualSettings,[id]:true,...(id==='genre'?{rhythm:true,progression:true}:{})};
+   if(value.imageChoice&&id==='progression'&&!this.$('progression').value)value.manualSettings.progression=false;
    editor.changeStructure({type:'accompaniment',value});
   };
   this.$('tempo').onclick=()=>onTempo(PRESETS[this.$('genre').value].tempo);
@@ -47,6 +50,8 @@ export class ImageControls {
    setupPlaybackSheet(settings,{closeId:'backing-settings-close',stopId:'backing-settings-stop',onStop:()=>this.onStop?.()});
    setupPlaybackSheet(suggestions,{closeId:'progression-close',stopId:'progression-stop',onStop:()=>this.onStop?.()});
   }
+  this.imageMode=new ImageModeControls({editor,onTempo});
+  (this.settingsSheet??this.panel).append(this.imageMode.reset);
  }
  value(){return structuredClone(this.editor.previewPattern?.accompaniment??fallback);}
  follow(tick){
@@ -73,7 +78,7 @@ export class ImageControls {
   for(const part of ['chord','bass'])fill($(`sound-${part}`),SOUNDS.map(v=>[v.id,v.label]));fill($('sound-drums'),[['acoustic','アコースティック風'],['electronic','電子ドラム'],['none','なし']]);
   for(const part of ['chord','bass','drums'])$(`sound-${part}`).onchange=()=>{const value=this.value();value.sounds={...value.sounds,[part]:$(`sound-${part}`).value};this.editor.changeStructure({type:'accompaniment',value});};
   $('sounds-close').onclick=()=>s.close();s.addEventListener('close',()=>this.onNavigate?.());
-  this.$('sounds').onclick=()=>{const value=this.value(),sounds={...SOUND_PRESETS[value.genre],...value.sounds};for(const part of ['chord','bass','drums'])$(`sound-${part}`).value=sounds[part];this.show(s);};
+  this.$('sounds').onclick=()=>{const value=this.value(),sounds={...SOUND_PRESETS[value.genre],...value.imageArrangement?.sounds,...value.sounds};for(const part of ['chord','bass','drums'])$(`sound-${part}`).value=sounds[part];this.show(s);};
   setupPlaybackSheet(d,{closeId:'chord-close',stopId:'chord-stop',onStop:()=>this.onStop?.()});
   setupPlaybackSheet(s,{closeId:'sounds-close',stopId:'sounds-stop',onStop:()=>this.onStop?.()});
  }
@@ -91,9 +96,12 @@ export class ImageControls {
  }
  render(busy=false){
   if(!this.panel)return;const pattern=this.editor.previewPattern;
-  this.create.disabled=busy||this.editor.pending;this.panel.hidden=!this.editor.isOpen;if(this.panel.hidden)return;
-  const value=this.value(),key=pattern.key?.mode==='minor'?'Am':'C';if(this.key!==key){this.fill('progression',PROGRESSIONS[key]);this.key=key;}
+  this.create.disabled=busy||this.editor.pending;this.panel.hidden=!this.editor.isOpen;if(this.panel.hidden){this.imageMode.render(busy);return;}
+  const value=this.value(),key=pattern.key?.mode==='minor'?'Am':'C';this.fill('progression',PROGRESSIONS[key]);this.key=key;
+  if(value.imageChoice){const automatic=document.createElement('option');automatic.value='';automatic.textContent='イメージに おまかせ';this.$('progression').prepend(automatic);}
+  this.$('tempo').onclick=()=>this.onTempo?.(PRESETS[this.$('genre').value].tempo);
   this.$('enabled').checked=value.enabled;for(const id of ['genre','rhythm','progression'])this.$(id).value=value[id];this.$('tempo').textContent=`おすすめのBPM ${PRESETS[value.genre].tempo} にする`;
+  if(value.imageChoice&&!value.manualSettings?.progression)this.$('progression').value='';
   if($('image-summary'))$('image-summary').textContent=`${GENRES.find(g=>g.id===value.genre).label}・${value.enabled?'伴奏ON':'伴奏OFF'}`;
   const row=this.$('chords');row.replaceChildren();const segments=harmonicSegments(pattern);
   for(let bar=0;bar<pattern.bars;bar++){const chord=segments.find(c=>c.startTick===bar*16),b=document.createElement('button');b.dataset.chordBar=bar;b.textContent=`${bar+1}：${chordLabel(chord)}`;b.setAttribute('aria-label',`${bar+1}小節目 ${chordLabel(chord)} を変更`);b.onclick=()=>this.openChord(bar);row.append(b);}
@@ -101,5 +109,6 @@ export class ImageControls {
   if(this.settingsSheet)for(const control of this.settingsSheet.querySelectorAll('input,select,button'))control.disabled=['backing-settings-close','backing-settings-stop'].includes(control.id)?false:busy||!!this.editor.entry;
   for(const control of this.$('suggestions').querySelectorAll('button'))control.disabled=busy;
   for(const control of this.chordSheet.querySelectorAll('input,select,button'))control.disabled=['chord-close','chord-stop'].includes(control.id)?false:busy;
+  this.imageMode.render(busy);
  }
 }

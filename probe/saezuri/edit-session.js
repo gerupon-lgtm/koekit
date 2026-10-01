@@ -1,4 +1,4 @@
-import { createCaptureEditor, proposeCaptureEdit, commitNote } from './capture-editor.js?v=v0.1.0-20261001214550-9fb3c40';
+import { createCaptureEditor, proposeCaptureEdit, commitNote } from './capture-editor.js?v=v0.1.0-20261001232933-0856715';
 
 const copy = value => structuredClone(value);
 const error = code => ({code, details:{}});
@@ -29,22 +29,32 @@ export function stageEdit(session, command) {
     const index=ordered.findIndex(note=>note.id===command.noteId);
     next.selectedNoteId=ordered[index+1]?.id ?? ordered[index-1]?.id ?? null;
   }
-  return {...session, working:workingCopy(next), history:[...session.history, copy(session.working)]};
+  return {...session, imageCandidate:null, working:workingCopy(next), history:[...session.history, copy(session.working)]};
+}
+// Only a candidate owned by this operation may be replaced. Melody/structure
+// edits still require their normal confirmation, and repeated auditions use one
+// Undo entry regardless of how many arrangements the user tries.
+export const canGenerateAccompaniment=session=>!!session&&!session.closed&&!session.entry&&(!hasDraftChanges(session)||!!session.imageCandidate);
+export function stageAccompanimentCandidate(session,value){
+  if(!canGenerateAccompaniment(session))return error('DRAFT_PENDING');
+  const next=stageEdit(session,{type:'accompaniment',value});if(next.code)return next;
+  return {...next,history:session.imageCandidate?session.history:next.history,
+    imageCandidate:session.imageCandidate??{base:copy(session.working)}};
 }
 export function confirmEditSession(session) {
   if (session.closed) return error('SESSION_CLOSED');
-  return {...session, confirmed:copy(session.working.pattern),confirmedCursor:session.working.cursor,confirmedHasRest:!!session.working.hasRest, accepted:true};
+  return {...session, imageCandidate:null, confirmed:copy(session.working.pattern),confirmedCursor:session.working.cursor,confirmedHasRest:!!session.working.hasRest, accepted:true};
 }
 export function cancelEditSession(session) {
   if (session.closed) return error('SESSION_CLOSED');
   if (!hasDraftChanges(session)) return session;
-  return {...session, history:[...session.history, copy(session.working)],
+  return {...session, imageCandidate:null, history:[...session.history, copy(session.working)],
     working:workingCopy({...session.working, pattern:session.confirmed,hasRest:!!session.confirmedHasRest, revision:session.working.revision+1})};
 }
 export function undoEditSession(session) {
   if (session.closed) return error('SESSION_CLOSED');
   if (!session.history.length) return session;
-  return {...session, history:session.history.slice(0,-1),
+  return {...session, imageCandidate:null, history:session.history.slice(0,-1),
     working:{...copy(session.history.at(-1)), revision:session.working.revision+1}};
 }
 export function endEditSession(session) {

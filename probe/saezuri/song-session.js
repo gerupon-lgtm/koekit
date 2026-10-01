@@ -1,6 +1,6 @@
-import {openEditSession, hasDraftChanges} from './edit-session.js?v=v0.1.0-20261001214550-9fb3c40';
-import {proposeEntry} from './entry-session.js?v=v0.1.0-20261001214550-9fb3c40';
-import {validateNotes} from '../../saezuri/document.js?v=v0.1.0-20261001214550-9fb3c40';
+import {openEditSession, hasDraftChanges} from './edit-session.js?v=v0.1.0-20261001232933-0856715';
+import {proposeEntry} from './entry-session.js?v=v0.1.0-20261001232933-0856715';
+import {validateNotes} from '../../saezuri/document.js?v=v0.1.0-20261001232933-0856715';
 const clone=value=>structuredClone(value);
 
 export function songCheckpoint(session,{existing=false}={}) {
@@ -14,6 +14,7 @@ export function songCheckpoint(session,{existing=false}={}) {
  return {confirmed,draft:pending?{
   confirmed:clone(session.confirmed),accepted:!!session.accepted,confirmedCursor:session.confirmedCursor??0,confirmedHasRest:!!session.confirmedHasRest,
   working:clone(session.working),entryInput:session.entry?clone(session.entry.input):null,
+  imageCandidate:session.imageCandidate?clone(session.imageCandidate):null,
  }:null};
 }
 
@@ -31,6 +32,12 @@ export function restoreCheckpoint(checkpoint,{discardDraft=false}={}) {
   const invalid=validateNotes(draft.working?.pattern);if(invalid)throw new Error(invalid.code);
   session.working={...clone(draft.working),undoStack:[]};
   session.accepted=!!draft.accepted;session.confirmedCursor=draft.confirmedCursor;session.confirmedHasRest=!!draft.confirmedHasRest;
+  if(draft.imageCandidate){
+   const base=draft.imageCandidate.base,invalidBase=validateNotes(base?.pattern);
+   const withoutBacking=p=>{const {accompaniment,...rest}=p;return rest;};
+   if(invalidBase||JSON.stringify(withoutBacking(base.pattern))!==JSON.stringify(withoutBacking(session.working.pattern))||!!base.hasRest!==!!session.working.hasRest)throw new Error('IMAGE_CANDIDATE_INVALID');
+   session.imageCandidate=clone(draft.imageCandidate);session.history=[clone(base)];
+  }
   if(draft.entryInput){const next=proposeEntry(session,draft.entryInput);if(next.code)throw new Error(next.code);return next;}
  }else session.working.cursor=checkpoint.confirmed?.cursor??0;
  return session;

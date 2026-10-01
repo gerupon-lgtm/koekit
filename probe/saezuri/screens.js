@@ -1,7 +1,7 @@
-import {MelodyLearning} from './learning.js?v=v0.1.0-20261001214550-9fb3c40';
-import {emptySequence,keepPhrase,sequencePlayback,proposeSequence,commitSequence,undoPlacement} from './sequence-session.js?v=v0.1.0-20261001214550-9fb3c40';
-import {readCaptureReport} from './capture-report.js?v=v0.1.0-20261001214550-9fb3c40';
-import {setupPlaybackSheet} from './sheet-controls.js?v=v0.1.0-20261001214550-9fb3c40';
+import {MelodyLearning} from './learning.js?v=v0.1.0-20261001232933-0856715';
+import {emptySequence,keepPhrase,sequencePlayback,proposeSequence,commitSequence,undoPlacement} from './sequence-session.js?v=v0.1.0-20261001232933-0856715';
+import {readCaptureReport} from './capture-report.js?v=v0.1.0-20261001232933-0856715';
+import {setupPlaybackSheet} from './sheet-controls.js?v=v0.1.0-20261001232933-0856715';
 const $=id=>document.getElementById(id);
 const button=(text,fn)=>{const b=document.createElement('button');b.type='button';b.textContent=text;b.onclick=fn;return b;};
 
@@ -29,6 +29,7 @@ export class MelodyScreens {
   for(const option of key.options){const value=option.value;option.value=value;option.textContent=value==='Am'?'くらめ':'あかるめ';}
   shape.append(keyLabel);const length=document.createElement('label');length.innerHTML='小節数<select id="phrase-bars"><option value="4">4小節</option><option value="8">8小節</option></select>';shape.append(length);
   create.querySelector('#creation-tabs').after(shape);const shapeHint=document.createElement('p');shapeHint.id='phrase-shape-hint';shapeHint.setAttribute('role','status');shape.after(shapeHint);
+  shape.before($('image-words'));shape.append($('image-next'));
   length.querySelector('select').onchange=()=>editor.changeStructure({type:'resize',bars:Number($('phrase-bars').value)});
   $('composer-panel').querySelector('details>summary').textContent='入力位置・表示・コピー';
   const connect=document.createElement('section');connect.id='melody-connect';connect.className='melody-screen';
