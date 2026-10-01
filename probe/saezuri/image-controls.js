@@ -37,8 +37,11 @@ export class ImageControls {
    document.querySelector('main').append(settings);this.settingsSheet=settings;
    const open=document.createElement('button');open.id='image-settings-open';open.textContent='伴奏の設定';open.onclick=()=>this.show(settings);this.$('suggest').before(open);
    const summary=document.createElement('p');summary.id='image-summary';this.$('chords').before(summary);
-   $('backing-settings-close').onclick=()=>settings.close();settings.addEventListener('close',()=>this.onNavigate?.());
-   const suggestions=document.createElement('dialog');suggestions.id='progression-suggestions';suggestions.className='backing-sheet';suggestions.setAttribute('aria-label','進行のおすすめ');suggestions.innerHTML='<h2>進行を くらべよう</h2>';suggestions.append(this.$('suggestions'));const stop=document.createElement('button');stop.textContent='■ とめる';stop.onclick=()=>this.onStop?.();const close=document.createElement('button');close.textContent='とじる';close.onclick=()=>{this.onStop?.();suggestions.close();};suggestions.append(stop,close);suggestions.addEventListener('close',()=>this.onNavigate?.());document.querySelector('main').append(suggestions);this.suggestionsSheet=suggestions;
+   $('backing-settings-close').onclick=()=>{this.onStop?.();settings.close();};settings.addEventListener('close',()=>this.onNavigate?.());
+   const suggestions=document.createElement('dialog');suggestions.id='progression-suggestions';suggestions.className='backing-sheet';suggestions.setAttribute('aria-label','進行のおすすめ');suggestions.innerHTML='<div class="screen-heading"><h2>進行を くらべよう</h2><button id="progression-close">とじる</button></div>';suggestions.append(this.$('suggestions'));
+   const all=document.createElement('button');all.id='progression-all-open';all.textContent='4種類すべてから選ぶ';all.onclick=()=>{suggestions.close();this.show(settings);this.$('progression').focus();};suggestions.append(all);
+   const stopRow=document.createElement('div');stopRow.className='sheet-stop';const stop=document.createElement('button');stop.id='progression-stop';stop.textContent='■ とめる';stop.onclick=()=>this.onStop?.();stopRow.append(stop);suggestions.append(stopRow);
+   suggestions.addEventListener('close',()=>this.onNavigate?.());document.querySelector('main').append(suggestions);$('progression-close').onclick=()=>{this.onStop?.();suggestions.close();};this.suggestionsSheet=suggestions;
    const suggest=this.$('suggest').onclick;this.$('suggest').onclick=()=>{suggest();this.show(suggestions);};
   }
  }

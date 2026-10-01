@@ -128,7 +128,12 @@ function setPhase(next, message) {
   if($('backing-loop')){
     $('backing-loop').disabled=next!=='idle'||!captureEditor.isOpen||captureEditor.pending||!captureEditor.previewPattern?.accompaniment?.enabled;
     $('loop-record').disabled=next!=='playing'||!transport?.loop||!transport.active||!capture?.ready;
-    $('loop-hint').textContent=transport?.active&&transport.loop?(capture?.ready?'録音ボタンで、次の先頭から録ります。':capture?.active?'録音の予約中です。':'マイクを準備しています…'):!microphoneEnabled()?'ハナウタは マイクONにして使います。':'';
+    const backingEnabled=captureEditor.previewPattern?.accompaniment?.enabled;
+    $('loop-hint').textContent=transport?.active&&transport.loop
+      ? !microphoneEnabled()?'伴奏をループ中。録音するときは、止めてマイクONにしてね。':capture?.ready?'録音ボタンで、次の先頭から録ります。':capture?.active?'録音の予約中です。':'マイクを準備しています…'
+      : next==='idle'&&captureEditor.isOpen
+        ? captureEditor.entry?.proposal?.code?'音の候補を直すか、「もどす」で取り消してね。':captureEditor.pending?'ループする前に、今の候補を「オッケー」で決めてね。':!backingEnabled?'伴奏の設定で「伴奏といっしょに聴く」をONにしてね。':!microphoneEnabled()?'伴奏だけで練習できます。ハナウタを録るときは マイクONにしてね。':''
+        : '';
   }
 }
 function draw() {

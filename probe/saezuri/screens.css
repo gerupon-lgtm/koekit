@@ -195,6 +195,8 @@ body.melody-app{background:#faf5ed;color:#443b36}
 .melody-app .backing-sheet{position:fixed;inset:auto 0 0;margin:0 auto;width:min(100%,540px);max-height:85svh;box-sizing:border-box;overflow:auto;border:1px solid #ddd4c5;border-radius:22px 22px 0 0;background:#faf5ed;color:#493f36;padding:14px 16px max(18px,env(safe-area-inset-bottom))}
 .melody-app .backing-sheet::backdrop,.melody-app .song-dialog::backdrop{background:#493f3659}
 .melody-app .backing-sheet h2{font-size:18px}
+.melody-app .backing-sheet .screen-heading{top:0}
+.melody-app .backing-sheet .heading-actions-end{align-self:start}
 .melody-app #chord-basic{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}
 .melody-app #chord-basic button{padding:6px 12px;margin:0;background:#dce9d5}
 .melody-app .chord-fields,.melody-app .sound-fields{display:grid;gap:8px;margin:12px 0}
@@ -215,6 +217,9 @@ body.melody-app{background:#faf5ed;color:#443b36}
 .melody-app .image-more{flex-wrap:wrap}
 .melody-app .suggestion-row{display:grid;grid-template-columns:1fr 1.5fr;gap:6px;margin:8px 0;border-bottom:1px solid #ddd4c5;padding-bottom:8px}
 .melody-app .suggestion-row p{grid-column:1/-1;margin:0;font-size:14px}
+.melody-app #progression-all-open{width:100%;margin:8px 0 0;font-size:14px}
+.melody-app .sheet-stop{position:sticky;bottom:0;display:flex;justify-content:center;margin-top:12px;padding-top:6px;background:#faf5ed}
+.melody-app .sheet-stop button{min-width:140px;margin:0}
 .melody-app #image-chords{grid-template-columns:none;grid-auto-flow:column;grid-auto-columns:calc(25% - 4px);overflow-x:auto;scroll-snap-type:x proximity;padding:2px 0}
 .melody-app #image-chords button{scroll-snap-align:start}
 .melody-app .song-row{grid-template-columns:repeat(3,minmax(0,1fr))}
