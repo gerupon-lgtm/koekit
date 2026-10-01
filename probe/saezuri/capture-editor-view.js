@@ -1,10 +1,10 @@
-import { openEditSession, stageEdit, selectEditNote, confirmEditSession, cancelEditSession, undoEditSession, hasDraftChanges } from './edit-session.js';
-import { analyzeFrames, quantizeSegments } from './analyzer.js';
-import { decodePitchTrace } from './analysis-comparison.js';
-import { pitchName } from './score.js';
-import { orderedNotes, selectionTarget } from './note-selection.js';
-import {proposeEntry,confirmEntry,cancelEntry,moveEntryCursor,entryPreview} from './entry-session.js';
-import {songCheckpoint,restoreCheckpoint} from './song-session.js';
+import { openEditSession, stageEdit, selectEditNote, confirmEditSession, cancelEditSession, undoEditSession, hasDraftChanges } from './edit-session.js?v=v0.1.0-20261001214550-9fb3c40';
+import { analyzeFrames, quantizeSegments } from './analyzer.js?v=v0.1.0-20261001214550-9fb3c40';
+import { decodePitchTrace } from './analysis-comparison.js?v=v0.1.0-20261001214550-9fb3c40';
+import { pitchName } from './score.js?v=v0.1.0-20261001214550-9fb3c40';
+import { orderedNotes, selectionTarget } from './note-selection.js?v=v0.1.0-20261001214550-9fb3c40';
+import {proposeEntry,confirmEntry,cancelEntry,moveEntryCursor,entryPreview} from './entry-session.js?v=v0.1.0-20261001214550-9fb3c40';
+import {songCheckpoint,restoreCheckpoint} from './song-session.js?v=v0.1.0-20261001214550-9fb3c40';
 
 const clone = value => value == null ? value : structuredClone(value);
 const labels = { current: '現在の設定', detail: '細かい変化', unsmoothed: 'ならしなし' };

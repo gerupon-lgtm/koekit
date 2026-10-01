@@ -1,6 +1,6 @@
-import {GENRES,CHORD_INTERVALS} from '../../saezuri/music/catalog.js';
-import {RHYTHMS,PROGRESSIONS,PRESETS,SOUNDS,SOUND_PRESETS,harmonicSegments,recommendProgressions} from '../../saezuri/music/accompaniment.js';
-import {setupPlaybackSheet} from './sheet-controls.js';
+import {GENRES,CHORD_INTERVALS} from '../../saezuri/music/catalog.js?v=v0.1.0-20261001214550-9fb3c40';
+import {RHYTHMS,PROGRESSIONS,PRESETS,SOUNDS,SOUND_PRESETS,harmonicSegments,recommendProgressions} from '../../saezuri/music/accompaniment.js?v=v0.1.0-20261001214550-9fb3c40';
+import {setupPlaybackSheet} from './sheet-controls.js?v=v0.1.0-20261001214550-9fb3c40';
 const pitches=['C','C♯','D','E♭','E','F','F♯','G','A♭','A','B♭','B'];
 const suffix={major:'',minor:'m'};
 export const chordLabel=c=>`${pitches[c.root]}${suffix[c.quality]??c.quality}${c.bass===c.root?'':`/${pitches[c.bass]}`}`;

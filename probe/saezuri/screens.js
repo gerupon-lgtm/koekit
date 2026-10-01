@@ -1,7 +1,7 @@
-import {MelodyLearning} from './learning.js';
-import {emptySequence,keepPhrase,sequencePlayback,proposeSequence,commitSequence,undoPlacement} from './sequence-session.js';
-import {readCaptureReport} from './capture-report.js';
-import {setupPlaybackSheet} from './sheet-controls.js';
+import {MelodyLearning} from './learning.js?v=v0.1.0-20261001214550-9fb3c40';
+import {emptySequence,keepPhrase,sequencePlayback,proposeSequence,commitSequence,undoPlacement} from './sequence-session.js?v=v0.1.0-20261001214550-9fb3c40';
+import {readCaptureReport} from './capture-report.js?v=v0.1.0-20261001214550-9fb3c40';
+import {setupPlaybackSheet} from './sheet-controls.js?v=v0.1.0-20261001214550-9fb3c40';
 const $=id=>document.getElementById(id);
 const button=(text,fn)=>{const b=document.createElement('button');b.type='button';b.textContent=text;b.onclick=fn;return b;};
 

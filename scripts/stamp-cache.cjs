@@ -1,5 +1,5 @@
 // キャッシュバスターのスタンプ（各デプロイ前に実行する）。
-// sw.js の `const BUILD = '...'` を、デプロイごとに一意な値へ置換する。
+// sw.js の BUILD と、サエズリズム試作のCSS/ES Modules/Worker参照を同じ一意な値へ更新する。
 // これにより APP_CACHE 名が変わり、旧キャッシュが破棄され、アプリ本体が確実に最新化される。
 //
 //   node scripts/stamp-cache.cjs
@@ -30,3 +30,5 @@ if (!re.test(sw)) {
 sw = sw.replace(re, `const BUILD = '${build}';`);
 fs.writeFileSync(swPath, sw);
 console.log('stamped BUILD =', build);
+const {stampTrialAssets}=require('./stamp-trial-assets.cjs');
+console.log('stamped trial asset references:',stampTrialAssets(root,build));

@@ -1,6 +1,6 @@
-import {validateNotes} from '../../saezuri/document.js';
-import {validateComposition,proposeSequence,commitSequence,undoSequence} from '../../saezuri/sequence.js';
-import {accompanimentEvents} from '../../saezuri/music/accompaniment.js';
+import {validateNotes} from '../../saezuri/document.js?v=v0.1.0-20261001214550-9fb3c40';
+import {validateComposition,proposeSequence,commitSequence,undoSequence} from '../../saezuri/sequence.js?v=v0.1.0-20261001214550-9fb3c40';
+import {accompanimentEvents} from '../../saezuri/music/accompaniment.js?v=v0.1.0-20261001214550-9fb3c40';
 export const emptySequence=()=>({patterns:[],placements:[],revision:0,undoStack:[]});
 export function keepPhrase(draft,pattern,name) {
  const error=validateNotes(pattern);if(error)return error;

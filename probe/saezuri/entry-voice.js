@@ -1,4 +1,4 @@
-import {parseEditCommand,EDIT_WORDS} from './edit-voice.js';
+import {parseEditCommand,EDIT_WORDS} from './edit-voice.js?v=v0.1.0-20261001214550-9fb3c40';
 const normalize=text=>String(text).normalize('NFKC').replace(/\s/g,'').replace(/[ァ-ヶ]/g,c=>String.fromCharCode(c.charCodeAt(0)-0x60));
 const pitches={ど:60,れ:62,み:64,ふぁ:65,そ:67,ら:69,し:71};
 const lengths={'1':4,'一':4,'いち':4,'2':8,'二':8,'に':8,'4':16,'四':16,'よん':16,'し':16,'はんぱく':2,'半拍':2,'はんぶん':2,'半分':2};
