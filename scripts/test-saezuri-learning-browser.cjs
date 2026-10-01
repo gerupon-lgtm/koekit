@@ -1,8 +1,9 @@
 const {chromium}=require('../.local-tools/node_modules/playwright');const assert=require('node:assert/strict');
+const {revealCreationControl}=require('./saezuri-browser-controls.cjs');
 const base=process.env.SAEZURI_BASE||'http://127.0.0.1:8014';
 (async()=>{const browser=await chromium.launch({channel:'chrome',headless:true,args:['--autoplay-policy=no-user-gesture-required']});try{
  const page=await browser.newPage({viewport:{width:390,height:844},serviceWorkers:'block'}),errors=[];page.on('pageerror',e=>errors.push(e.message));
- const click=id=>page.locator('#'+id).click(),report=async()=>{await page.evaluate(()=>document.querySelector('#report').click());return JSON.parse(await page.locator('#metrics').textContent());};
+ const click=async id=>{await revealCreationControl(page,'#'+id);await page.locator('#'+id).click();if(id==='new-manual')await revealCreationControl(page,'#composer-rest');},report=async()=>{await page.evaluate(()=>document.querySelector('#report').click());return JSON.parse(await page.locator('#metrics').textContent());};
  await page.goto(base+'/probe/saezuri/');await click('home-create');assert.equal(await page.locator('#new-tutorial').isEnabled(),true);assert.equal(await page.locator('#choose-example').isEnabled(),true);assert.equal(await page.locator('#new-manual').isEnabled(),true);
  await click('new-tutorial');await page.waitForFunction(()=>document.querySelector('#learning-step').textContent.includes('1'));assert.match(await page.locator('#learning-step').textContent(),/1/);
  await page.locator('[data-pitch="0"]').click();assert.equal((await report()).captureEditing.pending,true);await click('capture-edit-confirm');

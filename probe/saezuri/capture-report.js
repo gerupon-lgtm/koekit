@@ -8,11 +8,11 @@ export function readCaptureReport(text) {
   if (typeof text !== 'string' || text.length > 2000000) throw new Error('記録のサイズが大きすぎます。');
   let report;
   try { report = JSON.parse(text); } catch { throw new Error('JSON全体を貼り付けてください。'); }
-  if(report?.captureCandidate?.source==='manual' && !report.capture) {
+  if(['manual','tap'].includes(report?.captureCandidate?.source) && !report.capture) {
     const pattern=report.captureCandidate,tempo=report.compositionOptions?.tempo;
-    if(validateNotes(pattern)||pattern.gridStep!==2||pattern.notes.length>64||pattern.notes.some(n=>typeof n.id!=='string')||
+    if(validateNotes(pattern)||pattern.gridStep!==(pattern.source==='tap'?1:2)||pattern.notes.length>pattern.bars*16||pattern.notes.some(n=>typeof n.id!=='string')||
        !Number.isFinite(tempo)||tempo<60||tempo>180||
-       !((pattern.key?.tonicPitchClass===0&&pattern.key?.mode==='major')||(pattern.key?.tonicPitchClass===9&&pattern.key?.mode==='minor'))||
+       !((pattern.source==='tap'&&!pattern.key)||(pattern.key?.tonicPitchClass===0&&pattern.key?.mode==='major')||(pattern.key?.tonicPitchClass===9&&pattern.key?.mode==='minor'))||
        (pattern.accompaniment && validateAccompaniment(pattern.accompaniment))) throw new Error('通常作成の記録を読み込めません。');
     return {pattern:structuredClone(pattern),options:{tempo},importedFrom:{prototype:report.prototype,timestamp:report.timestamp,conditions:report.conditions}};
   }

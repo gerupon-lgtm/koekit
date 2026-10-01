@@ -1,5 +1,7 @@
 # サエズリズム 基本設計
 
+**2026-10-02 実装追加**：常設鍵盤の練習とリアルタイムのタップ録音を追加。`tap-recording.js` は16分tickの単旋律候補、`live-keyboard-audio.js` は独立した保持音、`keyboard-controls.js` は16鍵・3つの高さボタン・Pointer Captureを扱う。録音候補だけを停止時に既存編集へ渡し、練習では保存とUndoを変更しない。共通AudioContextの時計・ミキサー・伴奏ループ・停止・保存を共有する。source=tap／gridStep=1を既存patternに保存し、診断記録の再読込にも対応。ハナウタと排他、伴奏のみの譜面は小節追従とする。[詳細](tap-keyboard.md)。
+
 版：0.3／2026-10-01。状態：保存・再開、伴奏・個別コード・音色、4／8小節ループ録音を実装し、依頼に従い既存試作URLへ公開した。[実装記録](implementation-log.md)、[今回の検証](workflow-implementation-plan.md)、[配信記録](preview-deployment.md)参照。診断のprototypeは互換用にv25を維持し、workflowRevisionで更新を識別する。実機音響・本アプリの全機能は未完了。
 要件の正典：[要件定義書v1.2](../requirements-melody.md)。今回の操作合意：[伴奏・制作・録音・保存仕様v0.3](accompaniment-workflow-spec.md)。共通規約：[実装ガイド](../implementation-guide.md)。人向け：[設計サマリ](summary.md)。実装入口：[handoff.md](handoff.md)。
 

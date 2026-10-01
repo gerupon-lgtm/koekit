@@ -1,5 +1,6 @@
 const {chromium}=require('../.local-tools/node_modules/playwright');
 const assert=require('node:assert/strict');
+const {revealCreationControl}=require('./saezuri-browser-controls.cjs');
 const base=process.env.SAEZURI_BASE||'http://127.0.0.1:8018';
 (async()=>{
  const browser=await chromium.launch({channel:'chrome',headless:true,args:['--autoplay-policy=no-user-gesture-required']});
@@ -102,7 +103,7 @@ const base=process.env.SAEZURI_BASE||'http://127.0.0.1:8018';
   };
   for(const key of ['Am','C']){
    if(key==='C'){await page.locator('#composer-key').selectOption(key);await page.locator('#capture-edit-confirm').click();}
-   await page.locator('#image-suggest').click();
+   await revealCreationControl(page,'#image-suggest');await page.locator('#image-suggest').click();
    for(let i=0;i<4;i++)await checkHead(page.locator('.suggestion-row').nth(i).locator('button').first(),page.locator('#progression-stop'));
    await page.locator('#progression-close').click();await checkHead(page.locator('#preview'),page.locator('#stop'));
   }

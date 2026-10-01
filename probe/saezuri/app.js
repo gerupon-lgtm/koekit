@@ -20,6 +20,8 @@ import {SongWorkflow} from './song-workflow.js';
 import {nextLoopHead} from './loop-timing.js';
 import {alignScreenHeadings} from './headings.js';
 import {VolumeControls,AudioMixer} from './volume.js';
+import {KeyboardControls} from './keyboard-controls.js';
+import {heldVoice} from './live-keyboard-audio.js';
 const compactEditor=setupEditorLayout();
 const $ = id => document.getElementById(id);
 const example = () => ({ bars: 4, gridStep: 1, notes: [
@@ -44,20 +46,20 @@ const editingExample = () => ({ bars: 4, gridStep: 1, notes: [
 ] });
 let state = { pattern: editingExample(), cursor: 0, revision: 0 }, candidate = null, captured = null, capturedOriginal = null;
 let ctx, mixer, transport, capture, serial = 0, phase = 'idle', raf, lastFrame = 0, maxFrameGapMs = 0, lastBar = -1, playbackPreview = false;
-const record = { prototype: 'ML-T01-v25', workflowRevision:'2026-10-01',timestamp: new Date().toISOString(), userAgent: navigator.userAgent, playback: null, capture: null };
+const record = { prototype: 'ML-T01-v25', workflowRevision:'2026-10-02',timestamp: new Date().toISOString(), userAgent: navigator.userAgent, playback: null, capture: null };
 const volumeControls=new VolumeControls({onChange(levels){mixer?.setLevels(levels);record.audioLevels=levels;if(transport?.active&&record.playback)record.playback.audioLevels=levels;showReport();}});
 record.audioLevels=volumeControls.value();
 const keyChoices = { score: null, capture: null };
 const displayOctaves = { score: 0, capture: 0 };
 const captureAlignments = new Map();
-let voice, voiceTimer, composer, imageControls, shell, songWorkflow;
+let voice, voiceTimer, composer, imageControls, shell, songWorkflow,keyboard;
 function syncVoice() {
   if(!voice) return;
   if(captureEditor.previewPattern?.source==='manual') voice.configure(ENTRY_WORDS,parseEntryCommand);
   else voice.configure();
   clearTimeout(voiceTimer);
   const enabled=$('edit-voice').checked && microphoneEnabled();
-  const available=enabled && (!shell||shell.allowsVoice) && captureEditor.isOpen && !$('review').hidden && !document.hidden && phase==='idle';
+  const available=enabled && !keyboard?.held && (!shell||shell.allowsVoice) && captureEditor.isOpen && !$('review').hidden && !document.hidden && phase==='idle';
   if(!available) voice.setActive(false,{release:!enabled || !captureEditor.isOpen || document.hidden || (shell&&!shell.allowsVoice) || ['count-in','recording','analyzing'].includes(phase)});
   else voiceTimer=setTimeout(()=>voice.setActive(true),250);
 }
@@ -139,6 +141,7 @@ function setPhase(next, message) {
         ? captureEditor.entry?.proposal?.code?'音の候補を直すか、「もどす」で取り消してね。':captureEditor.pending?'ループする前に、今の候補を「オッケー」で決めてね。':!backingEnabled?'伴奏の設定で「伴奏といっしょに聴く」をONにしてね。':!microphoneEnabled()?'伴奏だけで練習できます。ハナウタを録るときは マイクONにしてね。':''
         : '';
   }
+  keyboard?.render({phase:next,loop:!!transport?.active&&transport.loop,screen:shell?.screen});
 }
 function draw() {
   drawPattern('score', state.pattern);
@@ -147,11 +150,13 @@ function draw() {
   setPhase(phase);
 }
 function stop(message = '停止しました。必要ならもう一度開始してください。') {
+  const tapPattern=keyboard?.finish();
   serial++; transport?.stop(false); capture?.cancel(); cancelAnimationFrame(raf);
   playbackPreview=false;captureEditor.followPlayback(null);
   shell?.follow(null);
   imageControls?.follow(null);
   setPhase('idle', message);
+  if(tapPattern){captureEditor.stageTapRecording(tapPattern);record.editingSource='tap';record.capture=null;record.captureOptions=null;setPhase('idle','タップ録音を止めました。聴いて、オッケーで決めよう。');showReport();}
 }
 async function prepare() {
   if (!ctx || ctx.state === 'closed') {
@@ -164,7 +169,7 @@ async function prepare() {
       stop(reason === 'ENDED' ? '再生がおわりました' : `再生停止：${reason}`); showReport();
     },mixer);
     capture = new ProbeCapture(ctx, next=>{if(next==='loop-ready')return;if(next==='analyzing'&&transport?.loop)transport.stop(false);setPhase(next);}, acceptCapture,mixer);
-    ctx.addEventListener('statechange', () => { if (ctx === ownedContext && ownedContext.state !== 'running' && phase !== 'idle' && phase !== 'preparing') stop('音声が中断しました。手動で再開してください。'); });
+    ctx.addEventListener('statechange', () => { if(ctx===ownedContext&&ownedContext.state!=='running')keyboard?.release();if (ctx === ownedContext && ownedContext.state !== 'running' && phase !== 'idle' && phase !== 'preparing') stop('音声が中断しました。手動で再開してください。'); });
   }
   await ctx.resume();
   if (ctx.state !== 'running') throw new Error('AUDIO_NOT_READY');
@@ -204,6 +209,8 @@ function animate() {
   lastFrame = now;
   const tick = transport.active ? transport.position() : Math.max(0, (ctx.currentTime - capture.startTime) * tempoValue() * 4 / 60);
   if(playbackPreview && transport.active && ctx.currentTime>=transport.anchor) captureEditor.followPlayback(tick);
+  keyboard?.frame();
+  if(transport.active&&transport.loop&&ctx.currentTime>=transport.anchor)captureEditor.followPlayback(tick,{notes:false,scrollPage:false});
   if(shell?.screen==='connect' && transport.active && ctx.currentTime>=transport.anchor)shell.follow(tick);
   if(transport.active&&ctx.currentTime>=transport.anchor)imageControls?.follow(tick);
   const bar = Math.floor(tick / 16), beat = Math.floor(tick / 4) % 4;
@@ -252,7 +259,7 @@ async function play(pattern = state.pattern, preview = false, options={}) {
 function showReport() {
   const frames = record.capture?.frames ?? [];
   const frameSummary = !frames.length && record.importedFrom?.frameSummary ? record.importedFrom.frameSummary : { count: frames.length, pitched: frames.filter(f => f.kind === 'pitched').length, unknown: frames.filter(f => f.kind === 'unknown').length };
-  $('metrics').textContent = JSON.stringify({ ...record, ...(captured?.source==='manual'?{compositionOptions:{tempo:Number($('tempo').value)}}:{}), conditions: $('conditions').value, captureCandidate: captured, capture: record.capture ? { ...record.capture, frames: frameSummary } : null }, null, 2);
+  $('metrics').textContent = JSON.stringify({ ...record, ...(['manual','tap'].includes(captured?.source)?{compositionOptions:{tempo:Number($('tempo').value)}}:{}), conditions: $('conditions').value, captureCandidate: captured, capture: record.capture ? { ...record.capture, frames: frameSummary } : null }, null, 2);
 }
 async function copyReport(event) {
   const button=event.currentTarget;
@@ -431,21 +438,25 @@ async function newComposition(withImage=false) {
 }
 composer=new ComposerControls({editor:captureEditor,onNew:()=>newComposition()});
 imageControls=new ImageControls({editor:captureEditor,onNew:()=>newComposition(true),onTempo:tempo=>{$('tempo').value=String(tempo);songWorkflow?.schedule();},onPreview:(pattern,standalone=false)=>play(pattern??captureEditor.previewPattern,true,{standalone}),onStop:()=>stop(),onNavigate:()=>setPhase(phase),compact:compactEditor&&new URLSearchParams(location.search).get('view')!=='editor'});
-if($('backing-loop'))$('backing-loop').onclick=async()=>{
-  if(phase!=='idle'||captureEditor.pending)return;
+async function startLoop({microphone=true}={}){
+  if(phase!=='idle'||captureEditor.pending)return false;
   voice?.setActive(false,{release:true});stop();const request=serial;setPhase('preparing');
   try{
     const tempo=tempoValue(),pattern=captureEditor.pattern;await prepare();if(request!==serial)return;
     const options={processing:$('processing').checked,countSound:false,recordCount:false,acousticSync:false,countVolume:Number($('count-volume').value),windowSize:Number($('window-size').value),adaptiveWindow:$('adaptive-window').checked,boundaryMode:$('boundary-mode').value,rmsFloor:Number($('rms').value),minDetectedRatio:Number($('ratio').value),maxGapSeconds:Number($('gap').value),smoothingMs:Number($('smoothing').value),noteMode:$('note-mode').value,manualMs:Number($('timing-adjust').value)};
-    if(microphoneEnabled()){await capture.prepareLoop(options);if(request!==serial)return;}
+    if(microphone&&microphoneEnabled()){await capture.prepareLoop(options);if(request!==serial)return false;}
     record.captureOptions={tempo,...options};
     const playback=playbackSettings();
     transport.start([],{tempo,totalTicks:pattern.bars*16,...playback,accompaniment:accompanimentEvents(pattern),loop:true});
     record.playback={tempo,bars:pattern.bars,notes:0,loop:true,...playback,accompaniment:pattern.accompaniment,audioLevels:volumeControls.value()};
-    playbackPreview=false;setPhase('playing');lastFrame=0;animate();showReport();
+    playbackPreview=false;setPhase('playing');lastFrame=0;animate();showReport();return true;
   }catch(error){if(request===serial)stop(`ループを始められません：${error.message}`);}
-};
+}
+if($('backing-loop'))$('backing-loop').onclick=()=>startLoop();
 if($('loop-record'))$('loop-record').onclick=async()=>{
+  if(keyboard?.take||captureEditor.pending||!microphoneEnabled())return;
+  keyboard?.release();
+  if(phase==='idle'&&!await startLoop())return;
   if(phase!=='playing'||!transport?.loop||!capture?.ready)return;
   const request=serial,tempo=transport.tempo,bars=transport.totalTicks/16;
   const musicalStart=nextLoopHead({anchor:transport.anchor,now:ctx.currentTime,tempo,bars});
@@ -472,6 +483,19 @@ if(screenNavigation) {
     captureEditor.restore(checkpoint);$('review').hidden=!captureEditor.isOpen;record.capture=null;record.editingSource='saved';setPhase('idle');
   }});
   shell.songWorkflow=songWorkflow;
+  keyboard=new KeyboardControls({editor:captureEditor,clock:()=>ctx?.currentTime??0,onActivity:()=>syncVoice(),
+    onPreview:pattern=>{drawPattern('capture',pattern);captureEditor.invalidatePlayback();},
+    prepareVoice:async()=>{await prepare();return midi=>heldVoice(ctx,mixer.melody,midi,$('instrument').value);},
+    onStart:async()=>{
+      if(keyboard.take||captureEditor.pending||!(phase==='idle'||phase==='playing'&&transport?.loop))return;
+      const looping=!!transport?.active&&transport.loop;
+      if(!looping&&!await startLoop({microphone:false}))return;
+      if(phase!=='playing'||!transport?.active||!transport.loop)return;
+      capture?.cancel();voice?.setActive(false,{release:true});
+      const anchor=looping?nextLoopHead({anchor:transport.anchor,now:ctx.currentTime,tempo:transport.tempo,bars:transport.totalTicks/16}):transport.anchor;
+      keyboard.begin(captureEditor.pattern,anchor,transport.tempo);setPhase('playing');
+    }
+  });
   alignScreenHeadings();
   setPhase(phase);
 }
@@ -482,9 +506,11 @@ if(compactEditor) {
     if(!next || Math.abs(next-width)<1) return;
     width=next;
     if(!captureEditor.isOpen) return;
+    if(keyboard?.take)keyboard.take.previewKey=null;
     captureEditor.followPlayback(null);
     drawPattern('capture',captureEditor.previewPattern);
     captureEditor.setBusy(phase!=='idle');
     if(playbackPreview && transport?.active && ctx.currentTime>=transport.anchor) captureEditor.followPlayback(transport.position());
+    if(transport?.active&&transport.loop&&ctx.currentTime>=transport.anchor)captureEditor.followPlayback(transport.position(),{notes:false,scrollPage:false});
   }).observe($('capture-score'));
 }

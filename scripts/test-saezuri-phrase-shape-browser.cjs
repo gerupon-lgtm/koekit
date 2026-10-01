@@ -1,5 +1,6 @@
 const {chromium}=require('../.local-tools/node_modules/playwright');
 const assert=require('node:assert/strict');
+const {revealCreationControl}=require('./saezuri-browser-controls.cjs');
 (async()=>{
  const browser=await chromium.launch({channel:'chrome',headless:true,args:['--autoplay-policy=no-user-gesture-required']});
  try {
@@ -16,12 +17,12 @@ const assert=require('node:assert/strict');
  assert.equal(r.captureEditing.pending,true);assert.equal(await page.locator('#backing-loop').isDisabled(),true);
  assert.deepEqual(r.captureEditing.editCandidate.notes,original);
  await page.locator('#capture-edit-confirm').click();assert.equal((await report()).captureCandidate.key.mode,'minor');
- await page.locator('#image-suggest').click();assert.match(await page.locator('.suggestion-row').first().textContent(),/Am → Dm → E → Am/);await page.locator('#progression-close').click();
+ await revealCreationControl(page,'#image-suggest');await page.locator('#image-suggest').click();assert.match(await page.locator('.suggestion-row').first().textContent(),/Am → Dm → E → Am/);await page.locator('#progression-close').click();
  await page.locator('#phrase-bars').selectOption('8');r=await report();assert.equal(r.captureCandidate.bars,4);assert.equal(r.captureEditing.editCandidate.bars,8);
  await page.locator('#capture-edit-undo').click();assert.equal(await page.locator('#phrase-bars').inputValue(),'4');
  await page.locator('#phrase-bars').selectOption('8');await page.locator('#capture-edit-confirm').click();
  await page.locator('[data-mode="input"]').click();await page.locator('#screen-settings').click();await page.locator('#creation-settings > details > summary').first().click();await page.locator('#composer-bar').selectOption('5');await page.locator('#settings-close').click();
- await page.locator('[data-pitch="0"]').click();assert.equal(await page.locator('#composer-key').isDisabled(),true);assert.equal(await page.locator('#phrase-bars').isDisabled(),true);await page.locator('#capture-edit-confirm').click();
+ await revealCreationControl(page,'[data-pitch="0"]');await page.locator('[data-pitch="0"]').click();assert.equal(await page.locator('#composer-key').isDisabled(),true);assert.equal(await page.locator('#phrase-bars').isDisabled(),true);await page.locator('#capture-edit-confirm').click();
  const long=(await report()).captureCandidate;assert.equal(long.notes[0].startTick,64);
  await page.locator('#phrase-bars').selectOption('4');r=await report();assert.equal(r.captureCandidate.bars,8);assert.deepEqual(r.captureCandidate.notes,long.notes);assert.equal(r.captureEditing.editCandidate.notes.length,0);assert.match(await page.locator('#phrase-shape-hint').textContent(),/後半4小節/);
  await page.locator('#capture-edit-undo').click();assert.equal(await page.locator('#phrase-bars').inputValue(),'8');assert.deepEqual((await report()).captureCandidate.notes,long.notes);
@@ -35,7 +36,7 @@ const assert=require('node:assert/strict');
    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,`${viewport.width} ${mode}: no horizontal overflow`);
    const boxes=await page.locator('#phrase-shape select').evaluateAll(nodes=>nodes.map(n=>{const b=n.getBoundingClientRect();return {top:b.top,bottom:b.bottom,left:b.left,right:b.right,height:b.height};}));
    assert.ok(Math.abs(boxes[0].top-boxes[1].top)<1,'controls stay in one row');assert.ok(boxes.every(b=>b.left>=0&&b.right<=viewport.width&&b.height>=44));
-   if(mode==='backing'&&viewport.width===390){for(const id of ['preview','capture-edit-confirm','stop']){const b=await page.locator('#'+id).boundingBox();assert.ok(b&&b.y+b.height<=viewport.height,`${id} visible without scrolling`);}}
+   if(mode==='backing'&&viewport.width===390){await page.evaluate(()=>{document.querySelector('#step-entry').open=false;document.querySelector('#keyboard-more').open=false;window.scrollTo(0,0);});for(const id of ['piano-keys','stop']){const b=await page.locator('#'+id).boundingBox();assert.ok(b&&b.y+b.height<=viewport.height,`${id} visible without scrolling`);}}
    if(mode==='backing'&&[320,390].includes(viewport.width))await page.screenshot({path:`.local-tools/saezuri-phrase-shape-${viewport.width}.png`});
   }
  }

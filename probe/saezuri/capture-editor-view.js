@@ -170,6 +170,13 @@ export class CaptureEditorView {
     this._variants.clear();this._variant='current';this._variants.set('current',candidate);
     this._status('録り直しの候補です。きめたメロディーは残しています。聴いてオッケー。');this._emit(true);
   }
+  stageTapRecording(pattern){
+    const previous=this._active?.session;if(!previous)return;
+    const candidate=this._makeVariant(pattern);
+    candidate.session={...clone(previous),working:{...candidate.session.working,revision:previous.working.revision+1},entry:null,history:[...previous.history,clone(previous.working)]};
+    this._variants.clear();this._variant='current';this._variants.set('current',candidate);
+    this._status('タップ録音の候補です。高さや長さを直して、オッケーで決めよう。');this._emit(true);
+  }
 
   // Alignment is allowed only before manual edits. Its immutable source remains
   // available to restore the original leading rest without altering diagnostics.
@@ -389,7 +396,8 @@ export class CaptureEditorView {
     }
   }
 
-  followPlayback(tick) {
+  invalidatePlayback(){this._playbackKey=null;}
+  followPlayback(tick,{notes:showNotes=true,scrollPage=true}={}) {
     const score=this._elements['capture-score'], blocks=this._elements['capture-blocks'];
     if(tick==null) {
       if(this._playbackKey==null) return;
@@ -401,11 +409,11 @@ export class CaptureEditorView {
       this._render(false);return;
     }
     if(!this.isOpen) return;
-    const notes=orderedNotes(entryPreview(this._active.session).notes);
+    const notes=showNotes?orderedNotes(entryPreview(this._active.session).notes):[];
     const index=notes.findIndex(n=>n.startTick<=tick && tick<n.startTick+n.durationTick);
     const note=notes[index], bar=Math.min(this._active.state.pattern.bars-1,Math.floor(tick/16));
-    const fragment=[...score.querySelectorAll('[data-start-tick]')].find(n=>Number(n.dataset.startTick)<=tick && tick<Number(n.dataset.startTick)+Number(n.dataset.durationTick));
-    const key=`${bar}:${note?.id??'rest'}:${fragment?.dataset.startTick??''}`;
+    const fragment=showNotes?[...score.querySelectorAll('[data-start-tick]')].find(n=>Number(n.dataset.startTick)<=tick && tick<Number(n.dataset.startTick)+Number(n.dataset.durationTick)):null;
+    const key=`${bar}:${showNotes?'notes':Math.floor(tick/4)%4}:${note?.id??'rest'}:${fragment?.dataset.startTick??''}`;
     if(key===this._playbackKey) return;
     this._playbackKey=key;
     score.classList.add('is-playing');blocks.classList.add('is-playing');
@@ -419,9 +427,9 @@ export class CaptureEditorView {
     }
     this._elements['capture-selection'].textContent=note
       ? `再生 ${bar+1}小節・${index+1} / ${notes.length} ばん・${pitchName(note.midi)}`
-      : `再生 ${bar+1}小節・休符`;
+      : showNotes?`再生 ${bar+1}小節・休符`:`伴奏 ${bar+1}小節・${Math.floor(tick/4)%4+1}拍`;
     if(staff) score.scrollTo({left:0,top:score.scrollTop+staff.getBoundingClientRect().top-score.getBoundingClientRect().top-2,behavior:'instant'});
     const viewport=score.getBoundingClientRect(), footer=document.querySelector('footer').getBoundingClientRect();
-    if(viewport.top<0 || viewport.bottom>footer.top) document.getElementById('capture-note-panel').scrollIntoView({block:'start',behavior:'instant'});
+    if(scrollPage&&(viewport.top<0 || viewport.bottom>footer.top)) document.getElementById('capture-note-panel').scrollIntoView({block:'start',behavior:'instant'});
   }
 }

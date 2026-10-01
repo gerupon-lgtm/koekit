@@ -1,0 +1,32 @@
+.melody-app #live-keyboard{margin:4px 0 8px}
+.melody-app.editor-focus #image-chords{order:2}
+.melody-app.editor-focus #live-keyboard{order:3}
+.melody-app.editor-focus #capture-score{height:132px;min-height:132px}
+.melody-app.editor-focus .edit-toolbar{order:4}
+.melody-app.editor-focus #keyboard-options{order:5}
+.melody-app .keyboard-actions,.melody-app .keyboard-octaves,.melody-app .keyboard-settings{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.melody-app .keyboard-actions button{min-height:56px;padding:6px 4px;line-height:1.3;font-size:14px;margin:0}
+.melody-app #tap-record{background:#e6edf0}
+.melody-app #loop-record{background:#eae5ef}
+.melody-app #keyboard-status{font-size:13px;text-align:center;margin:6px 0}
+.melody-app #piano-keys{height:112px;position:relative;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+.melody-app #piano-keys button{position:absolute;top:0;margin:0;padding:0;border-radius:0 0 6px 6px;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+.melody-app #piano-keys .piano-white{width:10%;height:112px;background:#fffdf7;border:1px solid #c6c1b9;display:flex;align-items:flex-end;justify-content:center;padding-bottom:8px;font-size:12px;color:#494640}
+.melody-app #piano-keys .piano-black{width:6%;height:69px;background:#494642;border:1px solid #37342f;z-index:1}
+.melody-app #piano-keys [data-reference]{background:#eee7f3}
+.melody-app #piano-keys [data-held]{background:#bfd5cf}
+.melody-app .keyboard-octaves{margin-top:8px}
+.melody-app .keyboard-octaves button{margin:0;min-height:42px;padding:6px;font-size:14px}
+.melody-app .keyboard-octaves [aria-pressed=true]{background:#d9e6de}
+.melody-app .keyboard-help{font-size:12px;line-height:1.5;margin:6px 0 10px}
+.melody-app .keyboard-settings{grid-template-columns:repeat(2,minmax(0,1fr));padding:8px 0}
+.melody-app #keyboard-more,.melody-app #step-entry{margin:8px 0}
+.melody-app #keyboard-more>summary,.melody-app #step-entry>summary{min-height:32px;padding:6px 8px;font-size:13px}
+.melody-app #step-entry #composer-panel{margin-top:8px}
+.melody-app #image-settings{display:none}
+.melody-app #image-chords{margin:4px 0;display:flex;gap:8px;overflow-x:auto}
+.melody-app #image-chords button{flex:0 0 auto;min-width:64px;margin:0;font-size:13px;padding:8px}
+.melody-app.keyboard-recording .listen-actions,.melody-app.keyboard-humming .listen-actions{display:none}
+.melody-app.keyboard-humming .keyboard-help,.melody-app.keyboard-humming #keyboard-more{display:none}
+@media(min-width:650px){.melody-app.editor-focus #live-keyboard{grid-column:2;grid-row:1/4}.melody-app.editor-focus #image-chords{grid-column:1;grid-row:3}.melody-app.editor-focus .edit-toolbar{grid-column:1;grid-row:4}.melody-app.editor-focus #keyboard-options{grid-column:2;grid-row:4}}
+.melody-app.learning-active #image-chords,.melody-app.learning-active .keyboard-actions,.melody-app.learning-active #keyboard-status,.melody-app.learning-active #piano-keys,.melody-app.learning-active .keyboard-octaves,.melody-app.learning-active .keyboard-help,.melody-app.learning-active #keyboard-more,.melody-app.learning-active #step-entry>summary{display:none}

@@ -1,5 +1,6 @@
 const {chromium}=require('../.local-tools/node_modules/playwright');
 const assert=require('node:assert/strict');
+const {revealCreationControl}=require('./saezuri-browser-controls.cjs');
 (async()=>{
  const browser=await chromium.launch({channel:'chrome',headless:true,args:['--autoplay-policy=no-user-gesture-required']});
  try{
@@ -7,7 +8,7 @@ const assert=require('node:assert/strict');
  const page=await context.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));
  await page.goto((process.env.SAEZURI_BASE||'http://127.0.0.1:8014')+'/probe/saezuri/');
  await page.locator('#home-create').click();await page.locator('#new-manual').click();
- await page.locator('[data-pitch="0"]').click();
+ await revealCreationControl(page,'[data-pitch="0"]');await page.locator('[data-pitch="0"]').click();
  await page.waitForFunction(()=>document.querySelector('#song-status')?.dataset.saved==='true',{},{timeout:3000});
  await page.reload();await page.locator('#home-songs').click();
  await page.locator('[data-song-open]').click();await page.locator('#song-continue').click();
@@ -24,7 +25,7 @@ const assert=require('node:assert/strict');
  await page.getByRole('button',{name:'わたしのきょく 1 のコピーをけす',exact:true}).click();await page.locator('#song-delete-confirm').click();await page.waitForFunction(()=>document.querySelectorAll('[data-song-open]').length===1);
  await page.locator('[data-song-open]').click();
  assert.equal(await page.locator('#song-resume').isVisible(),false);
- await page.locator('[data-pitch="2"]').click();await page.locator('#discard').click();
+ await revealCreationControl(page,'[data-pitch="2"]');await page.locator('[data-pitch="2"]').click();await page.locator('#discard').click();
  await page.locator('#melody-home').waitFor({state:'visible'});await page.reload();
  await page.locator('#home-songs').click();await page.locator('[data-song-open]').click();
  await page.locator('#song-discard-draft').click();

@@ -34,6 +34,7 @@ export class MelodyLearning {
  }
  openNew(action){this.shell.requestDiscard(async()=>{if(this.shell.songWorkflow&&!await this.shell.songWorkflow.allowNew())return;action();});}
  start(){
+    if($('step-entry'))$('step-entry').open=true;
   this.active=true;this.heard=false;this.lastStep=null;
   $('composer-duration').value='1';$('composer-octave').value='0';$('composer-replace').checked=false;
   this.shell.onOpenPattern(blankPattern(),'tutorial',120);this.shell.go('create');this.shell.setMode('input');

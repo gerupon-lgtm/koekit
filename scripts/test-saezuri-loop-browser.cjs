@@ -1,9 +1,10 @@
 const {chromium}=require('../.local-tools/node_modules/playwright');const assert=require('node:assert/strict');
+const {revealCreationControl}=require('./saezuri-browser-controls.cjs');
 (async()=>{const browser=await chromium.launch({channel:'chrome',headless:true,args:['--autoplay-policy=no-user-gesture-required','--use-fake-device-for-media-stream','--use-fake-ui-for-media-stream']});try{
  const context=await browser.newContext({viewport:{width:390,height:844},permissions:['microphone'],serviceWorkers:'block'});const page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
  await page.goto((process.env.SAEZURI_BASE||'http://127.0.0.1:8014')+'/probe/saezuri/');await page.locator('#home-create').click();await page.locator('#new-image').click();await page.locator('#capture-edit-confirm').click();
  await page.locator('#mic').click();await page.locator('#backing-loop').click();await page.waitForFunction(()=>document.querySelector('#status').dataset.state==='playing');assert.equal(await page.locator('#loop-record').isDisabled(),true);assert.match(await page.locator('#loop-hint').textContent(),/マイクON/);assert.doesNotMatch(await page.locator('#loop-hint').textContent(),/準備/);await page.locator('#stop').click();await page.locator('#mic').click();
- await page.locator('[data-mode="input"]').click();await page.locator('[data-pitch="0"]').click();await page.locator('#capture-edit-confirm').click();await page.locator('[data-mode="backing"]').click();
+ await page.locator('[data-mode="input"]').click();await revealCreationControl(page,'[data-pitch="0"]');await page.locator('[data-pitch="0"]').click();await page.locator('#capture-edit-confirm').click();await page.locator('[data-mode="backing"]').click();
  await page.locator('#backing-loop').click({timeout:3000});await page.locator('#loop-record').waitFor();await page.waitForFunction(()=>!document.querySelector('#loop-record').disabled);
  const report=async()=>{await page.locator('#report').evaluate(n=>n.click());return JSON.parse(await page.locator('#metrics').textContent());};
  let data=await report();assert.equal(data.playback.notes,0,'only backing while preparing retake');
