@@ -1,5 +1,7 @@
 # サエズリズム 実装への引継ぎ
 
+**2026-10-03 軽量音源試作の公開確認**：実装コミット `e39d00467f781883e9b0b59aaf6bd60f1a242676`、[Pages37069046203](https://github.com/gerupon-lgtm/koekit/actions/runs/37069046203)成功。[比較ページ](https://koekit.sikumilab.com/probe/light-sound/)と制作画面の `?sound=light`／`?sound=simple` を公開。HTTPS配信41ファイルのSHA-256・長さが一致し、公開PC Chromeの合成PCM・先頭／余韻／ループ・3方式16音の発音経路・停止／保存、軽い2方式の制作／鍵盤／タップ録音／保存再開／伴奏併用が通過、JS／通信エラーなし。通常URLは従来音源。スマホの成立・音質・発音上限・音声認識との実機併用・本採用は未確認。まず両端末で「混合6音・反復」を3方式比較し、制作画面で鍵盤／録音等を確認する。[条件・検証](light-sound-implementation.md)。
+
 **2026-10-03 スマホ優先の軽量音源試作**：標準Web Audioによる1〜2発振器の `light` と1発振器の `simple` を追加。事前合成を使わず、音符長と独立した減衰・離鍵後の余韻を維持する。通常URLは従来音源、`?sound=light`／`?sound=simple` で同じ制作画面を試す。比較ページは `probe/light-sound/`、3方式・1〜16音の保持／反復・Am→F→C→G・個別音色・本人評価・JSON保存を用意。PC Chromeの合成PCM、既存制作・保存・ループ・録音、3方式×48イメージ伴奏、従来鍵盤・音量・模擬音声コマンドの回帰を確認。Windows版WebKitの音声APIは利用不可でPARTIAL。スマホでの音切れ・遅延・音楽性・発音上限・本採用は実機確認待ち。公開確認は後続記録。[操作・条件・検証](light-sound-implementation.md)。
 
 **2026-10-03 FM検証ページの公開確認**：実装コミット `642e03cb6f30535b203f51b91ee7f52bf98ca94b`、[Pages37032961209](https://github.com/gerupon-lgtm/koekit/actions/runs/37032961209)成功。[FM検証ページ](https://koekit.sikumilab.com/probe/fm-polyphony/)でHTTPS・19ファイル一致・トップリンクなし・JS／通信エラー0を確認。公開Chromeで14処理時間測定・3実AudioWorklet発音・C3〜G3の6ベースWAV・切替・共通停止・非表示停止・取消・結果保存・320／390／844pxの間隔と中央配置が成功。結果はPCでの公開動作検証で、Pixel 6a／Chrome・iPhone XR／Chromeの発音上限は未測定。本アプリの音源は変更していない。以後のキャッシュ更新はこのページのWorker／Worklet／mjsと動的Voice／WAVにも届く。[実機操作・条件](dx7ii-mobile-polyphony-20261003.md)。

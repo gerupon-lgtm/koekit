@@ -1,7 +1,7 @@
 // ML-T01 only: locally synthesized comparison voices, not approved instrument assets.
-import { tickSeconds } from '../../saezuri/document.js?v=v0.1.0-20261002214255-70753ad';
-import { schedulePlaybackCount, COUNT_STYLES } from './playback-count.js?v=v0.1.0-20261002214255-70753ad';
-import { createLightVoice, LIGHT_ENGINES } from './light-voice.js?v=v0.1.0-20261002214255-70753ad';
+import { tickSeconds } from '../../saezuri/document.js?v=v0.1.0-20261002215245-e39d004';
+import { schedulePlaybackCount, COUNT_STYLES } from './playback-count.js?v=v0.1.0-20261002215245-e39d004';
+import { createLightVoice, LIGHT_ENGINES } from './light-voice.js?v=v0.1.0-20261002215245-e39d004';
 export function scheduleVoice(ctx, output, { midi, time, duration, instrument = 'piano', gain = 0.16, velocity = 70, engine = 'classic' }) {
   if(/^(electro-)?(kick|snare|hat)$/.test(instrument))return schedulePercussion(ctx,output,{time,duration,instrument,gain});
   if (LIGHT_ENGINES.includes(engine)) {

@@ -1,5 +1,5 @@
 // A held voice owns its nodes. Releasing it never stops the accompaniment.
-import { createLightVoice, LIGHT_ENGINES } from './light-voice.js?v=v0.1.0-20261002214255-70753ad';
+import { createLightVoice, LIGHT_ENGINES } from './light-voice.js?v=v0.1.0-20261002215245-e39d004';
 export function heldVoice(ctx,output,midi,instrument='piano',{engine='classic'}={}){
  if(LIGHT_ENGINES.includes(engine))return createLightVoice(ctx,output,{midi,instrument,engine});
  const partials={piano:[1,.35,.16,.08],wood:[1,0,.12],soft:[1,.12,.04],sine:[1],lead:[1,.5,.33,.25,.2,.16]};
