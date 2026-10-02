@@ -2,7 +2,7 @@
 const fs=require('node:fs');
 const path=require('node:path');
 function stampTrialAssets(root,build){
- const directories=['probe/saezuri','probe/fm-polyphony','saezuri'].map(name=>path.join(root,name));
+ const directories=['probe/saezuri','probe/fm-polyphony','probe/light-sound','saezuri'].map(name=>path.join(root,name));
  const owned=target=>directories.some(directory=>target.startsWith(directory+path.sep));
  let changed=0;
  function visit(directory){

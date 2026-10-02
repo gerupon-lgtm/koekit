@@ -1,8 +1,14 @@
 // ML-T01 only: locally synthesized comparison voices, not approved instrument assets.
-import { tickSeconds } from '../../saezuri/document.js?v=v0.1.0-20261002162220-642e03c';
-import { schedulePlaybackCount, COUNT_STYLES } from './playback-count.js?v=v0.1.0-20261002162220-642e03c';
-export function scheduleVoice(ctx, output, { midi, time, duration, instrument = 'piano', gain = 0.16 }) {
+import { tickSeconds } from '../../saezuri/document.js?v=v0.1.0-20261002214255-70753ad';
+import { schedulePlaybackCount, COUNT_STYLES } from './playback-count.js?v=v0.1.0-20261002214255-70753ad';
+import { createLightVoice, LIGHT_ENGINES } from './light-voice.js?v=v0.1.0-20261002214255-70753ad';
+export function scheduleVoice(ctx, output, { midi, time, duration, instrument = 'piano', gain = 0.16, velocity = 70, engine = 'classic' }) {
   if(/^(electro-)?(kick|snare|hat)$/.test(instrument))return schedulePercussion(ctx,output,{time,duration,instrument,gain});
+  if (LIGHT_ENGINES.includes(engine)) {
+    const voice = createLightVoice(ctx, output, { midi, time, duration, instrument, gain, velocity, engine });
+    const stop = () => voice.stop(); stop.endTime = voice.endTime; return stop;
+  }
+  if (engine !== 'classic') throw new Error('VOICE_ENGINE_UNKNOWN');
   // A sustained, band-limited saw-like lead, synthesized locally.
   const harmonics = { sine: [1], piano: [1, 0.35, 0.16, 0.08], wood: [1, 0, 0.12], soft: [1, 0.12, 0.04],
     lead: Array.from({length:10},(_,i)=>1/(i+1)) }[instrument];
@@ -45,7 +51,7 @@ function schedulePercussion(ctx,output,{time,duration,instrument,gain}){
  return ()=>{try{source.stop();}catch{}cleanup();};
 }
 export class ProbeTransport {
-  constructor(ctx, onStop, mixer=null) { this.ctx = ctx; this.onStop = onStop; this.mixer=mixer;this.serial = 0; this.voices = new Set(); this.active = false; }
+  constructor(ctx, onStop, mixer=null, {engine='classic'}={}) { this.ctx = ctx; this.onStop = onStop; this.mixer=mixer;this.engine=engine;this.serial = 0; this.voices = new Set(); this.active = false; }
   start(notes, { tempo = 120, totalTicks = 64, instrument = 'piano', lead = 0.35, ahead = 0.15, countSound = false, countVolume = 1, countStyle = 'rim', accompaniment = [], loop = false } = {}) {
     this.stop(false);
     if (!COUNT_STYLES.includes(countStyle)) throw new Error('COUNT_STYLE_UNKNOWN');
@@ -56,7 +62,7 @@ export class ProbeTransport {
     this.totalTicks = totalTicks;
     this.loop=loop;
     this.active = true;
-    this.metrics = { events: 0, accompanimentEvents:0, countEvents: 0, maxTimerGapMs: 0, aheadMs: ahead * 1000, leadMs: lead * 1000 };
+    this.metrics = { engine:this.engine, events: 0, accompanimentEvents:0, countEvents: 0, maxVoices:0, maxTimerGapMs: 0, aheadMs: ahead * 1000, leadMs: lead * 1000 };
     const queue = [...notes.map(n=>({...n,accompaniment:false})),...accompaniment.map(n=>({...n,accompaniment:true}))].sort((a,b) => a.startTick - b.startTick);
     let index = 0, cycle = 0, countTick = 0, previous = performance.now();
     const pump = (prime = false) => {
@@ -83,11 +89,12 @@ export class ProbeTransport {
         if (time > horizon) break;
         if (time < now - 0.04) return this.stop(true, 'SCHEDULER_LATE');
         const duration = tickSeconds(note.durationTick, tempo);
-        const stop = scheduleVoice(this.ctx, this.mixer?(note.accompaniment?this.mixer.backing:this.mixer.melody):this.ctx.destination, { midi: note.midi, time: Math.max(now, time), duration, instrument:note.accompaniment?note.instrument:instrument, gain:note.accompaniment?note.gain:.16 });
-        this.voices.add({ stop, end: time + duration + 0.07 });
+        const stop = scheduleVoice(this.ctx, this.mixer?(note.accompaniment?this.mixer.backing:this.mixer.melody):this.ctx.destination, { midi: note.midi, time: Math.max(now, time), duration, instrument:note.accompaniment?note.instrument:instrument, gain:note.accompaniment?note.gain:.16, velocity:note.velocity??70, engine:this.engine });
+        this.voices.add({ stop, end: stop.endTime ?? time + duration + 0.07 });
+        this.metrics.maxVoices=Math.max(this.metrics.maxVoices,this.voices.size);
         index++; this.metrics[note.accompaniment?'accompanimentEvents':'events']++;
       }
-      if (!loop && now >= this.anchor + tickSeconds(totalTicks, tempo) + 0.08) this.stop(true, 'ENDED');
+      if (!loop && now >= this.anchor + tickSeconds(totalTicks, tempo) + 0.08 && this.voices.size===0) this.stop(true, 'ENDED');
     };
     this.timer = setInterval(pump, 25);
     pump(true);

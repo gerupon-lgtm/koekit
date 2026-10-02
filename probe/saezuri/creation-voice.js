@@ -1,5 +1,5 @@
-import {EDIT_WORDS,parseEditCommand} from './edit-voice.js?v=v0.1.0-20261002162220-642e03c';
-import {ENTRY_WORDS,parseEntryCommand} from './entry-voice.js?v=v0.1.0-20261002162220-642e03c';
+import {EDIT_WORDS,parseEditCommand} from './edit-voice.js?v=v0.1.0-20261002214255-70753ad';
+import {ENTRY_WORDS,parseEntryCommand} from './entry-voice.js?v=v0.1.0-20261002214255-70753ad';
 const normalize=text=>String(text).normalize('NFKC').replace(/\s/g,'').replace(/[ァ-ヶ]/g,c=>String.fromCharCode(c.charCodeAt(0)-0x60)).toLowerCase();
 // Exact phrases only. Never use a fragment such as 次 for regeneration.
 export const IMAGE_VOICE_CHOICES=[

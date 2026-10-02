@@ -440,3 +440,8 @@
 - [x] D-T10制作：透過ロボット3状態・ロゴ・盤面素材・SE／ジングル。[素材記録](delivery/assets.md)。実機視認性と試聴はD-T08で確認。
 
 - [x] デリバリズムの[実装引継ぎ](delivery/handoff.md)と[アセット資料](delivery/references/README.md)を作成し、比較原画像をリポジトリ内へ複製。素材本制作とアプリ実装・自動検証を完了。引継ぎも更新済み。
+
+## 2026-10-03 サエズリズムのスマホ優先音源試作
+
+- [x] 1〜2発振器／1発振器の演奏時合成・比較画面・URL限定の制作画面接続とPC検証。[操作・検証記録](melody/light-sound-implementation.md)。
+- [ ] Pixel 6a／Chrome・iPhone XR／Chromeでの音切れ・鍵盤遅延・録音／音声操作併用・音色の本採用。

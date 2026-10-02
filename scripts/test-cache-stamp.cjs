@@ -12,6 +12,11 @@ test('deployment token reaches CSS, the module graph and workers without duplica
   write('probe/fm-polyphony/index.html','<script src="./main.js"></script>');
   write('probe/fm-polyphony/main.js',"import './config.js';new Worker('./worker.js');audioWorklet.addModule('./live-worklet.js');");
   write('probe/fm-polyphony/config.js','export const test=1;');
+  write('probe/light-sound/index.html','<link href="./style.css"><script src="./main.js"></script>');
+  write('probe/light-sound/style.css','body{}');
+  write('probe/light-sound/main.js',"import '../saezuri/light-voice.js';import '../../saezuri/music/accompaniment.js';");
+  write('probe/saezuri/light-voice.js','export const test=1;');
+  write('saezuri/music/accompaniment.js','export const test=1;');
   write('probe/fm-polyphony/worker.js',"import './runtime/fmopelab.mjs';");
   write('probe/fm-polyphony/live-worklet.js',"import './runtime/fmopelab.mjs';");
   write('probe/fm-polyphony/runtime/fmopelab.mjs','export const runtime=1;');
@@ -23,6 +28,7 @@ test('deployment token reaches CSS, the module graph and workers without duplica
    assert.match(read('probe/saezuri/index.html'),new RegExp('styles\\.css\\?v='+build));
    assert.equal(read('src/speech/microphone.js'),'let enabled=true;');assert.equal(read('styles.css'),'body{}');
    for(const name of ['index.html','main.js','worker.js','live-worklet.js'])assert.ok(read('probe/fm-polyphony/'+name).includes('?v='+build));
+   for(const name of ['index.html','main.js'])assert.ok(read('probe/light-sound/'+name).includes('?v='+build));
    assert.equal(stampTrialAssets(root,build),0,'same token is stable');
    if(build==='next')assert.ok(!read('probe/saezuri/app.js').includes('?v=first'));
   }
