@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="ja"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><link rel="icon" href="data:,"><title>FM音源・同時発音の確認</title>
+<style>
+:root{font-family:system-ui,sans-serif;color:#3b3830;background:#f8f4e9}*{box-sizing:border-box}body{margin:0;padding:16px}main{max-width:640px;margin:auto}h1{font-size:21px;text-align:center}p{line-height:1.6;font-size:14px}label{display:block;font-size:14px;margin:12px 0}input,select,button{font:inherit;border:1px solid #d4cdbc;border-radius:14px;padding:12px;background:#fffaf0;color:inherit;min-height:46px}input,select{display:block;width:100%;margin-top:6px}button{cursor:pointer}button:disabled{opacity:.5;cursor:default}.controls{display:flex;gap:10px;flex-wrap:wrap}.controls button{flex:1;min-width:140px}.stop{text-align:center;margin:16px 0}.stop button{width:140px;background:#eee4da}#measure,#listen{background:#e5ecdc}.report{overflow-x:auto}table{border-collapse:collapse;width:100%;font-size:13px}td,th{padding:10px 6px;border-bottom:1px solid #ddd6c9;text-align:center}#status{min-height:48px;background:#eee8f3;padding:12px;border-radius:14px}.note{font-size:12px}#heard{display:none;margin:12px 0}details{margin-top:16px}summary{cursor:pointer}a{color:#476047}
+</style>
+<main><h1>FM音源・同時発音の確認</h1>
+<p>端末で処理時間を測り、音数を変えて実際の音を聴きます。音切れの有無は、聴いて記録してください。</p>
+<label>機種名<input id="device" placeholder="例：Pixel 6a" maxlength="120"></label>
+<label>音の組み合わせ<select id="scenario"><option value="mixed">旋律＋和音＋柔らかいベース（3音色）</option><option value="single">エレピのみ（1音色）</option></select></label>
+<label>押している音数<select id="count"><option>1</option><option>2</option><option>4</option><option selected>6</option><option>8</option><option>12</option><option>16</option></select></label>
+<label>鳴らし方<select id="mode"><option value="held">音を保つ</option><option value="repeat">短く繰り返す（余韻が重なる）</option></select></label>
+<div class="controls"><button id="measure">処理時間を測る</button><button id="listen">この音数を聴く</button></div>
+<div class="stop"><button id="stop" disabled>■ とめる</button></div>
+<p id="status" role="status" aria-live="polite">準備できています。小さい音量から確認してください。</p>
+<div id="heard" class="controls"><button id="clean">途切れなし</button><button id="glitch">途切れあり</button></div>
+<div class="report"><table><thead><tr><th>音数</th><th>CPU平均*</th><th>CPU p95*</th><th>聴いた結果</th></tr></thead><tbody id="results"></tbody></table></div>
+<p class="note">* Workerでの合成時間を音声1ブロックの時間と比較した参考値です。実際のAudioWorkletの音切れ数や上限ではありません。50%以下を余裕の目安にしますが、合格判定は実際に聴いて行います。</p>
+<button id="export" disabled>結果を保存（JSON）</button>
+<details id="bass-samples"><summary>ベース音色を聴きくらべる</summary><p>C3 → E3 → G3のド・ミ・ソ。前の比較より1オクターブ上です。4候補はベロシティ70で揃えています。</p><div class="controls" id="bass-buttons"><button data-bass="dx7ii-dx7iifdvoice32b-s02-v70.wav">▶ SmoohBass</button><button data-bass="dx7ii-dx7iifdvoice32-s27-v70.wav">▶ StringBass</button><button data-bass="dx7-rom3a-s18-v70.wav">▶ FRETLESS 1</button><button data-bass="dx7crt-vrc1002_a64-s27-v70.wav">▶ Wood Bass</button><button data-bass="dx7ii-dx7iifdvoice32-s06-v70.wav">▶ SuperBass（70）</button><button data-bass="dx7ii-dx7iifdvoice32-s06-v45.wav">▶ SuperBass（45）</button></div><p class="note">停止は上の「■ とめる」を使います。別の音色を押すと切り替わります。この欄のWAV試聴は同時発音の負荷測定には含みません。</p></details>
+<details><summary>条件・限界</summary><p>ベロシティ70、追加音量0.08、各パート最大16音。音数は押している音の数で、離鍵後の余韻は別に負荷になります。繰り返しでは各音を0.35秒鳴らし、0.5秒ごとに音域を変えます。通常の試聴は12秒です。</p><p>3音色はEbonyIvory／PianoBells／SmoohBass。ベースはC3、和音はド・ミ・ソを重ねます。2音の場合は旋律＋ベース、1音は旋律のみ。テスト中に画面を隠すと停止します。マイク・音声認識・譜面・ドラムは含みません。実際の制作画面との併用と長時間の発熱は別途確認が必要です。</p><p>このページは検証用で、音声や結果を送信しません。機種名・結果は「結果を保存」から端末へ保存します。</p></details>
+</main><script type="module" src="./main.js?v=v0.1.0-20261002161601-cabae06"></script></html>

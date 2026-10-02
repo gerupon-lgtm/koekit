@@ -1,0 +1,186 @@
+{
+  "purpose": "DX7II Saezuri playback-only adoption review",
+  "applicationChanged": false,
+  "published": false,
+  "packageFilesVerified": 1636,
+  "runtimeSha256": "8ae442a5b3518f5d8ea0a9492e798145203099331fb2e8542418c1f428ac1a65",
+  "workletSha256": "94fada0ee463fcc93779658b78165166ccc3d25dfe806c51e89241816a8498e5",
+  "packageVerification": {
+    "validVoices": 761,
+    "diagnosedOutOfRange": 7,
+    "dx7iiShortRenders": 128,
+    "vcedRoundtrips": 761,
+    "bankHashes": 24,
+    "originalSourceHashes": 41
+  },
+  "desktopNode": {
+    "createdAt": "2026-10-02T14:38:34.636Z",
+    "node": "v24.18.0",
+    "rate": 48000,
+    "desktopOnly": true,
+    "realtime": [
+      {
+        "name": "piano",
+        "count": 1,
+        "audioSeconds": 2,
+        "wallMs": 201.17159999999998,
+        "realTimeRatio": 0.10058579999999999,
+        "p50Ms": 0.23579999999998336,
+        "p95Ms": 0.4467000000000212,
+        "maxMs": 1.032199999999989,
+        "blockBudgetMs": 2.6666666666666665
+      },
+      {
+        "name": "piano",
+        "count": 4,
+        "audioSeconds": 2,
+        "wallMs": 505.03630000000004,
+        "realTimeRatio": 0.25251815,
+        "p50Ms": 0.6381000000000085,
+        "p95Ms": 0.9107999999999947,
+        "maxMs": 1.565999999999974,
+        "blockBudgetMs": 2.6666666666666665
+      },
+      {
+        "name": "piano",
+        "count": 8,
+        "audioSeconds": 2,
+        "wallMs": 926.1042,
+        "realTimeRatio": 0.4630521,
+        "p50Ms": 1.1813999999999396,
+        "p95Ms": 1.6865000000000236,
+        "maxMs": 2.5009999999999764,
+        "blockBudgetMs": 2.6666666666666665
+      },
+      {
+        "name": "piano",
+        "count": 16,
+        "audioSeconds": 2,
+        "wallMs": 1798.1997,
+        "realTimeRatio": 0.8990998499999999,
+        "p50Ms": 2.31899999999996,
+        "p95Ms": 3.2784999999998945,
+        "maxMs": 4.14650000000006,
+        "blockBudgetMs": 2.6666666666666665
+      },
+      {
+        "name": "soft",
+        "count": 4,
+        "audioSeconds": 2,
+        "wallMs": 472.6972999999998,
+        "realTimeRatio": 0.2363486499999999,
+        "p50Ms": 0.6000999999996566,
+        "p95Ms": 0.8684000000002925,
+        "maxMs": 1.448500000000422,
+        "blockBudgetMs": 2.6666666666666665
+      },
+      {
+        "name": "bass",
+        "count": 1,
+        "audioSeconds": 2,
+        "wallMs": 138.14620000000014,
+        "realTimeRatio": 0.06907310000000007,
+        "p50Ms": 0.1679999999996653,
+        "p95Ms": 0.2763999999997395,
+        "maxMs": 0.5529999999998836,
+        "blockBudgetMs": 2.6666666666666665
+      }
+    ],
+    "phrase": [
+      {
+        "bars": 4,
+        "tempo": 120,
+        "phraseSeconds": 8,
+        "renderSeconds": 10,
+        "wallMs": 5026.7651000000005,
+        "peak": 0.31419453024864197,
+        "firstMs": 0.020833333333333332,
+        "bytes": 1920000,
+        "parts": [
+          {
+            "notes": 52,
+            "overlapSameMidi": 0,
+            "maxActive": 4
+          },
+          {
+            "notes": 32,
+            "overlapSameMidi": 0,
+            "maxActive": 1
+          },
+          {}
+        ]
+      },
+      {
+        "bars": 8,
+        "tempo": 120,
+        "phraseSeconds": 16,
+        "renderSeconds": 18,
+        "wallMs": 8258.0354,
+        "peak": 0.31419453024864197,
+        "firstMs": 0.020833333333333332,
+        "bytes": 3456000,
+        "parts": [
+          {
+            "notes": 104,
+            "overlapSameMidi": 0,
+            "maxActive": 4
+          },
+          {
+            "notes": 64,
+            "overlapSameMidi": 0,
+            "maxActive": 1
+          },
+          {}
+        ]
+      }
+    ],
+    "timing": [
+      {
+        "rate": 44100,
+        "requestedOnsetMs": 125,
+        "firstNonzeroMs": 125.14739229024943,
+        "firstOutputBeforeRequest": false
+      },
+      {
+        "rate": 48000,
+        "requestedOnsetMs": 125,
+        "firstNonzeroMs": 125.14583333333333,
+        "firstOutputBeforeRequest": false
+      }
+    ],
+    "sample": {
+      "file": "fm-saezuri-review.wav",
+      "sha256": "fdf70190c6701da064ea7a8be5305aaba544282e876a6092ee0dfd31aaef054b"
+    }
+  },
+  "desktopChrome": {
+    "createdAt": "2026-10-02T14:42:46.757Z",
+    "native": {
+      "rate": 48000,
+      "parts": [
+        {
+          "part": "melody",
+          "peak": 7.117872883100063e-05,
+          "stoppedPeak": 1.4901161415892261e-09
+        },
+        {
+          "part": "chord",
+          "peak": 0.017589105293154716,
+          "stoppedPeak": 1.4901161415892261e-09
+        },
+        {
+          "part": "bass",
+          "peak": 0.00566245848312974,
+          "stoppedPeak": 1.4901161415892261e-09
+        }
+      ],
+      "clock": {
+        "audioElapsedMs": 1210.6666666666667,
+        "wallElapsedMs": 1212.1000001430511
+      },
+      "diagnostics": [],
+      "realHardwareOrSpeechTest": false
+    },
+    "errors": []
+  }
+}

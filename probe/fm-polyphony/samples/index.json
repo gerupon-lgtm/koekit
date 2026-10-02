@@ -1,0 +1,536 @@
+{
+  "createdAt": "2026-10-02T16:03:53.058Z",
+  "purpose": "C3..G3 soft-bass audition corrected after user feedback; adoption undecided",
+  "sampleRate": 48000,
+  "durationSeconds": 6,
+  "channels": 1,
+  "bitsPerSample": 24,
+  "gain": 0.5,
+  "notes": [
+    48,
+    52,
+    55
+  ],
+  "heldSeconds": 1,
+  "releaseWindowSeconds": 1,
+  "maxVoices": 4,
+  "normalization": "none; same linear gain for all presets and velocities",
+  "voices": [
+    {
+      "id": "dx7ii-dx7iifdvoice32b-s02",
+      "name": "SmoohBass",
+      "role": "candidate",
+      "velocity": 70,
+      "source": {
+        "category": "DX7-2",
+        "bank": "dx7iifdvoice32b.syx",
+        "slot": 2,
+        "bankSha256": "00e68c54e65d033061f39e9e98195893428658901d0092a56b0614acc3f0ba84",
+        "rawBank": "presets/raw/DX7-2/dx7iifdvoice32b.syx"
+      },
+      "presetPath": "presets/voices/dx7ii-dx7iifdvoice32b-s02.json",
+      "presetSha256": "1d873814660933ca9e88af105f54db086d7b22610a005d6c283d8a20523cc45d",
+      "file": "dx7ii-dx7iifdvoice32b-s02-v70.wav",
+      "wavSha256": "74cd714280f467ff1c32f4e9d1472eaaa5fc3235b2d4a97619bc112d6139d16d",
+      "bytes": 864044,
+      "frames": 288000,
+      "peak": 0.4331677258014679,
+      "rms": 0.06905312848336947,
+      "notePeaks": [
+        0.4331677258014679,
+        0.3267059922218323,
+        0.3801605701446533
+      ],
+      "renderMs": 301.4873,
+      "diagnostics": {
+        "undefinedBits": [],
+        "parameters": []
+      },
+      "checks": {
+        "ready": true,
+        "finitePcm": true,
+        "noClipping": true,
+        "eachHeldNoteNonSilent": true,
+        "wavHeaderAndData": true,
+        "encodedPeak": true
+      },
+      "events": [
+        {
+          "atSeconds": 0,
+          "intent": {
+            "type": "noteOn",
+            "note": 48,
+            "velocity": 70
+          }
+        },
+        {
+          "atSeconds": 1,
+          "intent": {
+            "type": "noteOff",
+            "note": 48
+          }
+        },
+        {
+          "atSeconds": 2,
+          "intent": {
+            "type": "noteOn",
+            "note": 52,
+            "velocity": 70
+          }
+        },
+        {
+          "atSeconds": 3,
+          "intent": {
+            "type": "noteOff",
+            "note": 52
+          }
+        },
+        {
+          "atSeconds": 4,
+          "intent": {
+            "type": "noteOn",
+            "note": 55,
+            "velocity": 70
+          }
+        },
+        {
+          "atSeconds": 5,
+          "intent": {
+            "type": "noteOff",
+            "note": 55
+          }
+        }
+      ]
+    },
+    {
+      "id": "dx7ii-dx7iifdvoice32-s27",
+      "name": "StringBass",
+      "role": "candidate",
+      "velocity": 70,
+      "source": {
+        "category": "DX7-2",
+        "bank": "dx7iifdvoice32.syx",
+        "slot": 27,
+        "bankSha256": "78a7e4d4af44816516eb1af16700023dd72124bb8950ea453f5d8df668e41adb",
+        "rawBank": "presets/raw/DX7-2/dx7iifdvoice32.syx"
+      },
+      "presetPath": "presets/voices/dx7ii-dx7iifdvoice32-s27.json",
+      "presetSha256": "22fd67b6ab3b2a3b6ad7fb4d211e46bf2f11058df1d5c2b76e6aa8a95996feed",
+      "file": "dx7ii-dx7iifdvoice32-s27-v70.wav",
+      "wavSha256": "0341f4c9795d053b0f087348d3e73e70e4533467c7371eae438c8370145aacd9",
+      "bytes": 864044,
+      "frames": 288000,
+      "peak": 0.3937931954860687,
+      "rms": 0.04705302037777782,
+      "notePeaks": [
+        0.3937931954860687,
+        0.330154687166214,
+        0.2578338086605072
+      ],
+      "renderMs": 265.6912,
+      "diagnostics": {
+        "undefinedBits": [],
+        "parameters": []
+      },
+      "checks": {
+        "ready": true,
+        "finitePcm": true,
+        "noClipping": true,
+        "eachHeldNoteNonSilent": true,
+        "wavHeaderAndData": true,
+        "encodedPeak": true
+      },
+      "events": [
+        {
+          "atSeconds": 0,
+          "intent": {
+            "type": "noteOn",
+            "note": 48,
+            "velocity": 70
+          }
+        },
+        {
+          "atSeconds": 1,
+          "intent": {
+            "type": "noteOff",
+            "note": 48
+          }
+        },
+        {
+          "atSeconds": 2,
+          "intent": {
+            "type": "noteOn",
+            "note": 52,
+            "velocity": 70
+          }
+        },
+        {
+          "atSeconds": 3,
+          "intent": {
+            "type": "noteOff",
+            "note": 52
+          }
+        },
+        {
+          "atSeconds": 4,
+          "intent": {
+            "type": "noteOn",
+            "note": 55,
+            "velocity": 70
+          }
+        },
+        {
+          "atSeconds": 5,
+          "intent": {
+            "type": "noteOff",
+            "note": 55
+          }
+        }
+      ]
+    },
+    {
+      "id": "dx7-rom3a-s18",
+      "name": "FRETLESS 1",
+      "role": "candidate",
+      "velocity": 70,
+      "source": {
+        "category": "DX7",
+        "bank": "rom3a.syx",
+        "slot": 18,
+        "bankSha256": "157b71a53a9881c8209bb5de57f6d9519d5f43cb7cae591c4606e7fb52ff9d86",
+        "rawBank": "presets/raw/DX7/rom3a.syx"
+      },
+      "presetPath": "presets/voices/dx7-rom3a-s18.json",
+      "presetSha256": "32beb14413d60710ca280e9123f6045f7b5ef289ac00ac5db6ecb62ad9e89fb5",
+      "file": "dx7-rom3a-s18-v70.wav",
+      "wavSha256": "0cd6691c5d80c50fa9be53faf479a237da0ebc0bbbd0529dbca4d546a8ac28aa",
+      "bytes": 864044,
+      "frames": 288000,
+      "peak": 0.31103286147117615,
+      "rms": 0.06459069894800316,
+      "notePeaks": [
+        0.31103286147117615,
+        0.3092708885669708,
+        0.31007471680641174
+      ],
+      "renderMs": 245.9801,
+      "diagnostics": {
+        "undefinedBits": [],
+        "parameters": []
+      },
+      "checks": {
+        "ready": true,
+        "finitePcm": true,
+        "noClipping": true,
+        "eachHeldNoteNonSilent": true,
+        "wavHeaderAndData": true,
+        "encodedPeak": true
+      },
+      "events": [
+        {
+          "atSeconds": 0,
+          "intent": {
+            "type": "noteOn",
+            "note": 48,
+            "velocity": 70
+          }
+        },
+        {
+          "atSeconds": 1,
+          "intent": {
+            "type": "noteOff",
+            "note": 48
+          }
+        },
+        {
+          "atSeconds": 2,
+          "intent": {
+            "type": "noteOn",
+            "note": 52,
+            "velocity": 70
+          }
+        },
+        {
+          "atSeconds": 3,
+          "intent": {
+            "type": "noteOff",
+            "note": 52
+          }
+        },
+        {
+          "atSeconds": 4,
+          "intent": {
+            "type": "noteOn",
+            "note": 55,
+            "velocity": 70
+          }
+        },
+        {
+          "atSeconds": 5,
+          "intent": {
+            "type": "noteOff",
+            "note": 55
+          }
+        }
+      ]
+    },
+    {
+      "id": "dx7crt-vrc1002_a64-s27",
+      "name": "Wood Bass",
+      "role": "candidate",
+      "velocity": 70,
+      "source": {
+        "category": "DX7 CRT",
+        "bank": "vrc1002_a64.syx",
+        "slot": 27,
+        "bankSha256": "9d57bbb754074ee88c9df4524bab9cbec7fd376303a82b088b33b0b7736b7391",
+        "rawBank": "presets/raw/DX7 CRT/vrc1002_a64.syx"
+      },
+      "presetPath": "presets/voices/dx7crt-vrc1002_a64-s27.json",
+      "presetSha256": "5caa5e59a7f51b0f7f43f902d913c0f6f45145fce5e3e78702a62b82096d2a9e",
+      "file": "dx7crt-vrc1002_a64-s27-v70.wav",
+      "wavSha256": "ec610425bde966f9215d00880006f58eaab006b8418a7c5364d9e61c7b9d3a0f",
+      "bytes": 864044,
+      "frames": 288000,
+      "peak": 0.2510358393192291,
+      "rms": 0.09275661565292172,
+      "notePeaks": [
+        0.25097423791885376,
+        0.25100797414779663,
+        0.2510358393192291
+      ],
+      "renderMs": 300.34770000000003,
+      "diagnostics": {
+        "undefinedBits": [],
+        "parameters": []
+      },
+      "checks": {
+        "ready": true,
+        "finitePcm": true,
+        "noClipping": true,
+        "eachHeldNoteNonSilent": true,
+        "wavHeaderAndData": true,
+        "encodedPeak": true
+      },
+      "events": [
+        {
+          "atSeconds": 0,
+          "intent": {
+            "type": "noteOn",
+            "note": 48,
+            "velocity": 70
+          }
+        },
+        {
+          "atSeconds": 1,
+          "intent": {
+            "type": "noteOff",
+            "note": 48
+          }
+        },
+        {
+          "atSeconds": 2,
+          "intent": {
+            "type": "noteOn",
+            "note": 52,
+            "velocity": 70
+          }
+        },
+        {
+          "atSeconds": 3,
+          "intent": {
+            "type": "noteOff",
+            "note": 52
+          }
+        },
+        {
+          "atSeconds": 4,
+          "intent": {
+            "type": "noteOn",
+            "note": 55,
+            "velocity": 70
+          }
+        },
+        {
+          "atSeconds": 5,
+          "intent": {
+            "type": "noteOff",
+            "note": 55
+          }
+        }
+      ]
+    },
+    {
+      "id": "dx7ii-dx7iifdvoice32-s06",
+      "name": "SuperBass",
+      "role": "reference",
+      "velocity": 70,
+      "source": {
+        "category": "DX7-2",
+        "bank": "dx7iifdvoice32.syx",
+        "slot": 6,
+        "bankSha256": "78a7e4d4af44816516eb1af16700023dd72124bb8950ea453f5d8df668e41adb",
+        "rawBank": "presets/raw/DX7-2/dx7iifdvoice32.syx"
+      },
+      "presetPath": "presets/voices/dx7ii-dx7iifdvoice32-s06.json",
+      "presetSha256": "583aba5270dcd4e92b9277a38aacc6a7441b19bbcc65ab44c12495da446ab06c",
+      "file": "dx7ii-dx7iifdvoice32-s06-v70.wav",
+      "wavSha256": "5fa2a9c0f2879aab9a6cc8f2d5d71d5d8b22dcc9798e3b4f19d42acfe279953e",
+      "bytes": 864044,
+      "frames": 288000,
+      "peak": 0.35458481311798096,
+      "rms": 0.058424599283078686,
+      "notePeaks": [
+        0.3396875262260437,
+        0.3487696945667267,
+        0.35458481311798096
+      ],
+      "renderMs": 212.26819999999998,
+      "diagnostics": {
+        "undefinedBits": [],
+        "parameters": []
+      },
+      "checks": {
+        "ready": true,
+        "finitePcm": true,
+        "noClipping": true,
+        "eachHeldNoteNonSilent": true,
+        "wavHeaderAndData": true,
+        "encodedPeak": true
+      },
+      "events": [
+        {
+          "atSeconds": 0,
+          "intent": {
+            "type": "noteOn",
+            "note": 48,
+            "velocity": 70
+          }
+        },
+        {
+          "atSeconds": 1,
+          "intent": {
+            "type": "noteOff",
+            "note": 48
+          }
+        },
+        {
+          "atSeconds": 2,
+          "intent": {
+            "type": "noteOn",
+            "note": 52,
+            "velocity": 70
+          }
+        },
+        {
+          "atSeconds": 3,
+          "intent": {
+            "type": "noteOff",
+            "note": 52
+          }
+        },
+        {
+          "atSeconds": 4,
+          "intent": {
+            "type": "noteOn",
+            "note": 55,
+            "velocity": 70
+          }
+        },
+        {
+          "atSeconds": 5,
+          "intent": {
+            "type": "noteOff",
+            "note": 55
+          }
+        }
+      ]
+    },
+    {
+      "id": "dx7ii-dx7iifdvoice32-s06",
+      "name": "SuperBass",
+      "role": "lower-velocity reference",
+      "velocity": 45,
+      "source": {
+        "category": "DX7-2",
+        "bank": "dx7iifdvoice32.syx",
+        "slot": 6,
+        "bankSha256": "78a7e4d4af44816516eb1af16700023dd72124bb8950ea453f5d8df668e41adb",
+        "rawBank": "presets/raw/DX7-2/dx7iifdvoice32.syx"
+      },
+      "presetPath": "presets/voices/dx7ii-dx7iifdvoice32-s06.json",
+      "presetSha256": "583aba5270dcd4e92b9277a38aacc6a7441b19bbcc65ab44c12495da446ab06c",
+      "file": "dx7ii-dx7iifdvoice32-s06-v45.wav",
+      "wavSha256": "1e37cc6dbf26188dbf018c4c9e64a988315f66d6242d87469111c8e5a3a048ca",
+      "bytes": 864044,
+      "frames": 288000,
+      "peak": 0.2537800371646881,
+      "rms": 0.04188921163869024,
+      "notePeaks": [
+        0.24186177551746368,
+        0.2491898238658905,
+        0.2537800371646881
+      ],
+      "renderMs": 182.6313,
+      "diagnostics": {
+        "undefinedBits": [],
+        "parameters": []
+      },
+      "checks": {
+        "ready": true,
+        "finitePcm": true,
+        "noClipping": true,
+        "eachHeldNoteNonSilent": true,
+        "wavHeaderAndData": true,
+        "encodedPeak": true
+      },
+      "events": [
+        {
+          "atSeconds": 0,
+          "intent": {
+            "type": "noteOn",
+            "note": 48,
+            "velocity": 45
+          }
+        },
+        {
+          "atSeconds": 1,
+          "intent": {
+            "type": "noteOff",
+            "note": 48
+          }
+        },
+        {
+          "atSeconds": 2,
+          "intent": {
+            "type": "noteOn",
+            "note": 52,
+            "velocity": 45
+          }
+        },
+        {
+          "atSeconds": 3,
+          "intent": {
+            "type": "noteOff",
+            "note": 52
+          }
+        },
+        {
+          "atSeconds": 4,
+          "intent": {
+            "type": "noteOn",
+            "note": 55,
+            "velocity": 45
+          }
+        },
+        {
+          "atSeconds": 5,
+          "intent": {
+            "type": "noteOff",
+            "note": 55
+          }
+        }
+      ]
+    }
+  ]
+}

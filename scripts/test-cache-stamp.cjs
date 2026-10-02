@@ -9,6 +9,12 @@ test('deployment token reaches CSS, the module graph and workers without duplica
   write('probe/saezuri/app.js',"import './keyboard-controls.js';import '../../src/speech/microphone.js';new Worker(new URL('./worker.js',import.meta.url));");
   write('probe/saezuri/keyboard-controls.js',"import {pianoKeys} from './tap-recording.js';");write('probe/saezuri/tap-recording.js',"import '../../saezuri/document.js';");
   write('probe/saezuri/worker.js',"import '../../saezuri/document.js';");write('saezuri/document.js','export const value=1;');write('src/speech/microphone.js','let enabled=true;');
+  write('probe/fm-polyphony/index.html','<script src="./main.js"></script>');
+  write('probe/fm-polyphony/main.js',"import './config.js';new Worker('./worker.js');audioWorklet.addModule('./live-worklet.js');");
+  write('probe/fm-polyphony/config.js','export const test=1;');
+  write('probe/fm-polyphony/worker.js',"import './runtime/fmopelab.mjs';");
+  write('probe/fm-polyphony/live-worklet.js',"import './runtime/fmopelab.mjs';");
+  write('probe/fm-polyphony/runtime/fmopelab.mjs','export const runtime=1;');
   for(const build of ['first','next']){
    assert.ok(stampTrialAssets(root,build)>0);
    const read=name=>fs.readFileSync(path.join(root,name),'utf8');
@@ -16,6 +22,7 @@ test('deployment token reaches CSS, the module graph and workers without duplica
    assert.match(read('probe/saezuri/app.js'),/import '\.\.\/\.\.\/src\/speech\/microphone\.js';/);
    assert.match(read('probe/saezuri/index.html'),new RegExp('styles\\.css\\?v='+build));
    assert.equal(read('src/speech/microphone.js'),'let enabled=true;');assert.equal(read('styles.css'),'body{}');
+   for(const name of ['index.html','main.js','worker.js','live-worklet.js'])assert.ok(read('probe/fm-polyphony/'+name).includes('?v='+build));
    assert.equal(stampTrialAssets(root,build),0,'same token is stable');
    if(build==='next')assert.ok(!read('probe/saezuri/app.js').includes('?v=first'));
   }

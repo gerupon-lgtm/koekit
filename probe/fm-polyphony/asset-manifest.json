@@ -1,0 +1,36 @@
+{
+  "purpose": "GitHub Pages device verification; explicitly requested by project owner on 2026-10-03",
+  "copiedFiles": [
+    {
+      "source": "runtime/fmopelab-dx7ii.mjs",
+      "path": "runtime/fmopelab-dx7ii.mjs",
+      "bytes": 708181,
+      "sha256": "8ae442a5b3518f5d8ea0a9492e798145203099331fb2e8542418c1f428ac1a65"
+    },
+    {
+      "source": "licenses/Zod-MIT.txt",
+      "path": "licenses/Zod-MIT.txt",
+      "bytes": 1072,
+      "sha256": "3f1189b28e3866e0d979968d466b78f813f76827cfdca1fbb124cc0a5c8841f8"
+    },
+    {
+      "source": "presets/voices/dx7ii-dx7iifdvoice32-s09.json",
+      "path": "presets/dx7ii-dx7iifdvoice32-s09.json",
+      "bytes": 10796,
+      "sha256": "5f529df32223e207ab2d6dbb5549a4ebad3d471b64f198d66f1c318b322b58ed"
+    },
+    {
+      "source": "presets/voices/dx7ii-dx7iifdvoice32-s15.json",
+      "path": "presets/dx7ii-dx7iifdvoice32-s15.json",
+      "bytes": 10810,
+      "sha256": "451e96e07d70120efa83b74ee680658afab5d10ad6aa20933fafad4fa6db3e4e"
+    },
+    {
+      "source": "presets/voices/dx7ii-dx7iifdvoice32b-s02.json",
+      "path": "presets/dx7ii-dx7iifdvoice32b-s02.json",
+      "bytes": 10828,
+      "sha256": "1d873814660933ca9e88af105f54db086d7b22610a005d6c283d8a20523cc45d"
+    }
+  ],
+  "bassSampleManifest": "samples/index.json"
+}
