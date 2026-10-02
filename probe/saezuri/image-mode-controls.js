@@ -1,4 +1,4 @@
-import {IMAGE_TYPES,IMAGE_SPEEDS,IMAGE_MOODS,DEFAULT_IMAGE,IMAGE_TEMPOS,generateImageAccompaniment} from '../../saezuri/music/image-arrangement.js?v=v0.1.0-20261001233521-de8dc6d';
+import {IMAGE_TYPES,IMAGE_SPEEDS,IMAGE_MOODS,DEFAULT_IMAGE,IMAGE_TEMPOS,generateImageAccompaniment} from '../../saezuri/music/image-arrangement.js?v=v0.1.0-20261002022700-637b77f';
 const $=id=>document.getElementById(id);
 export class ImageModeControls {
  constructor({editor,onTempo}){
@@ -17,6 +17,11 @@ export class ImageModeControls {
  get active(){return !!this.editor.previewPattern?.accompaniment?.imageChoice;}
  choice(){return Object.fromEntries(['type','speed','mood'].map(key=>[key,$(`image-word-${key}`).value]));}
  begin(){return this.editor.stageImageAccompaniment(generateImageAccompaniment(this.editor.previewPattern,DEFAULT_IMAGE));}
+ selectVoice(field,value){
+  const options={type:IMAGE_TYPES,speed:IMAGE_SPEEDS,mood:IMAGE_MOODS};
+  if(!this.active||!this.editor.canGenerateAccompaniment||!options[field]?.some(([id])=>id===value))return false;
+  $(`image-word-${field}`).value=value;return this.generate();
+ }
  generate(options={}){
   if(!this.active||!this.editor.canGenerateAccompaniment)return false;
   return this.editor.stageImageAccompaniment(generateImageAccompaniment(this.editor.previewPattern,this.choice(),options));

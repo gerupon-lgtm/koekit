@@ -48,3 +48,10 @@ test('switching input vocabulary drops stale results and applies the new parser 
  assert.deepEqual(f.commands,[{type:'note',midi:60,durationTick:4}]);
  f.controller.setActive(false,{release:true});
 });
+test('phase vocabulary switch reuses a ready local input but rejects results from its previous recognizer',async()=>{
+ const f=fixture();f.controller.setActive(true);await flush();const stale=f.events.get('result');
+ f.controller.configure(['ストップ'],text=>text==='ストップ'?'stop':null,{release:false});
+ stale('オッケー');assert.deepEqual(f.commands,[]);assert.equal(f.input.disposed,0);
+ f.controller.setActive(true);await flush();f.events.get('result')('オッケー');f.events.get('result')('ストップ');assert.deepEqual(f.commands,['stop']);
+ f.controller.setActive(false,{release:true});assert.equal(f.input.disposed,1);
+});

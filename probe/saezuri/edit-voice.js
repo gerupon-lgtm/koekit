@@ -37,9 +37,9 @@ export class EditVoice {
     this.input=null; this.active=false; this.loading=false; this.epoch=0;
     this.words=EDIT_WORDS;this.parse=parseEditCommand;
   }
-  configure(words=EDIT_WORDS,parse=parseEditCommand) {
+  configure(words=EDIT_WORDS,parse=parseEditCommand,{release=true}={}) {
     if(this.words===words && this.parse===parse) return;
-    this.setActive(false,{release:true});this.words=words;this.parse=parse;
+    this.setActive(false,{release});this.words=words;this.parse=parse;
   }
   setActive(active, {release=false}={}) {
     if (!active) {

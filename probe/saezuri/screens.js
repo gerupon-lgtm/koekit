@@ -1,7 +1,7 @@
-import {MelodyLearning} from './learning.js?v=v0.1.0-20261001233521-de8dc6d';
-import {emptySequence,keepPhrase,sequencePlayback,proposeSequence,commitSequence,undoPlacement} from './sequence-session.js?v=v0.1.0-20261001233521-de8dc6d';
-import {readCaptureReport} from './capture-report.js?v=v0.1.0-20261001233521-de8dc6d';
-import {setupPlaybackSheet} from './sheet-controls.js?v=v0.1.0-20261001233521-de8dc6d';
+import {MelodyLearning} from './learning.js?v=v0.1.0-20261002022700-637b77f';
+import {emptySequence,keepPhrase,sequencePlayback,proposeSequence,commitSequence,undoPlacement} from './sequence-session.js?v=v0.1.0-20261002022700-637b77f';
+import {readCaptureReport} from './capture-report.js?v=v0.1.0-20261002022700-637b77f';
+import {setupPlaybackSheet} from './sheet-controls.js?v=v0.1.0-20261002022700-637b77f';
 const $=id=>document.getElementById(id);
 const button=(text,fn)=>{const b=document.createElement('button');b.type='button';b.textContent=text;b.onclick=fn;return b;};
 
@@ -56,6 +56,7 @@ export class MelodyScreens {
   $('screen-settings').onclick=()=>this.openSettings();$('sequence-settings').onclick=()=>this.openSettings();
   $('melody-help').onclick=()=>{
    const help=document.createElement('dialog');help.className='melody-help';help.innerHTML='<h2>つかいかた</h2><p>「つくる」で音を置いて、聴いて、オッケー。「フレーズにする」でつなげる画面に持っていけます。</p><p>「つなげる」でフレーズを順番に選びます。追加・並べ替えはオッケーで決定。声を使わなくても操作できます。</p>';
+   const voiceHelp=document.createElement('p');voiceHelp.textContent='マイクONと「声で操作」で、「スタート」は伴奏をループ、「ストップ」は停止。ループ中の「はなうた」「ろくおん」で次の先頭から録ります。「イメージからつくる」では「ロック」「ゆっくり」「やさしい」などで伴奏を選び、「別のパターン」で作り直せます。「きく」で聴き、「オッケー」で決めます。';help.append(voiceHelp);
    help.append(button('とじる',()=>help.close()));help.addEventListener('close',()=>help.remove());main.append(help);help.showModal();
   };
   const toolbar=document.querySelector('.edit-toolbar'),listen=document.querySelector('.listen-actions');
