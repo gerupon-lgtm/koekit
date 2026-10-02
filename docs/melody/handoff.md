@@ -1,5 +1,7 @@
 # サエズリズム 実装への引継ぎ
 
+**2026-10-03 FM検証ページの公開確認**：実装コミット `642e03cb6f30535b203f51b91ee7f52bf98ca94b`、[Pages37032961209](https://github.com/gerupon-lgtm/koekit/actions/runs/37032961209)成功。[FM検証ページ](https://koekit.sikumilab.com/probe/fm-polyphony/)でHTTPS・19ファイル一致・トップリンクなし・JS／通信エラー0を確認。公開Chromeで14処理時間測定・3実AudioWorklet発音・C3〜G3の6ベースWAV・切替・共通停止・非表示停止・取消・結果保存・320／390／844pxの間隔と中央配置が成功。結果はPCでの公開動作検証で、Pixel 6a／Chrome・iPhone XR／Chromeの発音上限は未測定。本アプリの音源は変更していない。以後のキャッシュ更新はこのページのWorker／Worklet／mjsと動的Voice／WAVにも届く。[実機操作・条件](dx7ii-mobile-polyphony-20261003.md)。
+
 **2026-10-03 FM検証ページの公開準備・ベース音域修正**：発案者の「低すぎる」「githubへアップ」の指示に従い、ベース6比較をC3／E3／G3へ上げて再生成し、独立した `probe/fm-polyphony/` に配置。負荷試験のベースもC3、和音はドミソへ変更。4候補・SuperBass70／45を折りたたみで試聴でき、共通の中央停止・切替・非表示停止を利用する。ローカルChromeで14処理時間測定・3実Worklet発音・6WAV再生・切替・停止・取消・保存・320／390／844pxの間隔と中央配置、JSエラー0を確認。スマホ上限は未測定。cache stampをこの独立ページとmjsへ拡張し、動的Voice／WAV URLにも同じtokenを使う。公開先は[FM検証ページ](https://koekit.sikumilab.com/probe/fm-polyphony/)。公開確認結果は後続記録。[条件・手順](dx7ii-mobile-polyphony-20261003.md)。
 
 **2026-10-03 柔らかいベース・スマホ発音数の検討**：SuperBassが硬いという発案者の指摘を受け、SmoohBass／StringBass／FRETLESS 1／Wood Bassをvelocity 70で比較WAVにした。SuperBassは同70と45も収録、全6件の形式・有限非無音・非クリップを検証。音色採用は未決。[ベース試聴](dx7ii-soft-bass-20261003.md)。対象実機はPixel 6a／ChromeとiPhone XR／Chrome。1〜16音のWorker処理時間と実際のAudioWorklet発音・保持／余韻を重ねる試験をローカル検証ページに用意。PC Chromeで28測定と6発音ケース、停止・取消・結果保存・3画面幅を確認したが、スマホ上限・人間の聴感・録音等の併用は未測定。PCの数値を実機の発音上限へ置き換えない。アプリの変更・音源の追加公開は未実施。[実機手順・根拠・PC参考値](dx7ii-mobile-polyphony-20261003.md)。

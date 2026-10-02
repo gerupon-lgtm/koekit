@@ -1,4 +1,4 @@
-import { ids, partsFor } from './config.js?v=v0.1.0-20261002161601-cabae06';
+import { ids, partsFor } from './config.js?v=v0.1.0-20261002162220-642e03c';
 const $ = id => document.getElementById(id);
 const assetURL = reference => { const url = new URL(reference, import.meta.url); url.search = new URL(import.meta.url).search; return url; };
 const data = { schema: 'koekit-fm-polyphony-probe/1', createdAt: new Date().toISOString(), userAgent: navigator.userAgent, device: '', sampleRate: null, baseLatency: null, voices: ids, velocity: 70, gain: 0.08, rows: [], live: [], assumptions: ['CPU ratios measured in Worker, not realtime underruns', 'Listening verdict entered by user', 'No speech, humming, score drawing or drums', 'Held count excludes release tails; 16 slots per renderer'] };
@@ -73,7 +73,7 @@ $('measure').onclick = async () => {
     const sampleRate = audio.sampleRate;
     await audio.close(); if (context === audio) context = undefined;
     const voices = await loadVoices(); if (token !== generation) return;
-    worker = new Worker('./worker.js?v=v0.1.0-20261002161601-cabae06', { type: 'module' });
+    worker = new Worker('./worker.js?v=v0.1.0-20261002162220-642e03c', { type: 'module' });
     const localWorker = worker;
     localWorker.onmessage = ({ data: message }) => {
       if (token !== generation) return;
@@ -92,7 +92,7 @@ $('listen').onclick = async () => {
   try {
     const selected = condition(), audio = await createContext();
     const voices = await loadVoices(); if (token !== generation) return;
-    await audio.audioWorklet.addModule('./live-worklet.js?v=v0.1.0-20261002161601-cabae06'); if (token !== generation) return;
+    await audio.audioWorklet.addModule('./live-worklet.js?v=v0.1.0-20261002162220-642e03c'); if (token !== generation) return;
     const durationSeconds = Number(new URLSearchParams(location.search).get('testDuration')) === 2 ? 2 : 12;
     const live = { ...selected, requestedSeconds: durationSeconds, sampleRate: audio.sampleRate, status: 'started', heard: null };
     data.live.push(live); currentLive = live;

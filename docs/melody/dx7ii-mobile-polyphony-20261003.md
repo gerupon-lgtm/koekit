@@ -44,3 +44,9 @@
 両端末のOS／Chrome版、通常12秒試聴を同条件で再実行し、発音数の境界と余裕を記録する。最終的に連続使用と制作機能併用を確認し、端末ごとの値と全体の既定上限を区別する。重い音色や長いreleaseだけを増やした条件も追加する。
 
 AudioWorkletは[secure contextで利用する](https://developer.mozilla.org/en-US/docs/Web/API/BaseAudioContext/audioWorklet)ため、両端末は公開したHTTPSページから測定する。ローカル開発が必要な場合にはPixelで[Chrome公式のUSB port forwarding](https://developer.chrome.com/docs/devtools/remote-debugging/local-server)を使える。iOS Chromeの[WKWebView実装](https://chromium.googlesource.com/chromium/src/+/main/ios/web)はAndroidと異なるため、片方の合格を両方の合格とみなさない。
+
+## 公開後の確認（2026-10-03）
+
+実装コミット `642e03cb6f30535b203f51b91ee7f52bf98ca94b`、[Pages実行37032961209](https://github.com/gerupon-lgtm/koekit/actions/runs/37032961209)成功。HTTPSの通常URLと19ファイルのGit内容一致、トップからのリンクなしを確認。公開Chromeで14処理時間測定・3実Worklet発音・6WAV再生・切替・停止・非表示停止・Worker取消・結果保存・320／390／844px、JS／通信エラー0を確認した。停止によるWAV読込取消は意図した動作として扱う。
+
+[公開Chrome検証](C:/Users/user/Documents/project/koekit/scripts/test-fm-polyphony-browser.cjs)、[公開ファイル照合](C:/Users/user/Documents/project/koekit/.local-tools/fmopelab-dx7ii-review-20261002/public-check/public-files.json)、[公開動作結果](C:/Users/user/Documents/project/koekit/.local-tools/fmopelab-dx7ii-review-20261002/public-check/published-result.json)。この結果には実機の聴感や発音上限を含まない。

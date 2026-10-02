@@ -1,6 +1,6 @@
 import { microphoneEnabled, onMicrophoneChange } from '../../src/speech/microphone.js';
-import { captureTiming, scheduleShaker, prepareShaker } from './capture-support.js?v=v0.1.0-20261002161601-cabae06';
-import {loopCaptureTiming} from './loop-timing.js?v=v0.1.0-20261002161601-cabae06';
+import { captureTiming, scheduleShaker, prepareShaker } from './capture-support.js?v=v0.1.0-20261002162220-642e03c';
+import {loopCaptureTiming} from './loop-timing.js?v=v0.1.0-20261002162220-642e03c';
 export class ProbeCapture {
   constructor(ctx, onState, onResult, mixer=null) {
     this.ctx = ctx; this.onState = onState; this.onResult = onResult;this.mixer=mixer; this.serial = 0; this.counts = [];
@@ -10,7 +10,7 @@ export class ProbeCapture {
     const stream=await navigator.mediaDevices.getUserMedia({audio:{channelCount:1,echoCancellation:options.processing,noiseSuppression:options.processing,autoGainControl:options.processing}});
     if(sessionId!==this.serial){stream.getTracks().forEach(t=>t.stop());return false;}
     this.stream=stream;
-    await this.ctx.audioWorklet.addModule(new URL('./worklet.js?v=v0.1.0-20261002161601-cabae06',import.meta.url));
+    await this.ctx.audioWorklet.addModule(new URL('./worklet.js?v=v0.1.0-20261002162220-642e03c',import.meta.url));
     if(sessionId!==this.serial)return false;
     this.node=new AudioWorkletNode(this.ctx,'saezuri-capture-probe');this.source=this.ctx.createMediaStreamSource(stream);
     this.silent=this.ctx.createGain();this.silent.gain.value=0;this.source.connect(this.node).connect(this.silent).connect(this.ctx.destination);
@@ -71,7 +71,7 @@ export class ProbeCapture {
         this.releaseInput();
         if (data.written !== data.samples.length) return this.cancel('CAPTURE_INCOMPLETE');
         this.onState('analyzing');
-        const worker = this.worker = new Worker(new URL('./worker.js?v=v0.1.0-20261002161601-cabae06', import.meta.url), { type: 'module' });
+        const worker = this.worker = new Worker(new URL('./worker.js?v=v0.1.0-20261002162220-642e03c', import.meta.url), { type: 'module' });
         worker.onerror = () => {if(sessionId===this.serial)this.cancel('ANALYSIS_FAILED');};
         worker.onmessage = ({ data: result }) => {
           if (sessionId !== this.serial) return;

@@ -1,6 +1,6 @@
 // Audition proposals, not an approved musical catalog. Store the complete
 // arrangement recipe so playback never depends on random numbers or UI state.
-import {CHORD_INTERVALS} from './catalog.js?v=v0.1.0-20261002161601-cabae06';
+import {CHORD_INTERVALS} from './catalog.js?v=v0.1.0-20261002162220-642e03c';
 export const IMAGE_TYPES=[['nursery','どうよう'],['pop','ポップ'],['rock','ロック'],['ballad','バラード']];
 export const IMAGE_SPEEDS=[['slow','ゆっくり'],['normal','ふつう'],['fast','はやい']];
 export const IMAGE_MOODS=[['bright','あかるい'],['gentle','やさしい'],['cool','かっこいい'],['sad','かなしい']];

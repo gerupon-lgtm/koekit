@@ -1,5 +1,7 @@
 # サエズリズム 技術試作のHTTPS仮公開
 
+**2026-10-03 FM検証ページの公開確認**：実装コミット `642e03cb6f30535b203f51b91ee7f52bf98ca94b`、[Pages37032961209](https://github.com/gerupon-lgtm/koekit/actions/runs/37032961209)成功。[FM検証ページ](https://koekit.sikumilab.com/probe/fm-polyphony/)でHTTPS・19ファイル一致・トップリンクなし・JS／通信エラー0を確認。公開Chromeで14処理時間測定・3実AudioWorklet発音・C3〜G3の6ベースWAV・切替・共通停止・非表示停止・取消・結果保存・320／390／844pxの間隔と中央配置が成功。結果はPCでの公開動作検証で、Pixel 6a／Chrome・iPhone XR／Chromeの発音上限は未測定。本アプリの音源は変更していない。以後のキャッシュ更新はこのページのWorker／Worklet／mjsと動的Voice／WAVにも届く。[実機操作・条件](dx7ii-mobile-polyphony-20261003.md)。
+
 **2026-10-03 FM同時発音・ベース比較の公開準備**：発案者の明示指示で、[独立したFM検証ページ](https://koekit.sikumilab.com/probe/fm-polyphony/)を追加する。ベース比較はC3〜G3へ修正。3音色の実FM合成による1〜16音の測定・試聴、余韻を重ねる条件、6WAVの比較、結果保存、共通停止を含む。本アプリへのFM統合は未実施。トップリンク・SWの事前キャッシュは追加せず、検証ページにnoindexを指定。実行runtime・3Voice・Zod表示・比較WAVだけを含め、元ZIP・全catalog・SysEx・source maps・ローカルの測定JSONは配置しない。cache stampの対象を追加し、Worker／Worklet／mjsと動的WAV／Voice URLにも同じtokenを使う。ローカルChromeの14測定・3FM発音・6WAV試聴・停止／切替／取消／保存・3画面幅は成功。Pages・公開URLの確認は後続記録。[実機の手順](dx7ii-mobile-polyphony-20261003.md)。
 
 **2026-10-02 音声操作の公開確認**：実装コミット `4a60b66d70fbf7a7b5f4492f42cdbc9c0703c5c2`、[Pages36955917260](https://github.com/gerupon-lgtm/koekit/actions/runs/36955917260)成功。公開63ファイル一致・HTTPS・伴奏だけの保存・JavaScriptエラー0・トップの試作リンクなしを確認。公開Chromeでも11選択肢、再生成・Undo・確定、「スタート」のループ開始、両録音予約の次の先頭待ち、待機取消、ハナウタ録音中／鍵盤を押したままの停止、旧結果と通常試聴／設定／マイクOFF／非表示の受付制限が成功。認識結果だけを模擬し、実声精度は未検証。[操作と制限](creation-voice.md)。
