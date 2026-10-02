@@ -21,7 +21,7 @@ fs.mkdirSync(output, { recursive: true });
     return { data, count: voice.oscillatorCount, end: voice.endTime, stats: lightVoiceStats(audio), finite: data.every(Number.isFinite), peak: Math.max(...data.slice(0, 9600).map(Math.abs)) };
    };
    const results = [];
-   for (const engine of ['light', 'simple']) for (const instrument of ['piano', 'wood', 'soft', 'sine', 'lead']) {
+   for (const engine of ['light', 'simple']) for (const instrument of ['piano', 'wood', 'soft', 'sine', 'lead', 'fm-piano', 'synth-bass', 'strings', 'brass']) {
     const short = await render(engine, instrument, .35), long = await render(engine, instrument, 1.3);
     let prefixDifference = 0;
     for (let i = .12 * rate; i < .43 * rate; i++) prefixDifference = Math.max(prefixDifference, Math.abs(short.data[i] - long.data[i]));
@@ -43,7 +43,7 @@ fs.mkdirSync(output, { recursive: true });
   }
   assert.ok(pcm.held.sounding > .005 && pcm.held.tail > 1e-4); assert.equal(pcm.held.silence, 0); assert.equal(pcm.held.activeAfter, 0); assert.ok(pcm.canceled);
   assert.ok(Math.abs(pcm.velocityRatio - .5 ** .8) < 1e-5);
-  console.log('PASS native PCM: 10 tone/engine pairs, duration-independent decay, release, held note, cancellation, velocity, low/high notes');
+  console.log('PASS native PCM: 18 tone/engine pairs, duration-independent decay, release, held note, cancellation, velocity, low/high notes');
   // Native AudioContext: a phrase end must wait for its final release.
   const transportResult = await page.evaluate(async () => {
    const token = new URL(document.querySelector('script[type=module]').src).searchParams.get('v'), suffix = token ? '?v=' + token : '';
@@ -85,11 +85,11 @@ fs.mkdirSync(output, { recursive: true });
     return { overflow: document.documentElement.scrollWidth > innerWidth, stop: (stop.left + stop.right) / 2, heading: (heading.left + heading.right) / 2, touching: boxes.some((a, i) => boxes.slice(i + 1).some(b => a.left < b.right + 7.9 && a.right + 7.9 > b.left && a.top < b.bottom + 7.9 && a.bottom + 7.9 > b.top)) };
    }); assert.ok(!geometry.overflow && !geometry.touching); assert.ok(Math.abs(geometry.stop - width / 2) < 1 && Math.abs(geometry.heading - width / 2) < 1);
   }
-  await page.locator('summary').click(); await page.locator('#device').fill('PC Chrome automated; phone not verified');
+  await page.locator('#result-options>summary').click(); await page.locator('#device').fill('PC Chrome automated; phone not verified');
   const downloadPromise = page.waitForEvent('download'); await page.locator('#export').click(); const download = await downloadPromise; await download.saveAs(path.join(output, 'result.json'));
   const record = JSON.parse(fs.readFileSync(path.join(output, 'result.json'))); assert.equal(record.records.filter(r => r.status === 'completed').length, 7); assert.equal(record.records.filter(r => r.heard === true).length, 6); assert.equal(record.records.filter(r => r.heard === false).length, 1);
   for (const row of record.records.filter(r => r.status === 'completed')) { assert.ok(row.metrics.events + row.metrics.accompanimentEvents > 0); assert.equal(row.metrics.engine, row.engine); }
-  await page.setViewportSize({ width: 390, height: 844 }); await page.locator('summary').click(); await page.screenshot({ path: path.join(output, 'probe-390.png'), fullPage: true });
+  await page.setViewportSize({ width: 390, height: 844 }); await page.locator('#result-options>summary').click(); await page.locator('.more-sounds>summary').click(); await page.screenshot({ path: path.join(output, 'probe-390.png'), fullPage: true });
   fs.writeFileSync(path.join(output, 'pcm-metrics.json'), JSON.stringify(pcm, null, 2));
   assert.deepEqual(errors, []); assert.deepEqual(failed, []);
   console.log('PASS probe: real 16-note held/repeat on 3 engines, Am/F/C/G with count/drums, tail lifetime, switching/stop/hidden, JSON, three widths; PC only');

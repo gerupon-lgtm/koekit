@@ -1,7 +1,7 @@
-import {GENRES,CHORD_INTERVALS} from '../../saezuri/music/catalog.js?v=v0.1.0-20261002215245-e39d004';
-import {RHYTHMS,PROGRESSIONS,PRESETS,SOUNDS,SOUND_PRESETS,harmonicSegments,recommendProgressions} from '../../saezuri/music/accompaniment.js?v=v0.1.0-20261002215245-e39d004';
-import {setupPlaybackSheet} from './sheet-controls.js?v=v0.1.0-20261002215245-e39d004';
-import {ImageModeControls} from './image-mode-controls.js?v=v0.1.0-20261002215245-e39d004';
+import {GENRES,CHORD_INTERVALS} from '../../saezuri/music/catalog.js?v=v0.1.0-20261002222541-da565ef';
+import {RHYTHMS,PROGRESSIONS,PRESETS,SOUNDS,SOUND_PRESETS,soundLabel,harmonicSegments,recommendProgressions} from '../../saezuri/music/accompaniment.js?v=v0.1.0-20261002222541-da565ef';
+import {setupPlaybackSheet} from './sheet-controls.js?v=v0.1.0-20261002222541-da565ef';
+import {ImageModeControls} from './image-mode-controls.js?v=v0.1.0-20261002222541-da565ef';
 const pitches=['C','C♯','D','E♭','E','F','F♯','G','A♭','A','B♭','B'];
 const suffix={major:'',minor:'m'};
 export const chordLabel=c=>`${pitches[c.root]}${suffix[c.quality]??c.quality}${c.bass===c.root?'':`/${pitches[c.bass]}`}`;
@@ -9,8 +9,8 @@ const fallback={enabled:false,genre:'nursery',rhythm:'quarters',progression:'hom
 const $=id=>document.getElementById(id);
 function fill(node,items){node.replaceChildren(...items.map(([id,label])=>{const o=document.createElement('option');o.value=id;o.textContent=label;return o;}));}
 export class ImageControls {
- constructor({editor,onNew,onTempo,onPreview,onStop,onNavigate,compact=false}) {
-  Object.assign(this,{editor,onTempo,onPreview,onStop,onNavigate});
+ constructor({editor,onNew,onTempo,onPreview,onStop,onNavigate,compact=false,engine='classic'}) {
+  Object.assign(this,{editor,onTempo,onPreview,onStop,onNavigate,engine});
   const source=document.querySelector('.source-actions');if(!source)return;
   this.create=document.createElement('button');this.create.id='new-image';this.create.textContent='イメージからつくる';this.create.onclick=onNew;source.prepend(this.create);
   const panel=document.createElement('details');panel.id='image-settings';
@@ -75,7 +75,7 @@ export class ImageControls {
   $('chord-confirm').onclick=()=>{this.stageChord();this.editor.command('confirm');d.close();};
   const s=document.createElement('dialog');s.id='sounds-sheet';s.className='backing-sheet';s.setAttribute('aria-label','パートの音色');s.innerHTML='<div class="screen-heading"><h2>パートの音色</h2><button id="sounds-close">とじる</button></div><div class="sound-fields"><label>コード<select id="sound-chord"></select></label><label>ベース<select id="sound-bass"></select></label><label>ドラム<select id="sound-drums"></select></label></div><p>アコースティック風と電子音を、組み合わせて使えます。</p><p>とじて聴き、オッケーで決めよう。</p>';
   document.querySelector('main').append(s);this.soundSheet=s;
-  for(const part of ['chord','bass'])fill($(`sound-${part}`),SOUNDS.map(v=>[v.id,v.label]));fill($('sound-drums'),[['acoustic','アコースティック風'],['electronic','電子ドラム'],['none','なし']]);
+   for(const part of ['chord','bass'])fill($(`sound-${part}`),SOUNDS.map(v=>[v.id,soundLabel(v.id,this.engine)]));fill($('sound-drums'),[['acoustic','アコースティック風'],['electronic','電子ドラム'],['none','なし']]);
   for(const part of ['chord','bass','drums'])$(`sound-${part}`).onchange=()=>{const value=this.value();value.sounds={...value.sounds,[part]:$(`sound-${part}`).value};this.editor.changeStructure({type:'accompaniment',value});};
   $('sounds-close').onclick=()=>s.close();s.addEventListener('close',()=>this.onNavigate?.());
   this.$('sounds').onclick=()=>{const value=this.value(),sounds={...SOUND_PRESETS[value.genre],...value.imageArrangement?.sounds,...value.sounds};for(const part of ['chord','bass','drums'])$(`sound-${part}`).value=sounds[part];this.show(s);};

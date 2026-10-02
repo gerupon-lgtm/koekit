@@ -1,7 +1,7 @@
-import { ProbeTransport } from '../saezuri/audio.js?v=v0.1.0-20261002215245-e39d004';
-import { AudioMixer } from '../saezuri/volume.js?v=v0.1.0-20261002215245-e39d004';
-import { lightVoiceStats, stopLightVoices } from '../saezuri/light-voice.js?v=v0.1.0-20261002215245-e39d004';
-import { accompanimentEvents } from '../../saezuri/music/accompaniment.js?v=v0.1.0-20261002215245-e39d004';
+import { ProbeTransport } from '../saezuri/audio.js?v=v0.1.0-20261002222541-da565ef';
+import { AudioMixer } from '../saezuri/volume.js?v=v0.1.0-20261002222541-da565ef';
+import { lightVoiceStats, stopLightVoices, LIGHT_ONLY_INSTRUMENTS, SOUND_REVISION } from '../saezuri/light-voice.js?v=v0.1.0-20261002222541-da565ef';
+import { accompanimentEvents } from '../../saezuri/music/accompaniment.js?v=v0.1.0-20261002222541-da565ef';
 const $ = id => document.getElementById(id);
 const engines = { light: '軽い音', simple: 'さらに軽い音', classic: '今の音' };
 const records = [], build = new URL(import.meta.url).searchParams.get('v');
@@ -13,7 +13,13 @@ function lock(value) {
   $('stop').disabled = !value;
   updateLinks();
 }
-function updateLinks() { $('try-app').href = `../saezuri/${$('engine').value === 'classic' ? '' : '?sound=' + $('engine').value}`; }
+function updateLinks() {
+  const classic = $('engine').value === 'classic';
+  $('try-app').href = `../saezuri/${classic ? '' : '?sound=' + $('engine').value}`;
+  for (const option of $('scenario').options) option.disabled = classic && LIGHT_ONLY_INSTRUMENTS.includes(option.value);
+  if (classic && LIGHT_ONLY_INSTRUMENTS.includes($('scenario').value)) $('scenario').value = 'mixed';
+  for (const button of document.querySelectorAll('[data-audition]')) button.disabled = classic && LIGHT_ONLY_INSTRUMENTS.includes(button.dataset.audition);
+}
 function refresh() {
   $('export').disabled = !records.length;
   $('results').replaceChildren(...records.slice(-12).reverse().map(row => {
@@ -34,7 +40,7 @@ function stress({ count, scenario, mode, seconds }) {
   const events = [], secondsPerTick = .125, steps = mode === 'held' ? 1 : Math.ceil(seconds / .5), gain = Math.min(.08, .65 / count);
   for (let step = 0; step < steps; step++) for (let i = 0; i < count; i++) {
     const part = scenario !== 'mixed' ? scenario : i === 0 ? 'piano' : i === 1 ? 'soft' : 'piano';
-    const midi = scenario === 'soft' || scenario === 'mixed' && i === 1 ? 48 : scenario !== 'mixed' ? 60 + [0, 4, 7, 12][i % 4] : i === 0 ? 72 : [60, 64, 67][(i - 2) % 3];
+    const midi = ['soft', 'synth-bass'].includes(scenario) || scenario === 'mixed' && i === 1 ? 48 + (scenario === 'synth-bass' ? [0, 4, 7, 12][i % 4] : 0) : scenario !== 'mixed' ? 60 + [0, 4, 7, 12][i % 4] : i === 0 ? 72 : [60, 64, 67][(i - 2) % 3];
     events.push({ startTick: step * 4, durationTick: mode === 'held' ? seconds / secondsPerTick : 2.8, midi, instrument: part, gain, velocity: 70 });
   }
   return { notes: [], accompaniment: events, totalTicks: seconds / secondsPerTick, tempo: 120, gain };
@@ -49,7 +55,8 @@ function song(seconds) {
   return { notes, accompaniment, totalTicks: cycles * 64, tempo: 120, countSound: true };
 }
 function audition(instrument) {
-  return { notes: [], tempo: 120, totalTicks: 56, accompaniment: [0, 4, 7].map((offset, i) => ({ midi: (instrument === 'soft' ? 48 : 60) + offset, startTick: i * 16, durationTick: 8, instrument, gain: .12, velocity: 70 })) };
+  if (['strings', 'brass', 'lead'].includes(instrument)) return { notes: [], tempo: 120, totalTicks: 36, accompaniment: [0, 4, 7].map(offset => ({ midi: 60 + offset, startTick: 0, durationTick: 32, instrument, gain: .07, velocity: 70 })) };
+  return { notes: [], tempo: 120, totalTicks: 56, accompaniment: [0, 4, 7].map((offset, i) => ({ midi: (['soft', 'synth-bass'].includes(instrument) ? 48 : 60) + offset, startTick: i * 16, durationTick: 8, instrument, gain: .12, velocity: 70 })) };
 }
 async function listen(sample) {
   // Changing sample uses the same stop; no stale preparation can start later.
@@ -58,7 +65,7 @@ async function listen(sample) {
   $('heard').hidden = true; lastHeard = undefined; lock(true);
   const selected = { engine: $('engine').value, scenario: $('scenario').value, mode: $('mode').value, count: Number($('count').value), seconds: Number($('seconds').value) };
   if (new URLSearchParams(location.search).get('testDuration') === '1') selected.seconds = 1;
-  const row = { ...selected, audition: sample ?? null, startedAt: new Date().toISOString(), status: 'started', heard: null };
+  const row = { ...selected, soundRevision: SOUND_REVISION, audition: sample ?? null, startedAt: new Date().toISOString(), status: 'started', heard: null };
   if (sample || selected.mode === 'song') row.count = null;
   try {
     const Audio = window.AudioContext ?? window.webkitAudioContext;
@@ -95,7 +102,7 @@ $('close').onclick = () => stop(); $('try-app').onclick = () => stop();
 document.addEventListener('visibilitychange', () => { if (document.hidden) { stop('画面が隠れたので停止しました。', 'hidden'); $('heard').hidden = true; lastHeard = undefined; } });
 window.addEventListener('pagehide', () => stop());
 $('export').onclick = () => {
-  const data = { schemaVersion: 1, test: 'saezuri-native-sound', build, device: $('device').value.trim(), userAgent: navigator.userAgent, exportedAt: new Date().toISOString(), records };
+  const data = { schemaVersion: 1, test: 'saezuri-native-sound', build, soundRevision: SOUND_REVISION, device: $('device').value.trim(), userAgent: navigator.userAgent, exportedAt: new Date().toISOString(), records };
   const url = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })), link = document.createElement('a');
   link.href = url; link.download = 'saezuri-light-sound-result.json'; link.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
 };

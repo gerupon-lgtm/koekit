@@ -1,11 +1,12 @@
 // ML-T01 only: locally synthesized comparison voices, not approved instrument assets.
-import { tickSeconds } from '../../saezuri/document.js?v=v0.1.0-20261002215245-e39d004';
-import { schedulePlaybackCount, COUNT_STYLES } from './playback-count.js?v=v0.1.0-20261002215245-e39d004';
-import { createLightVoice, LIGHT_ENGINES } from './light-voice.js?v=v0.1.0-20261002215245-e39d004';
+import { tickSeconds } from '../../saezuri/document.js?v=v0.1.0-20261002222541-da565ef';
+import { schedulePlaybackCount, COUNT_STYLES } from './playback-count.js?v=v0.1.0-20261002222541-da565ef';
+import { createLightVoice, LIGHT_ENGINES, LIGHT_ONLY_INSTRUMENTS } from './light-voice.js?v=v0.1.0-20261002222541-da565ef';
 export function scheduleVoice(ctx, output, { midi, time, duration, instrument = 'piano', gain = 0.16, velocity = 70, engine = 'classic' }) {
   if(/^(electro-)?(kick|snare|hat)$/.test(instrument))return schedulePercussion(ctx,output,{time,duration,instrument,gain});
-  if (LIGHT_ENGINES.includes(engine)) {
-    const voice = createLightVoice(ctx, output, { midi, time, duration, instrument, gain, velocity, engine });
+  if (engine !== 'classic' && !LIGHT_ENGINES.includes(engine)) throw new Error('VOICE_ENGINE_UNKNOWN');
+  if (LIGHT_ENGINES.includes(engine) || LIGHT_ONLY_INSTRUMENTS.includes(instrument)) {
+    const voice = createLightVoice(ctx, output, { midi, time, duration, instrument, gain, velocity, engine: engine === 'classic' ? 'light' : engine });
     const stop = () => voice.stop(); stop.endTime = voice.endTime; return stop;
   }
   if (engine !== 'classic') throw new Error('VOICE_ENGINE_UNKNOWN');

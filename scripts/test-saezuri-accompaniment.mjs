@@ -14,7 +14,7 @@ test('all progression, genre, rhythm and chord sound combinations keep audible u
   }
   checked++;
  }
- assert.equal(checked,960);
+ assert.equal(checked,1728);
 });
 test('audition presets generate bounded accompaniment independently from the melody',()=>{
  for(const key of ['C','Am'])for(const genre of Object.keys(PRESETS))for(const progression of PROGRESSIONS[key])for(const bars of [4,8]) {

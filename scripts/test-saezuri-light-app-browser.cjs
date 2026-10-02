@@ -28,8 +28,20 @@ const base = process.env.SAEZURI_BASE || 'http://127.0.0.1:8018';
    await page.locator('#capture-edit-confirm').click(); await page.waitForFunction(() => document.querySelector('#song-status').dataset.saved === 'true');
    const saved = (await report()).captureCandidate; await page.reload(); await page.locator('#home-songs').click(); await page.locator('[data-song-open]').first().click();
    if (await page.locator('#song-continue').isVisible()) await page.locator('#song-continue').click(); assert.deepEqual((await report()).captureCandidate.notes, saved.notes);
+   for (const instrument of ['fm-piano','synth-bass','brass','strings','lead','wood']) {
+    await page.locator('#screen-settings').click(); await page.locator('#instrument').selectOption(instrument); await page.locator('#settings-close').click();
+    await press(60); await page.waitForTimeout(instrument==='strings'?1000:160);
+    assert.ok(await page.evaluate(() => synthNodes.filter(n => !n.ended).length)>0, instrument+' remains sounding while held');
+    await page.mouse.up(); await page.waitForTimeout(550); assert.equal(await page.evaluate(() => synthNodes.filter(n => !n.ended).length),0,instrument+' release frees nodes');
+   }
+   await page.locator('#screen-settings').click(); await page.locator('#instrument').selectOption('strings'); await page.locator('#settings-close').click();
+   await page.waitForFunction(() => document.querySelector('#song-status').dataset.saved === 'true');
+   await page.reload(); await page.locator('#home-songs').click(); await page.locator('[data-song-open]').first().click();
+   if(await page.locator('#song-continue').isVisible())await page.locator('#song-continue').click();assert.equal(await page.locator('#instrument').inputValue(),'strings');
    // Enable a real accompaniment and preserve it through loop/tap/humming paths.
-   await page.locator('#keyboard-more>summary').click(); await page.locator('#image-settings-open').click(); await page.locator('#image-enabled').check(); await page.locator('#backing-settings-close').click(); await page.locator('#capture-edit-confirm').click();
+   await page.locator('#keyboard-more>summary').click(); await page.locator('#image-settings-open').click(); await page.locator('#image-enabled').check();
+   await page.locator('#image-sounds').click();await page.locator('#sound-chord').selectOption('strings');await page.locator('#sound-bass').selectOption('synth-bass');await page.locator('#sounds-close').click();
+   await page.locator('#backing-settings-close').click(); await page.locator('#capture-edit-confirm').click();
    await page.locator('#mic').click(); await page.locator('#backing-loop').click(); await page.waitForFunction(() => document.querySelector('#status').dataset.state === 'playing');
    await page.waitForTimeout(1300); await press(64); await page.waitForTimeout(180); await page.mouse.up();
    await page.waitForTimeout(800); assert.equal(await page.locator('#status').getAttribute('data-state'), 'playing');
@@ -39,6 +51,11 @@ const base = process.env.SAEZURI_BASE || 'http://127.0.0.1:8018';
    assert.equal(await page.locator('#piano-keys').isVisible(), false); await page.locator('#stop').click(); assert.equal(await page.locator('#piano-keys').isVisible(), true);
    await press(60); await page.waitForTimeout(100); await page.evaluate(() => { Object.defineProperty(document, 'hidden', { configurable: true, value: true }); document.dispatchEvent(new Event('visibilitychange')); });
    await page.mouse.up(); await page.waitForTimeout(100); assert.equal(await page.evaluate(() => synthNodes.filter(n => !n.ended).length), 0);
+   await page.goto(base+'/probe/saezuri/');await page.locator('#home-songs').click();await page.locator('[data-song-open]').first().click();
+   if(await page.locator('#song-continue').isVisible())await page.locator('#song-continue').click();
+   assert.equal(await page.locator('#instrument').inputValue(),'strings','new tone survives reopening through the normal URL');
+   await press(60);await page.waitForTimeout(250);assert.equal(await page.evaluate(()=>synthNodes.filter(n=>!n.ended).length),2,'normal URL plays the saved native strings');
+   await page.mouse.up();await page.waitForTimeout(550);assert.equal(await page.evaluate(()=>synthNodes.filter(n=>!n.ended).length),0);
    assert.deepEqual(errors, []); await context.close();
    console.log(`PASS ${engine} app: practice, zero mic in tap mode, recording/OK/save/reload, backing loop + held key, humming standby, immediate stop and hidden cleanup`);
   }

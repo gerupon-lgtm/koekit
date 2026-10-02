@@ -1,12 +1,12 @@
 <!doctype html>
 <html lang="ja">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><link rel="icon" href="data:,"><title>サエズリズム・軽い音源の確認</title><link rel="stylesheet" href="./style.css?v=v0.1.0-20261002215245-e39d004"></head>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><link rel="icon" href="data:,"><title>サエズリズム・軽い音源の確認</title><link rel="stylesheet" href="./style.css?v=v0.1.0-20261002222541-da565ef"></head>
 <body><main>
 <header><h1>音をためす</h1><a id="close" href="../saezuri/">とじる</a></header>
 <p class="intro">同じ音を聴きくらべて、スマホで音が途切れないか確認します。</p>
 <div class="fields">
 <label>音源<select id="engine"><option value="light">軽い音（1〜2発振器）</option><option value="simple">さらに軽い音（1発振器）</option><option value="classic">今の音</option></select></label>
-<label>音の組み合わせ<select id="scenario"><option value="mixed">旋律＋和音＋ベース</option><option value="piano">エレピだけ</option><option value="wood">ベルだけ</option><option value="soft">柔らかいベースだけ</option></select></label>
+<label>音の組み合わせ<select id="scenario"><option value="mixed">旋律＋和音＋ベース</option><option value="piano">エレピだけ</option><option value="fm-piano">FMエレピだけ</option><option value="wood">ベルだけ</option><option value="soft">柔らかいベースだけ</option><option value="synth-bass">シンセベースだけ</option><option value="strings">ストリングスだけ</option><option value="brass">ブラスだけ</option><option value="lead">シンセリードだけ</option></select></label>
 <label>鳴らし方<select id="mode"><option value="repeat">短く繰り返す</option><option value="held">長く鳴らす</option><option value="song">コード進行で鳴らす</option></select></label>
 <label>押している音数<select id="count"><option>1</option><option>2</option><option>4</option><option selected>6</option><option>8</option><option>12</option><option>16</option></select></label>
 </div>
@@ -14,13 +14,14 @@
 <p id="status" role="status" aria-live="polite">準備できています。</p>
 <div class="buttons" id="heard" hidden><button id="clean">途切れなし</button><button id="glitch">途切れあり</button></div>
 <div class="buttons samples"><button data-audition="piano">エレピを聴く</button><button data-audition="wood">ベルを聴く</button><button data-audition="soft">ベースを聴く</button></div>
+<details class="more-sounds"><summary>ほかの音色を聴く</summary><div class="buttons samples"><button data-audition="fm-piano">FMエレピ</button><button data-audition="synth-bass">シンセベース</button><button data-audition="strings">ストリングス</button><button data-audition="brass">ブラス</button><button data-audition="lead">シンセリード</button></div><p>ストリングス・ブラス・リードは、4秒の和音で音の伸びを確認できます。</p></details>
 <a id="try-app" class="app-link" href="../saezuri/?sound=light">この音で つくる画面へ</a>
-<details><summary>結果を保存・条件を確認</summary>
+<details id="result-options"><summary>結果を保存・条件を確認</summary>
 <label>機種名<input id="device" maxlength="120" placeholder="例：Pixel 6a"></label>
 <label>試聴の長さ<select id="seconds"><option selected>12</option><option>30</option><option>60</option></select></label>
 <button id="export" disabled>結果を保存（JSON）</button><div id="results"></div>
-<p>事前合成を使わず、すべて演奏時に鳴らします。軽い音のエレピ・ベルはサイン波2つ、ベースはフィルター付き三角波1つ。「さらに軽い音」は各音1つです。音色は調整前の試作です。</p>
+<p>事前合成を使わず、すべて演奏時に鳴らします。軽い音のエレピ・FMエレピ・ベルはサイン波2つ。ストリングスも2つ、ベース・ブラス・リードは1つです。「さらに軽い音」は各音1つで、FMエレピも簡略化した響きになります。追加音色は「今の音」との比較対象には含めません。音色は試聴しながら調整する試作です。</p>
 <p>音数は押している音の数です。余韻が重なると実際の発音数は増えます。3音色の2音は旋律＋ベース、4音以上は和音も含みます。コード進行はAm → F → C → G、カウントとドラム付きです。</p>
 <p>音源ごとに同じ音高・長さ・音量指定で比較します。タイマー間隔と発音数は参考値で、音切れ回数やCPU使用率ではありません。制作画面での鍵盤・録音・音声操作との併用も別途確認してください。記録は端末への保存だけで、送信しません。</p>
 </details>
-</main><footer><button id="stop" disabled>■ とめる</button></footer><script type="module" src="./main.js?v=v0.1.0-20261002215245-e39d004"></script></body></html>
+</main><footer><button id="stop" disabled>■ とめる</button></footer><script type="module" src="./main.js?v=v0.1.0-20261002222541-da565ef"></script></body></html>

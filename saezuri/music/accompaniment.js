@@ -1,6 +1,6 @@
 // Editable audition presets. These concrete arrangements are trial data.
-import {GENRES,CHORD_INTERVALS,chordTones} from './catalog.js?v=v0.1.0-20261002215245-e39d004';
-import {validImageChoice,validateImageArrangement} from './image-arrangement.js?v=v0.1.0-20261002215245-e39d004';
+import {GENRES,CHORD_INTERVALS,chordTones} from './catalog.js?v=v0.1.0-20261002222541-da565ef';
+import {validImageChoice,validateImageArrangement} from './image-arrangement.js?v=v0.1.0-20261002222541-da565ef';
 export const RHYTHMS=[{id:'quarters',label:'4つずつ'},{id:'offbeat',label:'うらで弾く'},{id:'arpeggio',label:'音をばらして弾く'}];
 export const PROGRESSIONS={
  C:[{id:'home',label:'C → F → G → C',chords:[[0,'major'],[5,'major'],[7,'major'],[0,'major']]},
@@ -13,7 +13,9 @@ export const PROGRESSIONS={
      {id:'gentle',label:'Am → G → F → E',chords:[[9,'minor'],[7,'major'],[5,'major'],[4,'major']]}],
 };
 export const PRESETS={nursery:{tempo:120,rhythm:'quarters',progression:'home'},pop:{tempo:120,rhythm:'offbeat',progression:'pop'},ballad:{tempo:80,rhythm:'arpeggio',progression:'circle'},rock:{tempo:140,rhythm:'quarters',progression:'pop'}};
-export const SOUNDS=[{id:'piano',label:'ピアノ風'},{id:'wood',label:'木琴風'},{id:'soft',label:'やわらかい電子音'},{id:'sine',label:'まるい電子音'},{id:'lead',label:'シンセ'}];
+export const SOUNDS=[{id:'piano',label:'ピアノ風',lightLabel:'エレピ'},{id:'wood',label:'木琴風',lightLabel:'ベル'},{id:'soft',label:'やわらかい電子音'},{id:'sine',label:'まるい電子音'},{id:'lead',label:'シンセ',lightLabel:'シンセリード'},
+ {id:'fm-piano',label:'FMエレピ'},{id:'synth-bass',label:'シンセベース'},{id:'strings',label:'ストリングス'},{id:'brass',label:'ブラス'}];
+export function soundLabel(id,engine='classic'){const sound=SOUNDS.find(item=>item.id===id);return engine==='classic'?sound?.label:(sound?.lightLabel??sound?.label);}
 export const SOUND_PRESETS={nursery:{chord:'wood',bass:'soft',drums:'acoustic'},pop:{chord:'piano',bass:'sine',drums:'electronic'},ballad:{chord:'soft',bass:'wood',drums:'acoustic'},rock:{chord:'lead',bass:'soft',drums:'electronic'}};
 export function validateAccompaniment(value,bars=8) {
  if(!value || typeof value.enabled!=='boolean'||!GENRES.some(g=>g.id===value.genre)||!RHYTHMS.some(r=>r.id===value.rhythm)||!PROGRESSIONS.C.some(p=>p.id===value.progression)) return {code:'ACCOMPANIMENT_INVALID'};

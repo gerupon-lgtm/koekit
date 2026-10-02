@@ -1,5 +1,5 @@
-import {blankPattern} from './entry-session.js?v=v0.1.0-20261002215245-e39d004';
-import {practicePhrases,practicePhrase,tutorialGuide} from './learning-data.js?v=v0.1.0-20261002215245-e39d004';
+import {blankPattern} from './entry-session.js?v=v0.1.0-20261002222541-da565ef';
+import {practicePhrases,practicePhrase,tutorialGuide} from './learning-data.js?v=v0.1.0-20261002222541-da565ef';
 const $=id=>document.getElementById(id);
 export class MelodyLearning {
  constructor(shell){
