@@ -1,5 +1,5 @@
 // Preview percussion only. Recording keeps the calibrated shaker waveform.
-import { scheduleShaker } from './capture-support.js?v=v0.1.0-20261002022700-637b77f';
+import { scheduleShaker } from './capture-support.js?v=v0.1.0-20261002023252-4a60b66';
 const cache = new WeakMap();
 export const COUNT_STYLES = ['rim','stick','tambourine','shaker'];
 

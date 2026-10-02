@@ -1,6 +1,6 @@
 // ML-T01 only: locally synthesized comparison voices, not approved instrument assets.
-import { tickSeconds } from '../../saezuri/document.js?v=v0.1.0-20261002022700-637b77f';
-import { schedulePlaybackCount, COUNT_STYLES } from './playback-count.js?v=v0.1.0-20261002022700-637b77f';
+import { tickSeconds } from '../../saezuri/document.js?v=v0.1.0-20261002023252-4a60b66';
+import { schedulePlaybackCount, COUNT_STYLES } from './playback-count.js?v=v0.1.0-20261002023252-4a60b66';
 export function scheduleVoice(ctx, output, { midi, time, duration, instrument = 'piano', gain = 0.16 }) {
   if(/^(electro-)?(kick|snare|hat)$/.test(instrument))return schedulePercussion(ctx,output,{time,duration,instrument,gain});
   // A sustained, band-limited saw-like lead, synthesized locally.
