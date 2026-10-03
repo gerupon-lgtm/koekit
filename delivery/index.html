@@ -8,7 +8,7 @@
   <link rel="manifest" href="../manifest.json">
   <link rel="icon" href="../assets/icons/koekit-192.png">
   <link rel="apple-touch-icon" href="../assets/icons/koekit-180.png">
-  <link rel="stylesheet" href="./styles.css?v=20261004.1">
+  <link rel="stylesheet" href="./styles.css?v=20261004.2">
   <link rel="stylesheet" href="./editor.css">
   <link rel="stylesheet" href="../src/ui/menu-controls.css">
   <link rel="stylesheet" href="../src/ui/mic-toggle.css">
@@ -18,6 +18,16 @@
   <script type="module" src="./app.js"></script>
 </head>
 <body>
+<!-- A thin warm outline keeps the robot visible on the original cream tiles. -->
+<svg width="0" height="0" aria-hidden="true" focusable="false" style="position:absolute;pointer-events:none"><defs>
+  <filter id="delivery-robot-outline" x="-20%" y="-20%" width="140%" height="140%" color-interpolation-filters="sRGB">
+    <feMorphology in="SourceAlpha" operator="dilate" radius="0.65" result="expanded"/>
+    <feComposite in="expanded" in2="SourceAlpha" operator="out" result="edge"/>
+    <feFlood flood-color="#947858" flood-opacity="0.85" result="edgeColor"/>
+    <feComposite in="edgeColor" in2="edge" operator="in" result="outline"/>
+    <feMerge><feMergeNode in="outline"/><feMergeNode in="SourceGraphic"/></feMerge>
+  </filter>
+</defs></svg>
 <main id="app">
   <header class="toolbar">
     <a id="home" class="icon menu-home" href="../" aria-label="コエキット トップへ"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3l9 8h-2.5v9h-5.5v-6h-2v6H5.5v-9H3z"/></svg></a>
@@ -39,7 +49,7 @@
       <button class="big peach" data-action="editor">つくる・あそぶ</button>
     </div>
     <div id="record" class="record"></div>
-    <footer class="title-footer">v0.1.0 · r20261004.1 &nbsp; © 2026 SIKUMI LAB</footer>
+    <footer class="title-footer">v0.1.0 · r20261004.2 &nbsp; © 2026 SIKUMI LAB</footer>
   </section>
   <section id="preparing" class="screen" hidden>
     <div class="preparing-mark" aria-hidden="true">▦</div><h2 id="preparing-message">みちを じゅんびちゅう…</h2>
