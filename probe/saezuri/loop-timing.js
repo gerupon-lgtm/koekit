@@ -1,4 +1,4 @@
-import {captureTiming} from './capture-support.js?v=v0.1.0-20261010113359-a5daded';
+import {captureTiming} from './capture-support.js?v=v0.1.0-20261010122649-d4089c8';
 export function nextLoopHead({anchor,now,tempo,bars}){
  if(!Number.isFinite(anchor)||!Number.isFinite(now)||!Number.isFinite(tempo)||tempo<=0||![4,8].includes(bars))throw new Error('LOOP_TIME');
  const length=bars*4*60/tempo;

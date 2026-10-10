@@ -1,8 +1,8 @@
-import {IMAGE_TYPES,IMAGE_SPEEDS,IMAGE_MOODS,DEFAULT_IMAGE,IMAGE_TEMPOS,generateImageAccompaniment} from '../../saezuri/music/image-arrangement.js?v=v0.1.0-20261010113359-a5daded';
+import {IMAGE_TYPES,IMAGE_SPEEDS,IMAGE_MOODS,DEFAULT_IMAGE,IMAGE_TEMPOS,generateImageAccompaniment} from '../../saezuri/music/image-arrangement.js?v=v0.1.0-20261010122649-d4089c8';
 const $=id=>document.getElementById(id);
 export class ImageModeControls {
- constructor({editor,onTempo}){
-  this.editor=editor;this.onTempo=onTempo;
+ constructor({editor,onTempo,compact=false}){
+  this.editor=editor;this.onTempo=onTempo;this.compact=compact;this.collapsed=false;
   this.panel=document.createElement('div');this.panel.id='image-words';this.panel.hidden=true;this.panel.setAttribute('aria-label','伴奏のイメージ');
   for(const [key,label,options] of [['type','音楽のタイプ',IMAGE_TYPES],['speed','はやさ',IMAGE_SPEEDS],['mood','ふんいき',IMAGE_MOODS]]){
    const field=document.createElement('label');field.textContent=label;
@@ -12,9 +12,12 @@ export class ImageModeControls {
   }
   $('composer-panel').before(this.panel);
   this.next=document.createElement('button');this.next.id='image-next';this.next.textContent='別のパターン';this.next.hidden=true;this.next.onclick=()=>this.generate();this.panel.after(this.next);
+  this.reopen=document.createElement('button');this.reopen.id='image-choice-reopen';this.reopen.textContent='伴奏をえらび直す';this.reopen.hidden=true;this.reopen.setAttribute('aria-controls','image-words');this.reopen.setAttribute('aria-expanded','false');
+  this.reopen.onclick=()=>{if(this.busy)return;this.collapsed=false;this.render(false);};this.next.after(this.reopen);
   this.reset=document.createElement('button');this.reset.id='image-reset-manual';this.reset.textContent='手直しを外して おまかせ';this.reset.hidden=true;this.reset.onclick=()=>this.generate({resetManual:true});
  }
  get active(){return !!this.editor.previewPattern?.accompaniment?.imageChoice;}
+ confirmed(){const expanded=this.compact&&this.active&&!this.collapsed;if(this.compact&&this.active)this.collapsed=true;return expanded;}
  choice(){return Object.fromEntries(['type','speed','mood'].map(key=>[key,$(`image-word-${key}`).value]));}
  begin(){return this.editor.stageImageAccompaniment(generateImageAccompaniment(this.editor.previewPattern,DEFAULT_IMAGE));}
  selectVoice(field,value){
@@ -28,7 +31,12 @@ export class ImageModeControls {
  }
  render(busy){
   const value=this.editor.previewPattern?.accompaniment,active=this.active&&this.editor.isOpen;
-  this.panel.hidden=!active;this.next.hidden=!active;
+  if(active&&!this.wasActive)this.collapsed=!this.editor.imageCandidate;
+  if(active&&this.editor.imageCandidate&&!this.wasImageCandidate)this.collapsed=false;
+  this.wasActive=active;this.wasImageCandidate=this.editor.imageCandidate;this.busy=busy;
+  this.panel.hidden=!active||this.compact&&(this.collapsed||busy);this.next.hidden=this.panel.hidden;
+  this.reopen.hidden=!active||!this.compact||!this.panel.hidden;this.reopen.disabled=busy;
+  this.reopen.setAttribute('aria-expanded',String(!this.panel.hidden));
   document.body.classList.toggle('image-mode',active);
   document.body.classList.toggle('image-empty',active&&!this.editor.previewPattern?.notes.length);
   for(const [id,text] of [['composer-key',active?'調':'ふんいき'],['phrase-bars',active?'':'小節数']]){

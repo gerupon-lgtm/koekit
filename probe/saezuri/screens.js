@@ -1,7 +1,7 @@
-import {MelodyLearning} from './learning.js?v=v0.1.0-20261010113359-a5daded';
-import {emptySequence,keepPhrase,sequencePlayback,proposeSequence,commitSequence,undoPlacement} from './sequence-session.js?v=v0.1.0-20261010113359-a5daded';
-import {readCaptureReport} from './capture-report.js?v=v0.1.0-20261010113359-a5daded';
-import {setupPlaybackSheet} from './sheet-controls.js?v=v0.1.0-20261010113359-a5daded';
+import {MelodyLearning} from './learning.js?v=v0.1.0-20261010122649-d4089c8';
+import {emptySequence,keepPhrase,sequencePlayback,proposeSequence,commitSequence,undoPlacement} from './sequence-session.js?v=v0.1.0-20261010122649-d4089c8';
+import {readCaptureReport} from './capture-report.js?v=v0.1.0-20261010122649-d4089c8';
+import {setupPlaybackSheet} from './sheet-controls.js?v=v0.1.0-20261010122649-d4089c8';
 const $=id=>document.getElementById(id);
 const trialBuild=new URL(import.meta.url).searchParams.get('v')||'local-20261010';
 const trialVersion=trialBuild.match(/-(\d{14})-/)?.[1]||trialBuild;
@@ -31,7 +31,7 @@ export class MelodyScreens {
   for(const option of key.options){const value=option.value;option.value=value;option.textContent=value==='Am'?'くらめ':'あかるめ';}
   shape.append(keyLabel);const length=document.createElement('label');length.innerHTML='小節数<select id="phrase-bars"><option value="4">4小節</option><option value="8">8小節</option></select>';shape.append(length);
   create.querySelector('#creation-tabs').after(shape);const shapeHint=document.createElement('p');shapeHint.id='phrase-shape-hint';shapeHint.setAttribute('role','status');shape.after(shapeHint);
-  shape.before($('image-words'));shape.append($('image-next'));
+  shape.before($('image-words'));shape.append($('image-next'),$('image-choice-reopen'));
   length.querySelector('select').onchange=()=>editor.changeStructure({type:'resize',bars:Number($('phrase-bars').value)});
   $('composer-panel').querySelector('details>summary').textContent='入力位置・表示・コピー';
   const connect=document.createElement('section');connect.id='melody-connect';connect.className='melody-screen';
@@ -54,7 +54,7 @@ export class MelodyScreens {
   $('creation-settings').append($('composer-panel').querySelector('details'),document.querySelector('.quick-transpose'),$('editor-more'),document.querySelector('.editor-finish'),$('technical-tools'));
   dialog.append($('copy-status'),$('copy-fallback'));
   setupPlaybackSheet(dialog,{closeId:'settings-close',stopId:'settings-stop',onStop,stopOnClose:false});
-  $('settings-close').onclick=()=>dialog.close();dialog.addEventListener('close',()=>{onNavigate();});
+  $('settings-close').onclick=()=>dialog.close();dialog.addEventListener('close',()=>{const inline=$('keyboard-instrument');if(inline)inline.append($('instrument').closest('label'));onNavigate();});
   $('screen-settings').onclick=()=>this.openSettings();$('sequence-settings').onclick=()=>this.openSettings();
   $('melody-help').onclick=()=>{
    const help=document.createElement('dialog');help.className='melody-help';help.innerHTML='<h2>つかいかた</h2><p>「つくる」で音を置いて、聴いて、オッケー。「フレーズにする」でつなげる画面に持っていけます。</p><p>「つなげる」でフレーズを順番に選びます。追加・並べ替えはオッケーで決定。声を使わなくても操作できます。</p>';
@@ -123,7 +123,7 @@ export class MelodyScreens {
   this.discardDialog.showModal();this.onNavigate();$('discard-cancel').focus();
  }
  get allowsVoice(){return this.screen==='create'&&!document.querySelector('dialog[open]');}
- openSettings(){ $('creation-settings').hidden=this.screen!=='create';this.dialog.showModal();this.onNavigate();}
+ openSettings(){ $('creation-settings').hidden=this.screen!=='create';this.dialog.querySelector('.listen-settings').append($('instrument').closest('label'));this.dialog.showModal();this.onNavigate();}
  go(screen,{history:push=true,stop=true}={}) {
   if(this.phase==='saving')return;
   if(screen==='create'&&!this.editor.isOpen&&this.phase==='idle')screen='choose';

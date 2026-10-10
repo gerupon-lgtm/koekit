@@ -9,6 +9,11 @@
 .melody-app #tap-record{background:#e6edf0}
 .melody-app #loop-record{background:#eae5ef}
 .melody-app #keyboard-status{font-size:13px;text-align:center;margin:6px 0}
+.melody-app .keyboard-heading{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:8px 0}
+.melody-app .keyboard-heading #keyboard-status{margin:0;min-width:0}
+.melody-app #keyboard-instrument{width:60%;max-width:240px;min-width:0}
+.melody-app #keyboard-instrument label{display:flex;flex-direction:row;align-items:center;gap:6px;margin:0;font-size:13px;white-space:nowrap}
+.melody-app #keyboard-instrument select{width:100%;min-width:0;min-height:44px;padding:5px;font-size:14px}
 .melody-app #piano-keys{height:112px;position:relative;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
 .melody-app #piano-keys button{position:absolute;top:0;margin:0;padding:0;border-radius:0 0 6px 6px;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
 .melody-app #piano-keys .piano-white{width:10%;height:112px;background:#fffdf7;border:1px solid #c6c1b9;display:flex;align-items:flex-end;justify-content:center;padding-bottom:8px;font-size:12px;color:#494640}

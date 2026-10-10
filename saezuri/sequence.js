@@ -1,6 +1,6 @@
 // ML-T02: pure composition editing drafts, not the database Song serializer.
 // undoStack is session-only. Q1 save/history lifecycle and Q2 selection UI are not implemented.
-import { validateNotes } from './document.js?v=v0.1.0-20261010113359-a5daded';
+import { validateNotes } from './document.js?v=v0.1.0-20261010122649-d4089c8';
 const error = code => ({ code });
 const validId = id => typeof id === 'string' && id.length > 0;
 function snapshot(draft) {

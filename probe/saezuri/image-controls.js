@@ -1,7 +1,7 @@
-import {GENRES,CHORD_INTERVALS} from '../../saezuri/music/catalog.js?v=v0.1.0-20261010113359-a5daded';
-import {RHYTHMS,PROGRESSIONS,PRESETS,SOUNDS,SOUND_PRESETS,soundLabel,harmonicSegments,recommendProgressions} from '../../saezuri/music/accompaniment.js?v=v0.1.0-20261010113359-a5daded';
-import {setupPlaybackSheet} from './sheet-controls.js?v=v0.1.0-20261010113359-a5daded';
-import {ImageModeControls} from './image-mode-controls.js?v=v0.1.0-20261010113359-a5daded';
+import {GENRES,CHORD_INTERVALS} from '../../saezuri/music/catalog.js?v=v0.1.0-20261010122649-d4089c8';
+import {RHYTHMS,PROGRESSIONS,PRESETS,SOUNDS,SOUND_PRESETS,soundLabel,harmonicSegments,recommendProgressions} from '../../saezuri/music/accompaniment.js?v=v0.1.0-20261010122649-d4089c8';
+import {setupPlaybackSheet} from './sheet-controls.js?v=v0.1.0-20261010122649-d4089c8';
+import {ImageModeControls} from './image-mode-controls.js?v=v0.1.0-20261010122649-d4089c8';
 const pitches=['C','C♯','D','E♭','E','F','F♯','G','A♭','A','B♭','B'];
 const suffix={major:'',minor:'m'};
 export const chordLabel=c=>`${pitches[c.root]}${suffix[c.quality]??c.quality}${c.bass===c.root?'':`/${pitches[c.bass]}`}`;
@@ -50,7 +50,7 @@ export class ImageControls {
    setupPlaybackSheet(settings,{closeId:'backing-settings-close',stopId:'backing-settings-stop',onStop:()=>this.onStop?.()});
    setupPlaybackSheet(suggestions,{closeId:'progression-close',stopId:'progression-stop',onStop:()=>this.onStop?.()});
   }
-  this.imageMode=new ImageModeControls({editor,onTempo});
+  this.imageMode=new ImageModeControls({editor,onTempo,compact});
   (this.settingsSheet??this.panel).append(this.imageMode.reset);
  }
  value(){return structuredClone(this.editor.previewPattern?.accompaniment??fallback);}
