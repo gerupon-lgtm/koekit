@@ -4,7 +4,7 @@ const base = process.env.SAEZURI_BASE || 'http://127.0.0.1:8018';
 (async () => {
  const browser = await chromium.launch({ channel: 'chrome', headless: true, args: ['--autoplay-policy=no-user-gesture-required', '--use-fake-device-for-media-stream', '--use-fake-ui-for-media-stream'] });
  try {
-  for (const engine of ['light', 'simple']) {
+  for (const {engine, query} of [{engine:'light',query:''},{engine:'simple',query:'?sound=simple'},{engine:'classic',query:'?sound=classic'}]) {
    const context = await browser.newContext({ permissions: ['microphone'], serviceWorkers: 'block', viewport: { width: 390, height: 844 } });
    const page = await context.newPage(), errors = []; page.on('pageerror', e => errors.push(e.message));
    await page.addInitScript(() => {
@@ -13,11 +13,11 @@ const base = process.env.SAEZURI_BASE || 'http://127.0.0.1:8018';
     navigator.mediaDevices.getUserMedia = (...a) => { window.micRequests++; return get(...a); };
     AudioContext.prototype.createOscillator = function () { const osc = make.call(this), row = { ended: false }; window.synthNodes.push(row); osc.addEventListener('ended', () => row.ended = true); return osc; };
    });
-   await page.goto(base + '/probe/saezuri/?sound=' + engine); await page.locator('#home-create').click(); await page.locator('#new-manual').click();
+   await page.goto(base + '/probe/saezuri/' + query); await page.locator('#home-create').click(); await page.locator('#new-manual').click();
    const report = async () => { await page.locator('#report').evaluate(n => n.click()); return JSON.parse(await page.locator('#metrics').textContent()); };
    const press = async midi => { const box = await page.locator(`#piano-keys [data-midi="${midi}"]`).boundingBox(); await page.mouse.move(box.x + box.width / 2, box.y + box.height - 12); await page.mouse.down(); };
-   const before = await report();
-   await press(60); await page.waitForTimeout(150); assert.equal(await page.evaluate(() => synthNodes.filter(n => !n.ended).length), engine === 'light' ? 2 : 1);
+   const before = await report(); assert.equal(before.audioEngine,engine);
+   await press(60); await page.waitForTimeout(150); assert.equal(await page.evaluate(() => synthNodes.filter(n => !n.ended).length), engine === 'classic' ? 4 : engine === 'light' ? 2 : 1);
    await page.mouse.up(); await page.waitForTimeout(550); assert.equal(await page.evaluate(() => synthNodes.filter(n => !n.ended).length), 0);
    const after = await report(); assert.deepEqual(after.captureEditing, before.captureEditing); assert.equal(await page.evaluate(() => micRequests), 0);
    await page.locator('#screen-settings').click(); await page.locator('#tempo').fill('180'); await page.locator('#tempo').dispatchEvent('change'); await page.locator('#play-count').uncheck(); await page.locator('#settings-close').click();

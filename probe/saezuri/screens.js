@@ -1,8 +1,10 @@
-import {MelodyLearning} from './learning.js?v=v0.1.0-20261002222541-da565ef';
-import {emptySequence,keepPhrase,sequencePlayback,proposeSequence,commitSequence,undoPlacement} from './sequence-session.js?v=v0.1.0-20261002222541-da565ef';
-import {readCaptureReport} from './capture-report.js?v=v0.1.0-20261002222541-da565ef';
-import {setupPlaybackSheet} from './sheet-controls.js?v=v0.1.0-20261002222541-da565ef';
+import {MelodyLearning} from './learning.js?v=v0.1.0-20261010113359-a5daded';
+import {emptySequence,keepPhrase,sequencePlayback,proposeSequence,commitSequence,undoPlacement} from './sequence-session.js?v=v0.1.0-20261010113359-a5daded';
+import {readCaptureReport} from './capture-report.js?v=v0.1.0-20261010113359-a5daded';
+import {setupPlaybackSheet} from './sheet-controls.js?v=v0.1.0-20261010113359-a5daded';
 const $=id=>document.getElementById(id);
+const trialBuild=new URL(import.meta.url).searchParams.get('v')||'local-20261010';
+const trialVersion=trialBuild.match(/-(\d{14})-/)?.[1]||trialBuild;
 const button=(text,fn)=>{const b=document.createElement('button');b.type='button';b.textContent=text;b.onclick=fn;return b;};
 
 export class MelodyScreens {
@@ -18,7 +20,7 @@ export class MelodyScreens {
   home.innerHTML=`<nav class="home-nav"><a class="menu-home" href="../../" aria-label="コエキットへ"><svg viewBox="0 0 24 24"><path d="M12 3l9 8h-2.5v9h-5.5v-6h-2v6H5.5v-9H3z"/></svg></a><button class="menu-help" id="melody-help" aria-label="つかいかた">？</button></nav>
    <h1><img src="../../assets/brand/saezurhythm.svg" alt="サエズリズム"></h1><p class="home-caption">こえと タッチで、メロディーを つくろう。</p>
    <div class="home-menu"><button id="home-create">つくる<small>音をならべて、ひとつのフレーズに</small></button><button id="home-connect">つなげる<small>フレーズをならべて、長い曲に</small></button><button id="home-resume" hidden>つづきから</button></div>
-   <p class="session-note">このタブの中で試せます。再読み込みすると作業は消えます。</p><p class="home-credit">開発版 2026.10.02　© 2026 SIKUMI LAB</p>`;
+   <p class="session-note">このタブの中で試せます。再読み込みすると作業は消えます。</p><p class="home-credit" data-build="${trialBuild}">開発版 ${trialVersion}　© 2026 SIKUMI LAB</p>`;
   const choose=document.createElement('section');choose.id='melody-choose';choose.className='melody-screen';
   choose.innerHTML='<div class="screen-heading"><button data-screen-back>← トップ</button><h2 tabindex="-1">つくる</h2></div><p>どこから はじめる？</p><div id="creation-choices"></div><p id="choose-notice" role="status"></p><button id="choose-resume" hidden>つづきから</button>';
   const create=document.createElement('div');create.id='melody-create';create.className='melody-screen';

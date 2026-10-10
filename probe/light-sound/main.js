@@ -1,9 +1,9 @@
-import { ProbeTransport } from '../saezuri/audio.js?v=v0.1.0-20261002222541-da565ef';
-import { AudioMixer } from '../saezuri/volume.js?v=v0.1.0-20261002222541-da565ef';
-import { lightVoiceStats, stopLightVoices, LIGHT_ONLY_INSTRUMENTS, SOUND_REVISION } from '../saezuri/light-voice.js?v=v0.1.0-20261002222541-da565ef';
-import { accompanimentEvents } from '../../saezuri/music/accompaniment.js?v=v0.1.0-20261002222541-da565ef';
+import { ProbeTransport } from '../saezuri/audio.js?v=v0.1.0-20261010113359-a5daded';
+import { AudioMixer } from '../saezuri/volume.js?v=v0.1.0-20261010113359-a5daded';
+import { lightVoiceStats, stopLightVoices, LIGHT_ONLY_INSTRUMENTS, SOUND_REVISION } from '../saezuri/light-voice.js?v=v0.1.0-20261010113359-a5daded';
+import { accompanimentEvents } from '../../saezuri/music/accompaniment.js?v=v0.1.0-20261010113359-a5daded';
 const $ = id => document.getElementById(id);
-const engines = { light: '軽い音', simple: 'さらに軽い音', classic: '今の音' };
+const engines = { light: '軽い音', simple: 'さらに軽い音', classic: '以前の音' };
 const records = [], build = new URL(import.meta.url).searchParams.get('v');
 let context, transport, busy = false, generation = 0, current, lastHeard;
 function lock(value) {
@@ -15,7 +15,7 @@ function lock(value) {
 }
 function updateLinks() {
   const classic = $('engine').value === 'classic';
-  $('try-app').href = `../saezuri/${classic ? '' : '?sound=' + $('engine').value}`;
+  $('try-app').href = `../saezuri/?sound=${$('engine').value}`;
   for (const option of $('scenario').options) option.disabled = classic && LIGHT_ONLY_INSTRUMENTS.includes(option.value);
   if (classic && LIGHT_ONLY_INSTRUMENTS.includes($('scenario').value)) $('scenario').value = 'mixed';
   for (const button of document.querySelectorAll('[data-audition]')) button.disabled = classic && LIGHT_ONLY_INSTRUMENTS.includes(button.dataset.audition);

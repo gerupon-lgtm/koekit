@@ -1,8 +1,9 @@
 // ML-T01 only: locally synthesized comparison voices, not approved instrument assets.
-import { tickSeconds } from '../../saezuri/document.js?v=v0.1.0-20261002222541-da565ef';
-import { schedulePlaybackCount, COUNT_STYLES } from './playback-count.js?v=v0.1.0-20261002222541-da565ef';
-import { createLightVoice, LIGHT_ENGINES, LIGHT_ONLY_INSTRUMENTS } from './light-voice.js?v=v0.1.0-20261002222541-da565ef';
-export function scheduleVoice(ctx, output, { midi, time, duration, instrument = 'piano', gain = 0.16, velocity = 70, engine = 'classic' }) {
+import { tickSeconds } from '../../saezuri/document.js?v=v0.1.0-20261010113359-a5daded';
+import { schedulePlaybackCount, COUNT_STYLES } from './playback-count.js?v=v0.1.0-20261010113359-a5daded';
+import { createLightVoice, LIGHT_ENGINES, LIGHT_ONLY_INSTRUMENTS } from './light-voice.js?v=v0.1.0-20261010113359-a5daded';
+import { DEFAULT_SOUND_ENGINE } from './sound-engine.js?v=v0.1.0-20261010113359-a5daded';
+export function scheduleVoice(ctx, output, { midi, time, duration, instrument = 'piano', gain = 0.16, velocity = 70, engine = DEFAULT_SOUND_ENGINE }) {
   if(/^(electro-)?(kick|snare|hat)$/.test(instrument))return schedulePercussion(ctx,output,{time,duration,instrument,gain});
   if (engine !== 'classic' && !LIGHT_ENGINES.includes(engine)) throw new Error('VOICE_ENGINE_UNKNOWN');
   if (LIGHT_ENGINES.includes(engine) || LIGHT_ONLY_INSTRUMENTS.includes(instrument)) {
@@ -52,7 +53,7 @@ function schedulePercussion(ctx,output,{time,duration,instrument,gain}){
  return ()=>{try{source.stop();}catch{}cleanup();};
 }
 export class ProbeTransport {
-  constructor(ctx, onStop, mixer=null, {engine='classic'}={}) { this.ctx = ctx; this.onStop = onStop; this.mixer=mixer;this.engine=engine;this.serial = 0; this.voices = new Set(); this.active = false; }
+  constructor(ctx, onStop, mixer=null, {engine=DEFAULT_SOUND_ENGINE}={}) { this.ctx = ctx; this.onStop = onStop; this.mixer=mixer;this.engine=engine;this.serial = 0; this.voices = new Set(); this.active = false; }
   start(notes, { tempo = 120, totalTicks = 64, instrument = 'piano', lead = 0.35, ahead = 0.15, countSound = false, countVolume = 1, countStyle = 'rim', accompaniment = [], loop = false } = {}) {
     this.stop(false);
     if (!COUNT_STYLES.includes(countStyle)) throw new Error('COUNT_STYLE_UNKNOWN');

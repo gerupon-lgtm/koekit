@@ -1,10 +1,10 @@
-import {SongStore,SONG_LIMIT} from '../../saezuri/song-store.js?v=v0.1.0-20261002222541-da565ef';
-import {checkpointFingerprint,restoreCheckpoint} from './song-session.js?v=v0.1.0-20261002222541-da565ef';
-import {emptySequence} from './sequence-session.js?v=v0.1.0-20261002222541-da565ef';
-import {validateComposition} from '../../saezuri/sequence.js?v=v0.1.0-20261002222541-da565ef';
-import {sequencePlayback} from './sequence-session.js?v=v0.1.0-20261002222541-da565ef';
-import {entryPreview} from './entry-session.js?v=v0.1.0-20261002222541-da565ef';
-import {setupPlaybackSheet} from './sheet-controls.js?v=v0.1.0-20261002222541-da565ef';
+import {SongStore,SONG_LIMIT} from '../../saezuri/song-store.js?v=v0.1.0-20261010113359-a5daded';
+import {checkpointFingerprint,restoreCheckpoint} from './song-session.js?v=v0.1.0-20261010113359-a5daded';
+import {emptySequence} from './sequence-session.js?v=v0.1.0-20261010113359-a5daded';
+import {validateComposition} from '../../saezuri/sequence.js?v=v0.1.0-20261010113359-a5daded';
+import {sequencePlayback} from './sequence-session.js?v=v0.1.0-20261010113359-a5daded';
+import {entryPreview} from './entry-session.js?v=v0.1.0-20261010113359-a5daded';
+import {setupPlaybackSheet} from './sheet-controls.js?v=v0.1.0-20261010113359-a5daded';
 const $=id=>document.getElementById(id);
 const copy=value=>structuredClone(value);
 const messages={SONG_LIMIT:`${SONG_LIMIT}きょく いっぱいです。きょくを けすと、新しく ほぞんできます。`,SONG_CONFLICT:'ほかの画面で きょくが変わりました。この画面のつくりかけは残っています。',SONG_DELETED:'ほかの画面で このきょくが消されました。この画面のつくりかけは残っています。'};
