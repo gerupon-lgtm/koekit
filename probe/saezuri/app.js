@@ -1,31 +1,31 @@
-import { proposeNote, commitNote, undo } from '../../saezuri/document.js?v=v0.1.0-20261017153326-f7c4952';
+import { proposeNote, commitNote, undo } from '../../saezuri/document.js?v=v0.1.0-20261017154938-4e13641';
 import { microphoneEnabled, setMicrophoneEnabled, onMicrophoneChange } from '../../src/speech/microphone.js';
 import { createSpeechInput, METHODS } from '../../src/speech/index.js';
-import { EditVoice } from './edit-voice.js?v=v0.1.0-20261017153326-f7c4952';
-import { ProbeTransport } from './audio.js?v=v0.1.0-20261017153326-f7c4952';
-import { ProbeCapture } from './capture.js?v=v0.1.0-20261017153326-f7c4952';
-import { renderScore, pitchName } from './score.js?v=v0.1.0-20261017153326-f7c4952';
-import { alignCaptureStart } from './capture-support.js?v=v0.1.0-20261017153326-f7c4952';
-import { inferSignature, signature } from './key-signature.js?v=v0.1.0-20261017153326-f7c4952';
-import { CaptureEditorView } from './capture-editor-view.js?v=v0.1.0-20261017153326-f7c4952';
-import { readCaptureReport } from './capture-report.js?v=v0.1.0-20261017153326-f7c4952';
-import { releaseCaptureDetails } from './capture-retention.js?v=v0.1.0-20261017153326-f7c4952';
-import { setupEditorLayout, syncEditorLayout, focusEditor } from './editor-layout.js?v=v0.1.0-20261017153326-f7c4952';
-import {ComposerControls} from './composer-controls.js?v=v0.1.0-20261017153326-f7c4952';
-import {blankPattern} from './entry-session.js?v=v0.1.0-20261017153326-f7c4952';
-import {creationVoiceProfile,LOOP_VOICE_PROFILE,STOP_VOICE_PROFILE} from './creation-voice.js?v=v0.1.0-20261017153326-f7c4952';
-import {ImageControls} from './image-controls.js?v=v0.1.0-20261017153326-f7c4952';
-import {accompanimentEvents,SOUNDS,soundLabel} from '../../saezuri/music/accompaniment.js?v=v0.1.0-20261017153326-f7c4952';
-import {MelodyScreens} from './screens.js?v=v0.1.0-20261017153326-f7c4952';
-import {SongWorkflow} from './song-workflow.js?v=v0.1.0-20261017153326-f7c4952';
-import {nextLoopHead} from './loop-timing.js?v=v0.1.0-20261017153326-f7c4952';
-import {alignScreenHeadings} from './headings.js?v=v0.1.0-20261017153326-f7c4952';
-import {VolumeControls,AudioMixer} from './volume.js?v=v0.1.0-20261017153326-f7c4952';
-import {KeyboardControls} from './keyboard-controls.js?v=v0.1.0-20261017153326-f7c4952';
-import {heldVoice} from './live-keyboard-audio.js?v=v0.1.0-20261017153326-f7c4952';
-import {stopLightVoices,lightVoiceStats} from './light-voice.js?v=v0.1.0-20261017153326-f7c4952';
-import {resolveSoundEngine,SOUND_POLICY_REVISION} from './sound-engine.js?v=v0.1.0-20261017153326-f7c4952';
-import {DEFAULT_IMAGE} from '../../saezuri/music/image-arrangement.js?v=v0.1.0-20261017153326-f7c4952';
+import { EditVoice } from './edit-voice.js?v=v0.1.0-20261017154938-4e13641';
+import { ProbeTransport } from './audio.js?v=v0.1.0-20261017154938-4e13641';
+import { ProbeCapture } from './capture.js?v=v0.1.0-20261017154938-4e13641';
+import { renderScore, pitchName } from './score.js?v=v0.1.0-20261017154938-4e13641';
+import { alignCaptureStart } from './capture-support.js?v=v0.1.0-20261017154938-4e13641';
+import { inferSignature, signature } from './key-signature.js?v=v0.1.0-20261017154938-4e13641';
+import { CaptureEditorView } from './capture-editor-view.js?v=v0.1.0-20261017154938-4e13641';
+import { readCaptureReport } from './capture-report.js?v=v0.1.0-20261017154938-4e13641';
+import { releaseCaptureDetails } from './capture-retention.js?v=v0.1.0-20261017154938-4e13641';
+import { setupEditorLayout, syncEditorLayout, focusEditor } from './editor-layout.js?v=v0.1.0-20261017154938-4e13641';
+import {ComposerControls} from './composer-controls.js?v=v0.1.0-20261017154938-4e13641';
+import {blankPattern} from './entry-session.js?v=v0.1.0-20261017154938-4e13641';
+import {creationVoiceProfile,LOOP_VOICE_PROFILE,STOP_VOICE_PROFILE} from './creation-voice.js?v=v0.1.0-20261017154938-4e13641';
+import {ImageControls} from './image-controls.js?v=v0.1.0-20261017154938-4e13641';
+import {accompanimentEvents,SOUNDS,soundLabel} from '../../saezuri/music/accompaniment.js?v=v0.1.0-20261017154938-4e13641';
+import {MelodyScreens} from './screens.js?v=v0.1.0-20261017154938-4e13641';
+import {SongWorkflow} from './song-workflow.js?v=v0.1.0-20261017154938-4e13641';
+import {nextLoopHead} from './loop-timing.js?v=v0.1.0-20261017154938-4e13641';
+import {alignScreenHeadings} from './headings.js?v=v0.1.0-20261017154938-4e13641';
+import {VolumeControls,AudioMixer} from './volume.js?v=v0.1.0-20261017154938-4e13641';
+import {KeyboardControls} from './keyboard-controls.js?v=v0.1.0-20261017154938-4e13641';
+import {heldVoice} from './live-keyboard-audio.js?v=v0.1.0-20261017154938-4e13641';
+import {stopLightVoices,lightVoiceStats} from './light-voice.js?v=v0.1.0-20261017154938-4e13641';
+import {resolveSoundEngine,SOUND_POLICY_REVISION} from './sound-engine.js?v=v0.1.0-20261017154938-4e13641';
+import {DEFAULT_IMAGE} from '../../saezuri/music/image-arrangement.js?v=v0.1.0-20261017154938-4e13641';
 const compactEditor=setupEditorLayout();
 const requestedEngine=new URLSearchParams(location.search).get('sound');
 const voiceEngine=resolveSoundEngine(requestedEngine);
@@ -100,6 +100,7 @@ const captureEditor = new CaptureEditorView({ onChange(change) {
   if(revealKeyboard&&shell?.screen==='create')keyboard?.reveal();
   showReport();
   songWorkflow?.schedule();
+  shell?.placementWorkflow?.confirmed(change);
 } });
 function drawPattern(kind, pattern) {
   const inferred = inferSignature(kind==='capture' ? (captured?.notes ?? pattern.notes) : pattern.notes), fifths = keyChoices[kind] ?? (pattern.source==='manual'?0:inferred.fifths);
@@ -391,6 +392,7 @@ $('adopt').onclick = () => {
 };
 function discardCurrent() {
   if(phase!=='idle') return;
+  shell?.placementWorkflow?.abandon();
   shell?.learning?.end();if($('after-keep'))$('after-keep').hidden=true;
   captured=null; capturedOriginal=null;captureAlignments.clear();captureEditor.load(null);$('review').hidden=true;setPhase('idle');showReport();
 }
@@ -507,6 +509,25 @@ const screenNavigation=compactEditor && new URLSearchParams(location.search).get
 if(compactEditor&&!screenNavigation) $('edit-score').click();
 if(screenNavigation) {
   shell=new MelodyScreens({editor:captureEditor,onStop:()=>stop(),onNavigate:()=>setPhase(phase),
+    onEditWorkspace:(pattern,checkpoint)=>{
+      stop();
+      const savedState=state,savedCandidate=candidate,savedImport=captureImportSource;
+      const savedKeys=structuredClone(keyChoices),savedOctaves={...displayOctaves},savedAlignments=[...captureAlignments];
+      const fields=['capture','captureOptions','importedFrom','editingSource','captureAlignmentTicks'];
+      const savedRecord=Object.fromEntries(fields.map(key=>[key,record[key]]));
+      const parked=captureEditor.parkWorkspace(!!songWorkflow?.id||!!songWorkflow?.requestedFingerprint);
+      record.capture=null;record.captureOptions=null;delete record.importedFrom;record.editingSource='placement';
+      captureImportSource=null;captureAlignments.clear();keyChoices.capture=null;displayOctaves.capture=0;
+      if(checkpoint)captureEditor.restore(checkpoint);else captureEditor.openPattern(pattern,{accepted:true});
+      $('review').hidden=false;setPhase('idle');showReport();
+      return {checkpoint:parked.checkpoint,restore:()=>{
+        for(const key of fields){if(savedRecord[key]===undefined)delete record[key];else record[key]=savedRecord[key];}
+        captureImportSource=savedImport;state=savedState;candidate=savedCandidate;
+        Object.assign(keyChoices,savedKeys);Object.assign(displayOctaves,savedOctaves);
+        captureAlignments.clear();for(const [key,value] of savedAlignments)captureAlignments.set(key,value);
+        parked.restore();$('review').hidden=!captureEditor.isOpen;draw();setPhase('idle');showReport();
+      }};
+    },
     onOpenPattern:(pattern,source,tempo)=>{
       if(songWorkflow){songWorkflow.practice=source==='tutorial';if(songWorkflow.practice)songWorkflow.status('おてほんは ほぞん枠を使いません',false);}
       keyChoices.capture=null;displayOctaves.capture=0;captureAlignments.clear();$('tempo').value=String(tempo);

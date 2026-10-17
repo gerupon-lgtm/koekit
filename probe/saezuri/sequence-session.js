@@ -1,12 +1,23 @@
-import {validateNotes} from '../../saezuri/document.js?v=v0.1.0-20261017153326-f7c4952';
-import {validateComposition,proposeSequence,commitSequence,undoSequence} from '../../saezuri/sequence.js?v=v0.1.0-20261017153326-f7c4952';
-import {accompanimentEvents} from '../../saezuri/music/accompaniment.js?v=v0.1.0-20261017153326-f7c4952';
+import {validateNotes} from '../../saezuri/document.js?v=v0.1.0-20261017154938-4e13641';
+import {validateComposition,proposeSequence,commitSequence,undoSequence} from '../../saezuri/sequence.js?v=v0.1.0-20261017154938-4e13641';
+import {accompanimentEvents} from '../../saezuri/music/accompaniment.js?v=v0.1.0-20261017154938-4e13641';
 export const emptySequence=()=>({patterns:[],placements:[],revision:0,undoStack:[]});
+function phraseId(draft){
+ const used=new Set([...draft.patterns,...(draft.undoStack??[]).flatMap(item=>item.patterns??[])].map(p=>p.id));
+ let number=0,id;do{id=`phrase-${draft.revision}-${number++}`;}while(used.has(id));return id;
+}
 export function keepPhrase(draft,pattern,name) {
  const error=validateNotes(pattern);if(error)return error;
  if(!pattern.notes.length)return {code:'EMPTY_PHRASE'};
- const id=`phrase-${draft.revision}-${draft.patterns.length}`;
+ const id=phraseId(draft);
  return {...draft,revision:draft.revision+1,patterns:[...draft.patterns,{...structuredClone(pattern),id,familyId:id,name:name.trim().slice(0,24)||`フレーズ${draft.patterns.length+1}`} ]};
+}
+export function derivePlacement(draft,placementId,pattern){
+ const placement=draft.placements.find(p=>p.id===placementId),source=draft.patterns.find(p=>p.id===placement?.patternId);
+ if(!source)return {code:'PLACEMENT_NOT_FOUND'};
+ const stem=(source.familyName??draft.patterns.find(p=>p.id===source.familyId)?.name??source.name??'フレーズ').slice(0,20),names=new Set(draft.patterns.map(p=>p.name));
+ let number=1,name;do{name=`${stem} ${number++}`;}while(names.has(name));
+ return proposeSequence(draft,{type:'derive',placementId,patternId:phraseId(draft),pattern,name});
 }
 export function sequencePlayback(draft) {
  const invalid=validateComposition(draft);if(invalid)return invalid;
@@ -21,6 +32,8 @@ export function sequencePlayback(draft) {
 }
 // Arrangement undo must preserve the phrase shelf, which is independently added to.
 export function undoPlacement(draft) {
- const restored=undoSequence(draft);return {...restored,patterns:draft.patterns};
+ const restored=undoSequence(draft),patterns=[...restored.patterns];
+ for(const pattern of draft.patterns)if(!patterns.some(p=>p.id===pattern.id))patterns.push(pattern);
+ return {...restored,patterns};
 }
 export {proposeSequence,commitSequence};

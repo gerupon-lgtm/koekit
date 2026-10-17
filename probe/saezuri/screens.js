@@ -1,14 +1,15 @@
-import {MelodyLearning} from './learning.js?v=v0.1.0-20261017153326-f7c4952';
-import {emptySequence,keepPhrase,sequencePlayback,proposeSequence,commitSequence,undoPlacement} from './sequence-session.js?v=v0.1.0-20261017153326-f7c4952';
-import {readCaptureReport} from './capture-report.js?v=v0.1.0-20261017153326-f7c4952';
-import {setupPlaybackSheet} from './sheet-controls.js?v=v0.1.0-20261017153326-f7c4952';
+import {MelodyLearning} from './learning.js?v=v0.1.0-20261017154938-4e13641';
+import {emptySequence,keepPhrase,sequencePlayback,proposeSequence,commitSequence,undoPlacement} from './sequence-session.js?v=v0.1.0-20261017154938-4e13641';
+import {readCaptureReport} from './capture-report.js?v=v0.1.0-20261017154938-4e13641';
+import {setupPlaybackSheet} from './sheet-controls.js?v=v0.1.0-20261017154938-4e13641';
+import {PlacementWorkflow} from './placement-workflow.js?v=v0.1.0-20261017154938-4e13641';
 const $=id=>document.getElementById(id);
 const trialBuild=new URL(import.meta.url).searchParams.get('v')||'local-20261010';
 const trialVersion=trialBuild.match(/-(\d{14})-/)?.[1]||trialBuild;
 const button=(text,fn)=>{const b=document.createElement('button');b.type='button';b.textContent=text;b.onclick=fn;return b;};
 
 export class MelodyScreens {
- constructor({editor,onStop,onNavigate,onPlay,onDiscard,onOpenPattern,onAudition}) {
+ constructor({editor,onStop,onNavigate,onPlay,onDiscard,onOpenPattern,onAudition,onEditWorkspace}) {
   Object.assign(this,{editor,onStop,onNavigate,onPlay,onDiscard,onOpenPattern,onAudition});
   this.screen='home';this.sequence=emptySequence();this.proposal=null;this.selected=null;this.mode='input';this.busy=false;
   document.body.classList.add('melody-app');
@@ -105,6 +106,7 @@ export class MelodyScreens {
   $('sequence-undo').onclick=()=>{if(this.busy)return;if(this.proposal)this.proposal=null;else this.sequence=undoPlacement(this.sequence);this.renderSequence();};
   for(const [id,type,delta] of [['sequence-left','move',-1],['sequence-right','move',1],['sequence-delete','remove',0]])$(id).onclick=()=>this.stage({type,placementId:this.selected,index:this.sequence.placements.findIndex(p=>p.id===this.selected)+delta});
   addEventListener('popstate',()=>this.go(['home','choose','create','connect','samples'].includes(history.state?.melodyScreen)?history.state.melodyScreen:'home',{history:false}));
+  this.placementWorkflow=new PlacementWorkflow(this,onEditWorkspace);
   this.learning=new MelodyLearning(this);
   history.replaceState({...history.state,melodyScreen:'home'},'');this.go('home',{history:false});
  }
@@ -114,6 +116,7 @@ export class MelodyScreens {
   node.innerHTML=`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="${paths[type]}"/></svg><span>${label}</span>`;
  }
  requestDiscard(action,ending=false){
+  if(this.placementWorkflow?.active){this.placementWorkflow.cancel();return;}
   if(this.songWorkflow){this.songWorkflow.depart(action,ending);return;}
   if(this.discardDialog.open)return;
   if(!this.editor.isOpen&&!this.busy){action();return;}
@@ -126,6 +129,7 @@ export class MelodyScreens {
  openSettings(){ $('creation-settings').hidden=this.screen!=='create';this.dialog.querySelector('.listen-settings').append($('instrument').closest('label'));this.dialog.showModal();this.onNavigate();}
  go(screen,{history:push=true,stop=true}={}) {
   if(this.phase==='saving')return;
+  if(this.placementWorkflow?.active)screen='create';
   if(screen==='create'&&!this.editor.isOpen&&this.phase==='idle')screen='choose';
   if(stop)this.onStop();
   for(const open of document.querySelectorAll('dialog[open]'))open.close();
@@ -154,7 +158,7 @@ export class MelodyScreens {
   $('choose-resume').hidden=!this.editor.isOpen;
   $('choose-notice').textContent=this.editor.isOpen?'作業を残しています。別の作り方を選ぶと、今の作業をほぞんします。':'';
   $('capture-position').hidden=!['preparing','count-in','recording','analyzing'].includes(phase);
-  $('keep-phrase').disabled=this.busy||!this.editor.isOpen||this.editor.pending||!!this.proposal||!this.editor.pattern?.notes.length;
+  $('keep-phrase').disabled=this.busy||!!this.placementWorkflow?.active||!this.editor.isOpen||this.editor.pending||!!this.proposal||!this.editor.pattern?.notes.length;
   if(this.proposal)$('phrase-feedback').textContent='つなげる画面の候補を確定か取消してから登録できます。';
   $('phrase-name').disabled=this.busy;
   for(const id of ['after-keep-connect','after-keep-more'])$(id).disabled=this.busy;
@@ -164,7 +168,7 @@ export class MelodyScreens {
   this.renderSequence();this.learning?.sync(phase);
  }
   async keep() {
-  if(this.busy||!this.editor.isOpen||this.editor.pending||this.proposal||!this.editor.pattern)return;
+  if(this.busy||this.placementWorkflow?.active||!this.editor.isOpen||this.editor.pending||this.proposal||!this.editor.pattern)return;
     if(this.songWorkflow?.practice){
      const pattern=JSON.stringify(this.editor.pattern);
      if(!await this.songWorkflow.allowNew())return;
@@ -181,13 +185,13 @@ export class MelodyScreens {
   this.renderSequence();
  }
  stage(command) {
-  if(this.busy||this.proposal)return;
+  if(this.busy||this.proposal||this.placementWorkflow?.active)return;
   const next=proposeSequence(this.sequence,command);
   if(next.code){$('sequence-message').textContent=next.code==='PLACEMENT_LIMIT'?'16個まで並べられます。':'その並べ方にはできません。';return;}
   this.proposal=next;if(command.type==='append')this.selected=command.placement.id;this.renderSequence();
  }
  renderSequence() {
-  const draft=this.proposal?.next??this.sequence,locked=this.busy||!!this.proposal;
+  const draft=this.proposal?.next??this.sequence,locked=this.busy||!!this.proposal||!!this.placementWorkflow?.active;
   $('sequence-empty').hidden=!!this.sequence.patterns.length;
   $('sequence-create').hidden=!!this.sequence.patterns.length;
   const shelf=$('phrase-shelf');shelf.replaceChildren();
@@ -206,6 +210,7 @@ export class MelodyScreens {
   this.ranges=sequencePlayback(draft).ranges??[];
   $('sequence-count').textContent=`${draft.placements.length} / 16 ・ ${(this.ranges.at(-1)?.end??0)/16}小節`;
   $('sequence-message').textContent=this.proposal?'仮の順番です。聴いてからオッケーで決めます。':'フレーズを選ぶと、最後に追加する候補になります。';
+  this.placementWorkflow?.render(locked);
   this.songWorkflow?.schedule();
  }
  follow(tick){if(this.screen!=='connect')return;const active=tick==null?null:this.ranges?.find(p=>p.start<=tick&&tick<p.end);

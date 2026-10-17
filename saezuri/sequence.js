@@ -1,6 +1,7 @@
 // ML-T02: pure composition editing drafts, not the database Song serializer.
 // undoStack is session-only. Q1 save/history lifecycle and Q2 selection UI are not implemented.
-import { validateNotes } from './document.js?v=v0.1.0-20261017153326-f7c4952';
+import { validateNotes } from './document.js?v=v0.1.0-20261017154938-4e13641';
+import {validateAccompaniment} from './music/accompaniment.js?v=v0.1.0-20261017154938-4e13641';
 const error = code => ({ code });
 const validId = id => typeof id === 'string' && id.length > 0;
 function snapshot(draft) {
@@ -46,6 +47,26 @@ export function proposeSequence(draft, command) {
     const [placement] = next.placements.splice(index, 1);
     if (command.type === 'move') next.placements.splice(command.index, 0, placement);
     targets.push(placement.id);
+  } else if(command.type==='derive') {
+    const placement=next.placements.find(p=>p.id===command.placementId);
+    if(!placement)return error('PLACEMENT_NOT_FOUND');
+    if(!validId(command.patternId)||next.patterns.some(p=>p.id===command.patternId))return error('PATTERN_ID');
+    const source=next.patterns.find(p=>p.id===placement.patternId);
+    const replacement={...structuredClone(command.pattern),id:command.patternId,familyId:source.familyId,
+      familyName:source.familyName??source.name,derivedFrom:source.id,name:command.name,revision:(source.revision??0)+1};
+    const invalidPattern=validateNotes(replacement)??(replacement.accompaniment&&validateAccompaniment(replacement.accompaniment,replacement.bars));
+    if(invalidPattern)return invalidPattern;
+    next.patterns.push(replacement);placement.patternId=replacement.id;targets.push(placement.id);
+  } else if(command.type==='replace') {
+    const placement=next.placements.find(p=>p.id===command.placementId);
+    if(!placement)return error('PLACEMENT_NOT_FOUND');
+    if(!next.patterns.some(p=>p.id===command.patternId))return error('PATTERN_NOT_FOUND');
+    placement.patternId=command.patternId;targets.push(placement.id);
+  } else if(command.type==='delete-pattern') {
+    if(!next.patterns.some(p=>p.id===command.patternId))return error('PATTERN_NOT_FOUND');
+    if(next.placements.some(p=>p.patternId===command.patternId))return error('PATTERN_IN_USE');
+    next.patterns=next.patterns.filter(p=>p.id!==command.patternId);
+    if(!next.patterns.length)next.keepEmpty=true;
   } else if (command.type === 'edit') {
     if (!Array.isArray(command.edits) || !command.edits.length) return error('EDIT_TARGETS');
     let familyId;

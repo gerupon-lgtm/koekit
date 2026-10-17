@@ -1,5 +1,5 @@
-import { createPerformanceAudioRenderer } from './runtime/fmopelab-dx7ii.mjs?v=v0.1.0-20261017153326-f7c4952';
-import { counts, partsFor, frameEvents } from './config.js?v=v0.1.0-20261017153326-f7c4952';
+import { createPerformanceAudioRenderer } from './runtime/fmopelab-dx7ii.mjs?v=v0.1.0-20261017154938-4e13641';
+import { counts, partsFor, frameEvents } from './config.js?v=v0.1.0-20261017154938-4e13641';
 
 self.onmessage = ({ data }) => {
   try {

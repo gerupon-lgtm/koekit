@@ -98,6 +98,14 @@ body.melody-app{background:#faf5ed;color:#443b36}
 .melody-app #sequence-line button[data-playing]{background:#d9ebd5;outline:2px solid #16816e}
 .melody-app .sequence-edit,.melody-app .sequence-actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:10px}
 .melody-app .sequence-edit button,.melody-app .sequence-actions button{margin:0;font-size:14px;padding:6px}
+.melody-app #phrase-shelf{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+.melody-app .phrase-shelf-row{display:grid;grid-template-columns:minmax(0,1fr) 44px;gap:8px}
+.melody-app .phrase-shelf-row button{min-width:0;padding:6px;overflow-wrap:anywhere}
+.melody-app .phrase-shelf-row [data-phrase-remove]{font-size:12px;background:#ece5da}
+.melody-app .placement-edit-hint{font-size:13px;line-height:1.5;margin:4px 0 8px}
+.melody-app .phrase-choose-row{display:grid;grid-template-columns:1fr 1.3fr;gap:8px;padding:12px 0;border-bottom:1px solid #ddd4c5}
+.melody-app .phrase-choose-row p{grid-column:1/-1;margin:0}
+.melody-app .phrase-choose-row button{margin:0;min-width:0}
 .melody-app #sequence-confirm{background:#d9ebd5}.melody-app #sequence-preview{background:#d9ebd5}
 .melody-app #melody-connect h3{font-size:15px;margin:14px 0 6px}
 .melody-app #sequence-message,.melody-app #sequence-empty{font-size:14px;line-height:1.6}

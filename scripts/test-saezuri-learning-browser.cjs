@@ -21,7 +21,7 @@ const base=process.env.SAEZURI_BASE||'http://127.0.0.1:8014';
  await page.locator('[data-practice-edit="walk"]').click();await page.waitForFunction(()=>document.querySelectorAll('#capture-blocks button').length===7);assert.equal(await page.locator('#learning-guide').isVisible(),false);assert.equal(await page.locator('#melody-discard').isVisible(),false,'successful saving needs no exit confirmation');
  await click('capture-pitch-up');await click('capture-edit-confirm');await page.locator('[data-mode="backing"]').click();await click('image-settings-open');await page.locator('#image-enabled').check();await click('backing-settings-close');await click('capture-edit-confirm');
  await click('preview');await page.waitForFunction(()=>document.querySelector('#status').dataset.state==='playing');assert.equal((await report()).playback.accompaniment.enabled,true);await click('stop');await click('keep-phrase');assert.equal(await page.locator('#after-keep-connect').isVisible(),true);
- await click('after-keep-connect');assert.equal(await page.locator('#phrase-shelf button').count(),1);
+ await click('after-keep-connect');assert.equal(await page.locator('#phrase-shelf [data-phrase]').count(),1);
  await page.locator('#melody-connect [data-screen-back]').click();await click('home-create');await click('choose-example');
  await page.locator('[data-practice-edit="walk"]').click();await page.waitForFunction(()=>document.querySelectorAll('#capture-blocks button').length===7);assert.equal((await report()).captureCandidate.notes[0].midi,60,'preset was not mutated');assert.equal((await report()).captureCandidate.accompaniment.enabled,false);
  await page.locator('#melody-create [data-screen-back]').click();await click('choose-example');

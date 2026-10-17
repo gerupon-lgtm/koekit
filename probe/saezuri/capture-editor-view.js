@@ -1,11 +1,11 @@
-import { openEditSession, stageEdit, selectEditNote, confirmEditSession, cancelEditSession, undoEditSession, hasDraftChanges } from './edit-session.js?v=v0.1.0-20261017153326-f7c4952';
-import {canGenerateAccompaniment,stageAccompanimentCandidate} from './edit-session.js?v=v0.1.0-20261017153326-f7c4952';
-import { analyzeFrames, quantizeSegments } from './analyzer.js?v=v0.1.0-20261017153326-f7c4952';
-import { decodePitchTrace } from './analysis-comparison.js?v=v0.1.0-20261017153326-f7c4952';
-import { pitchName } from './score.js?v=v0.1.0-20261017153326-f7c4952';
-import { orderedNotes, selectionTarget } from './note-selection.js?v=v0.1.0-20261017153326-f7c4952';
-import {proposeEntry,confirmEntry,cancelEntry,moveEntryCursor,entryPreview} from './entry-session.js?v=v0.1.0-20261017153326-f7c4952';
-import {songCheckpoint,restoreCheckpoint} from './song-session.js?v=v0.1.0-20261017153326-f7c4952';
+import { openEditSession, stageEdit, selectEditNote, confirmEditSession, cancelEditSession, undoEditSession, hasDraftChanges } from './edit-session.js?v=v0.1.0-20261017154938-4e13641';
+import {canGenerateAccompaniment,stageAccompanimentCandidate} from './edit-session.js?v=v0.1.0-20261017154938-4e13641';
+import { analyzeFrames, quantizeSegments } from './analyzer.js?v=v0.1.0-20261017154938-4e13641';
+import { decodePitchTrace } from './analysis-comparison.js?v=v0.1.0-20261017154938-4e13641';
+import { pitchName } from './score.js?v=v0.1.0-20261017154938-4e13641';
+import { orderedNotes, selectionTarget } from './note-selection.js?v=v0.1.0-20261017154938-4e13641';
+import {proposeEntry,confirmEntry,cancelEntry,moveEntryCursor,entryPreview} from './entry-session.js?v=v0.1.0-20261017154938-4e13641';
+import {songCheckpoint,restoreCheckpoint} from './song-session.js?v=v0.1.0-20261017154938-4e13641';
 
 const clone = value => value == null ? value : structuredClone(value);
 const labels = { current: '現在の設定', detail: '細かい変化', unsmoothed: 'ならしなし' };
@@ -127,9 +127,16 @@ export class CaptureEditorView {
     return {session, get state() { return this.session.working; }, sourcePattern:clone(pattern), edited:false};
   }
 
-  openPattern(pattern) {
+  parkWorkspace(existing=false) {
+    const variants=this._variants,variant=this._variant,checkpoint=this.checkpoint(existing);
+    this._variants=new Map();this._variant='current';
+    return {checkpoint,restore:()=>{this._variants=variants;this._variant=variant;this._emit(true);}};
+  }
+
+  openPattern(pattern,{accepted=false}={}) {
     this._variants.clear(); this._variant='current';
     this._variants.set('current',this._makeVariant(pattern));
+    this._active.session.accepted=accepted;
     this._status('音を選んで直し、流れを聴いてから、まとめてオッケー。');
     this._emit(true);
   }
@@ -212,6 +219,7 @@ export class CaptureEditorView {
     this._busy = !!busy;
     this._render(false);
   }
+  setConfirmationExit(enabled){this._confirmationExit=!!enabled;this._render(false);}
 
   snapshot() {
     return {
@@ -228,10 +236,10 @@ export class CaptureEditorView {
 
   _status(text) { this._elements['capture-edit-status'].textContent = text; }
 
-  _emit(sourceChanged, fields = true, confirmed = false) {
+  _emit(sourceChanged, fields = true, confirmed = false, entryConfirmed = false) {
     this._render(fields);
     this.onChange?.({ pattern: this.pattern, previewPattern: this.previewPattern, pending: this.pending,
-      edited: this.edited, variant: this.variant, sourcePattern: clone(this._active?.sourcePattern ?? null), sourceChanged, confirmed });
+      edited: this.edited, variant: this.variant, sourcePattern: clone(this._active?.sourcePattern ?? null), sourceChanged, confirmed,entryConfirmed });
     this._highlight();
   }
 
@@ -306,7 +314,7 @@ export class CaptureEditorView {
     this._active.session=next;this._active.edited=true;
     this._active.session.confirmedCursor=this._active.session.working.cursor;
     this._status(adding?'追加を確定しました。次の音を入力できます。':'まとめて確定しました。続けて編集できます。この作業中は「もどす」が使えます。');
-    this._emit(false,true,true);
+    this._emit(false,true,true,adding);
   }
 
   _cancel() {
@@ -358,7 +366,7 @@ export class CaptureEditorView {
     }
     for(const id of ['capture-first','capture-previous']) elements[id].disabled ||= selectedIndex<=0;
     for(const id of ['capture-last','capture-next']) elements[id].disabled ||= selectedIndex===notes.length-1;
-    elements['capture-edit-confirm'].disabled = locked || !!this.entry?.proposal.code || (this.accepted && !this.pending);
+    elements['capture-edit-confirm'].disabled = locked || !!this.entry?.proposal.code || (this.accepted && !this.pending&&!this._confirmationExit);
     elements['capture-edit-cancel'].disabled = this._busy || !this.pending;
     elements['capture-edit-undo'].disabled = locked || (!this.entry && !active?.session.history.length);
     const blocks=elements['capture-blocks'], focusedId=blocks.contains(document.activeElement)?document.activeElement.dataset.noteId:null;
