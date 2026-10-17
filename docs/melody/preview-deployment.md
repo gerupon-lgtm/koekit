@@ -1,4 +1,8 @@
-# サエズリズム 技術試作のHTTPS仮公開
+# サエズリズム 公開・配信記録
+
+## 2026-10-18 トップからの入口・派生編集・エンディング
+
+追加承認に基づき、[コエキットのトップ](https://koekit.sikumilab.com/)の既存カードから[サエズリズム](https://koekit.sikumilab.com/probe/saezuri/)を開けるようにした。解析整理 `4e13641`、配置派生・差し替え `5919374`、指定和音エンディング `46bc9c2`、最終調整 `b32e7fb` を含む公開コミット `46f52f7`。[Pages39069943867](https://github.com/gerupon-lgtm/koekit/actions/runs/39069943867)成功。BUILD `v0.1.0-20261017205925-b32e7fb`。公開78ファイル一致・公開Chrome10スクリプト成功。既存URLと保存先は維持し、旧キャッシュからの更新と保存曲保持も確認した。実機・実声は未確認。[全条件と結果](release-20261018.md)。以下は従来の試作公開の履歴。
 
 **2026-10-03 FM検証ページの公開確認**：実装コミット `642e03cb6f30535b203f51b91ee7f52bf98ca94b`、[Pages37032961209](https://github.com/gerupon-lgtm/koekit/actions/runs/37032961209)成功。[FM検証ページ](https://koekit.sikumilab.com/probe/fm-polyphony/)でHTTPS・19ファイル一致・トップリンクなし・JS／通信エラー0を確認。公開Chromeで14処理時間測定・3実AudioWorklet発音・C3〜G3の6ベースWAV・切替・共通停止・非表示停止・取消・結果保存・320／390／844pxの間隔と中央配置が成功。結果はPCでの公開動作検証で、Pixel 6a／Chrome・iPhone XR／Chromeの発音上限は未測定。本アプリの音源は変更していない。以後のキャッシュ更新はこのページのWorker／Worklet／mjsと動的Voice／WAVにも届く。[実機操作・条件](dx7ii-mobile-polyphony-20261003.md)。
 
