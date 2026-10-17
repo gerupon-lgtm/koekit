@@ -1,3 +1,4 @@
+const {revealCreationControl}=require('./saezuri-browser-controls.cjs');
 const {chromium}=require('../.local-tools/node_modules/playwright');const assert=require('node:assert/strict');
 const base=process.env.SAEZURI_BASE||'http://127.0.0.1:8014';
 (async()=>{const browser=await chromium.launch({channel:'chrome',headless:true,args:['--autoplay-policy=no-user-gesture-required','--use-fake-device-for-media-stream','--use-fake-ui-for-media-stream']});try{
@@ -12,7 +13,7 @@ const base=process.env.SAEZURI_BASE||'http://127.0.0.1:8014';
  await page.screenshot({path:'.local-tools/saezuri-v22-home.png'});
  await page.locator('#home-connect').click();assert.equal(await page.locator('#sequence-empty').isVisible(),true);
  await page.locator('#melody-connect [data-screen-back]').click();await create();
- await page.locator('[data-pitch="0"]').click();await home();await page.locator('#home-resume').click();
+ await revealCreationControl(page,'[data-pitch="0"]');await page.locator('[data-pitch="0"]').click();await home();await page.locator('#home-resume').click();
  assert.equal((await report()).captureEditing.inputCandidate.midi,60,'return preserves unconfirmed entry');
  await page.locator('#capture-edit-confirm').click();await page.locator('#phrase-name').fill('A');await page.locator('#keep-phrase').click();
  assert.match(await page.locator('#phrase-feedback').textContent(),/A/);
@@ -27,7 +28,7 @@ const base=process.env.SAEZURI_BASE||'http://127.0.0.1:8014';
  await page.locator('#preview').click();await page.waitForFunction(()=>document.querySelector('#status').dataset.state==='playing');
  await home();assert.equal(await page.locator('#status').getAttribute('data-state'),'idle');assert.match(await page.locator('#edit-voice-status').textContent(),/おやすみ/);
  await page.goBack();await page.goBack();assert.equal(await page.locator('#melody-create').isVisible(),true,'browser back returns to editor');
- await home();await create();await page.locator('[data-pitch="4"]').click();await page.locator('#capture-edit-confirm').click();await page.locator('#phrase-name').fill('B');await page.locator('#keep-phrase').click();
+ await home();await create();await revealCreationControl(page,'[data-pitch="4"]');await page.locator('[data-pitch="4"]').click();await page.locator('#capture-edit-confirm').click();await page.locator('#phrase-name').fill('B');await page.locator('#keep-phrase').click();
  await home();await page.locator('#home-connect').click();assert.equal(await page.locator('#phrase-shelf [data-phrase]').count(),2);
  await page.locator('#phrase-shelf [data-phrase]').nth(0).click();assert.equal(await page.locator('#sequence-confirm').isEnabled(),true);await page.locator('#sequence-confirm').click();
  await page.locator('#phrase-shelf [data-phrase]').nth(1).click();await page.locator('#sequence-confirm').click();
@@ -45,7 +46,7 @@ const base=process.env.SAEZURI_BASE||'http://127.0.0.1:8014';
  }
  await page.setViewportSize({width:390,height:844});
  await page.locator('#melody-connect [data-screen-back]').click();await page.locator('#home-create').click();await page.locator('#new-image').click();if(await page.locator('#melody-discard').isVisible())await page.locator('#discard-confirm').click();
- await page.locator('#image-settings-open').click();assert.equal(await page.locator('#image-genre').isVisible(),true);await page.locator('#backing-settings-close').click();await home();await page.locator('#home-create').click();
+ await revealCreationControl(page,'#image-settings-open');await page.locator('#image-settings-open').click();assert.equal(await page.locator('#image-genre').isVisible(),true);await page.locator('#backing-settings-close').click();await page.locator('#capture-edit-confirm').click();await home();await page.locator('#home-create').click();
  await page.locator('#choose-mic').click();assert.equal(await page.locator('#capture').isDisabled(),true);
  await page.locator('#choose-mic').click();await page.locator('#capture').click();if(await page.locator('#melody-discard').isVisible())await page.locator('#discard-confirm').click();
  await page.waitForFunction(()=>document.querySelector('#status').dataset.state==='count-in');assert.equal(await page.locator('#capture-position').isVisible(),true);

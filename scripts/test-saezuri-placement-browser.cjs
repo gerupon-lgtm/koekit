@@ -18,10 +18,12 @@ const base=process.env.SAEZURI_BASE||'http://127.0.0.1:8026';
   const sourceId=await page.locator('[data-phrase]').getAttribute('data-phrase');
   await page.locator('[data-mode="edit"]').click();await page.locator('#capture-pitch-up').click();const original=await report();
   assert.equal(original.captureEditing.pending,true);assert.ok(original.captureEditing.undoDepth>0);
+  const normalHeaders={};for(const width of [320,390,844,1280]){await page.setViewportSize({width,height:844});normalHeaders[width]=await page.locator('#melody-create .screen-heading').evaluate(n=>n.getBoundingClientRect().height);}await page.setViewportSize({width:390,height:844});
   await connect();
   for(let i=0;i<2;i++){await page.locator(`[data-phrase="${sourceId}"]`).click();await page.locator('#sequence-confirm').click();}
   await page.locator('#sequence-line [data-placement]').first().click();await page.locator('#sequence-edit').click();
   await page.locator('#placement-edit-hint').waitFor();assert.equal((await report()).captureCandidate.notes[0].midi,60);
+  for(const width of [320,390,844,1280]){await page.setViewportSize({width,height:844});const header=await page.locator('#melody-create .screen-heading').evaluate(n=>{const r=n.getBoundingClientRect(),t=n.querySelector('h2').getBoundingClientRect();return {height:r.height,center:Math.abs((t.left+t.right-innerWidth)/2)};});assert.ok(header.height<=normalHeaders[width]+1,'editing header stays compact '+width);assert.ok(header.center<2,'title stays centered '+width);}await page.setViewportSize({width:390,height:844});
   await page.locator('#capture-pitch-up').click();await page.locator('#capture-edit-confirm').click();await page.locator('#melody-connect').waitFor();
   assert.deepEqual(await names(),['1. A 1','2. A']);
   const derivedId=await page.locator('[data-phrase]').last().getAttribute('data-phrase');

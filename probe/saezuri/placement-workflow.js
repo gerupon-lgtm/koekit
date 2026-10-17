@@ -1,6 +1,6 @@
-import {derivePlacement,commitSequence} from './sequence-session.js?v=v0.1.0-20261017160446-5919374';
-import {setupPlaybackSheet} from './sheet-controls.js?v=v0.1.0-20261017160446-5919374';
-import {restoreCheckpoint} from './song-session.js?v=v0.1.0-20261017160446-5919374';
+import {derivePlacement,commitSequence} from './sequence-session.js?v=v0.1.0-20261017161802-46bc9c2';
+import {setupPlaybackSheet} from './sheet-controls.js?v=v0.1.0-20261017161802-46bc9c2';
+import {restoreCheckpoint} from './song-session.js?v=v0.1.0-20261017161802-46bc9c2';
 const $=id=>document.getElementById(id);
 const button=(text,action)=>{const node=document.createElement('button');node.type='button';node.textContent=text;node.onclick=action;return node;};
 
@@ -85,7 +85,7 @@ export class PlacementWorkflow {
   $('sequence-edit').disabled=locked||!selected;$('sequence-replace').disabled=locked||!selected;
   const hint=$('placement-edit-hint');hint.hidden=!this.active;
   if(this.active){const source=shell.sequence.patterns.find(p=>p.id===this.context.patternId);hint.textContent=`「${source?.name??'フレーズ'}」のこの場所だけ直すよ。オッケーで別のフレーズにします。戻るととりけします。`;}
-  $('melody-create').querySelector('.screen-heading h2').firstChild.textContent=this.active?'フレーズを直す':'つくる';
+  $('melody-create').querySelector('.screen-heading h2').firstChild.textContent=this.active?'直す':'つくる';
   $('melody-create').querySelector('.phrase-register').hidden=this.active;
   if(this.active)$('after-keep').hidden=true;
   for(const add of [...$('phrase-shelf').querySelectorAll('[data-phrase]')]){

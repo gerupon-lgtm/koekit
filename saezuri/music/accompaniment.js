@@ -1,6 +1,6 @@
 // Editable audition presets. These concrete arrangements are trial data.
-import {GENRES,CHORD_INTERVALS,chordTones} from './catalog.js?v=v0.1.0-20261017160446-5919374';
-import {validImageChoice,validateImageArrangement} from './image-arrangement.js?v=v0.1.0-20261017160446-5919374';
+import {GENRES,CHORD_INTERVALS,chordTones} from './catalog.js?v=v0.1.0-20261017161802-46bc9c2';
+import {validImageChoice,validateImageArrangement} from './image-arrangement.js?v=v0.1.0-20261017161802-46bc9c2';
 export const RHYTHMS=[{id:'quarters',label:'4つずつ'},{id:'offbeat',label:'うらで弾く'},{id:'arpeggio',label:'音をばらして弾く'}];
 export const PROGRESSIONS={
  C:[{id:'home',label:'C → F → G → C',chords:[[0,'major'],[5,'major'],[7,'major'],[0,'major']]},
