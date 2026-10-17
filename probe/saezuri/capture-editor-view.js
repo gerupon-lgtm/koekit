@@ -1,11 +1,11 @@
-import { openEditSession, stageEdit, selectEditNote, confirmEditSession, cancelEditSession, undoEditSession, hasDraftChanges } from './edit-session.js?v=v0.1.0-20261010122649-d4089c8';
-import {canGenerateAccompaniment,stageAccompanimentCandidate} from './edit-session.js?v=v0.1.0-20261010122649-d4089c8';
-import { analyzeFrames, quantizeSegments } from './analyzer.js?v=v0.1.0-20261010122649-d4089c8';
-import { decodePitchTrace } from './analysis-comparison.js?v=v0.1.0-20261010122649-d4089c8';
-import { pitchName } from './score.js?v=v0.1.0-20261010122649-d4089c8';
-import { orderedNotes, selectionTarget } from './note-selection.js?v=v0.1.0-20261010122649-d4089c8';
-import {proposeEntry,confirmEntry,cancelEntry,moveEntryCursor,entryPreview} from './entry-session.js?v=v0.1.0-20261010122649-d4089c8';
-import {songCheckpoint,restoreCheckpoint} from './song-session.js?v=v0.1.0-20261010122649-d4089c8';
+import { openEditSession, stageEdit, selectEditNote, confirmEditSession, cancelEditSession, undoEditSession, hasDraftChanges } from './edit-session.js?v=v0.1.0-20261017153326-f7c4952';
+import {canGenerateAccompaniment,stageAccompanimentCandidate} from './edit-session.js?v=v0.1.0-20261017153326-f7c4952';
+import { analyzeFrames, quantizeSegments } from './analyzer.js?v=v0.1.0-20261017153326-f7c4952';
+import { decodePitchTrace } from './analysis-comparison.js?v=v0.1.0-20261017153326-f7c4952';
+import { pitchName } from './score.js?v=v0.1.0-20261017153326-f7c4952';
+import { orderedNotes, selectionTarget } from './note-selection.js?v=v0.1.0-20261017153326-f7c4952';
+import {proposeEntry,confirmEntry,cancelEntry,moveEntryCursor,entryPreview} from './entry-session.js?v=v0.1.0-20261017153326-f7c4952';
+import {songCheckpoint,restoreCheckpoint} from './song-session.js?v=v0.1.0-20261017153326-f7c4952';
 
 const clone = value => value == null ? value : structuredClone(value);
 const labels = { current: '現在の設定', detail: '細かい変化', unsmoothed: 'ならしなし' };
@@ -103,6 +103,15 @@ export class CaptureEditorView {
   get variant() { return this._variant; }
 
   checkpoint(existing=false) { return songCheckpoint(this._active?.session,{existing}); }
+  releaseAnalysisVariants() {
+    if(this._busy || !this.isOpen || this.pending || !this.accepted)return false;
+    // Keep this exact session: its selected notes, source, cursor and Undo are
+    // independent of the discarded alternative analysis sessions.
+    const active=this._active;
+    this._variants.clear();this._variants.set(this._variant,active);
+    this._render(false);
+    return true;
+  }
   clearHistory(){for(const item of this._variants.values())item.session.history=[];}
   restore(checkpoint,options={}) {
     const session=restoreCheckpoint(checkpoint,options);
@@ -316,7 +325,7 @@ export class CaptureEditorView {
   _render(fields) {
     const elements = this._elements, active = this._active, locked = this._busy || !this.isOpen;
     elements['capture-variant'].value = this.variant;
-    elements['capture-variant'].disabled = locked || this.pending;
+    elements['capture-variant'].disabled = locked || this.pending || this._variants.size<2;
     for (const option of elements['capture-variant'].options) option.disabled = !this._variants.has(option.value);
     const notes = orderedNotes(active?.state.pattern.notes ?? []);
     if(active) for(const id of ['capture-edit-start','capture-edit-length','capture-split-at']) elements[id].max=String(active.state.pattern.bars*16);

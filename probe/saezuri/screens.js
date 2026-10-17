@@ -1,7 +1,7 @@
-import {MelodyLearning} from './learning.js?v=v0.1.0-20261010122649-d4089c8';
-import {emptySequence,keepPhrase,sequencePlayback,proposeSequence,commitSequence,undoPlacement} from './sequence-session.js?v=v0.1.0-20261010122649-d4089c8';
-import {readCaptureReport} from './capture-report.js?v=v0.1.0-20261010122649-d4089c8';
-import {setupPlaybackSheet} from './sheet-controls.js?v=v0.1.0-20261010122649-d4089c8';
+import {MelodyLearning} from './learning.js?v=v0.1.0-20261017153326-f7c4952';
+import {emptySequence,keepPhrase,sequencePlayback,proposeSequence,commitSequence,undoPlacement} from './sequence-session.js?v=v0.1.0-20261017153326-f7c4952';
+import {readCaptureReport} from './capture-report.js?v=v0.1.0-20261017153326-f7c4952';
+import {setupPlaybackSheet} from './sheet-controls.js?v=v0.1.0-20261017153326-f7c4952';
 const $=id=>document.getElementById(id);
 const trialBuild=new URL(import.meta.url).searchParams.get('v')||'local-20261010';
 const trialVersion=trialBuild.match(/-(\d{14})-/)?.[1]||trialBuild;
