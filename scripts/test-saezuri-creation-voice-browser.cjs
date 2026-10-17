@@ -5,13 +5,16 @@ const base=process.env.SAEZURI_BASE||'http://127.0.0.1:8018';
  await context.addInitScript(()=>{window.recognizers=[];window.streams=[];window.Vosk={createModel:async()=>({KaldiRecognizer:class{
   constructor(rate,grammar){this.events={};this.grammar=JSON.parse(grammar);window.recognizers.push(this);}on(event,cb){this.events[event]=cb;}acceptWaveform(){}remove(){this.removed=true;}
  }})};const gum=navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);navigator.mediaDevices.getUserMedia=async options=>{const stream=await gum(options);window.streams.push(stream);return stream;};});
- const page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
+ const page=await context.newPage(),errors=[];page.on('pageerror',e=>{errors.push(e.message);console.error('page error:',e.message);});
+ page.on('requestfailed',r=>console.error('request failed:',r.url(),r.failure()?.errorText));
  const click=id=>page.locator('#'+id).evaluate(n=>n.click());
  const report=async()=>{await click('report');return JSON.parse(await page.locator('#metrics').textContent());};
  const pending=async()=>{const r=await report();return r.captureEditing.editCandidate??r.captureCandidate;};
  const listen=word=>page.waitForFunction(word=>document.querySelector('#edit-voice-status').textContent==='声を受け付けています'&&window.recognizers.at(-1)?.grammar.includes(word),word);
  const say=async word=>{await page.evaluate(word=>window.recognizers.at(-1).events.result({result:{text:word}}),word);};
- await page.goto(base+'/probe/saezuri/');await click('home-create');await click('new-image');await page.locator('#edit-voice').check();await listen('ロック');
+ await page.goto(base+'/probe/saezuri/');
+ try{await click('home-create');}catch(error){console.error('startup state:',await page.evaluate(()=>({url:location.href,ready:document.readyState,title:document.title,body:document.body.innerText.slice(0,600)})));throw error;}
+ await click('new-image');await page.locator('#edit-voice').check();await listen('ロック');
  const baseline=await pending();
  for(const [word,field,value] of [['ロック','type','rock'],['ゆっくり','speed','slow'],['やさしい','mood','gentle'],['バラード','type','ballad'],['普通','speed','normal'],['かなしい','mood','sad'],['どうよう','type','nursery'],['はやい','speed','fast'],['かっこいい','mood','cool'],['ポップ','type','pop'],['あかるい','mood','bright']]){
   await say(word);assert.equal(await page.locator('#image-word-'+field).inputValue(),value);assert.deepEqual((await pending()).notes,baseline.notes);

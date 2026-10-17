@@ -5,7 +5,8 @@ const {revealCreationControl}=require('./saezuri-browser-controls.cjs');
  const browser=await chromium.launch({channel:'chrome',headless:true,args:['--autoplay-policy=no-user-gesture-required']});
  try{
  const context=await browser.newContext({viewport:{width:390,height:844},serviceWorkers:'block'});
- const page=await context.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));
+ const page=await context.newPage();const errors=[];page.on('pageerror',e=>{errors.push(e.message);console.error('page error:',e.message);});
+ page.on('requestfailed',r=>console.error('request failed:',r.url(),r.failure()?.errorText));
  await page.goto((process.env.SAEZURI_BASE||'http://127.0.0.1:8014')+'/probe/saezuri/');
  await page.locator('#home-create').click();await page.locator('#new-manual').click();
  await revealCreationControl(page,'[data-pitch="0"]');await page.locator('[data-pitch="0"]').click();
