@@ -31,6 +31,12 @@ BUILD `v0.1.0-20261017214607-f706a29`。
 - おてほんは320×568、360×640、390×740、412×840、844×390、1280×800。入力・編集・案内を閉じた状態で、主要ボタンの44×44px以上、停止欄から8px以上の間隔、譜面全体、横へのはみ出しなし、自動スクロールなしを確認。6段階の実操作・案内再表示・保存枠を使わない練習・完了後の明示的な保存も確認。
 - `check-version` と `git diff --check` が成功。画面の確認画像は無視対象の `.local-tools/learning-layout-20261018/`、`.local-tools/menu-startup-20261018/` に保存。
 
-途中のブラウザ検証で、初期ホーム待機が1回30秒を超えた。更新用ファイルの書き換えと検証実行が重なった可能性があるが、原因は確定していない。書き換え完了後の6サイズ一式と関連スクリプトの逐次実行では再現しなかった。公開版でも初期表示を確認する。
+途中のブラウザ検証で、初期ホーム待機が1回30秒を超えた。更新用ファイルの書き換えと検証実行が重なった可能性があるが、原因は確定していない。書き換え完了後の6サイズ一式と関連スクリプトの逐次実行では再現しなかった。公開版の8入口と同じ6サイズの検証でも再現しなかった。
 
-公開の最終結果は配信確認後に追記する。Pixel 6a／iPhone XRでの実操作・実声・体感速度は未確認。
+公開確認：実装コミット `ddd60df12230b16a8a3e7bdd565506b6dc7ceb66` をmainへ反映し、[Pages 39072643270](https://github.com/gerupon-lgtm/koekit/actions/runs/39072643270)のbuild／deploy／report-build-statusがすべて成功。
+
+- [公開トップ](https://koekit.sikumilab.com/)と[サエズリズム](https://koekit.sikumilab.com/probe/saezuri/)を確認。
+- 公開86ファイルのHTTPS・応答・種類・バイト長・SHA-256がGitの確定内容と一致。Windowsの改行に影響されないGit blobとの比較。
+- 公開Chromeで `test-menu-startup-browser`、`test-saezuri-learning-layout-browser`、`test-saezuri-learning-browser`、`test-saezuri-entry-browser`、`test-offline-browser`、`test-saezuri-keyboard-access-browser` の6本が成功。全小品の遅延読み込み、ヘルプ、失敗と再試行、遅い読み込み、縦横6サイズ、おてほん完了と案内再表示、旧キャッシュからの更新、保存保持、オフライン、通常鍵盤と音色の実発音を確認した。
+
+Pixel 6a／iPhone XRでの実操作・実声・体感速度は未確認。コードの公開後は、この記録と引き継ぎだけを更新し、アプリのBUILDは同じものを維持する。
