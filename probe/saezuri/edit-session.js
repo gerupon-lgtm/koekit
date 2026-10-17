@@ -31,6 +31,16 @@ export function stageEdit(session, command) {
   }
   return {...session, imageCandidate:null, working:workingCopy(next), history:[...session.history, copy(session.working)]};
 }
+export function stageDuration(session,durationTick){
+ if(session.entry)return error('DRAFT_PENDING');
+ const note=session.working.pattern.notes.find(n=>n.id===session.working.selectedNoteId);
+ if(!note)return error('NOTE_NOT_FOUND');
+ const next=stageEdit(session,{type:'replace',noteId:note.id,midi:note.midi,startTick:note.startTick,durationTick});
+ if(next.code)return next;
+ const last=[...session.working.pattern.notes].sort((a,b)=>a.startTick-b.startTick).at(-1);
+ if(last.id===note.id&&session.working.cursor===note.startTick+note.durationTick)next.working.cursor=note.startTick+durationTick;
+ return {...next,confirmedCursor:session.confirmedCursor??session.working.cursor};
+}
 // Only a candidate owned by this operation may be replaced. Melody/structure
 // edits still require their normal confirmation, and repeated auditions use one
 // Undo entry regardless of how many arrangements the user tries.
@@ -49,7 +59,7 @@ export function cancelEditSession(session) {
   if (session.closed) return error('SESSION_CLOSED');
   if (!hasDraftChanges(session)) return session;
   return {...session, imageCandidate:null, history:[...session.history, copy(session.working)],
-    working:workingCopy({...session.working, pattern:session.confirmed,hasRest:!!session.confirmedHasRest, revision:session.working.revision+1})};
+    working:workingCopy({...session.working, pattern:session.confirmed,cursor:session.confirmedCursor??session.working.cursor,hasRest:!!session.confirmedHasRest, revision:session.working.revision+1})};
 }
 export function undoEditSession(session) {
   if (session.closed) return error('SESSION_CLOSED');

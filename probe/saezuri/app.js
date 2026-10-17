@@ -413,6 +413,7 @@ voice=new EditVoice({createInput:()=>createSpeechInput(METHODS.VOSK),
     if(command?.type==='record-standby')return;
     if(command?.type==='image-choice') {imageControls?.imageMode.selectVoice(command.field,command.value);return;}
     if(command?.type==='image-next') {imageControls?.imageMode.generate();return;}
+    if(command?.type==='duration') {captureEditor.changeNoteLength(command.durationTick);return;}
     if(command?.type==='note') {
       captureEditor.inputNote({...command,...($('composer-replace')?.checked?{replaceNoteId:captureEditor.selectedNoteId}:{})});return;
     }

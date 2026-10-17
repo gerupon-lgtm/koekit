@@ -1,4 +1,4 @@
-import { openEditSession, stageEdit, selectEditNote, confirmEditSession, cancelEditSession, undoEditSession, hasDraftChanges } from './edit-session.js?v=v0.1.0-20261017214607-f706a29';
+import { openEditSession, stageEdit, stageDuration, selectEditNote, confirmEditSession, cancelEditSession, undoEditSession, hasDraftChanges } from './edit-session.js?v=v0.1.0-20261017214607-f706a29';
 import {canGenerateAccompaniment,stageAccompanimentCandidate} from './edit-session.js?v=v0.1.0-20261017214607-f706a29';
 import { analyzeFrames, quantizeSegments } from './analyzer.js?v=v0.1.0-20261017214607-f706a29';
 import { decodePitchTrace } from './analysis-comparison.js?v=v0.1.0-20261017214607-f706a29';
@@ -87,6 +87,13 @@ export class CaptureEditorView {
   changeStructure(command) {
     if(this._busy || !this.isOpen || this.entry) return;
     this._stage(command);
+  }
+  changeNoteLength(durationTick){
+    if(this._busy||!this.isOpen)return;
+    const next=stageDuration(this._active.session,durationTick);
+    if(next.code){this._status(messages[next.code]??'この長さには変えられません。');return;}
+    this._active.session=next;this._active.edited=true;
+    this._status('長さを変える候補です。聴いて、オッケーで決めよう。');this._emit(false);
   }
   get canGenerateAccompaniment(){return !this._busy&&canGenerateAccompaniment(this._active?.session);}
   get imageCandidate(){return !!this._active?.session.imageCandidate;}

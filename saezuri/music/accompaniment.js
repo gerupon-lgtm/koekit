@@ -1,7 +1,7 @@
 // Editable audition presets. These concrete arrangements are trial data.
 import {GENRES,CHORD_INTERVALS,chordTones} from './catalog.js?v=v0.1.0-20261017214607-f706a29';
 import {validImageChoice,validateImageArrangement} from './image-arrangement.js?v=v0.1.0-20261017214607-f706a29';
-export const RHYTHMS=[{id:'quarters',label:'4つずつ'},{id:'offbeat',label:'うらで弾く'},{id:'arpeggio',label:'音をばらして弾く'}];
+export const RHYTHMS=[{id:'quarters',label:'4つずつ'},{id:'offbeat',label:'うらで弾く'},{id:'arpeggio',label:'音をばらして弾く'},{id:'tutorial',label:'おてほんの リズム'}];
 export const PROGRESSIONS={
  C:[{id:'home',label:'C → F → G → C',chords:[[0,'major'],[5,'major'],[7,'major'],[0,'major']]},
     {id:'pop',label:'C → G → Am → F',chords:[[0,'major'],[7,'major'],[9,'minor'],[5,'major']]},
@@ -72,7 +72,16 @@ export function accompanimentEvents(pattern) {
    for(let i=0;i<arrangement.inversion;i++){const low=chord.shift();chord.push(low+12<=79?low+12:low);}
    chord.sort((a,b)=>a-b);if(arrangement.voicing==='falling')chord.reverse();
   }
-  const push=(tick,length,midi,instrument,gain,part)=>events.push({startTick:startTick+tick,durationTick:Math.min(length,durationTick-tick),midi,instrument,gain,part});
+  const push=(tick,length,midi,instrument,gain,part)=>events.push({startTick:startTick+tick,durationTick:Math.min(length,durationTick-tick),midi,instrument,gain,part,...(value.rhythm==='tutorial'?{velocity:55}:{})});
+  if(value.rhythm==='tutorial'){
+   for(let tick=0;tick<durationTick;tick+=2)push(tick,2,36+bass,sounds.bass,.12,'bass');
+   for(const tick of [0,2,6,8,10,14])if(tick<durationTick)for(const midi of chord)push(tick,2,midi,sounds.chord,tick===0?.06:.045,'chord');
+   if(sounds.drums!=='none'){
+    const prefix=sounds.drums==='electronic'?'electro-':'';
+    for(const [tick,kind,gain] of [[0,'kick',.09],[8,'kick',.055],[4,'snare',.05],[12,'snare',.05],[0,'hat',.035],[2,'hat',.02],[6,'hat',.02],[10,'hat',.02],[14,'hat',.02]])if(tick<durationTick)push(tick,1,kind==='kick'?36:kind==='snare'?38:42,prefix+kind,gain,'drums');
+   }
+   continue;
+  }
   if(arrangement){
    const strength=arrangement.strength;
    for(const [i,tick] of arrangement.bassTicks.entries())if(tick<durationTick)push(tick,Math.min(arrangement.gate+2,(arrangement.bassTicks[i+1]??16)-tick),36+bass+arrangement.bassIntervals[i],sounds.bass,.065*strength,'bass');
