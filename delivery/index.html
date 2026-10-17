@@ -1,10 +1,12 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html lang="ja" class="app-starting">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#faf5ed">
   <title>デリバリズム</title>
+<link rel="stylesheet" href="../src/ui/app-startup.css?v=v0.1.0-20261017214607-f706a29">
+<script src="../src/ui/app-startup.js?v=v0.1.0-20261017214607-f706a29" onerror="document.documentElement.classList.add('app-startup-failed')"></script>
   <link rel="manifest" href="../manifest.json">
   <link rel="icon" href="../assets/icons/koekit-192.png">
   <link rel="apple-touch-icon" href="../assets/icons/koekit-180.png">
@@ -18,6 +20,13 @@
   <script type="module" src="./app.js"></script>
 </head>
 <body>
+<div id="app-startup" data-ready="#level-list button" role="status" aria-live="polite">
+  <img src="../assets/brand/deliverhythm.svg" alt="デリバリズム">
+  <p class="startup-message">じゅんび中…</p>
+  <p class="startup-error">まだ 開けませんでした。もういちど 試してね。</p>
+  <div class="startup-links"><a href="" data-startup-retry>もういちど</a><a href="../">コエキットへ</a></div>
+  <noscript><style>#app-startup .startup-message{display:none}</style><p>あそぶには JavaScriptを オンにしてね。</p></noscript>
+</div>
 <!-- A thin warm outline keeps the robot visible on the original cream tiles. -->
 <svg width="0" height="0" aria-hidden="true" focusable="false" style="position:absolute;pointer-events:none"><defs>
   <filter id="delivery-robot-outline" x="-20%" y="-20%" width="140%" height="140%" color-interpolation-filters="sRGB">

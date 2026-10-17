@@ -1,4 +1,4 @@
-import {validateNotes} from '../../saezuri/document.js?v=v0.1.0-20261017205925-b32e7fb';
+import {validateNotes} from '../../saezuri/document.js?v=v0.1.0-20261017214607-f706a29';
 const names=['ド','ド♯','レ','レ♯','ミ','ファ','ファ♯','ソ','ソ♯','ラ','ラ♯','シ'];
 export function pianoKeys(octave=0){
  if(![-1,0,1].includes(octave))throw new Error('KEYBOARD_OCTAVE');

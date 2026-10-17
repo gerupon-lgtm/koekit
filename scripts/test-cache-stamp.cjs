@@ -4,7 +4,10 @@ test('deployment token reaches CSS, the module graph and workers without duplica
  const root=fs.mkdtempSync(path.join(os.tmpdir(),'koekit-cache-'));
  try{
   const write=(name,text)=>{fs.mkdirSync(path.dirname(path.join(root,name)),{recursive:true});fs.writeFileSync(path.join(root,name),text);};
-  write('probe/saezuri/index.html','<link href="../../styles.css"><link href="./keyboard.css"><script src="./app.js"></script>');
+  write('probe/saezuri/index.html','<link href="../../styles.css"><link href="./keyboard.css"><script src="../../src/ui/app-startup.js"></script><script src="./app.js"></script>');
+  write('src/ui/app-startup.js','(()=>{})();');write('src/ui/app-startup.css','html{}');
+  const smallWorks=['doubutsu','kioku','irodori','jintori','delivery','story'];
+  for(const name of smallWorks){write(name+'/index.html','<link href="../src/ui/app-startup.css"><script src="../src/ui/app-startup.js"></script><script src="./app.js"></script>');write(name+'/app.js','let ready=true;');}
   write('styles.css','body{}');write('probe/saezuri/keyboard.css','button{}');
   write('probe/saezuri/app.js',"import './keyboard-controls.js';import '../../src/speech/microphone.js';new Worker(new URL('./worker.js',import.meta.url));");
   write('probe/saezuri/keyboard-controls.js',"import {pianoKeys} from './tap-recording.js';");write('probe/saezuri/tap-recording.js',"import '../../saezuri/document.js';");
@@ -26,6 +29,8 @@ test('deployment token reaches CSS, the module graph and workers without duplica
    for(const name of ['index.html','app.js','keyboard-controls.js','tap-recording.js','worker.js'])assert.ok(read('probe/saezuri/'+name).includes('?v='+build));
    assert.match(read('probe/saezuri/app.js'),/import '\.\.\/\.\.\/src\/speech\/microphone\.js';/);
    assert.match(read('probe/saezuri/index.html'),new RegExp('styles\\.css\\?v='+build));
+   assert.ok(read('probe/saezuri/index.html').includes('app-startup.js?v='+build));
+   for(const name of smallWorks){const html=read(name+'/index.html');assert.ok(html.includes('app-startup.js?v='+build));assert.ok(html.includes('app-startup.css?v='+build));assert.ok(html.includes('src="./app.js"'));assert.equal(read(name+'/app.js'),'let ready=true;');}
    assert.equal(read('src/speech/microphone.js'),'let enabled=true;');assert.equal(read('styles.css'),'body{}');
    for(const name of ['index.html','main.js','worker.js','live-worklet.js'])assert.ok(read('probe/fm-polyphony/'+name).includes('?v='+build));
    for(const name of ['index.html','main.js'])assert.ok(read('probe/light-sound/'+name).includes('?v='+build));

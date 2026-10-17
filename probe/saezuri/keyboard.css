@@ -34,4 +34,32 @@
 .melody-app.keyboard-recording .listen-actions,.melody-app.keyboard-humming .listen-actions{display:none}
 .melody-app.keyboard-humming .keyboard-help,.melody-app.keyboard-humming #keyboard-more{display:none}
 @media(min-width:650px){.melody-app.editor-focus #live-keyboard{grid-column:2;grid-row:1/4}.melody-app.editor-focus #image-chords{grid-column:1;grid-row:3}.melody-app.editor-focus .edit-toolbar{grid-column:1;grid-row:4}.melody-app.editor-focus #keyboard-options{grid-column:2;grid-row:4}}
-.melody-app.learning-active #image-chords,.melody-app.learning-active .keyboard-actions,.melody-app.learning-active #keyboard-status,.melody-app.learning-active #piano-keys,.melody-app.learning-active .keyboard-octaves,.melody-app.learning-active .keyboard-help,.melody-app.learning-active #keyboard-more,.melody-app.learning-active #step-entry>summary{display:none}
+.melody-app.learning-active #image-chords,.melody-app.learning-active #keyboard-more,.melody-app.learning-active #step-entry>summary{display:none}
+/* The guided exercise uses one-beat notes at the original height. Keep only
+   its current action on screen; closing the words does not change the editor. */
+.melody-app.learning-active #creation-tabs,.melody-app.learning-active #phrase-shape,.melody-app.learning-active #phrase-shape-hint,.melody-app.learning-active .editor-voice,.melody-app.learning-active .song-status,.melody-app.learning-active #live-keyboard,.melody-app.learning-active .composer-values,.melody-app.learning-active #composer-lengths,.melody-app.learning-active #composer-position,.melody-app.learning-active .note-navigation,.melody-app.learning-active #capture-edit-delete,.melody-app.learning-active #capture-edit-status,.melody-app.learning-active #composer-candidate{display:none}
+.melody-app.learning-active #learning-guide{padding:4px 8px;margin:4px 0 8px}
+.melody-app.learning-active #learning-close{min-height:44px}
+.melody-app.learning-active #learning-action{font-size:18px;line-height:1.35;margin:0}
+.melody-app.learning-active #learning-message{font-size:13px;line-height:1.4;margin:3px 0 0}
+.melody-app.learning-active #learning-reopen{width:100%;min-height:44px;font-size:14px;margin:4px 0 8px}
+.melody-app.editor-focus.learning-active #capture-score{height:clamp(76px,17svh,112px);min-height:76px}
+.melody-app.editor-focus.learning-active #capture-score svg{display:block;height:100%;margin:0}
+.melody-app.learning-active[data-create-mode=input] #capture-blocks{display:none}
+.melody-app.learning-active #capture-blocks{margin:4px 0;padding:0}
+.melody-app.editor-focus.learning-active #keyboard-options{order:2;margin:0}
+.melody-app.learning-active #step-entry,.melody-app.learning-active #step-entry #composer-panel{margin:0}
+.melody-app.editor-focus.learning-active #composer-keys{margin:4px 0 8px}
+.melody-app.editor-focus.learning-active .edit-toolbar{order:3}
+.melody-app.learning-active .note-actions{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.melody-app.learning-active .note-actions button{margin:0}
+@media(max-width:360px){.melody-app.editor-focus.learning-active #composer-keys{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media(min-width:650px){
+ .melody-app.editor-focus.learning-active #capture-score{grid-column:1;grid-row:1/4}
+ .melody-app.editor-focus.learning-active #capture-blocks{grid-column:1;grid-row:4}
+ .melody-app.editor-focus.learning-active #keyboard-options{grid-column:2;grid-row:1}
+ .melody-app.editor-focus.learning-active #capture-note-panel>.edit-toolbar{grid-column:2;grid-row:2}
+ .melody-app.editor-focus.learning-active[data-create-mode=edit] #capture-score{grid-row:1}
+ .melody-app.editor-focus.learning-active[data-create-mode=edit] #capture-blocks{grid-row:2}
+ .melody-app.editor-focus.learning-active[data-create-mode=edit] #capture-note-panel>.edit-toolbar{grid-row:1/3}
+}

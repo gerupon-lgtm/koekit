@@ -1,9 +1,9 @@
-import {MelodyLearning} from './learning.js?v=v0.1.0-20261017205925-b32e7fb';
-import {emptySequence,keepPhrase,sequencePlayback,proposeSequence,commitSequence,undoPlacement} from './sequence-session.js?v=v0.1.0-20261017205925-b32e7fb';
-import {readCaptureReport} from './capture-report.js?v=v0.1.0-20261017205925-b32e7fb';
-import {setupPlaybackSheet} from './sheet-controls.js?v=v0.1.0-20261017205925-b32e7fb';
-import {PlacementWorkflow} from './placement-workflow.js?v=v0.1.0-20261017205925-b32e7fb';
-import {EndingWorkflow} from './ending-workflow.js?v=v0.1.0-20261017205925-b32e7fb';
+import {MelodyLearning} from './learning.js?v=v0.1.0-20261017214607-f706a29';
+import {emptySequence,keepPhrase,sequencePlayback,proposeSequence,commitSequence,undoPlacement} from './sequence-session.js?v=v0.1.0-20261017214607-f706a29';
+import {readCaptureReport} from './capture-report.js?v=v0.1.0-20261017214607-f706a29';
+import {setupPlaybackSheet} from './sheet-controls.js?v=v0.1.0-20261017214607-f706a29';
+import {PlacementWorkflow} from './placement-workflow.js?v=v0.1.0-20261017214607-f706a29';
+import {EndingWorkflow} from './ending-workflow.js?v=v0.1.0-20261017214607-f706a29';
 const $=id=>document.getElementById(id);
 const trialBuild=new URL(import.meta.url).searchParams.get('v')||'local-20261010';
 const trialVersion=trialBuild.match(/-(\d{14})-/)?.[1]||trialBuild;
@@ -20,7 +20,7 @@ export class MelodyScreens {
   const main=document.querySelector('main');
   const home=document.createElement('section');home.id='melody-home';home.className='melody-screen';
   home.innerHTML=`<nav class="home-nav"><a class="menu-home" href="../../" aria-label="コエキットへ"><svg viewBox="0 0 24 24"><path d="M12 3l9 8h-2.5v9h-5.5v-6h-2v6H5.5v-9H3z"/></svg></a><button class="menu-help" id="melody-help" aria-label="つかいかた">？</button></nav>
-   <h1><img src="../../assets/brand/saezurhythm.svg" alt="サエズリズム"></h1><p class="home-caption">こえと タッチで、メロディーを つくろう。</p>
+   <h1 tabindex="-1"><img src="../../assets/brand/saezurhythm.svg" alt="サエズリズム"></h1><p class="home-caption">こえと タッチで、メロディーを つくろう。</p>
    <div class="home-menu"><button id="home-create">つくる<small>音をならべて、ひとつのフレーズに</small></button><button id="home-connect">つなげる<small>フレーズをならべて、長い曲に</small></button><button id="home-resume" hidden>つづきから</button></div>
    <p class="session-note">このタブの中で試せます。再読み込みすると作業は消えます。</p><p class="home-credit" data-build="${trialBuild}">開発版 ${trialVersion}　© 2026 SIKUMI LAB</p>`;
   const choose=document.createElement('section');choose.id='melody-choose';choose.className='melody-screen';
@@ -59,9 +59,9 @@ export class MelodyScreens {
   $('settings-close').onclick=()=>dialog.close();dialog.addEventListener('close',()=>{const inline=$('keyboard-instrument');if(inline)inline.append($('instrument').closest('label'));onNavigate();});
   $('screen-settings').onclick=()=>this.openSettings();$('sequence-settings').onclick=()=>this.openSettings();
   $('melody-help').onclick=()=>{
-   const help=document.createElement('dialog');help.className='melody-help';help.innerHTML='<h2>つかいかた</h2><p>「つくる」で音を置いて、聴いて、オッケー。「フレーズにする」でつなげる画面に持っていけます。</p><p>「つなげる」でフレーズを順番に選びます。追加・並べ替えはオッケーで決定。声を使わなくても操作できます。</p>';
+   const help=document.createElement('dialog');help.className='melody-help menu-help-dialog';help.innerHTML='<h2>つかいかた</h2><p>「つくる」で音を置いて、聴いて、オッケー。「フレーズにする」でつなげる画面に持っていけます。</p><p>「つなげる」でフレーズを順番に選びます。追加・並べ替えはオッケーで決定。声を使わなくても操作できます。</p>';
    const voiceHelp=document.createElement('p');voiceHelp.textContent='マイクONと「声で操作」で、「スタート」は伴奏をループ、「ストップ」は停止。ループ中の「はなうた」「ろくおん」で次の先頭から録ります。「イメージからつくる」では「ロック」「ゆっくり」「やさしい」などで伴奏を選び、「別のパターン」で作り直せます。「きく」で聴き、「オッケー」で決めます。';help.append(voiceHelp);
-   help.append(button('とじる',()=>help.close()));help.addEventListener('close',()=>help.remove());main.append(help);help.showModal();
+   const close=button('とじる',()=>help.close());close.className='menu-help-dismiss';help.append(close);help.addEventListener('close',()=>help.remove());main.append(help);help.showModal();
   };
   const toolbar=document.querySelector('.edit-toolbar'),listen=document.querySelector('.listen-actions');
   const edit=document.createElement('div');edit.id='screen-note-edit';
@@ -110,7 +110,7 @@ export class MelodyScreens {
   this.placementWorkflow=new PlacementWorkflow(this,onEditWorkspace);
   this.endingWorkflow=new EndingWorkflow(this);
   this.learning=new MelodyLearning(this);
-  history.replaceState({...history.state,melodyScreen:'home'},'');this.go('home',{history:false});
+  history.replaceState({...history.state,melodyScreen:'home'},'');this.go('home',{history:false,focus:false});
  }
  icon(node,type,label,aria=label){
   const paths={back:'M15 5l-7 7 7 7',exit:'M10 4H4v16h6m0-8h11m-5-5 5 5-5 5',settings:'M4 7h16M4 17h16M9 4v6M15 14v6'};
@@ -129,7 +129,7 @@ export class MelodyScreens {
  }
  get allowsVoice(){return this.screen==='create'&&!document.querySelector('dialog[open]');}
  openSettings(){ $('creation-settings').hidden=this.screen!=='create';this.dialog.querySelector('.listen-settings').append($('instrument').closest('label'));this.dialog.showModal();this.onNavigate();}
- go(screen,{history:push=true,stop=true}={}) {
+ go(screen,{history:push=true,stop=true,focus=true}={}) {
   if(this.phase==='saving')return;
   if(this.placementWorkflow?.active)screen='create';
   if(screen==='create'&&!this.editor.isOpen&&this.phase==='idle')screen='choose';
@@ -141,7 +141,7 @@ export class MelodyScreens {
   document.querySelector('body > footer').hidden=!['create','connect','samples'].includes(screen);
   if(push)history.pushState({...history.state,melodyScreen:screen},'');
   this.onNavigate();this.sync(this.phase??'idle');window.scrollTo(0,0);
-  (this.screens[screen].querySelector('h2')??this.screens[screen].querySelector('button'))?.focus({preventScroll:true});
+  if(focus)(this.screens[screen].querySelector('h2,h1')??this.screens[screen].querySelector('button'))?.focus({preventScroll:true});
  }
  setMode(mode){this.mode=mode;if(mode==='backing')$('image-settings').open=true;document.body.dataset.createMode=mode;for(const b of document.querySelectorAll('[data-mode]'))b.setAttribute('aria-pressed',String(b.dataset.mode===mode));}
  sync(phase) {

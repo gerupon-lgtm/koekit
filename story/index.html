@@ -1,10 +1,12 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html lang="ja" class="app-starting">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#faf5ed">
 <title>モノガタリズム</title>
+<link rel="stylesheet" href="../src/ui/app-startup.css?v=v0.1.0-20261017214607-f706a29">
+<script src="../src/ui/app-startup.js?v=v0.1.0-20261017214607-f706a29" onerror="document.documentElement.classList.add('app-startup-failed')"></script>
 <link rel="manifest" href="../manifest.json">
 <link rel="icon" href="../assets/icons/koekit-192.png">
 <link rel="apple-touch-icon" href="../assets/icons/koekit-180.png">
@@ -16,6 +18,13 @@
 <script type="module" src="../src/ui/mic-toggle.js"></script>
 </head>
 <body class="kids">
+<div id="app-startup" data-ready="#app" role="status" aria-live="polite">
+  <img src="./assets/monogatarhythm.svg" alt="モノガタリズム">
+  <p class="startup-message">じゅんび中…</p>
+  <p class="startup-error">まだ 開けませんでした。もういちど 試してね。</p>
+  <div class="startup-links"><a href="" data-startup-retry>もういちど</a><a href="../">コエキットへ</a></div>
+  <noscript><style>#app-startup .startup-message{display:none}</style><p>あそぶには JavaScriptを オンにしてね。</p></noscript>
+</div>
 <main id="app">
   <header class="toolbar">
     <a id="home-link" class="icon menu-home" href="../" aria-label="コエキット トップへ"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 3l9 8h-2.5v9h-5.5v-6h-2v6H5.5v-9H3z"/></svg></a>

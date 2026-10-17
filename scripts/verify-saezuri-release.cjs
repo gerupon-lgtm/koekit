@@ -3,7 +3,7 @@ const {execFileSync}=require('node:child_process'),fs=require('node:fs'),crypto=
 const base=(process.env.SAEZURI_BASE||'https://koekit.sikumilab.com').replace(/\/$/,'');
 const commit=execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim();
 const tracked=execFileSync('git',['ls-files','--','probe/saezuri','saezuri','probe/light-sound','probe/fm-polyphony'],{encoding:'utf8'}).trim().split('\n');
-const files=[...new Set(['index.html','styles.css','manifest.json','sw-register.js','sw.js','version.json','assets/brand/saezurhythm.svg',...tracked.filter(p=>/\.(?:html|m?js|css|json)$/.test(p))])].sort();
+const files=[...new Set(['index.html','styles.css','manifest.json','sw-register.js','sw.js','version.json','assets/brand/saezurhythm.svg','src/ui/app-startup.js','src/ui/app-startup.css',...['doubutsu','kioku','irodori','jintori','delivery','story'].map(name=>name+'/index.html'),...tracked.filter(p=>/\.(?:html|m?js|css|json)$/.test(p))])].sort();
 const folder='.local-tools/saezuri-entry-20261018',hash=bytes=>crypto.createHash('sha256').update(bytes).digest('hex');
 (async()=>{
  assert.equal(new URL(base).protocol,'https:');const results=[];

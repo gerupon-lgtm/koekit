@@ -1,0 +1,14 @@
+html.app-starting{overflow:hidden;background:#faf5ed}
+html.app-starting[data-startup-theme=blue]{background:#f2f6fb}
+html.app-starting body{visibility:hidden}
+#app-startup{display:none}
+html.app-starting #app-startup{visibility:visible;display:flex;position:fixed;inset:0;z-index:10000;box-sizing:border-box;flex-direction:column;align-items:center;justify-content:center;gap:20px;padding:24px;background:#faf5ed;color:#493f36;text-align:center;font:inherit}
+html.app-starting[data-startup-theme=blue] #app-startup{background:#f2f6fb;color:#223c60}
+#app-startup img{display:block;width:min(78vw,320px);height:auto}
+#app-startup p{margin:0;line-height:1.7;font-size:16px}
+#app-startup a{display:inline-block;padding:10px 16px;border-radius:14px;background:white;color:inherit;text-decoration:none;min-height:44px;box-sizing:border-box}
+#app-startup .startup-links{display:flex;flex-wrap:wrap;justify-content:center;gap:12px}
+#app-startup [data-startup-retry],#app-startup .startup-error{display:none}
+html.app-startup-failed #app-startup .startup-message{display:none}
+html.app-startup-failed #app-startup .startup-error,html.app-startup-failed #app-startup [data-startup-retry]{display:block}
+#app-startup a:focus-visible{outline:3px solid #8a5a3c;outline-offset:3px}

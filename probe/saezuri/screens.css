@@ -8,7 +8,7 @@ body.melody-app{background:#faf5ed;color:#443b36}
 .melody-app.editor-focus .listen-settings label:has(#play-count){grid-column:span 2}
 .melody-app.editor-focus main{max-width:760px;padding:8px 12px 90px}
 .melody-app .melody-screen{margin:0;padding:0;border:0;background:transparent;border-radius:0;min-width:0}
-.melody-app button{min-height:44px;touch-action:manipulation}
+.melody-app button:not(.menu-help):not(.menu-home):not(.menu-help-dismiss){min-height:44px;touch-action:manipulation}
 .melody-app input:not([type=checkbox]),.melody-app select{font-size:16px}
 .melody-app .home-nav{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:50px}
 .melody-app .screen-heading{display:grid;grid-template-columns:var(--heading-side,0px) minmax(0,1fr) var(--heading-side,0px);align-items:center;gap:8px;min-height:50px}
@@ -19,6 +19,7 @@ body.melody-app{background:#faf5ed;color:#443b36}
 .melody-app .heading-actions>button{font-size:14px;padding:8px 10px;margin:0;background:white}
 .melody-app #melody-home{text-align:center;min-height:calc(100svh - 24px);display:flex;flex-direction:column}
 .melody-app #melody-home h1{margin:12px 0 0}
+.melody-app #melody-home h1:focus{outline:none}
 .melody-app #melody-home h1 img{width:min(92%,390px);height:auto}
 .melody-app .home-caption{font-size:15px;margin:8px 0 24px}
 .melody-app .home-menu{width:min(100%,400px);margin:0 auto;display:grid;gap:14px}
@@ -82,7 +83,7 @@ body.melody-app{background:#faf5ed;color:#443b36}
 .melody-app #phrase-feedback{grid-column:1/-1;font-size:12px;margin:0;line-height:1.4}
 .melody-app #phrase-feedback:empty{display:none}
 .melody-app #capture-position{margin:5px 0;font-size:16px}
-.melody-app dialog{width:min(94vw,560px);max-height:88svh;border:0;border-radius:18px;padding:16px;color:#443b36;background:#faf5ed;font:inherit;overflow:auto}
+.melody-app dialog:not(.menu-help-dialog){width:min(94vw,560px);max-height:88svh;border:0;border-radius:18px;padding:16px;color:#443b36;background:#faf5ed;font:inherit;overflow:auto}
 .melody-app dialog::backdrop{background:#30291f80}
 .melody-app dialog .screen-heading{position:sticky;top:-16px;background:#faf5ed;z-index:6;margin-bottom:12px}
 .melody-app dialog .quick-transpose{max-width:none}
@@ -127,9 +128,9 @@ body.melody-app{background:#faf5ed;color:#443b36}
 /* Editing controls follow delivery/styles.css button/seg and irodori/styles.css ir-icon.
    Scoped here so the shared apps and the legacy technical layout stay independent. */
 .melody-app.editor-focus{color:#493f36}
-.melody-app.editor-focus button{border:0;border-radius:14px;background:#ece5da;color:#493f36;font-weight:700;min-height:48px}
+.melody-app.editor-focus button:not(.menu-help):not(.menu-home):not(.menu-help-dismiss){border:0;border-radius:14px;background:#ece5da;color:#493f36;font-weight:700;min-height:48px}
 .melody-app.editor-focus button:disabled{opacity:.45;cursor:default}
-.melody-app.editor-focus button:focus-visible{outline:3px solid #77599d;outline-offset:3px}
+.melody-app.editor-focus button:not(.menu-help):not(.menu-home):not(.menu-help-dismiss):focus-visible{outline:3px solid #77599d;outline-offset:3px}
 .melody-app.editor-focus button[aria-pressed=true]{box-shadow:inset 0 0 0 2px #6d9791;background:#e0eddf}
 .melody-app.editor-focus .screen-heading .melody-icon{width:50px;height:50px;min-height:50px;flex-shrink:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;padding:3px 0;margin:0;background:#fff;border-radius:15px;color:#8a5a3c;box-shadow:0 1px 2px #0000001a}
 .melody-app .melody-icon svg{width:23px;height:23px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}

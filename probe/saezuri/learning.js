@@ -1,9 +1,9 @@
-import {blankPattern} from './entry-session.js?v=v0.1.0-20261017205925-b32e7fb';
-import {practicePhrases,practicePhrase,tutorialGuide} from './learning-data.js?v=v0.1.0-20261017205925-b32e7fb';
+import {blankPattern} from './entry-session.js?v=v0.1.0-20261017214607-f706a29';
+import {practicePhrases,practicePhrase,tutorialGuide} from './learning-data.js?v=v0.1.0-20261017214607-f706a29';
 const $=id=>document.getElementById(id);
 export class MelodyLearning {
  constructor(shell){
-  this.shell=shell;this.active=false;this.heard=false;this.lastStep=null;
+  this.shell=shell;this.active=false;this.guideHidden=false;this.heard=false;this.lastStep=null;
   const actions=document.querySelector('.source-actions');
   const tutorial=document.createElement('button');tutorial.id='new-tutorial';tutorial.innerHTML='おてほんから つくる<small>① 案内にそって、操作をおぼえる</small>';
   tutorial.onclick=()=>shell.requestDiscard(()=>this.start(),true);
@@ -29,23 +29,26 @@ export class MelodyLearning {
   const guide=document.createElement('aside');guide.id='learning-guide';guide.hidden=true;guide.setAttribute('aria-label','おてほんの案内');
   guide.innerHTML='<div class="learning-heading"><strong id="learning-step"></strong><button id="learning-close">案内をとじる</button></div><div role="status" aria-live="polite" aria-atomic="true"><strong id="learning-action"></strong><p id="learning-message"></p></div><button id="learning-next" hidden>つぎは おためしをアレンジ</button>';
   $('creation-tabs').before(guide);
-  $('learning-close').onclick=()=>{this.end();this.sync(shell.phase);};
+  const reopen=document.createElement('button');reopen.id='learning-reopen';reopen.textContent='案内をひらく';reopen.hidden=true;guide.after(reopen);
+  $('learning-close').onclick=()=>{this.guideHidden=true;this.sync(shell.phase);};
+  reopen.onclick=()=>{this.guideHidden=false;this.sync(shell.phase);};
   $('learning-next').onclick=()=>shell.go('samples');
  }
  openNew(action){this.shell.requestDiscard(async()=>{if(this.shell.songWorkflow&&!await this.shell.songWorkflow.allowNew())return;action();});}
  start(){
     if($('step-entry'))$('step-entry').open=true;
-  this.active=true;this.heard=false;this.lastStep=null;
+  this.active=true;this.guideHidden=false;this.heard=false;this.lastStep=null;
   $('composer-duration').value='1';$('composer-octave').value='0';$('composer-replace').checked=false;
   this.shell.onOpenPattern(blankPattern(),'tutorial',120);this.shell.go('create');this.shell.setMode('input');
  }
- end(){document.body.classList.remove('learning-active','learning-complete');this.active=false;this.heard=false;this.lastStep=null;$('learning-guide').hidden=true;this.clearHighlight();}
+ end(){document.body.classList.remove('learning-active','learning-complete','learning-guide-hidden');this.active=false;this.guideHidden=false;this.heard=false;this.lastStep=null;$('learning-guide').hidden=true;$('learning-reopen').hidden=true;this.clearHighlight();}
  clearHighlight(){for(const node of document.querySelectorAll('[data-learning-target]'))node.removeAttribute('data-learning-target');}
  sync(phase){
   $('new-tutorial').disabled=this.shell.busy;
   for(const b of $('practice-list').querySelectorAll('button'))b.disabled=this.shell.busy;
   const editor=this.shell.editor;if(this.active&&!editor.isOpen)this.end();const show=this.active&&editor.isOpen;
-  $('learning-guide').hidden=!show;document.body.classList.toggle('learning-active',show);this.clearHighlight();if(!show)return;
+  $('learning-guide').hidden=!show||this.guideHidden;$('learning-reopen').hidden=!show||!this.guideHidden;
+  document.body.classList.toggle('learning-active',show);document.body.classList.toggle('learning-guide-hidden',show&&this.guideHidden);this.clearHighlight();if(!show)return;
   const notes=editor.previewPattern?.notes??[];
   if(notes[0]?.midi!==62)this.heard=false;
   if(phase==='playing'&&this.shell.screen==='create'&&notes.length===2&&notes[0].midi===62)this.heard=true;

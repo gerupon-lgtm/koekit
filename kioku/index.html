@@ -1,10 +1,12 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html lang="ja" class="app-starting" data-startup-theme="blue">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#f2f6fb">
   <title>メモリズム</title>
+<link rel="stylesheet" href="../src/ui/app-startup.css?v=v0.1.0-20261017214607-f706a29">
+<script src="../src/ui/app-startup.js?v=v0.1.0-20261017214607-f706a29" onerror="document.documentElement.classList.add('app-startup-failed')"></script>
   <link rel="manifest" href="../manifest.json">
   <link rel="apple-touch-icon" href="../assets/icons/koekit-180.png">
   <link rel="icon" href="../assets/icons/koekit-192.png">
@@ -35,6 +37,13 @@
 <link rel="stylesheet" href="../src/ui/voice-guide.css">
 </head>
 <body class="play-app kioku">
+<div id="app-startup" data-ready="#approved-menu-layout" role="status" aria-live="polite">
+  <img src="../assets/brand/memorhythm.svg" alt="メモリズム">
+  <p class="startup-message">じゅんび中…</p>
+  <p class="startup-error">まだ 開けませんでした。もういちど 試してね。</p>
+  <div class="startup-links"><a href="" data-startup-retry>もういちど</a><a href="../">コエキットへ</a></div>
+  <noscript><style>#app-startup .startup-message{display:none}</style><p>あそぶには JavaScriptを オンにしてね。</p></noscript>
+</div>
   <!-- ============ S-02 タイトル ============ -->
   <section class="screen active" id="title" data-screen="title">
     <a class="icon-btn home menu-home" href="../" aria-label="コエキット トップへ">
