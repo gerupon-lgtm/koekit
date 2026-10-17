@@ -1,6 +1,7 @@
-import {validateNotes} from '../../saezuri/document.js?v=v0.1.0-20261017154938-4e13641';
-import {validateComposition,proposeSequence,commitSequence,undoSequence} from '../../saezuri/sequence.js?v=v0.1.0-20261017154938-4e13641';
-import {accompanimentEvents} from '../../saezuri/music/accompaniment.js?v=v0.1.0-20261017154938-4e13641';
+import {validateNotes} from '../../saezuri/document.js?v=v0.1.0-20261017160446-5919374';
+import {validateComposition,proposeSequence,commitSequence,undoSequence} from '../../saezuri/sequence.js?v=v0.1.0-20261017160446-5919374';
+import {accompanimentEvents} from '../../saezuri/music/accompaniment.js?v=v0.1.0-20261017160446-5919374';
+import {endingEvents,endingDescription} from '../../saezuri/music/ending.js?v=v0.1.0-20261017160446-5919374';
 export const emptySequence=()=>({patterns:[],placements:[],revision:0,undoStack:[]});
 function phraseId(draft){
  const used=new Set([...draft.patterns,...(draft.undoStack??[]).flatMap(item=>item.patterns??[])].map(p=>p.id));
@@ -28,7 +29,9 @@ export function sequencePlayback(draft) {
   backing.push(...accompanimentEvents(p).map(n=>({...n,startTick:offset+n.startTick})));
   ranges.push({id:placement.id,start:offset,end:offset+p.bars*16});offset+=p.bars*16;
  }
- return {pattern:{bars:offset/16,notes},backing,ranges};
+ const ending=endingDescription(draft);if(ending?.code)return ending;
+ if(ending){const events=endingEvents(draft,offset);if(events.code)return events;backing.push(...events);ranges.push({id:'ending',start:offset,end:offset+ending.durationTick});}
+ return {pattern:{bars:(offset+(ending?.durationTick??0))/16,notes},backing,ranges,ending:ending?{...ending,startTick:offset}:null};
 }
 // Arrangement undo must preserve the phrase shelf, which is independently added to.
 export function undoPlacement(draft) {

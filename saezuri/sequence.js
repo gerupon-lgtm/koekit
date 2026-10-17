@@ -1,7 +1,8 @@
 // ML-T02: pure composition editing drafts, not the database Song serializer.
 // undoStack is session-only. Q1 save/history lifecycle and Q2 selection UI are not implemented.
-import { validateNotes } from './document.js?v=v0.1.0-20261017154938-4e13641';
-import {validateAccompaniment} from './music/accompaniment.js?v=v0.1.0-20261017154938-4e13641';
+import { validateNotes } from './document.js?v=v0.1.0-20261017160446-5919374';
+import {validateAccompaniment} from './music/accompaniment.js?v=v0.1.0-20261017160446-5919374';
+import {validateEnding,endingBars} from './music/ending.js?v=v0.1.0-20261017160446-5919374';
 const error = code => ({ code });
 const validId = id => typeof id === 'string' && id.length > 0;
 function snapshot(draft) {
@@ -12,7 +13,7 @@ function snapshot(draft) {
 export function validateComposition(draft) {
   if (!draft || !Array.isArray(draft.patterns) || !Array.isArray(draft.placements) || !Number.isSafeInteger(draft.revision) || draft.revision < 0) return error('COMPOSITION_INVALID');
   if (draft.placements.length > 16) return error('PLACEMENT_LIMIT');
-  if (draft.ending && typeof draft.ending.enabled !== 'boolean') return error('ENDING_INVALID');
+  const invalidEnding=validateEnding(draft.ending);if(invalidEnding)return invalidEnding;
   const patterns = new Set(), placements = new Set();
   for (const pattern of draft.patterns) {
     if (!pattern || !validId(pattern.id) || patterns.has(pattern.id) || !validId(pattern.familyId)) return error('PATTERN_ID');
@@ -32,7 +33,7 @@ export function compositionTicks(draft) {
   const invalid = validateComposition(draft);
   if (invalid) throw new Error(invalid.code);
   const patterns = new Map(draft.patterns.map(pattern => [pattern.id, pattern]));
-  return draft.placements.reduce((ticks, placement) => ticks + patterns.get(placement.patternId).bars * 16, draft.ending?.enabled ? 16 : 0);
+  return draft.placements.reduce((ticks, placement) => ticks + patterns.get(placement.patternId).bars * 16, draft.placements.length?endingBars(draft.ending)*16:0);
 }
 
 export function proposeSequence(draft, command) {
@@ -47,6 +48,9 @@ export function proposeSequence(draft, command) {
     const [placement] = next.placements.splice(index, 1);
     if (command.type === 'move') next.placements.splice(command.index, 0, placement);
     targets.push(placement.id);
+  } else if(command.type==='ending') {
+    const invalidEnding=validateEnding(command.value);if(invalidEnding)return invalidEnding;
+    next.ending=structuredClone(command.value);
   } else if(command.type==='derive') {
     const placement=next.placements.find(p=>p.id===command.placementId);
     if(!placement)return error('PLACEMENT_NOT_FOUND');

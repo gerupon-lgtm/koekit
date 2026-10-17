@@ -1,8 +1,9 @@
-import {MelodyLearning} from './learning.js?v=v0.1.0-20261017154938-4e13641';
-import {emptySequence,keepPhrase,sequencePlayback,proposeSequence,commitSequence,undoPlacement} from './sequence-session.js?v=v0.1.0-20261017154938-4e13641';
-import {readCaptureReport} from './capture-report.js?v=v0.1.0-20261017154938-4e13641';
-import {setupPlaybackSheet} from './sheet-controls.js?v=v0.1.0-20261017154938-4e13641';
-import {PlacementWorkflow} from './placement-workflow.js?v=v0.1.0-20261017154938-4e13641';
+import {MelodyLearning} from './learning.js?v=v0.1.0-20261017160446-5919374';
+import {emptySequence,keepPhrase,sequencePlayback,proposeSequence,commitSequence,undoPlacement} from './sequence-session.js?v=v0.1.0-20261017160446-5919374';
+import {readCaptureReport} from './capture-report.js?v=v0.1.0-20261017160446-5919374';
+import {setupPlaybackSheet} from './sheet-controls.js?v=v0.1.0-20261017160446-5919374';
+import {PlacementWorkflow} from './placement-workflow.js?v=v0.1.0-20261017160446-5919374';
+import {EndingWorkflow} from './ending-workflow.js?v=v0.1.0-20261017160446-5919374';
 const $=id=>document.getElementById(id);
 const trialBuild=new URL(import.meta.url).searchParams.get('v')||'local-20261010';
 const trialVersion=trialBuild.match(/-(\d{14})-/)?.[1]||trialBuild;
@@ -102,11 +103,12 @@ export class MelodyScreens {
    this.requestDiscard(()=>$(id).click());
   },true);
   $('sequence-preview').onclick=()=>{const data=sequencePlayback(this.proposal?.next??this.sequence);if(data.pattern?.bars)onPlay(data,!!this.proposal);};
-  $('sequence-confirm').onclick=()=>{if(!this.busy&&this.proposal){const next=commitSequence(this.sequence,this.proposal);if(!next.code){this.sequence=next;this.proposal=null;this.renderSequence();}}};
+  $('sequence-confirm').onclick=()=>this.confirmSequence();
   $('sequence-undo').onclick=()=>{if(this.busy)return;if(this.proposal)this.proposal=null;else this.sequence=undoPlacement(this.sequence);this.renderSequence();};
   for(const [id,type,delta] of [['sequence-left','move',-1],['sequence-right','move',1],['sequence-delete','remove',0]])$(id).onclick=()=>this.stage({type,placementId:this.selected,index:this.sequence.placements.findIndex(p=>p.id===this.selected)+delta});
   addEventListener('popstate',()=>this.go(['home','choose','create','connect','samples'].includes(history.state?.melodyScreen)?history.state.melodyScreen:'home',{history:false}));
   this.placementWorkflow=new PlacementWorkflow(this,onEditWorkspace);
+  this.endingWorkflow=new EndingWorkflow(this);
   this.learning=new MelodyLearning(this);
   history.replaceState({...history.state,melodyScreen:'home'},'');this.go('home',{history:false});
  }
@@ -190,6 +192,11 @@ export class MelodyScreens {
   if(next.code){$('sequence-message').textContent=next.code==='PLACEMENT_LIMIT'?'16個まで並べられます。':'その並べ方にはできません。';return;}
   this.proposal=next;if(command.type==='append')this.selected=command.placement.id;this.renderSequence();
  }
+ confirmSequence(){
+  if(this.busy||!this.proposal)return false;
+  const next=commitSequence(this.sequence,this.proposal);if(next.code)return false;
+  this.sequence=next;this.proposal=null;this.renderSequence();return true;
+ }
  renderSequence() {
   const draft=this.proposal?.next??this.sequence,locked=this.busy||!!this.proposal||!!this.placementWorkflow?.active;
   $('sequence-empty').hidden=!!this.sequence.patterns.length;
@@ -207,14 +214,15 @@ export class MelodyScreens {
   $('sequence-preview').disabled=this.busy||!draft.placements.length;
   $('sequence-confirm').disabled=this.busy||!this.proposal;
   $('sequence-undo').disabled=this.busy||(!this.proposal&&!this.sequence.undoStack.length);
-  this.ranges=sequencePlayback(draft).ranges??[];
+  const playback=sequencePlayback(draft);this.ranges=playback.ranges??[];
   $('sequence-count').textContent=`${draft.placements.length} / 16 ・ ${(this.ranges.at(-1)?.end??0)/16}小節`;
   $('sequence-message').textContent=this.proposal?'仮の順番です。聴いてからオッケーで決めます。':'フレーズを選ぶと、最後に追加する候補になります。';
   this.placementWorkflow?.render(locked);
+  this.endingWorkflow?.render(draft,playback);
   this.songWorkflow?.schedule();
  }
  follow(tick){if(this.screen!=='connect')return;const active=tick==null?null:this.ranges?.find(p=>p.start<=tick&&tick<p.end);
   if(this.playingId===active?.id)return;this.playingId=active?.id;
-  const line=$('sequence-line');for(const b of line.children){const playing=b.dataset.placement===active?.id;b.toggleAttribute('data-playing',playing);if(playing)line.scrollTop+=b.getBoundingClientRect().top-line.getBoundingClientRect().top-(line.clientHeight-b.offsetHeight)/2;}
+  const line=$('sequence-line');for(const b of line.children){const playing=(b.dataset.placement??b.dataset.ending)===active?.id;b.toggleAttribute('data-playing',playing);if(playing)line.scrollTop+=b.getBoundingClientRect().top-line.getBoundingClientRect().top-(line.clientHeight-b.offsetHeight)/2;}
  }
 }

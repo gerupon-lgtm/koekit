@@ -106,6 +106,14 @@ body.melody-app{background:#faf5ed;color:#443b36}
 .melody-app .phrase-choose-row{display:grid;grid-template-columns:1fr 1.3fr;gap:8px;padding:12px 0;border-bottom:1px solid #ddd4c5}
 .melody-app .phrase-choose-row p{grid-column:1/-1;margin:0}
 .melody-app .phrase-choose-row button{margin:0;min-width:0}
+.melody-app .ending-open{margin:12px 0 0;width:100%}
+.melody-app .ending-chord-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.melody-app .ending-chord-fields label{min-width:0}
+.melody-app #ending-bass-detail{margin:12px 0}
+.melody-app #ending-sheet .sheet-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.melody-app #ending-sheet .sheet-actions button{margin:0;min-width:0}
+.melody-app #ending-cancel{grid-column:1/-1}
+.melody-app #sequence-line [data-ending]{background:#dce9d5}
 .melody-app #sequence-confirm{background:#d9ebd5}.melody-app #sequence-preview{background:#d9ebd5}
 .melody-app #melody-connect h3{font-size:15px;margin:14px 0 6px}
 .melody-app #sequence-message,.melody-app #sequence-empty{font-size:14px;line-height:1.6}

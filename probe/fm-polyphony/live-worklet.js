@@ -1,5 +1,5 @@
-import { createPerformanceAudioRenderer } from './runtime/fmopelab-dx7ii.mjs?v=v0.1.0-20261017154938-4e13641';
-import { frameEvents } from './config.js?v=v0.1.0-20261017154938-4e13641';
+import { createPerformanceAudioRenderer } from './runtime/fmopelab-dx7ii.mjs?v=v0.1.0-20261017160446-5919374';
+import { frameEvents } from './config.js?v=v0.1.0-20261017160446-5919374';
 
 class PolyphonyProbe extends AudioWorkletProcessor {
   constructor(options) {

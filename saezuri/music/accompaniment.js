@@ -1,6 +1,6 @@
 // Editable audition presets. These concrete arrangements are trial data.
-import {GENRES,CHORD_INTERVALS,chordTones} from './catalog.js?v=v0.1.0-20261017154938-4e13641';
-import {validImageChoice,validateImageArrangement} from './image-arrangement.js?v=v0.1.0-20261017154938-4e13641';
+import {GENRES,CHORD_INTERVALS,chordTones} from './catalog.js?v=v0.1.0-20261017160446-5919374';
+import {validImageChoice,validateImageArrangement} from './image-arrangement.js?v=v0.1.0-20261017160446-5919374';
 export const RHYTHMS=[{id:'quarters',label:'4つずつ'},{id:'offbeat',label:'うらで弾く'},{id:'arpeggio',label:'音をばらして弾く'}];
 export const PROGRESSIONS={
  C:[{id:'home',label:'C → F → G → C',chords:[[0,'major'],[5,'major'],[7,'major'],[0,'major']]},
@@ -66,9 +66,7 @@ export function accompanimentEvents(pattern) {
  const events=[],sounds={...SOUND_PRESETS[value.genre],...arrangement?.sounds,...value.sounds};let previous=[];
  for(const segment of harmonicSegments(pattern)){
   const {startTick,durationTick,root,quality,bass}=segment;
-  let chord=CHORD_INTERVALS[quality].map(x=>48+root+x);
-  // Keep chord voices above the bass while choosing nearby octaves.
-  chord=chord.map((midi,i)=>[midi-12,midi,midi+12].filter(n=>n>=53&&n<=79).sort((a,b)=>Math.abs(a-(previous[i]??midi))-Math.abs(b-(previous[i]??midi)))[0]);previous=chord;
+  let chord=chordVoicing({root,quality},previous);previous=chord;
   if(arrangement){
    chord.sort((a,b)=>a-b);
    for(let i=0;i<arrangement.inversion;i++){const low=chord.shift();chord.push(low+12<=79?low+12:low);}
@@ -98,4 +96,8 @@ export function accompanimentEvents(pattern) {
   }
  }
  return events;
+}
+// Shared register selection, including chords that finish the whole song.
+export function chordVoicing({root,quality},previous=[]){
+ return CHORD_INTERVALS[quality].map(x=>48+root+x).map((midi,i)=>[midi-12,midi,midi+12].filter(n=>n>=53&&n<=79).sort((a,b)=>Math.abs(a-(previous[i]??midi))-Math.abs(b-(previous[i]??midi)))[0]);
 }

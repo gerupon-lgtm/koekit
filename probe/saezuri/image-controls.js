@@ -1,8 +1,9 @@
-import {GENRES,CHORD_INTERVALS} from '../../saezuri/music/catalog.js?v=v0.1.0-20261017154938-4e13641';
-import {RHYTHMS,PROGRESSIONS,PRESETS,SOUNDS,SOUND_PRESETS,soundLabel,harmonicSegments,recommendProgressions} from '../../saezuri/music/accompaniment.js?v=v0.1.0-20261017154938-4e13641';
-import {setupPlaybackSheet} from './sheet-controls.js?v=v0.1.0-20261017154938-4e13641';
-import {ImageModeControls} from './image-mode-controls.js?v=v0.1.0-20261017154938-4e13641';
+import {GENRES,CHORD_INTERVALS} from '../../saezuri/music/catalog.js?v=v0.1.0-20261017160446-5919374';
+import {RHYTHMS,PROGRESSIONS,PRESETS,SOUNDS,SOUND_PRESETS,soundLabel,harmonicSegments,recommendProgressions} from '../../saezuri/music/accompaniment.js?v=v0.1.0-20261017160446-5919374';
+import {setupPlaybackSheet} from './sheet-controls.js?v=v0.1.0-20261017160446-5919374';
+import {ImageModeControls} from './image-mode-controls.js?v=v0.1.0-20261017160446-5919374';
 const pitches=['C','C♯','D','E♭','E','F','F♯','G','A♭','A','B♭','B'];
+export const chordPitches=pitches;
 const suffix={major:'',minor:'m'};
 export const chordLabel=c=>`${pitches[c.root]}${suffix[c.quality]??c.quality}${c.bass===c.root?'':`/${pitches[c.bass]}`}`;
 const fallback={enabled:false,genre:'nursery',rhythm:'quarters',progression:'home'};
