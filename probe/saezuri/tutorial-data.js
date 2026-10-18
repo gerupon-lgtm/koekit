@@ -1,5 +1,5 @@
-import {blankPattern} from './entry-session.js?v=v0.1.0-20261018003820-9ddde13';
-import {accompanimentEvents,harmonicSegments} from '../../saezuri/music/accompaniment.js?v=v0.1.0-20261018003820-9ddde13';
+import {blankPattern} from './entry-session.js?v=v0.1.0-20261018010056-2f414a0';
+import {accompanimentEvents,harmonicSegments} from '../../saezuri/music/accompaniment.js?v=v0.1.0-20261018010056-2f414a0';
 
 export const TUTORIAL_TEMPO=112;
 const melody=[

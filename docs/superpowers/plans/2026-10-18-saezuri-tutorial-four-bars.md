@@ -15,7 +15,7 @@
 - No build pipeline, runtime CDN, external voice submission, or automatic candidate confirmation.
 - Work in `.local-tools/saezuri-workflow-release`, branch `codex/saezuri-continuation-20261018`; leave the dirty original checkout alone.
 - 112 BPM, 4 bars, 15 attacks; tied E at tick46 has duration4; last D/C/C at50/54/56 have durations4/2/8.
-- Every tutorial audition starts with one bar of four pulses per beat; stopping cancels all scheduled audio.
+- Every tutorial audition starts with one bar of four quarter-note pulses (corrected 2026-10-18); stopping cancels all scheduled audio.
 - Preserve manual work, Undo, storage, keyboard, humming, loop recording, placement/ending and other apps.
 - Cache-stamp all changed/new runtime assets and display the resulting BUILD; distinguish browser checks from phone acceptance.
 
@@ -47,7 +47,7 @@
 
 **Interfaces:** Produce `TutorialPreview` with `open(data,{onHeard,onClose})`, `play()`, `follow()`, `stop()` and `close()`, using injected shared playback callbacks; `renderTutorialView(container,pattern,{display,selectedId,onSelect})`. Extend `ProbeTransport.start` with optional `preRollTicks=0,preRollStep=1` while keeping ordinary starts unchanged.
 
-- [x] Add failing timing checks for 16 count attacks before music, no early music/active notes, count cancellation and ordinary transport defaults.
+- [x] Add failing timing checks for 4 quarter-note count attacks before music, no early music/active notes, count cancellation and ordinary transport defaults.
 - [x] Implement one-bar count in the shared transport; implement cards/compact staff and audition controls from approved layout14. No duplicated synthesis engine or standalone copied app.
 - [x] Verify `node scripts/test-saezuri-tutorial-preview-browser.cjs`; Expected: four bars fit 320×568 and other target viewports, chord labels at bar heads, notes/rest/dot/tie correct, view switch preserves anchor, close/stop cancel audio, no JS errors.
 - [x] Run existing count/loop/default-sound browser checks once; Expected: pass without changing their ordinary expectations.

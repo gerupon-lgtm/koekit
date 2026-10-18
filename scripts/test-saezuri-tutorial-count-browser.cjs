@@ -1,0 +1,9 @@
+const {chromium}=require('../.local-tools/node_modules/playwright'),assert=require('node:assert/strict');
+const base=process.env.SAEZURI_BASE||'http://127.0.0.1:8026';
+(async()=>{const browser=await chromium.launch({channel:'chrome',headless:true,args:['--autoplay-policy=no-user-gesture-required']});try{
+ const page=await browser.newPage({viewport:{width:390,height:640},serviceWorkers:'block'}),errors=[];page.on('pageerror',e=>errors.push(e.message));
+ await page.addInitScript(()=>{window.countStarts=[];window.musicStarts=[];for(const [method,target] of [['createBufferSource','countStarts'],['createOscillator','musicStarts']]){const original=AudioContext.prototype[method];AudioContext.prototype[method]=function(...args){const node=original.apply(this,args),start=node.start.bind(node);node.start=time=>{window[target].push(time);return start(time);};return node;};}});
+ await page.goto(base+'/probe/saezuri/');await page.locator('#home-create').click();await page.locator('#new-tutorial').click();await page.locator('#learning-model').click();await page.waitForFunction(()=>document.querySelector('#learning-preview').dataset.phase==='count-in');
+ const timing=await page.evaluate(()=>{const music=Math.min(...musicStarts),count=countStarts.filter(t=>t<music-1e-6);return {count:count.map(t=>Math.round((t-count[0])*112*4/60)),musicTick:Math.round((music-count[0])*112*4/60)};});
+ assert.deepEqual(timing.count,[0,4,8,12],'four quarter-note clicks only');assert.equal(timing.musicTick,16,'music still begins after one complete measure');await page.locator('#learning-preview-close').click();assert.equal(await page.locator('#status').getAttribute('data-state'),'idle');assert.deepEqual(errors,[]);console.log('PASS public app tutorial count: four quarter notes, music at next measure, close stops');
+}finally{await browser.close();}})().catch(e=>{console.error(e);process.exitCode=1;});

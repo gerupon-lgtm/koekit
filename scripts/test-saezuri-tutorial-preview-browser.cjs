@@ -13,18 +13,18 @@ const base=process.env.SAEZURI_BASE||'http://127.0.0.1:8000';
    ctx.createBufferSource=()=>{const source=buffer(),start=source.start.bind(source);source.start=t=>{starts.push(t);start(t);};return source;};
    ctx.createOscillator=()=>{const source=oscillator(),start=source.start.bind(source);source.start=t=>{oscillators.push(t);start(t);};return source;};
    const transport=new ProbeTransport(ctx);try{
-    const now=ctx.currentTime;transport.start([{midi:64,startTick:0,durationTick:2}],{tempo:112,totalTicks:8,lead:.2,preRollTicks:16,preRollStep:1});
+    const now=ctx.currentTime;transport.start([{midi:64,startTick:0,durationTick:2}],{tempo:112,totalTicks:8,lead:.2,preRollTicks:16,preRollStep:4});
     const result={anchor:transport.anchor-now,count:starts.map(t=>Math.round((t-now-.2)*112*4/60)),oscillators:oscillators.map(t=>t-transport.anchor),metrics:transport.metrics};
     transport.stop(false);const count=starts.length;await new Promise(r=>setTimeout(r,350));result.leaked=starts.length!==count;
     transport.start([],{countSound:false,lead:.2,totalTicks:4});result.ordinaryLead=transport.anchor-ctx.currentTime;result.ordinaryCounts=transport.metrics.countEvents;return result;
    }finally{transport.stop(false);await ctx.close();}
   });
-  assert.deepEqual(timing.count,[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]);assert.ok(Math.abs(timing.anchor-(.2+60/112*4))<.01);assert.ok(timing.oscillators.every(t=>t>=0));assert.equal(timing.leaked,false);assert.equal(timing.ordinaryCounts,0);assert.ok(timing.ordinaryLead<.21);
+  assert.deepEqual(timing.count,[0,4,8,12]);assert.ok(Math.abs(timing.anchor-(.2+60/112*4))<.01);assert.ok(timing.oscillators.every(t=>t>=0));assert.equal(timing.leaked,false);assert.equal(timing.ordinaryCounts,0);assert.ok(timing.ordinaryLead<.21);
   await page.evaluate(async()=>{
    const {TutorialPreview}=await import('./tutorial-preview.js'),{tutorialPattern,tutorialExcerpt}=await import('./tutorial-data.js'),{ProbeTransport}=await import('./audio.js');
    const ctx=new AudioContext();let frame,preview,heard=0;
    const transport=new ProbeTransport(ctx,reason=>{cancelAnimationFrame(frame);preview.stop({notify:false,reason});});
-   preview=new TutorialPreview({onPlay:async data=>{await ctx.resume();transport.start(data.notes,{tempo:data.tempo,totalTicks:data.totalTicks,instrument:'fm-piano',accompaniment:data.accompaniment,preRollTicks:16,preRollStep:1});const follow=()=>{if(!transport.active)return;preview.follow(transport.position(),{countBeat:transport.counting?Math.max(0,Math.floor((ctx.currentTime-transport.countAnchor)*transport.tempo/60)):null});frame=requestAnimationFrame(follow);};follow();},onStop:()=>{cancelAnimationFrame(frame);transport.stop(false);}});
+   preview=new TutorialPreview({onPlay:async data=>{await ctx.resume();transport.start(data.notes,{tempo:data.tempo,totalTicks:data.totalTicks,instrument:'fm-piano',accompaniment:data.accompaniment,preRollTicks:16,preRollStep:4});const follow=()=>{if(!transport.active)return;preview.follow(transport.position(),{countBeat:transport.counting?Math.max(0,Math.floor((ctx.currentTime-transport.countAnchor)*transport.tempo/60)):null});frame=requestAnimationFrame(follow);};follow();},onStop:()=>{cancelAnimationFrame(frame);transport.stop(false);}});
    const full=tutorialExcerpt(tutorialPattern({backing:true}),0,64);preview.open(full,{onHeard:()=>heard++});
    window.tutorialHarness={preview,transport,ctx,full,get heard(){return heard;}};
   });
