@@ -1,9 +1,9 @@
-import {blankPattern} from './entry-session.js?v=v0.1.0-20261017214607-f706a29';
-import {practicePhrases,practicePhrase} from './learning-data.js?v=v0.1.0-20261017214607-f706a29';
-import {lessonGuide,lessonFingerprint,LESSON_TITLES,LESSON_RANGES} from './tutorial-guide.js?v=v0.1.0-20261017214607-f706a29';
-import {tutorialPattern,tutorialExcerpt,TUTORIAL_TEMPO} from './tutorial-data.js?v=v0.1.0-20261017214607-f706a29';
-import {TutorialPreview} from './tutorial-preview.js?v=v0.1.0-20261017214607-f706a29';
-import {renderTutorialView} from './tutorial-view.js?v=v0.1.0-20261017214607-f706a29';
+import {blankPattern} from './entry-session.js?v=v0.1.0-20261018003820-9ddde13';
+import {practicePhrases,practicePhrase} from './learning-data.js?v=v0.1.0-20261018003820-9ddde13';
+import {lessonGuide,lessonFingerprint,LESSON_TITLES,LESSON_RANGES} from './tutorial-guide.js?v=v0.1.0-20261018003820-9ddde13';
+import {tutorialPattern,tutorialExcerpt,TUTORIAL_TEMPO} from './tutorial-data.js?v=v0.1.0-20261018003820-9ddde13';
+import {TutorialPreview} from './tutorial-preview.js?v=v0.1.0-20261018003820-9ddde13';
+import {renderTutorialView} from './tutorial-view.js?v=v0.1.0-20261018003820-9ddde13';
 const $=id=>document.getElementById(id);
 export class MelodyLearning {
  constructor(shell){
