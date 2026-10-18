@@ -84,6 +84,18 @@ Windows版WebKitでも用途切り替えを実行したが、最初の再生を�
 
 検証中、既存の鍵盤アクセスと非公開の提供曲再現で、最初の画面の表示待ちが各1回失敗した。各スクリプトの単独再実行は成功し、後者に失敗時のページ状態・読み込み失敗の診断を追加した。初期表示失敗の原因は未確定で、音声処理を作る前の失敗であることと分けて記録する。成功するまで自動再試行する実装は追加していない。
 
+## 用途別設定と10ms比較の公開確認
+
+公開コミット `33d64a51495a2c63bb8cfb30a1c8a85a4ff897c8`。[Pages39117551739](https://github.com/gerupon-lgtm/koekit/actions/runs/39117551739)のbuild／report-build-status／deployがすべて成功。公開98ファイルのHTTPS・種類・長さ・SHA-256がコミットと一致した。
+
+公開PC Chromeでも3条件の保存曲→鍵盤→曲の切り替え、準備中取消、古い音声処理の閉鎖、新しい長押しの保持、ループの同じ時刻基準、編集状態保持が成功。提供曲を各検証ブラウザーの端末内保存だけへ置き、3条件とも全28音の出だし・伴奏176イベント・自然終了・出力不足0回を確認した。公開PCの遅延は上の表と同じ。提供曲・音声・動画・非公開検証データはGitHubへ追加していない。
+
+- 通常版：<https://koekit.sikumilab.com/probe/saezuri/>
+- 内部10msを希望する比較：<https://koekit.sikumilab.com/probe/saezuri/?audioLatency=10ms>
+- 元の反応優先設定で曲を比較：<https://koekit.sikumilab.com/probe/saezuri/?audioLatency=interactive>
+
+Pixelでは同じ曲・音量・出力先で、10ms比較を複数回聴く。直後の「記録をコピー」で `playback.latencyHint: 0.01`、`baseLatency`、`outputLatency`、`audioOutputStats` と、途切れ・反応の本人評価を合わせて確認する。耳へ届くまで100ms以内は努力目標で、ブラウザーの報告値だけで実測達成と扱わない。鍵盤・録音・伴奏ループには、比較URLでもinteractiveが適用される。
+
 ## 参照した一次資料
 
 - [Web Audio仕様の遅延要求](https://webaudio.github.io/web-audio-api/#dom-audiocontextoptions-latencyhint)：指定は希望値で、実際の遅延はブラウザーが決定する。
