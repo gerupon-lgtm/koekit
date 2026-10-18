@@ -4,7 +4,13 @@ export function playbackLatencyHint(value,purpose='playback'){
  if(purpose!=='playback')return 'interactive';
  if(value==='10ms')return .01;
  if(value==='20ms')return .02;
- return value==='interactive'?'interactive':'playback';
+ if(value==='playback'||value==='interactive')return value;
+ return .02;
+}
+// Keep the connected graph bounded. Explicit phrase comparison is limited to
+// eight bars so a long saved sequence cannot allocate every future voice.
+export function playbackScheduleAll(value,totalTicks){
+ return value==='phrase'&&totalTicks<=128;
 }
 const counters=['underrunEvents','underrunDuration','totalDuration'];
 export function readPlaybackStats(ctx){

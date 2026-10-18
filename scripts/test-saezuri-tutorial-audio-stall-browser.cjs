@@ -8,7 +8,7 @@ const base=process.env.SAEZURI_BASE||'http://127.0.0.1:8026';
  await page.evaluate(()=>{const until=performance.now()+700;while(performance.now()<until){}});
  await page.waitForTimeout(120);
  const result=await page.evaluate(()=>({phase:document.querySelector('#learning-preview').dataset.phase,status:document.querySelector('#status').dataset.state,stops:window.transportStops}));console.log(JSON.stringify(result));assert.equal(result.phase,'music','a 700ms busy screen must not cut off a four-bar audition');assert.ok(!result.stops.includes('SCHEDULER_LATE'));await page.locator('#learning-preview-close').click();
- if((process.env.SAEZURI_QUERY||'').includes('audioSchedule=window')){
+ if(!(process.env.SAEZURI_QUERY||'').includes('audioSchedule=phrase')){
   await page.locator('#learning-model').click();await page.waitForFunction(()=>document.querySelector('#learning-preview').dataset.phase==='music');
   await page.evaluate(()=>{const until=performance.now()+1400;while(performance.now()<until){}});
   await page.waitForFunction(()=>transportStops.includes('SCHEDULER_LATE'));assert.equal(await page.locator('#status').getAttribute('data-state'),'idle');
