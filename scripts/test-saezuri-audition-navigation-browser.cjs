@@ -10,5 +10,5 @@ const base=process.env.SAEZURI_BASE||'http://127.0.0.1:8026';
  await page.locator('[data-duration="0.5"]').click();await page.locator('[data-pitch="0"]').click();assert.equal(await page.locator('#composer-position-next').isDisabled(),true);await page.locator('#capture-edit-confirm').click();assert.match(await page.locator('#composer-position').textContent(),/2小節・3拍目/);await page.locator('#composer-position').click();
  for(const width of [320,390,768]){await page.setViewportSize({width,height:740});const bounds=await page.locator('.composer-position-row').evaluate(n=>{const b=[...n.querySelectorAll('button')].map(x=>x.getBoundingClientRect());return {left:b[0].left,right:b[1].right,gap:b[1].left-b[0].right};});assert.ok(bounds.left>=0&&bounds.right<=width&&bounds.gap>=8);assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);}
  await page.setViewportSize({width:390,height:740});await page.screenshot({path:'.local-tools/audition-input-navigation.png',fullPage:true});console.log('PASS replay command, retained mic, visible input navigation, bar/half beat selection, candidate lock and automatic advance, three widths');
- 
+
  }finally{await browser.close();}})().catch(e=>{console.error(e);process.exitCode=1;});
