@@ -1,5 +1,5 @@
-import {renderTutorialView,highlightTutorialView} from './tutorial-view.js?v=v0.1.0-20261018044544-927f7b8';
-import {setupPlaybackSheet} from './sheet-controls.js?v=v0.1.0-20261018044544-927f7b8';
+import {renderTutorialView,highlightTutorialView} from './tutorial-view.js?v=v0.1.0-20261018052053-f1df1c8';
+import {setupPlaybackSheet} from './sheet-controls.js?v=v0.1.0-20261018052053-f1df1c8';
 
 export class TutorialPreview{
  constructor({onPlay,onStop,onNavigate=()=>{},onDisplay=()=>{}}){
@@ -62,6 +62,7 @@ export class TutorialPreview{
   if(notify&&wasPlaying)this.onStop();if(reason==='ENDED')this.status.textContent='聴き終わったよ。';else if(reason==='ERROR')this.status.textContent='音を出せませんでした。もう一度押してね。';
   else if(reason==='SCHEDULER_LATE')this.status.textContent='画面の処理が間に合わず止まりました。「きく」でやり直せます。';
   else if(reason==='AUDIO_INTERRUPTED')this.status.textContent='音が中断しました。「きく」でやり直せます。';
+  if(reason==='ENDED'&&wasPlaying&&this.openNow)this.dialog.querySelector('#learning-preview-return').focus({preventScroll:true});
  }
  finishClose(){if(!this.opened)return;this.opened=false;this.stop();this.onClosed?.();this.onNavigate();}
  close(){this.finishClose();if(this.dialog.open)this.dialog.close();}

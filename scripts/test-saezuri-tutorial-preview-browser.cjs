@@ -46,7 +46,11 @@ const base=process.env.SAEZURI_BASE||'http://127.0.0.1:8000';
   await page.locator('[data-tutorial-view="cards"]').click();assert.equal(await page.evaluate(()=>tutorialHarness.transport.anchor),anchor);assert.equal(await page.evaluate(()=>tutorialHarness.transport.active),true);
   await page.locator('#learning-preview-stop').click();assert.equal(await page.evaluate(()=>tutorialHarness.transport.active),false);assert.equal(await page.locator('#learning-preview [data-playing]').count(),0);assert.equal(await page.evaluate(()=>tutorialHarness.heard),1);
   await page.evaluate(async()=>{const {tutorialPattern,tutorialExcerpt}=await import('./tutorial-data.js');tutorialHarness.preview.open(tutorialExcerpt(tutorialPattern(),0,8));});
-  await page.locator('#learning-preview-play').click();await page.waitForFunction(()=>document.querySelector('#learning-preview').dataset.phase==='idle',{},{timeout:8000});
+  await page.locator('#learning-preview-play').tap();await page.waitForFunction(()=>document.querySelector('#learning-preview').dataset.phase==='idle',{},{timeout:8000});
+  assert.equal(await page.locator('#learning-preview').isVisible(),true,'finishing does not leave the audition');
+  assert.equal(await page.evaluate(()=>document.activeElement?.id),'learning-preview-return','only the focus moves to the return action');
+  const focus=await page.locator('#learning-preview-return').evaluate(n=>{const css=getComputedStyle(n);return {style:css.outlineStyle,width:parseFloat(css.outlineWidth)};});assert.notEqual(focus.style,'none');assert.ok(focus.width>=2,'focus is visible after touch playback too');
+  await page.screenshot({path:'.local-tools/tutorial-return-focus.png'});
   await page.locator('#learning-preview-play').click();await page.waitForFunction(()=>document.querySelector('#learning-preview').dataset.phase==='count-in');await page.locator('#learning-preview-close').click();await page.waitForTimeout(2400);assert.equal(await page.evaluate(()=>tutorialHarness.transport.active),false);assert.equal(await page.locator('#learning-preview').isVisible(),false);
   await page.evaluate(()=>tutorialHarness.ctx.close());assert.deepEqual(errors,[]);console.log(JSON.stringify({result:'PASS',base,layout,checks:'count timing and cancellation, cards/score without restart, four bars fit, partial natural end, stop and close'}));
  }finally{await browser.close();}
