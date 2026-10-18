@@ -41,4 +41,9 @@ Pixel 6a／Chrome、iPhone XR／Chromeの実操作・実声・スピーカーで
 
 ## 公開記録
 
-BUILD `v0.1.0-20261018031532-dbed0a8`。公開確認の結果はデプロイ後に追記する。
+BUILD `v0.1.0-20261018031532-dbed0a8`。公開コミット `6ce45ea66dbf031d7aa347a0f8896c4e6f38f8d7`。
+
+- [Pages39093068271](https://github.com/gerupon-lgtm/koekit/actions/runs/39093068271)のbuild・deploy・report-build-statusがすべて成功。
+- [公開画面](https://koekit.sikumilab.com/probe/saezuri/)の95ファイルについて、HTTPS・応答種別・バイト長・SHA-256がコミットと一致。
+- 公開Chromeでも最初の説明、声の説明、入力カードの実際の音声処理、候補→確定、表示中の正しい音への目印、選択音名、試聴後の戻り方、次の段階名を確認。320×568・360×640・390×740で編集／入力の操作が停止欄に隠れないことも確認。
+- 記録用データ：専用作業ツリーの `.local-tools/saezuri-entry-20261018/public-assets.json`。実機の未確認項目は上記のとおり継続する。
