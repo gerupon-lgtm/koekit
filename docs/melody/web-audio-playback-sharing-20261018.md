@@ -8,6 +8,8 @@
 
 **改善の手掛かりであり、原因の確定や全条件での解決ではない。** 2オペFMだけに固有の対策ではなく、Web Audioで音を出すアプリの比較候補となる。音色・音符長・減衰・発音数は変えていない。事前合成への切替でもない。
 
+追記：本人の指示により、サエズリズムでは有限の曲の試聴に `playback` を標準採用し、鍵盤・伴奏ループ・録音には `interactive` を維持する。さらに「音欠けを抑え、音が出るまで100ms以内」を努力目標として、曲だけ内部10msを希望する `?audioLatency=10ms`（数値 `0.01`）の比較を追加した。10msや100msの実機での達成は未確認。以下の表の「通常」は比較開始時点の旧設定を指す。
+
 ## 実機で分かったこと
 
 機種は本人申告のPixel 6a。提供記録のChromeは155、音声は48kHz。8小節、120 BPM、旋律28音、伴奏176イベント、カウント32発、全体音量200%で比較した。
@@ -21,7 +23,7 @@
 | 出力不足のブラウザー統計 | 未計測 | 1回／合計約21.4ms |
 | 再生終了 | 正常終了 | 正常終了 |
 
-`baseLatency`と`outputLatency`は異なる指標であり、鍵盤を押してから聞こえるまでを直接測った値ではない。比較設定の出力側の遅延は大きいため、曲の試聴と鍵盤演奏を同じ条件で採用しないこと。
+`baseLatency`と`outputLatency`は異なる区間の指標であり、鍵盤を押してから聞こえるまでを直接測った値ではない。和は旧設定で約24ms、比較設定で約288msの目安になる。内部を半分にしても出力側が半分になるとは限らない。比較設定の出力側の遅延は大きいため、曲の試聴と鍵盤演奏を同じ条件で採用しないこと。
 
 通常設定の提供動画では19.44秒付近に約2.58msのほぼ無音の区間があり、8秒前の同じフレーズにはなかった。今回の統計には発生時刻がなく、計測範囲には再生前の無音待ちと余韻も含む。**統計の1回を「曲の途中に21.4ms途切れた」と読み替えない。** 本人の聴感と統計値を別々に残す。
 
@@ -35,13 +37,16 @@
 // 曲の試聴用の比較設定
 const audioContext = new AudioContext({ latencyHint: 'playback' });
 
+// 内部10msを希望する別の比較（上の生成行と置き換える）
+// const audioContext = new AudioContext({ latencyHint: 0.01 });
+
 // 比較元：通常の即応性を優先する設定
 // const audioContext = new AudioContext({ latencyHint: 'interactive' });
 ```
 
 これはブラウザーへの希望値。実際に採用される遅延は端末・ブラウザーが決めるため、`baseLatency`と`outputLatency`も記録する。`latencyHint`は生成時の指定であり、使用中の設定だけをそのまま書き換える前提にしない。
 
-鍵盤・タップ録音・ハナウタ・伴奏ループとの併用では、反応と録音位置も実機で確認する。一つの音声処理を共有するアプリで用途ごとに切り替える場合は、古い音源の停止、録音の終了、時刻の基準と予約の作り直しを設計してから行う。今回はこの自動切替を本番へ採用したわけではない。
+鍵盤・タップ録音・ハナウタ・伴奏ループとの併用では、反応と録音位置も実機で確認する。一つの音声処理を共有するアプリで用途ごとに切り替える場合は、古い音源の停止、録音の終了、時刻の基準と予約の作り直しを設計してから行う。サエズリズムの今回の実装では、停止した境目で切り替え、同じ設定なら再利用し、使い終わった処理は閉じる。ループ演奏・録音の途中には切り替えない。古い処理の終了通知や準備完了で、新しい曲・鍵盤を誤停止しないことも確認する。
 
 ## 再生ごとの記録を取る最小例
 
@@ -94,12 +99,14 @@ const outputStats = playbackStatsDelta(before, readPlaybackStats(audioContext));
 ## 参照元と再利用先
 
 - 公開した比較画面：<https://koekit.sikumilab.com/probe/saezuri/?audioLatency=playback>
-- 比較元：<https://koekit.sikumilab.com/probe/saezuri/>
+- 内部10msを希望する比較：<https://koekit.sikumilab.com/probe/saezuri/?audioLatency=10ms>
+- 旧設定との比較：<https://koekit.sikumilab.com/probe/saezuri/?audioLatency=interactive>
+- 通常URL（現在は有限の試聴にplayback）：<https://koekit.sikumilab.com/probe/saezuri/>
 - 診断部品：`probe/saezuri/playback-diagnostics.js`
 - 組み込み例：`probe/saezuri/audio.js`、`probe/saezuri/app.js`
-- テスト：`scripts/test-saezuri-playback-diagnostics.mjs`、`scripts/test-saezuri-output-diagnostics-browser.cjs`
+- テスト：`scripts/test-saezuri-playback-diagnostics.mjs`、`scripts/test-saezuri-output-diagnostics-browser.cjs`、`scripts/test-saezuri-latency-routing-browser.cjs`
 - 詳細な調査記録：[Pixelの瞬間的な音欠け](audio-dropout-20261018.md)
-- 公開コミット：`7c9757747c7d10f9f630cbdf66abc50209794629`。比較版の実機確認時のBUILDは `v0.1.0-20261018091246-9ef79c3`。
+- 最初の比較版の公開コミット：`7c9757747c7d10f9f630cbdf66abc50209794629`。その実機確認時のBUILDは `v0.1.0-20261018091246-9ef79c3`。用途別設定と10ms比較のBUILDは `v0.1.0-20261018095008-c27f217`。最新の検証・公開状況は上記調査記録を参照。
 - 一次資料：[Web Audioの遅延要求](https://webaudio.github.io/web-audio-api/#dom-audiocontextoptions-latencyhint)、[再生統計](https://webaudio.github.io/web-audio-api/#AudioPlaybackStats)。
 
 ## 別アプリの実装担当へ渡す依頼文

@@ -2,7 +2,7 @@ const {chromium}=require('../.local-tools/node_modules/playwright'),assert=requi
 const base=process.env.SAEZURI_BASE||'http://127.0.0.1:8026';
 (async()=>{const browser=await chromium.launch({channel:'chrome',headless:true,args:['--autoplay-policy=no-user-gesture-required']});try{
  const results=[];
- for(const [query,hint,unsupported] of [['','interactive',false],['?audioLatency=playback','playback',false],['?audioLatency=playback','playback',true]]){
+ for(const [query,hint,unsupported] of [['','playback',false],['?audioLatency=10ms',.01,false],['?audioLatency=interactive','interactive',false],['?audioLatency=playback','playback',true]]){
   const context=await browser.newContext({viewport:{width:390,height:740},serviceWorkers:'block'});
   await context.addInitScript(({unsupported})=>{
    window.outputReadings=0;window.outputCounters={underrunEvents:7,underrunDuration:.02,totalDuration:20};window.requestedLatency=[];
@@ -25,7 +25,7 @@ const base=process.env.SAEZURI_BASE||'http://127.0.0.1:8026';
    await page.evaluate(()=>{const until=performance.now()+700;while(performance.now()<until){};outputCounters={underrunEvents:outputCounters.underrunEvents+1,underrunDuration:outputCounters.underrunDuration+.004,totalDuration:outputCounters.totalDuration+2};});
    assert.equal(await page.evaluate(()=>outputReadings),reads,'native statistics are not read on every animation frame');
    if(!pass)await page.waitForFunction(()=>document.querySelector('#status').dataset.state==='idle',null,{timeout:10000});else await page.locator('#song-list-stop').click();
-   const result=await report();assert.equal(result.audioLatencyHint,hint);assert.equal(result.playback.engine,'light');assert.equal(result.playback.scheduleMode,'phrase');
+   const result=await report();assert.equal(result.audioLatencyHint,hint);assert.equal(result.playback.latencyHint,hint);assert.equal(result.playback.engine,'light');assert.equal(result.playback.scheduleMode,'phrase');
    if(unsupported)assert.deepEqual(result.playback.audioOutputStats,{status:'unavailable'});
    else{assert.equal(result.playback.audioOutputStats.status,'measured');assert.equal(result.playback.audioOutputStats.underrunEvents,1);assert.ok(Math.abs(result.playback.audioOutputStats.underrunDuration-.004)<1e-9);assert.equal(result.playback.audioOutputStats.totalDuration,2);}
    if(!pass){assert.equal(result.playback.reason,'ENDED');assert.equal(result.playback.events,16);}

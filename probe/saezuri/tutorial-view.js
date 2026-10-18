@@ -1,6 +1,6 @@
-import {spellPitch} from './key-signature.js?v=v0.1.0-20261018091246-9ef79c3';
-import {harmonicSegments} from '../../saezuri/music/accompaniment.js?v=v0.1.0-20261018091246-9ef79c3';
-import {createRestSymbol,restParts} from './rest-symbol.js?v=v0.1.0-20261018091246-9ef79c3';
+import {spellPitch} from './key-signature.js?v=v0.1.0-20261018095008-c27f217';
+import {harmonicSegments} from '../../saezuri/music/accompaniment.js?v=v0.1.0-20261018095008-c27f217';
+import {createRestSymbol,restParts} from './rest-symbol.js?v=v0.1.0-20261018095008-c27f217';
 
 const names=['ド','ド♯','レ','レ♯','ミ','ファ','ファ♯','ソ','ソ♯','ラ','ラ♯','シ'];
 const roots=['C','C♯','D','E♭','E','F','F♯','G','A♭','A','B♭','B'];

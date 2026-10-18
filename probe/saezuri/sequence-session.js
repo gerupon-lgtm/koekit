@@ -1,7 +1,7 @@
-import {validateNotes} from '../../saezuri/document.js?v=v0.1.0-20261018091246-9ef79c3';
-import {validateComposition,proposeSequence,commitSequence,undoSequence} from '../../saezuri/sequence.js?v=v0.1.0-20261018091246-9ef79c3';
-import {accompanimentEvents} from '../../saezuri/music/accompaniment.js?v=v0.1.0-20261018091246-9ef79c3';
-import {endingEvents,endingDescription} from '../../saezuri/music/ending.js?v=v0.1.0-20261018091246-9ef79c3';
+import {validateNotes} from '../../saezuri/document.js?v=v0.1.0-20261018095008-c27f217';
+import {validateComposition,proposeSequence,commitSequence,undoSequence} from '../../saezuri/sequence.js?v=v0.1.0-20261018095008-c27f217';
+import {accompanimentEvents} from '../../saezuri/music/accompaniment.js?v=v0.1.0-20261018095008-c27f217';
+import {endingEvents,endingDescription} from '../../saezuri/music/ending.js?v=v0.1.0-20261018095008-c27f217';
 export const emptySequence=()=>({patterns:[],placements:[],revision:0,undoStack:[]});
 function phraseId(draft){
  const used=new Set([...draft.patterns,...(draft.undoStack??[]).flatMap(item=>item.patterns??[])].map(p=>p.id));
