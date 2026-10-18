@@ -1,5 +1,6 @@
-import {spellPitch} from './key-signature.js?v=v0.1.0-20261018064821-0593820';
-import {harmonicSegments} from '../../saezuri/music/accompaniment.js?v=v0.1.0-20261018064821-0593820';
+import {spellPitch} from './key-signature.js?v=v0.1.0-20261018083007-a4d4b63';
+import {harmonicSegments} from '../../saezuri/music/accompaniment.js?v=v0.1.0-20261018083007-a4d4b63';
+import {createRestSymbol,restParts} from './rest-symbol.js?v=v0.1.0-20261018083007-a4d4b63';
 
 const names=['ド','ド♯','レ','レ♯','ミ','ファ','ファ♯','ソ','ソ♯','ラ','ラ♯','シ'];
 const roots=['C','C♯','D','E♭','E','F','F♯','G','A♭','A','B♭','B'];
@@ -49,7 +50,7 @@ export function renderTutorialView(container,pattern,{display='cards',selectedId
    if(event.noteId&&event.noteId===selectedId)group.classList.add('is-selected');
    group.append(svg('rect',{x:x-13,y:y-28,width:28,height:44,rx:8,class:'learning-target-halo','aria-hidden':'true'}),svg('text',{x:x+13,y:y-19,'font-size':10,class:'learning-target-label','aria-hidden':'true'},'◀ここ'));
    if(onSelect&&event.noteId){group.setAttribute('role','button');group.setAttribute('tabindex','0');group.setAttribute('aria-label',`${label} ${beats}拍を選ぶ`);group.addEventListener('click',()=>onSelect(event.noteId));group.addEventListener('keydown',e=>{if(['Enter',' '].includes(e.key)){e.preventDefault();onSelect(event.noteId);}});}
-   if(event.midi===null)group.append(svg('text',{x:x-4,y:50,'font-size':25,'font-family':'Segoe UI Symbol,serif'},event.durationTick===2?'𝄾':event.durationTick===4?'𝄽':event.durationTick>=16?'𝄻':'𝄼'));
+   if(event.midi===null)for(const part of restParts(event.startTick,event.durationTick))group.append(createRestSymbol(part.durationTick,{x:left+(part.startTick%16)/16*span,y:38}));
    else{
     for(let line=62;line<=y;line+=8)group.append(svg('line',{x1:x-8,y1:line,x2:x+8,y2:line,'stroke-width':1}));
     for(let line=14;line>=y;line-=8)group.append(svg('line',{x1:x-8,y1:line,x2:x+8,y2:line,'stroke-width':1}));

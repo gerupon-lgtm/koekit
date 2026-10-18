@@ -1,5 +1,6 @@
-import { scoreEvents } from '../../saezuri/document.js?v=v0.1.0-20261018064821-0593820';
-import { signature, spellPitch } from './key-signature.js?v=v0.1.0-20261018064821-0593820';
+import { scoreEvents } from '../../saezuri/document.js?v=v0.1.0-20261018083007-a4d4b63';
+import { signature, spellPitch } from './key-signature.js?v=v0.1.0-20261018083007-a4d4b63';
+import {createRestSymbol} from './rest-symbol.js?v=v0.1.0-20261018083007-a4d4b63';
 const ns = 'http://www.w3.org/2000/svg';
 function svgElement(tag, attrs = {}, text) {
   const node = document.createElementNS(ns, tag);
@@ -36,7 +37,7 @@ export function renderScore(container, pattern, { fifths = 0, displayOctave = 0,
     for (const e of current) {
       const x = left + (e.startTick % 16) * spacing;
       if (e.midi === null) {
-        svg.append(svgElement('text', { x, y: 86, 'font-size': 27, 'aria-label': `休符 ${e.durationTick / 4}拍` }, e.durationTick === 4 ? '𝄽' : e.durationTick === 2 ? '𝄾' : '𝄿'));
+        const rest=createRestSymbol(e.durationTick,{x,y:76,staffSpace:12});rest.setAttribute('color','#514479');svg.append(rest);
         continue;
       }
       const pitch = spellPitch(e.midi + displayOctave * 12,fifths), y = yFor(e.midi);
