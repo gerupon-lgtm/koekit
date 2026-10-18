@@ -54,19 +54,21 @@ function schedulePercussion(ctx,output,{time,duration,instrument,gain}){
 }
 export class ProbeTransport {
   constructor(ctx, onStop, mixer=null, {engine=DEFAULT_SOUND_ENGINE}={}) { this.ctx = ctx; this.onStop = onStop; this.mixer=mixer;this.engine=engine;this.serial = 0; this.voices = new Set(); this.active = false; }
-  start(notes, { tempo = 120, totalTicks = 64, instrument = 'piano', lead = 0.35, ahead = 0.15, countSound = false, countVolume = 1, countStyle = 'rim', accompaniment = [], loop = false } = {}) {
+  start(notes, { tempo = 120, totalTicks = 64, instrument = 'piano', lead = 0.35, ahead = 0.15, countSound = false, countVolume = 1, countStyle = 'rim', accompaniment = [], loop = false, preRollTicks=0, preRollStep=1 } = {}) {
     this.stop(false);
     if (!COUNT_STYLES.includes(countStyle)) throw new Error('COUNT_STYLE_UNKNOWN');
     if (this.ctx.state !== 'running') throw new Error('AUDIO_NOT_READY');
+    if(!Number.isInteger(preRollTicks)||preRollTicks<0||!Number.isInteger(preRollStep)||preRollStep<1)throw new Error('PRE_ROLL_INVALID');
     const serial = this.serial;
-    this.anchor = this.ctx.currentTime + lead;
+    this.countAnchor=this.ctx.currentTime+lead;this.preRollTicks=preRollTicks;
+    this.anchor = this.countAnchor+tickSeconds(preRollTicks,tempo);
     this.tempo = tempo;
     this.totalTicks = totalTicks;
     this.loop=loop;
     this.active = true;
     this.metrics = { engine:this.engine, events: 0, accompanimentEvents:0, countEvents: 0, maxVoices:0, maxTimerGapMs: 0, aheadMs: ahead * 1000, leadMs: lead * 1000 };
     const queue = [...notes.map(n=>({...n,accompaniment:false})),...accompaniment.map(n=>({...n,accompaniment:true}))].sort((a,b) => a.startTick - b.startTick);
-    let index = 0, cycle = 0, countTick = 0, previous = performance.now();
+    let index = 0, cycle = 0, countTick = 0, preRollTick=0, previous = performance.now();
     const pump = (prime = false) => {
       if (serial !== this.serial) return;
       const wall = performance.now();
@@ -77,6 +79,14 @@ export class ProbeTransport {
       const horizon = prime ? Math.max(now + ahead, this.anchor + ahead) : now + ahead;
       for (const voice of this.voices) if (voice.end < now) this.voices.delete(voice);
       if (this.ctx.state !== 'running') return this.stop(true, 'AUDIO_INTERRUPTED');
+      while(preRollTick<preRollTicks){
+        const time=this.countAnchor+tickSeconds(preRollTick,tempo);
+        if(time>horizon)break;
+        if(time<now-.04)return this.stop(true,'SCHEDULER_LATE');
+        const accent=preRollTick%4===0;
+        const stop=schedulePlaybackCount(this.ctx,Math.max(now,time),accent,(this.mixer?1:countVolume)*(accent?.85:.6),countStyle,this.mixer?.count??this.ctx.destination);
+        this.voices.add({stop,end:time+.15});preRollTick+=preRollStep;this.metrics.countEvents++;
+      }
       while (countSound && (loop || countTick < totalTicks)) {
         const time = this.anchor + tickSeconds(countTick, tempo);
         if (time > horizon) break;
@@ -102,6 +112,7 @@ export class ProbeTransport {
     pump(true);
   }
   position() {const tick=Math.max(0,(this.ctx.currentTime-this.anchor)*this.tempo*4/60);return this.active?(this.loop?tick%this.totalTicks:Math.min(this.totalTicks,tick)):0;}
+  get counting(){return this.active&&this.preRollTicks>0&&this.ctx.currentTime<this.anchor;}
   stop(notify = true, reason = 'STOPPED') {
     this.serial++;
     clearInterval(this.timer);
