@@ -33,4 +33,6 @@ BUILD `v0.1.0-20261018134304-5dbbaa0`。開発版表示と更新用URL54ファ�
 
 ## 公開確認
 
-公開後の確認結果を追記する。
+`4c5f3c9200502b6a12b466cc52307ed1a67eacfe` をmainへ公開。[Pages39133317781](https://github.com/gerupon-lgtm/koekit/actions/runs/39133317781)のbuild／deploy／report-build-statusがすべて成功。公開99ファイルのHTTPS・種類・長さ・SHA-256がGitの確定内容と一致した。
+
+[通常URL](https://koekit.sikumilab.com/probe/saezuri/)のPC Chromeでも、音符移動、録音位置表示、用途別音声切り替えの3スクリプトが成功。4条件×カード／五線譜、4幅、重なり拒否、曲の境界、小節をまたぐ移動、候補／確定後の保存再開、声の移動語と選択語の区別、古い認識の拒否を確認した。伴奏ループ・タップ／ハナウタ待機と小節位置、曲20ms／入力interactiveの既存条件も維持されている。実機の操作感・実声・聴感は引き続き確認する。
