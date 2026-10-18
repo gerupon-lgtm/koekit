@@ -1,9 +1,9 @@
-import {MelodyLearning} from './learning.js?v=v0.1.0-20261018022930-5c5a903';
-import {emptySequence,keepPhrase,sequencePlayback,proposeSequence,commitSequence,undoPlacement} from './sequence-session.js?v=v0.1.0-20261018022930-5c5a903';
-import {readCaptureReport} from './capture-report.js?v=v0.1.0-20261018022930-5c5a903';
-import {setupPlaybackSheet} from './sheet-controls.js?v=v0.1.0-20261018022930-5c5a903';
-import {PlacementWorkflow} from './placement-workflow.js?v=v0.1.0-20261018022930-5c5a903';
-import {EndingWorkflow} from './ending-workflow.js?v=v0.1.0-20261018022930-5c5a903';
+import {MelodyLearning} from './learning.js?v=v0.1.0-20261018023617-9fb21c5';
+import {emptySequence,keepPhrase,sequencePlayback,proposeSequence,commitSequence,undoPlacement} from './sequence-session.js?v=v0.1.0-20261018023617-9fb21c5';
+import {readCaptureReport} from './capture-report.js?v=v0.1.0-20261018023617-9fb21c5';
+import {setupPlaybackSheet} from './sheet-controls.js?v=v0.1.0-20261018023617-9fb21c5';
+import {PlacementWorkflow} from './placement-workflow.js?v=v0.1.0-20261018023617-9fb21c5';
+import {EndingWorkflow} from './ending-workflow.js?v=v0.1.0-20261018023617-9fb21c5';
 const $=id=>document.getElementById(id);
 const trialBuild=new URL(import.meta.url).searchParams.get('v')||'local-20261010';
 const trialVersion=trialBuild.match(/-(\d{14})-/)?.[1]||trialBuild;

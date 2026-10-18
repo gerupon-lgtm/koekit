@@ -1,7 +1,7 @@
-import {GENRES,CHORD_INTERVALS} from '../../saezuri/music/catalog.js?v=v0.1.0-20261018022930-5c5a903';
-import {RHYTHMS,PROGRESSIONS,PRESETS,SOUNDS,SOUND_PRESETS,soundLabel,harmonicSegments,recommendProgressions} from '../../saezuri/music/accompaniment.js?v=v0.1.0-20261018022930-5c5a903';
-import {setupPlaybackSheet} from './sheet-controls.js?v=v0.1.0-20261018022930-5c5a903';
-import {ImageModeControls} from './image-mode-controls.js?v=v0.1.0-20261018022930-5c5a903';
+import {GENRES,CHORD_INTERVALS} from '../../saezuri/music/catalog.js?v=v0.1.0-20261018023617-9fb21c5';
+import {RHYTHMS,PROGRESSIONS,PRESETS,SOUNDS,SOUND_PRESETS,soundLabel,harmonicSegments,recommendProgressions} from '../../saezuri/music/accompaniment.js?v=v0.1.0-20261018023617-9fb21c5';
+import {setupPlaybackSheet} from './sheet-controls.js?v=v0.1.0-20261018023617-9fb21c5';
+import {ImageModeControls} from './image-mode-controls.js?v=v0.1.0-20261018023617-9fb21c5';
 const pitches=['C','C♯','D','E♭','E','F','F♯','G','A♭','A','B♭','B'];
 export const chordPitches=pitches;
 const suffix={major:'',minor:'m'};

@@ -1,4 +1,4 @@
-import {renderTutorialView,highlightTutorialView} from './tutorial-view.js?v=v0.1.0-20261018022930-5c5a903';
+import {renderTutorialView,highlightTutorialView} from './tutorial-view.js?v=v0.1.0-20261018023617-9fb21c5';
 const $=id=>document.getElementById(id),storageKey='saezuri.creationDisplays.v1';
 
 // Display preferences never enter the song, candidate, cursor or undo history.
@@ -30,7 +30,7 @@ export class CreationDisplays{
   document.body.dataset.entryPending=String(!!this.editor.entry);
   this.row.hidden=learning||!this.editor.isOpen||this.shell.screen!=='create';
   const manual=pattern?.source==='manual';$('creation-input-display').querySelector('[value="cards"]').disabled=!manual;
-  if(!manual&&this.input==='cards'){this.input='keyboard';this.apply();}
+  if(!manual&&this.input==='cards'&&this.editor.isOpen&&this.shell.screen==='create'&&!learning){this.input='keyboard';this.apply();}
   $('creation-input-display').disabled=phase!=='idle';
   this.cards.hidden=learning||this.note!=='cards'||!pattern;
   if(!pattern||learning)return;

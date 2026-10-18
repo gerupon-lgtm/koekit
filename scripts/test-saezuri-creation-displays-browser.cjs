@@ -2,7 +2,7 @@ const {chromium}=require('../.local-tools/node_modules/playwright'),assert=requi
 const base=process.env.SAEZURI_BASE||'http://127.0.0.1:8026';
 (async()=>{const browser=await chromium.launch({channel:'chrome',headless:true,args:['--autoplay-policy=no-user-gesture-required']});try{
  const page=await browser.newPage({viewport:{width:390,height:740},serviceWorkers:'block'}),errors=[];page.on('pageerror',e=>errors.push(e.message));
- await page.goto(base+'/probe/saezuri/');await page.locator('#home-create').click();await page.locator('#new-manual').click();
+ await page.addInitScript(()=>localStorage.setItem('saezuri.creationDisplays.v1',JSON.stringify({note:'cards',input:'cards'})));await page.goto(base+'/probe/saezuri/');assert.equal(await page.locator('body').getAttribute('data-input-display'),'cards','home must retain the remembered input display');await page.locator('#home-create').click();await page.locator('#new-manual').click();
  const report=async()=>{await page.locator('#report').evaluate(n=>n.click());const r=JSON.parse(await page.locator('#metrics').textContent());return {notes:r.captureCandidate.notes,cursor:r.captureEditing.inputCursor,undo:r.captureEditing.undoDepth,pending:r.captureEditing.pending};};
  await page.locator('#creation-input-display').selectOption('cards');await page.locator('[data-pitch="0"]').click();await page.locator('#capture-edit-confirm').click();const original=await report();
  for(const width of [320,390,768])for(const note of ['cards','score'])for(const input of ['cards','keyboard']){
