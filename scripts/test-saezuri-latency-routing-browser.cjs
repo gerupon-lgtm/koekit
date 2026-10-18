@@ -2,7 +2,7 @@ const {chromium,webkit}=require('../.local-tools/node_modules/playwright'),asser
 const base=process.env.SAEZURI_BASE||'http://127.0.0.1:8026';
 (async()=>{const browser=process.env.SAEZURI_BROWSER==='webkit'?await webkit.launch({headless:true,executablePath:process.env.SAEZURI_WEBKIT_PATH}):await chromium.launch({channel:'chrome',headless:true,args:['--autoplay-policy=no-user-gesture-required']});try{
  const results=[];
- for(const [query,hint] of [['','playback'],['?audioLatency=10ms',.01],['?audioLatency=20ms',.02],['?audioLatency=interactive','interactive']]){
+ for(const [query,hint] of [['','playback'],['?audioLatency=10ms',.01],['?audioLatency=20ms',.02],['?audioLatency=interactive','interactive'],['?audioLatency=20ms&audioSchedule=window',.02]]){
   const context=await browser.newContext({viewport:{width:390,height:844},serviceWorkers:'block'});
   await context.addInitScript(()=>{
    if(typeof AudioContext!=='function')return;
@@ -29,7 +29,7 @@ const base=process.env.SAEZURI_BASE||'http://127.0.0.1:8026';
   const play=()=>page.locator('#preview').click();
   const press=async()=>{const key=page.locator('#piano-keys [data-midi="60"]');await key.scrollIntoViewIfNeeded();const box=await key.boundingBox();await page.mouse.move(box.x+box.width/2,box.y+box.height-10);await page.mouse.down();await page.waitForFunction(()=>document.querySelectorAll('#piano-keys [data-held]').length===1&&audioContexts.at(-1).starts>0);};
   const before=await report();
-  await play();await page.waitForFunction(()=>document.querySelector('#status').textContent==='再生中');assert.equal((await report()).playback.latencyHint,hint);await page.locator('#stop').click();
+  await play();await page.waitForFunction(()=>document.querySelector('#status').textContent==='再生中');const first=await report();assert.equal(first.playback.latencyHint,hint);assert.equal(first.playback.scheduleMode,query.includes('audioSchedule=window')?'window':'phrase');assert.equal(first.playback.voiceControls.enabled,await page.locator('#edit-voice').isChecked());assert.equal(first.playback.voiceControls.microphoneEnabled,await page.locator('#mic').getAttribute('aria-pressed')==='true');await page.locator('#stop').click();
   await press();assert.equal(await page.evaluate(()=>audioContexts.at(-1).hint),'interactive');
   await page.waitForFunction(()=>audioContexts.filter(row=>row.ctx.state!=='closed').length===1);assert.equal(await page.locator('#piano-keys [data-held]').count(),1,'closing the former song context cannot release the new held key');
   assert.equal((await report()).playback.latencyHint,hint,'last song retains its own hint after a live-key context switch');await page.mouse.up();

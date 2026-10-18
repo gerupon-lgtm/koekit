@@ -11,7 +11,7 @@ const base=process.env.SAEZURI_BASE||'http://127.0.0.1:8026';
    const tap=new AudioWorkletNode(this,'tape');this.testLimiter.connect(tap);tap.connect(this.destination);tap.port.onmessage=e=>this.testTape.push(e.data);this.testTap=tap;
   }};
  });
- await page.goto(base+'/probe/saezuri/');await page.locator('#home-create').click();await page.locator('#new-tutorial').click();
+ await page.goto(base+'/probe/saezuri/'+(process.env.SAEZURI_QUERY||''));await page.locator('#home-create').click();await page.locator('#new-tutorial').click();
  await page.evaluate(async()=>{const url=performance.getEntriesByType('resource').find(r=>/\/audio\.js\?/.test(r.name)).name;const {ProbeTransport}=await import(url),start=ProbeTransport.prototype.start;ProbeTransport.prototype.start=function(notes,options){const result=start.call(this,notes,options);window.audioTake={ctx:this.ctx,transport:this,notes,options,anchor:this.anchor,countAnchor:this.countAnchor};return result;};});
  const results=[];
  for(let pass=0;pass<2;pass++){

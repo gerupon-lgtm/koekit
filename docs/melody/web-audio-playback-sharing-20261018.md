@@ -2,6 +2,8 @@
 
 2026-10-18／サエズリズムでの調査・Pixel 6aの本人確認に基づく。
 
+**さらに更新**：声OFFの保存曲再生で数値20msも途切れた。内部約21.33ms＋出力側57ms、出力不足4回・計85.3ms。次は20msを維持し、全曲分の音声ノードを先に接続する方式から、約1秒先まで順次接続する比較 `?audioLatency=20ms&audioSchedule=window` を追加。PCでは先の未発音の音を接続するだけでも処理時間が増え、実際の予約処理の比較で発振器保持数248→34と、音データの最大差約0.000000835を確認した。音色・音符・余韻を変えない比較であり、実機の解消は未確認。短い先読みでは長い画面停止への耐性も確認する。詳細と「伴奏は安定重視／演奏は反応優先」の未採用の検討案は[最新の調査記録](audio-dropout-20261018.md)を参照。
+
 **最新追記**：Pixelで数値10ms指定を試した結果は、内部約10.67ms＋出力側36ms、出力不足3回・合計32ms、本人の聴感は「途切れあり」。100msより小さい報告値だけでは安定性を満たさなかった。次は曲だけ数値20ms指定 `?audioLatency=20ms` を比較する。playbackでの先の良好な1件、10msでの途切れの1件を区別し、他アプリでも同じ結果になるとは扱わない。鍵盤・録音はinteractiveを維持。原因特定・解消・20msの実機成功は未確認。
 
 ## 先に伝えたいこと
@@ -106,6 +108,7 @@ const outputStats = playbackStatsDelta(before, readPlaybackStats(audioContext));
 - 公開した比較画面：<https://koekit.sikumilab.com/probe/saezuri/?audioLatency=playback>
 - 内部10msを希望する比較：<https://koekit.sikumilab.com/probe/saezuri/?audioLatency=10ms>
 - 内部20msを希望する次の比較：<https://koekit.sikumilab.com/probe/saezuri/?audioLatency=20ms>
+- 内部20ms・約1秒先まで順次接続する比較：<https://koekit.sikumilab.com/probe/saezuri/?audioLatency=20ms&audioSchedule=window>
 - 旧設定との比較：<https://koekit.sikumilab.com/probe/saezuri/?audioLatency=interactive>
 - 通常URL（現在は有限の試聴にplayback）：<https://koekit.sikumilab.com/probe/saezuri/>
 - 診断部品：`probe/saezuri/playback-diagnostics.js`

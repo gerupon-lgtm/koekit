@@ -1,7 +1,7 @@
-import { analyzeSamples, analyzeFrames, quantizeSegments } from './analyzer.js?v=v0.1.0-20261018101505-3b4c99f';
-import { filterCaptureSamples } from './capture-support.js?v=v0.1.0-20261018101505-3b4c99f';
-import { measureCountDelay, selectCaptureWindow } from './acoustic-sync.js?v=v0.1.0-20261018101505-3b4c99f';
-import { buildAnalysisComparison } from './analysis-comparison.js?v=v0.1.0-20261018101505-3b4c99f';
+import { analyzeSamples, analyzeFrames, quantizeSegments } from './analyzer.js?v=v0.1.0-20261018103515-21204eb';
+import { filterCaptureSamples } from './capture-support.js?v=v0.1.0-20261018103515-21204eb';
+import { measureCountDelay, selectCaptureWindow } from './acoustic-sync.js?v=v0.1.0-20261018103515-21204eb';
+import { buildAnalysisComparison } from './analysis-comparison.js?v=v0.1.0-20261018103515-21204eb';
 self.onmessage = ({ data }) => {
   const { sampleRate, tempo, sessionId, options } = data;
   let samples=data.samples, timing=data.timing;
