@@ -1,5 +1,5 @@
-import {renderTutorialView,highlightTutorialView} from './tutorial-view.js?v=v0.1.0-20261018014908-1621596';
-import {setupPlaybackSheet} from './sheet-controls.js?v=v0.1.0-20261018014908-1621596';
+import {renderTutorialView,highlightTutorialView} from './tutorial-view.js?v=v0.1.0-20261018022930-5c5a903';
+import {setupPlaybackSheet} from './sheet-controls.js?v=v0.1.0-20261018022930-5c5a903';
 
 export class TutorialPreview{
  constructor({onPlay,onStop,onNavigate=()=>{},onDisplay=()=>{}}){
@@ -7,6 +7,9 @@ export class TutorialPreview{
   const dialog=document.createElement('dialog');dialog.id='learning-preview';dialog.className='tutorial-preview';dialog.setAttribute('aria-labelledby','learning-preview-title');
   dialog.innerHTML='<div class="screen-heading"><h2 id="learning-preview-title">おてほんを 聴く</h2><button data-close>とじる</button></div><div class="tutorial-display-switch" role="group" aria-label="メロディーの表示"><button data-tutorial-view="cards">カード</button><button data-tutorial-view="score">五線譜</button></div><p id="learning-preview-status" role="status" aria-live="polite"></p><div id="learning-preview-view"></div><div class="tutorial-play-actions"><button id="learning-preview-play">聴く</button><button id="learning-preview-melody">メロディーだけ</button></div>';
   document.querySelector('main').append(dialog);this.dialog=dialog;this.view=dialog.querySelector('#learning-preview-view');this.status=dialog.querySelector('#learning-preview-status');
+  const info=document.createElement('div');info.className='tutorial-preview-info';
+  const voiceButton=document.createElement('button');voiceButton.id='learning-preview-voice-toggle';voiceButton.type='button';voiceButton.onclick=()=>document.getElementById('learning-voice')?.click();
+  const text=document.createElement('div'),hint=document.createElement('p');hint.id='learning-preview-voice-hint';this.status.before(info);info.append(voiceButton,text);text.append(this.status,hint);
   setupPlaybackSheet(dialog,{closeId:'learning-preview-close',stopId:'learning-preview-stop',onStop:()=>this.stop(),stopOnClose:false});
   dialog.querySelector('.sheet-stop').append(dialog.querySelector('.tutorial-play-actions'));
   dialog.querySelector('#learning-preview-close').onclick=()=>this.close();
@@ -31,9 +34,19 @@ export class TutorialPreview{
   this.dialog.querySelector('#learning-preview-play').textContent=backing?'伴奏つきで聴く':'聴く';this.dialog.querySelector('#learning-preview-melody').hidden=!backing;
   for(const b of this.dialog.querySelectorAll('.tutorial-play-actions button'))b.disabled=this.playing;
   if(!this.playing)this.status.textContent=`${this.data?.tempo??112} BPM・1小節カウント`;
+  this.syncVoice();
  }
+ syncVoice(){
+  const toggle=this.dialog.querySelector('#learning-preview-voice-toggle'),hint=this.dialog.querySelector('#learning-preview-voice-hint');
+  const enabled=!!document.getElementById('edit-voice')?.checked&&document.getElementById('mic')?.getAttribute('aria-pressed')==='true';
+  toggle.textContent=enabled?'声 ON':'声 OFF';toggle.setAttribute('aria-pressed',String(enabled));
+  const status=document.getElementById('edit-voice-status')?.textContent;
+  hint.textContent=!enabled?'声の操作は「声 OFF」を押してね。':status==='声を受け付けています'?'声：「きく」「もういちど」「とめる」「とじる」':status==='音声認識の準備中…'?'声のじゅんび中…':'声の受付はおやすみ中。ボタンで操作できます。';
+ }
+ replay(){const mode=this.playMode??'backing';this.stop();return this.play(mode);}
  async play(mode='backing'){
   if(!this.openNow||!this.data||this.playing)return;
+  this.playMode=mode;
   const epoch=++this.epoch;this.playing=true;this.lastTick=null;this.sync();this.status.textContent='音をじゅんび中…';
   try{const data=structuredClone(this.data);if(mode==='melody')data.accompaniment=[];const result=await this.onPlay(data);if(epoch===this.epoch&&result===false)this.stop({notify:false,reason:'ERROR'});}
   catch{if(epoch===this.epoch)this.stop({reason:'ERROR'});}
@@ -47,6 +60,8 @@ export class TutorialPreview{
  stop({notify=true,reason='STOPPED'}={}){
   const wasPlaying=this.playing;this.playing=false;this.lastTick=null;this.epoch++;highlightTutorialView(this.view,null);this.sync();
   if(notify&&wasPlaying)this.onStop();if(reason==='ENDED')this.status.textContent='最後まで聴けたね。';else if(reason==='ERROR')this.status.textContent='音を出せませんでした。もう一度押してね。';
+  else if(reason==='SCHEDULER_LATE')this.status.textContent='画面の処理が間に合わず止まりました。「きく」でやり直せます。';
+  else if(reason==='AUDIO_INTERRUPTED')this.status.textContent='音が中断しました。「きく」でやり直せます。';
  }
  finishClose(){if(!this.opened)return;this.opened=false;this.stop();this.onClosed?.();this.onNavigate();}
  close(){this.finishClose();if(this.dialog.open)this.dialog.close();}

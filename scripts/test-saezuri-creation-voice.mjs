@@ -49,3 +49,9 @@ test('tutorial navigation is bounded and keeps ordinary next and stop meanings',
  assert.equal(playing.parse('オッケー'),null);assert.deepEqual(playing.parse('ストップ'),{type:'loop-stop'});
  assert.equal(parseCreationCommand('伴奏 を つける',{manual:true}),null);
 });
+
+ test('audition repeat aliases keep the visible target and remain excluded from loop and recording profiles',async()=>{
+ const {TUTORIAL_VOICE_PROFILE:idle,TUTORIAL_PLAY_PROFILE:playing}=await import('../probe/saezuri/creation-voice.js');
+ for(const text of ['もう 一度','もう 一回','もういちど','もういっかい']){assert.deepEqual(idle.parse(text),{type:'tutorial',action:'replay'});assert.deepEqual(playing.parse(text),{type:'tutorial',action:'replay'});assert.equal(STOP_VOICE_PROFILE.parse(text),null);assert.equal(LOOP_VOICE_PROFILE.parse(text),null);assert.equal(parseCreationCommand(text,{manual:true}),'preview');}
+ assert.deepEqual(playing.parse('きく'),{type:'tutorial',action:'replay'});assert.equal(playing.parse('ド 一'),null);
+ });

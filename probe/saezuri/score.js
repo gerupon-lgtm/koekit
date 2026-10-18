@@ -1,5 +1,5 @@
-import { scoreEvents } from '../../saezuri/document.js?v=v0.1.0-20261018014908-1621596';
-import { signature, spellPitch } from './key-signature.js?v=v0.1.0-20261018014908-1621596';
+import { scoreEvents } from '../../saezuri/document.js?v=v0.1.0-20261018022930-5c5a903';
+import { signature, spellPitch } from './key-signature.js?v=v0.1.0-20261018022930-5c5a903';
 const ns = 'http://www.w3.org/2000/svg';
 function svgElement(tag, attrs = {}, text) {
   const node = document.createElementNS(ns, tag);
@@ -24,6 +24,7 @@ export function renderScore(container, pattern, { fifths = 0, displayOctave = 0,
     const ys = current.filter(e => e.midi !== null).map(e => yFor(e.midi));
     const upper = Math.min(0, ...ys.map(y => y - 55)), lower = Math.max(155, ...ys.map(y => y + 40));
     const svg = svgElement('svg', { viewBox: `0 ${upper} ${width} ${lower - upper}`, 'data-bar':bar, role: 'img', 'aria-label': `${bar + 1}小節目の試作譜面` });
+    svg.dataset.entryLeft=left;svg.dataset.entrySpacing=spacing;
     svg.append(svgElement('text', { x: 8, y: 24 }, `${bar + 1}小節`));
     for (let i = 0; i < 5; i++) svg.append(svgElement('line', { x1: 10, y1: 52 + i * 12, x2: width-8, y2: 52 + i * 12, stroke: '#897b72' }));
     svg.append(svgElement('text', { x: fitWidth?6:10, y: 94, 'font-size': fitWidth?44:52, 'font-family': 'Segoe UI Symbol,serif' }, '𝄞'));

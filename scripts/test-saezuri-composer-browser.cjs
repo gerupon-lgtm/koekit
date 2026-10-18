@@ -29,7 +29,7 @@ const base=process.env.SAEZURI_BASE||'http://127.0.0.1:8014';
  await say('三 拍 半');assert.equal((await report()).captureEditing.inputCursor,10);
  await say('ド 一');r=await report();assert.equal(r.captureEditing.inputError,'NOTE_OVERLAP');assert.equal(await page.locator('#capture-edit-confirm').isDisabled(),true);
  await say('とりけし');
- await page.locator('#composer-panel > details > summary').click();await page.locator('#composer-bar').selectOption('4');await page.locator('[data-tick="14"]').click();
+ await page.locator('#composer-panel > details > summary').click();await page.locator('#composer-location > summary').click();await page.locator('#composer-bar').selectOption('4');await page.locator('[data-tick="14"]').click();
  await page.locator('#composer-view').selectOption('blocks');assert.equal(await page.locator('#capture-score').isVisible(),false);
  await page.locator('#composer-view').selectOption('score');assert.equal(await page.locator('#capture-blocks').isVisible(),false);
  await page.locator('#composer-view').selectOption('both');assert.equal((await report()).captureEditing.inputCursor,62);

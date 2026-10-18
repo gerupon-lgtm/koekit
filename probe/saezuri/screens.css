@@ -56,6 +56,40 @@ body.melody-app{background:#faf5ed;color:#443b36}
 .melody-app.editor-focus .edit-toolbar{order:2;position:static;padding:0;background:transparent;border:0}
 .melody-app.editor-focus #composer-panel{border:0;padding:0;margin:0;background:transparent}
 .melody-app.editor-focus #composer-position{font-size:12px;margin:1px 0 4px}
+.melody-app #composer-position-controls{order:-1;width:100%;min-width:0}
+.composer-position-row{display:flex;align-items:center;gap:8px}
+.composer-position-row>div{flex:1;min-width:0}
+.melody-app.editor-focus #composer-position-controls button{margin:0;min-height:44px;font-size:12px;padding:4px 8px}
+.melody-app.editor-focus #composer-position-controls #composer-position{font-size:12px;line-height:16px;margin:0;text-align:center}
+.melody-app #composer-position{width:100%}
+.melody-app #composer-location>summary{display:none}
+.melody-app #composer-location{margin:2px 0;font-size:12px}
+.melody-app #composer-location summary{min-height:32px;display:list-item;cursor:pointer;line-height:32px}
+.melody-app #composer-location[open]{display:flex;flex-wrap:wrap;gap:8px}
+.melody-app #composer-location>label{display:flex;flex-direction:row;align-items:center;gap:8px}
+.melody-app #composer-location select{min-height:44px}
+.melody-app #composer-location #composer-beats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;width:100%}
+.melody-app .composer-position-hint{font-size:11px;line-height:15px;margin:0 0 4px}
+.melody-app #creation-voice-hint{font-size:11px;line-height:15px;margin:0 0 4px}
+.melody-app #creation-displays{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:4px 0}
+.melody-app #creation-displays label{font-size:12px;gap:2px;min-width:0}
+.melody-app #creation-displays select{width:100%;min-height:44px;padding:4px 8px;font-size:14px}
+.melody-app #composition-cards{order:0;height:132px;overflow:auto;min-width:0;overscroll-behavior:contain}
+.melody-app #composition-cards .tutorial-card{opacity:1}
+.melody-app #composition-cards .tutorial-bar{border:0;border-radius:0;background:none}
+.melody-app #composition-cards .tutorial-card[data-input-cursor]{box-shadow:inset 0 -3px #16816e}
+.melody-app:not(.learning-active) #capture-blocks,.melody-app:not(.learning-active)[data-note-display=cards] #capture-score{display:none}
+.melody-app:not(.learning-active)[data-input-display=cards] #piano-keys,.melody-app:not(.learning-active)[data-input-display=cards] .keyboard-octaves,.melody-app:not(.learning-active)[data-input-display=cards] .keyboard-help,.melody-app:not(.learning-active)[data-input-display=keyboard] #step-entry,.melody-app:not(.learning-active)[data-input-display=keyboard] #composer-position-controls{display:none}
+.melody-app:not(.learning-active)[data-input-display=cards] #keyboard-options{order:2}
+.melody-app:not(.learning-active)[data-input-display=cards] #step-entry>summary{display:none}
+.melody-app:not(.learning-active)[data-input-display=cards] .keyboard-actions{display:none}
+.melody-app:not(.learning-active)[data-input-display=cards] #composer-length-buttons{grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
+.melody-app.editor-focus:not(.learning-active)[data-input-display=cards] #composer-length-buttons button{flex-direction:column;font-size:11px;min-height:52px;padding:2px;gap:0}
+.melody-app:not(.learning-active)[data-input-display=cards] #composer-length-buttons svg{height:26px;width:22px}
+.melody-app.editor-focus:not(.learning-active)[data-input-display=cards] #composer-keys{margin:4px 0;gap:6px}
+.melody-app.editor-focus:not(.learning-active)[data-input-display=cards] #composer-keys button{min-height:44px;padding:4px 0}
+.melody-app:not(.learning-active)[data-input-display=cards]:not([data-entry-pending=true]) #composer-candidate{display:none}
+.melody-app.learning-active #composer-position-controls,.melody-app[data-create-mode=edit] #composer-position-controls,.melody-app[data-create-mode=backing] #composer-position-controls,.melody-app:not([data-create-mode=input]) [data-entry-cursor]{display:none}
 .melody-app.editor-focus .composer-values{gap:8px}
 .melody-app.editor-focus .composer-values label{font-size:12px;gap:2px}
 .melody-app.editor-focus .composer-values input,.melody-app.editor-focus .composer-values select{min-height:44px;padding:5px;font-size:16px}

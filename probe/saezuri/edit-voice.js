@@ -3,7 +3,7 @@ const aliases = {
   down:['ひくく','低く','さげる','下げる','はんおんひくく','半音低く','はんおんさげる','半音下げる'],
   next:['つぎ','次'], previous:['まえ','前'],
   first:['さいしょ','最初'], last:['さいご','最後'],
-  preview:['きく','聴く','聞く'], confirm:['オッケー','オーケー','おっけー','おーけー','決定','けってい'],
+  preview:['きく','聴く','聞く','もういちど','もう一度','もういっかい','もう一回'], confirm:['オッケー','オーケー','おっけー','おーけー','決定','けってい'],
   undo:['もどす','戻す'], cancel:['とりけし','取り消し'],
   delete:['けす','消す'],
 };
@@ -26,7 +26,7 @@ for(let number=1;number<=64;number++) {
 for (const direction of ['up','down']) for (const word of aliases[direction].slice(0,4)) {
   aliases[direction].push(`半音${word}`,`はんおん${word}`);
 }
-export const EDIT_WORDS = [...Object.entries(aliases).filter(([key])=>!key.includes(':')).flatMap(([,forms])=>forms),...numberedGrammar];
+export const EDIT_WORDS = [...Object.entries(aliases).filter(([key])=>!key.includes(':')).flatMap(([,forms])=>forms).filter(word=>!word.startsWith('もう')),'もう 一度','もう 一回',...numberedGrammar];
 export const parseEditCommand = raw => Object.keys(aliases).find(key=>aliases[key].some(word=>normalize(word)===normalize(raw))) ?? null;
 
 // Gate the shared local recognizer by the editing interval. Disposing an
@@ -51,7 +51,7 @@ export class EditVoice {
       this.onStatus?.('paused');
       return;
     }
-    if (this.active) return;
+    if (this.active) return this.ready;
     this.active=true; this.loading=true;
     const epoch=++this.epoch;
     const input=this.input ??= this.createInput();
@@ -67,8 +67,9 @@ export class EditVoice {
     input.on('result',result); input.on('error',fail); input.on('end',end);
     this.detach=()=>{input.off('result',result); input.off('error',fail); input.off('end',end);};
     this.onStatus?.('loading');
-    Promise.resolve().then(()=>current() && input.start(this.words)).then(()=>{
+    this.ready=Promise.resolve().then(()=>current() && input.start(this.words)).then(()=>{
       if(current()) {this.loading=false;this.onStatus?.('listening');}
     }).catch(fail);
+    return this.ready;
   }
 }

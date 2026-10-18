@@ -1,8 +1,8 @@
 // ML-T01 only: locally synthesized comparison voices, not approved instrument assets.
-import { tickSeconds } from '../../saezuri/document.js?v=v0.1.0-20261018014908-1621596';
-import { schedulePlaybackCount, COUNT_STYLES } from './playback-count.js?v=v0.1.0-20261018014908-1621596';
-import { createLightVoice, LIGHT_ENGINES, LIGHT_ONLY_INSTRUMENTS } from './light-voice.js?v=v0.1.0-20261018014908-1621596';
-import { DEFAULT_SOUND_ENGINE } from './sound-engine.js?v=v0.1.0-20261018014908-1621596';
+import { tickSeconds } from '../../saezuri/document.js?v=v0.1.0-20261018022930-5c5a903';
+import { schedulePlaybackCount, COUNT_STYLES } from './playback-count.js?v=v0.1.0-20261018022930-5c5a903';
+import { createLightVoice, LIGHT_ENGINES, LIGHT_ONLY_INSTRUMENTS } from './light-voice.js?v=v0.1.0-20261018022930-5c5a903';
+import { DEFAULT_SOUND_ENGINE } from './sound-engine.js?v=v0.1.0-20261018022930-5c5a903';
 export function scheduleVoice(ctx, output, { midi, time, duration, instrument = 'piano', gain = 0.16, velocity = 70, engine = DEFAULT_SOUND_ENGINE }) {
   if(/^(electro-)?(kick|snare|hat)$/.test(instrument))return schedulePercussion(ctx,output,{time,duration,instrument,gain});
   if (engine !== 'classic' && !LIGHT_ENGINES.includes(engine)) throw new Error('VOICE_ENGINE_UNKNOWN');
@@ -52,13 +52,28 @@ function schedulePercussion(ctx,output,{time,duration,instrument,gain}){
  const cleanup=()=>{source.disconnect();filter?.disconnect();level.disconnect();};source.onended=cleanup;source.start(time);source.stop(time+length+.005);
  return ()=>{try{source.stop();}catch{}cleanup();};
 }
+// Wake the real output before placing the first click on its clock. This is
+// silence, not a rendered instrument or an extra audible count.
+export async function preparePlaybackOutput(ctx,valid=()=>true){
+ const start=ctx.currentTime,settle=Math.min(.4,Math.max(.12,(ctx.baseLatency||0)+(ctx.outputLatency||0))),wall=performance.now();
+ const source=ctx.createConstantSource();source.offset.value=0;source.connect(ctx.destination);source.start();
+ try{
+  while(ctx.currentTime<start+settle){
+   if(!valid())return false;
+   if(ctx.state!=='running'||performance.now()-wall>3000)throw new Error('AUDIO_NOT_READY');
+   await new Promise(resolve=>setTimeout(resolve,20));
+  }
+  return valid();
+ }finally{source.stop();source.disconnect();}
+}
 export class ProbeTransport {
   constructor(ctx, onStop, mixer=null, {engine=DEFAULT_SOUND_ENGINE}={}) { this.ctx = ctx; this.onStop = onStop; this.mixer=mixer;this.engine=engine;this.serial = 0; this.voices = new Set(); this.active = false; }
-  start(notes, { tempo = 120, totalTicks = 64, instrument = 'piano', lead = 0.35, ahead = 0.15, countSound = false, countVolume = 1, countStyle = 'rim', accompaniment = [], loop = false, preRollTicks=0, preRollStep=1 } = {}) {
+  start(notes, { tempo = 120, totalTicks = 64, instrument = 'piano', lead = 0.35, ahead = 0.15, countSound = false, countVolume = 1, countStyle = 'rim', accompaniment = [], loop = false, preRollTicks=0, preRollStep=1, scheduleAll=false } = {}) {
     this.stop(false);
     if (!COUNT_STYLES.includes(countStyle)) throw new Error('COUNT_STYLE_UNKNOWN');
     if (this.ctx.state !== 'running') throw new Error('AUDIO_NOT_READY');
     if(!Number.isInteger(preRollTicks)||preRollTicks<0||!Number.isInteger(preRollStep)||preRollStep<1)throw new Error('PRE_ROLL_INVALID');
+    if(scheduleAll&&loop)throw new Error('SCHEDULE_ALL_LOOP');
     const serial = this.serial;
     this.countAnchor=this.ctx.currentTime+lead;this.preRollTicks=preRollTicks;
     this.anchor = this.countAnchor+tickSeconds(preRollTicks,tempo);
@@ -66,7 +81,7 @@ export class ProbeTransport {
     this.totalTicks = totalTicks;
     this.loop=loop;
     this.active = true;
-    this.metrics = { engine:this.engine, events: 0, accompanimentEvents:0, countEvents: 0, maxVoices:0, maxTimerGapMs: 0, aheadMs: ahead * 1000, leadMs: lead * 1000 };
+    this.metrics = { engine:this.engine, scheduleMode:scheduleAll?'phrase':'window',events: 0, accompanimentEvents:0, countEvents: 0, maxVoices:0, maxTimerGapMs: 0, aheadMs: ahead * 1000, leadMs: lead * 1000 };
     const queue = [...notes.map(n=>({...n,accompaniment:false})),...accompaniment.map(n=>({...n,accompaniment:true}))].sort((a,b) => a.startTick - b.startTick);
     let index = 0, cycle = 0, countTick = 0, preRollTick=0, previous = performance.now();
     const pump = (prime = false) => {
@@ -76,7 +91,7 @@ export class ProbeTransport {
       previous = wall;
       const now = this.ctx.currentTime;
       // Queue the musical head before synchronous UI work can consume the lead.
-      const horizon = prime ? Math.max(now + ahead, this.anchor + ahead) : now + ahead;
+      const horizon = scheduleAll ? this.anchor+tickSeconds(totalTicks,tempo) : prime ? Math.max(now + ahead, this.anchor + ahead) : now + ahead;
       for (const voice of this.voices) if (voice.end < now) this.voices.delete(voice);
       if (this.ctx.state !== 'running') return this.stop(true, 'AUDIO_INTERRUPTED');
       while(preRollTick<preRollTicks){
@@ -109,7 +124,10 @@ export class ProbeTransport {
       if (!loop && now >= this.anchor + tickSeconds(totalTicks, tempo) + 0.08 && this.voices.size===0) this.stop(true, 'ENDED');
     };
     this.timer = setInterval(pump, 25);
+    const scheduledAt=this.ctx.currentTime;
     pump(true);
+    this.metrics.initialScheduleMs=(this.ctx.currentTime-scheduledAt)*1000;
+    this.metrics.firstCountHeadroomMs=(this.countAnchor-this.ctx.currentTime)*1000;
   }
   position() {const tick=Math.max(0,(this.ctx.currentTime-this.anchor)*this.tempo*4/60);return this.active?(this.loop?tick%this.totalTicks:Math.min(this.totalTicks,tick)):0;}
   get counting(){return this.active&&this.preRollTicks>0&&this.ctx.currentTime<this.anchor;}

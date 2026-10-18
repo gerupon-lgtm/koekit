@@ -1,5 +1,5 @@
-import {EDIT_WORDS,parseEditCommand} from './edit-voice.js?v=v0.1.0-20261018014908-1621596';
-import {ENTRY_WORDS,parseEntryCommand} from './entry-voice.js?v=v0.1.0-20261018014908-1621596';
+import {EDIT_WORDS,parseEditCommand} from './edit-voice.js?v=v0.1.0-20261018022930-5c5a903';
+import {ENTRY_WORDS,parseEntryCommand} from './entry-voice.js?v=v0.1.0-20261018022930-5c5a903';
 const normalize=text=>String(text).normalize('NFKC').replace(/\s/g,'').replace(/[ァ-ヶ]/g,c=>String.fromCharCode(c.charCodeAt(0)-0x60)).toLowerCase();
 // Exact phrases only. Never use a fragment such as 次 for regeneration.
 export const IMAGE_VOICE_CHOICES=[
@@ -38,6 +38,7 @@ for(const manual of [false,true])for(const image of [false,true])profiles.set(`$
 });
 export const creationVoiceProfile=pattern=>profiles.get(`${pattern?.source==='manual'}:${!!pattern?.accompaniment?.imageChoice}`);
 
-const tutorialPhrases=[['つぎへ','next'],['次へ','next'],['つくってみよう','next'],['おてほん','model'],['お手本','model'],['ばんそうをつける','backing'],['伴奏をつける','backing'],['とじる','close'],['閉じる','close']];
-export const TUTORIAL_VOICE_PROFILE={words:[...new Set([...ENTRY_WORDS,...['次 へ','つくっ て みよう','お手本','伴奏 を つける','閉じる']])],parse:raw=>{const phrase=tutorialPhrases.find(p=>normalize(p[0])===normalize(raw));return phrase?{type:'tutorial',action:phrase[1]}:parseCreationCommand(raw,{manual:true});}};
-export const TUTORIAL_PLAY_PROFILE={words:[...STOP_VOICE_PROFILE.words,'とじる','閉じる'],parse:raw=>['とじる','閉じる'].some(w=>normalize(w)===normalize(raw))?{type:'tutorial',action:'close'}:STOP_VOICE_PROFILE.parse(raw)};
+const repeatWords=['もういちど','もう一度','もういっかい','もう一回'];
+const tutorialPhrases=[...repeatWords.map(word=>[word,'replay']),['つぎへ','next'],['次へ','next'],['つくってみよう','next'],['おてほん','model'],['お手本','model'],['ばんそうをつける','backing'],['伴奏をつける','backing'],['とじる','close'],['閉じる','close']];
+export const TUTORIAL_VOICE_PROFILE={words:[...new Set([...ENTRY_WORDS,...['次 へ','つくっ て みよう','お手本','伴奏 を つける','閉じる','もう 一度','もう 一回']])],parse:raw=>{const phrase=tutorialPhrases.find(p=>normalize(p[0])===normalize(raw));return phrase?{type:'tutorial',action:phrase[1]}:parseCreationCommand(raw,{manual:true});}};
+export const TUTORIAL_PLAY_PROFILE={words:[...STOP_VOICE_PROFILE.words,'とじる','閉じる','もう 一度','もう 一回','きく','聴く','聞く'],parse:raw=>repeatWords.some(w=>normalize(w)===normalize(raw))||parseEditCommand(raw)==='preview'?{type:'tutorial',action:'replay'}:['とじる','閉じる'].some(w=>normalize(w)===normalize(raw))?{type:'tutorial',action:'close'}:STOP_VOICE_PROFILE.parse(raw)};

@@ -1,9 +1,9 @@
-import {blankPattern} from './entry-session.js?v=v0.1.0-20261018014908-1621596';
-import {practicePhrases,practicePhrase} from './learning-data.js?v=v0.1.0-20261018014908-1621596';
-import {lessonGuide,lessonFingerprint,LESSON_TITLES,LESSON_RANGES} from './tutorial-guide.js?v=v0.1.0-20261018014908-1621596';
-import {tutorialPattern,tutorialExcerpt,TUTORIAL_TEMPO} from './tutorial-data.js?v=v0.1.0-20261018014908-1621596';
-import {TutorialPreview} from './tutorial-preview.js?v=v0.1.0-20261018014908-1621596';
-import {renderTutorialView} from './tutorial-view.js?v=v0.1.0-20261018014908-1621596';
+import {blankPattern} from './entry-session.js?v=v0.1.0-20261018022930-5c5a903';
+import {practicePhrases,practicePhrase} from './learning-data.js?v=v0.1.0-20261018022930-5c5a903';
+import {lessonGuide,lessonFingerprint,LESSON_TITLES,LESSON_RANGES} from './tutorial-guide.js?v=v0.1.0-20261018022930-5c5a903';
+import {tutorialPattern,tutorialExcerpt,TUTORIAL_TEMPO} from './tutorial-data.js?v=v0.1.0-20261018022930-5c5a903';
+import {TutorialPreview} from './tutorial-preview.js?v=v0.1.0-20261018022930-5c5a903';
+import {renderTutorialView} from './tutorial-view.js?v=v0.1.0-20261018022930-5c5a903';
 const $=id=>document.getElementById(id);
 export class MelodyLearning {
  constructor(shell){
@@ -76,6 +76,10 @@ export class MelodyLearning {
  }
  handleVoice(command){
   if(!this.active||this.shell.screen!=='create')return false;
+  if(command?.type==='tutorial'&&command.action==='replay'||command==='preview'&&this.preview.openNow){
+   if(this.preview.openNow)this.preview.replay();else if(!this.shell.busy)this.audition(this.stage===0);
+   return true;
+  }
   if(command?.type==='tutorial'){
    if(command.action==='close'){this.preview.close();return true;}
    if(this.shell.busy)return true;
