@@ -34,4 +34,6 @@ BUILD `v0.1.0-20261018123833-2ec184f`。画面の開発版情報と更新用URL5
 
 ## 公開確認
 
-公開後の確認結果を追記する。
+`5e82d23cb87dae1460886c23758bf87f74e2ac0e` をmainへ公開。[Pages39128388460](https://github.com/gerupon-lgtm/koekit/actions/runs/39128388460)のbuild／deploy／report-build-statusがすべて成功。公開99ファイルのHTTPS・種類・長さ・SHA-256がGitの確定内容と一致した。
+
+[通常URL](https://koekit.sikumilab.com/probe/saezuri/)のPC Chromeでも、新しい進行表示、イメージの録音配置、用途別音声切り替えの3スクリプトが成功。4／8小節と4サイズ、ループの現在位置、タップ／ハナウタの待機と先頭開始、候補→確定、保存再開、短い手動コードの切り替え、通常曲20ms／録音interactiveの共有時計を確認した。実機の視認性・実声・聴感は利用者による継続確認の範囲とする。
