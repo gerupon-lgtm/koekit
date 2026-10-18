@@ -1,7 +1,8 @@
 // Editable audition presets. These concrete arrangements are trial data.
-import {GENRES,CHORD_INTERVALS,chordTones} from './catalog.js?v=v0.1.0-20261018052053-f1df1c8';
-import {validImageChoice,validateImageArrangement} from './image-arrangement.js?v=v0.1.0-20261018052053-f1df1c8';
-export const RHYTHMS=[{id:'quarters',label:'4つずつ'},{id:'offbeat',label:'うらで弾く'},{id:'arpeggio',label:'音をばらして弾く'},{id:'tutorial',label:'おてほんの リズム'}];
+import {GENRES,CHORD_INTERVALS,chordTones} from './catalog.js?v=v0.1.0-20261018060645-b9da761';
+import {validImageChoice,validateImageArrangement} from './image-arrangement.js?v=v0.1.0-20261018060645-b9da761';
+import {POP_EIGHT_BEAT} from './backing-patterns.js?v=v0.1.0-20261018060645-b9da761';
+export const RHYTHMS=[{id:'quarters',label:'4つずつ'},{id:'offbeat',label:'うらで弾く'},{id:'arpeggio',label:'音をばらして弾く'},{id:POP_EIGHT_BEAT.rhythm,label:POP_EIGHT_BEAT.label}];
 export const PROGRESSIONS={
  C:[{id:'home',label:'C → F → G → C',chords:[[0,'major'],[5,'major'],[7,'major'],[0,'major']]},
     {id:'pop',label:'C → G → Am → F',chords:[[0,'major'],[7,'major'],[9,'minor'],[5,'major']]},
@@ -63,19 +64,19 @@ export function accompanimentEvents(pattern) {
  const value=pattern.accompaniment;
  if(!value?.enabled||validateAccompaniment(value,pattern.bars)) return [];
  const arrangement=value.imageArrangement;
- const events=[],sounds={...SOUND_PRESETS[value.genre],...arrangement?.sounds,...value.sounds};let previous=[];
+ const events=[],sounds={...SOUND_PRESETS[value.genre],...arrangement?.sounds,...(value.rhythm===POP_EIGHT_BEAT.rhythm?POP_EIGHT_BEAT.sounds:{}),...value.sounds};let previous=[];
  for(const segment of harmonicSegments(pattern)){
   const {startTick,durationTick,root,quality,bass}=segment;
   let chord=chordVoicing({root,quality},previous);previous=chord;
-  if(arrangement){
+  if(arrangement&&arrangement.patternId!==POP_EIGHT_BEAT.id){
    chord.sort((a,b)=>a-b);
    for(let i=0;i<arrangement.inversion;i++){const low=chord.shift();chord.push(low+12<=79?low+12:low);}
    chord.sort((a,b)=>a-b);if(arrangement.voicing==='falling')chord.reverse();
   }
   const push=(tick,length,midi,instrument,gain,part)=>events.push({startTick:startTick+tick,durationTick:Math.min(length,durationTick-tick),midi,instrument,gain,part,...(value.rhythm==='tutorial'?{velocity:55}:{})});
   if(value.rhythm==='tutorial'){
-   for(let tick=0;tick<durationTick;tick+=2)push(tick,2,36+bass,sounds.bass,.12,'bass');
-   for(const tick of [0,2,6,8,10,14])if(tick<durationTick)for(const midi of chord)push(tick,2,midi,sounds.chord,tick===0?.06:.045,'chord');
+   for(const tick of POP_EIGHT_BEAT.bassTicks)if(tick<durationTick)push(tick,2,36+bass,sounds.bass,.12,'bass');
+   for(const tick of POP_EIGHT_BEAT.chordTicks)if(tick<durationTick)for(const midi of chord)push(tick,2,midi,sounds.chord,tick===0?.06:.045,'chord');
    if(sounds.drums!=='none'){
     const prefix=sounds.drums==='electronic'?'electro-':'';
     for(const [tick,kind,gain] of [[0,'kick',.09],[8,'kick',.055],[4,'snare',.05],[12,'snare',.05],[0,'hat',.035],[2,'hat',.02],[6,'hat',.02],[10,'hat',.02],[14,'hat',.02]])if(tick<durationTick)push(tick,1,kind==='kick'?36:kind==='snare'?38:42,prefix+kind,gain,'drums');

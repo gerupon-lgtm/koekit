@@ -1,4 +1,4 @@
-import {pianoKeys,TapRecording} from './tap-recording.js?v=v0.1.0-20261018052053-f1df1c8';
+import {pianoKeys,TapRecording} from './tap-recording.js?v=v0.1.0-20261018060645-b9da761';
 const $=id=>document.getElementById(id);
 export class KeyboardControls {
  constructor({editor,prepareVoice,onStart,onActivity,onPreview,clock}){
@@ -9,6 +9,7 @@ export class KeyboardControls {
   const heading=document.createElement('div');heading.className='keyboard-heading';$('keyboard-status').before(heading);
   const instrument=document.createElement('div');instrument.id='keyboard-instrument';instrument.append($('instrument').closest('label'));heading.append($('keyboard-status'),instrument);
   const actions=panel.querySelector('.keyboard-actions');actions.prepend($('backing-loop'));actions.append($('loop-record'));
+  actions.after($('loop-hint'));
   $('backing-loop').innerHTML='伴奏<br>ループ';$('loop-record').innerHTML='ハナウタ<br>で録る';
   panel.before($('image-chords'));
   panel.querySelector('.keyboard-settings').append($('image-settings-open'),$('image-suggest'));

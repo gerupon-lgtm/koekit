@@ -44,10 +44,10 @@ test('free editing never accepts image words, preserves note/edit phrases, and p
 
 test('tutorial navigation is bounded and keeps ordinary next and stop meanings',async()=>{
  const {TUTORIAL_VOICE_PROFILE:p,TUTORIAL_PLAY_PROFILE:playing}=await import('../probe/saezuri/creation-voice.js');
- for(const [word,action] of [['次 へ','next'],['お手本','model'],['伴奏 を つける','backing'],['閉じる','close']])assert.deepEqual(p.parse(word),{type:'tutorial',action});
+ for(const [word,action] of [['次 へ','next'],['お手本','model'],['閉じる','close']])assert.deepEqual(p.parse(word),{type:'tutorial',action});
  assert.equal(p.parse('つぎ'),'next');assert.deepEqual(p.parse('ミ 付 点 一'),{type:'note',midi:64,durationTick:6});
  assert.equal(playing.parse('オッケー'),null);assert.deepEqual(playing.parse('ストップ'),{type:'loop-stop'});
- assert.equal(parseCreationCommand('伴奏 を つける',{manual:true}),null);
+ assert.deepEqual(parseCreationCommand('伴奏 を つける',{manual:true}),{type:'backing-navigation',action:'open'});
 });
 
  test('audition repeat aliases keep the visible target and remain excluded from loop and recording profiles',async()=>{
@@ -55,3 +55,25 @@ test('tutorial navigation is bounded and keeps ordinary next and stop meanings',
  for(const text of ['もう 一度','もう 一回','もういちど','もういっかい']){assert.deepEqual(idle.parse(text),{type:'tutorial',action:'replay'});assert.deepEqual(playing.parse(text),{type:'tutorial',action:'replay'});assert.equal(STOP_VOICE_PROFILE.parse(text),null);assert.equal(LOOP_VOICE_PROFILE.parse(text),null);assert.equal(parseCreationCommand(text,{manual:true}),'preview');}
  assert.deepEqual(playing.parse('きく'),{type:'tutorial',action:'replay'});assert.equal(playing.parse('ド 一'),null);
  });
+
+test('production and tutorial share backing navigation, and numbered candidate commands are confined to the common sheet',async()=>{
+ const {TUTORIAL_VOICE_PROFILE:t,PROGRESSION_VOICE_PROFILE:p,PROGRESSION_PLAY_PROFILE:playing}=await import('../probe/saezuri/creation-voice.js');
+ for(const word of ['伴奏','ばんそう','伴奏をつける']){const command={type:'backing-navigation',action:'open'};assert.deepEqual(parseCreationCommand(word),command);assert.deepEqual(t.parse(word),command);}
+ assert.deepEqual(t.parse('進行 の おすすめ'),{type:'backing-navigation',action:'suggestions'});
+ for(const [index,number] of ['いち','に','さん','よん'].entries()){
+  assert.deepEqual(p.parse(number+'ばんをきく'),{type:'progression-choice',action:'listen',index});
+  assert.deepEqual(p.parse(number+'ばんをつかう'),{type:'progression-choice',action:'use',index});
+  assert.equal(playing.parse(number+'ばんをつかう'),null);assert.equal(parseCreationCommand(number+'ばんをつかう'),null);
+ }
+ assert.equal(p.parse('1ばん'),null);assert.equal(parseCreationCommand('1ばん'),'select:1');assert.equal(p.parse('オッケー'),null);
+ assert.deepEqual(playing.parse('とじる'),{type:'progression-choice',action:'close'});assert.deepEqual(playing.parse('とめる'),{type:'progression-choice',action:'stop'});
+});
+test('genre and shared pop pattern phrases select the same backing controls only while the backing tab is active',async()=>{
+ const {TUTORIAL_BACKING_VOICE_PROFILE:t}=await import('../probe/saezuri/creation-voice.js');
+ for(const [word,genre] of [['どうよう','nursery'],['ポップ','pop'],['ロック','rock'],['バラード','ballad']]){
+  const command={type:'backing-genre',genre};assert.deepEqual(t.parse(word),command);assert.deepEqual(creationVoiceProfile({source:'manual'},{backing:true}).parse(word),command);
+  assert.equal(creationVoiceProfile({source:'manual'}).parse(word),null);assert.equal(LOOP_VOICE_PROFILE.parse(word),null);
+ }
+ assert.deepEqual(t.parse('はずむ 八 ビート'),{type:'backing-rhythm',rhythm:'tutorial'});assert.equal(t.parse('つぎ'),'next');
+ assert.equal(creationVoiceProfile({source:'manual'},{backing:true}),creationVoiceProfile({source:'manual'},{backing:true}));
+});

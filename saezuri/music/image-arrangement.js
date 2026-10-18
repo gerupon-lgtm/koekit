@@ -1,12 +1,14 @@
 // Audition proposals, not an approved musical catalog. Store the complete
 // arrangement recipe so playback never depends on random numbers or UI state.
-import {CHORD_INTERVALS} from './catalog.js?v=v0.1.0-20261018052053-f1df1c8';
+import {CHORD_INTERVALS} from './catalog.js?v=v0.1.0-20261018060645-b9da761';
+import {POP_EIGHT_BEAT} from './backing-patterns.js?v=v0.1.0-20261018060645-b9da761';
 export const IMAGE_TYPES=[['nursery','どうよう'],['pop','ポップ'],['rock','ロック'],['ballad','バラード']];
 export const IMAGE_SPEEDS=[['slow','ゆっくり'],['normal','ふつう'],['fast','はやい']];
 export const IMAGE_MOODS=[['bright','あかるい'],['gentle','やさしい'],['cool','かっこいい'],['sad','かなしい']];
 export const DEFAULT_IMAGE={type:'nursery',speed:'normal',mood:'bright'};
 export const IMAGE_TEMPOS={slow:80,normal:120,fast:144};
 export const IMAGE_PATTERN_COUNT=8;
+export const imagePatternCount=type=>IMAGE_PATTERN_COUNT+(type===POP_EIGHT_BEAT.genre?1:0);
 const major=[
  [[0,'major'],[5,'major'],[7,'7'],[0,'major']],
  [[0,'major'],[7,'major'],[9,'minor'],[5,'major']],
@@ -37,12 +39,14 @@ export function validImageChoice(choice){return !!choice&&[[IMAGE_TYPES,'type'],
 const hitsValid=hits=>Array.isArray(hits)&&hits.length<=16&&hits.every((n,i)=>Number.isInteger(n)&&n>=0&&n<16&&(i===0||n>hits[i-1]));
 export function validateImageArrangement(value){
  if(!value)return null;
- if(!validImageChoice(value.choice)||value.version!==1||!Number.isInteger(value.index)||value.index<0||value.index>=IMAGE_PATTERN_COUNT)return {code:'IMAGE_INVALID'};
+ if(!validImageChoice(value.choice)||value.version!==1||!Number.isInteger(value.index)||value.index<0||value.index>=IMAGE_PATTERN_COUNT+(value.patternId===POP_EIGHT_BEAT.id?1:0))return {code:'IMAGE_INVALID'};
+ if(value.patternId!==undefined&&(value.patternId!==POP_EIGHT_BEAT.id||value.index!==IMAGE_PATTERN_COUNT))return {code:'IMAGE_INVALID'};
  if(!['major','minor'].every(mode=>Array.isArray(value.progressions?.[mode])&&value.progressions[mode].length===4&&value.progressions[mode].every(c=>Array.isArray(c)&&c.length===2&&Number.isInteger(c[0])&&c[0]>=0&&c[0]<12&&typeof c[1]==='string'&&Object.hasOwn(CHORD_INTERVALS,c[1]))))return {code:'IMAGE_INVALID'};
  if(!['quarters','offbeat','arpeggio'].includes(value.rhythm)||!['block','broken','rising','falling'].includes(value.voicing))return {code:'IMAGE_INVALID'};
  if(![value.chordTicks,value.bassTicks,value.drums?.kick,value.drums?.snare,value.drums?.hat].every(hitsValid)||!Array.isArray(value.bassIntervals)||value.bassIntervals.length!==value.bassTicks.length||!value.bassIntervals.every(n=>[0,7,12].includes(n)))return {code:'IMAGE_INVALID'};
  if(![0,1,2].includes(value.inversion)||!Number.isFinite(value.gate)||value.gate<1||value.gate>15||!Number.isFinite(value.strength)||value.strength<.3||value.strength>1.2)return {code:'IMAGE_INVALID'};
- if(!['piano','wood','soft','sine','lead'].includes(value.sounds?.chord)||!['piano','wood','soft','sine','lead'].includes(value.sounds?.bass)||!['none','acoustic','electronic'].includes(value.sounds?.drums))return {code:'IMAGE_INVALID'};
+ const soundIds=['piano','wood','soft','sine','lead',POP_EIGHT_BEAT.sounds.chord,POP_EIGHT_BEAT.sounds.bass];
+ if(!soundIds.includes(value.sounds?.chord)||!soundIds.includes(value.sounds?.bass)||!['none','acoustic','electronic'].includes(value.sounds?.drums))return {code:'IMAGE_INVALID'};
  return null;
 }
 export function generateImageAccompaniment(pattern,choice=DEFAULT_IMAGE,{resetManual=false}={}){
@@ -50,8 +54,8 @@ export function generateImageAccompaniment(pattern,choice=DEFAULT_IMAGE,{resetMa
  const old=structuredClone(pattern.accompaniment??{enabled:true,genre:'nursery',rhythm:'quarters',progression:'home'});
  if(resetManual){delete old.chords;delete old.sounds;delete old.manualSettings;}
  const previous=old.imageArrangement,sameChoice=previous&&['type','speed','mood'].every(key=>previous.choice[key]===choice[key]);
- const index=sameChoice?(previous.index+1)%IMAGE_PATTERN_COUNT:0;
  const manual=old.manualSettings??{},type=manual.genre?old.genre:choice.type,profile=profiles[type];
+ const index=sameChoice?(previous.index+1)%imagePatternCount(type):0;
  const gentle=choice.mood==='gentle'||choice.mood==='sad',sparse=choice.speed==='slow';
  const rhythm=manual.rhythm?old.rhythm:(type==='ballad'||gentle?'arpeggio':profile.rhythm);
  const chordTicks=rhythm==='arpeggio'?(sparse?[0,4,8,12]:[0,2,4,6,8,10,12,14]):rhythm==='offbeat'?(sparse?[2,10]:[2,6,10,14]):sparse?[0,8]:[0,4,8,12];
@@ -59,9 +63,13 @@ export function generateImageAccompaniment(pattern,choice=DEFAULT_IMAGE,{resetMa
  const shift={bright:0,gentle:2,cool:4,sad:5}[choice.mood];
  const sounds={...profile.sounds};if(gentle)sounds.chord=type==='nursery'?'wood':'piano';
  const voicing=rhythm==='arpeggio'?(index%2?'falling':'rising'):gentle||index%2?'broken':'block';
- const arrangement={version:1,choice:{...choice},index,progressions:{major:structuredClone(major[(index+shift)%8]),minor:structuredClone(minor[(index+shift)%8])},rhythm,voicing,chordTicks,bassTicks,
+ const arrangement={version:1,choice:{...choice},index,progressions:{major:structuredClone(major[(index+shift)%8]),minor:structuredClone(minor[(index+shift)%8])},rhythm:rhythm===POP_EIGHT_BEAT.rhythm?'offbeat':rhythm,voicing,chordTicks,bassTicks,
   bassIntervals:bassTicks.map((_,i)=>i%2===0?0:index%3===0?7:index%3===1?12:0),inversion:index%3,
   gate:sparse?7:type==='ballad'?3:2,strength:gentle?.65:choice.mood==='cool'?1:.85,sounds,
   drums:{kick:type==='ballad'?[0]:index%2?[0,6,8]:[0,8],snare:gentle?[12]:[4,12],hat:sparse?[4,12]:choice.speed==='fast'?[0,2,4,6,8,10,12,14]:[2,6,10,14]}};
- return {...old,enabled:manual.enabled?old.enabled:true,genre:type,rhythm,imageChoice:{...choice},imageArrangement:arrangement};
+ if(type===POP_EIGHT_BEAT.genre&&index===IMAGE_PATTERN_COUNT){
+  Object.assign(arrangement,{patternId:POP_EIGHT_BEAT.id,rhythm:'offbeat',voicing:'block',chordTicks:[...POP_EIGHT_BEAT.chordTicks],bassTicks:[...POP_EIGHT_BEAT.bassTicks],bassIntervals:POP_EIGHT_BEAT.bassTicks.map(()=>0),inversion:0,gate:2,strength:1,sounds:{...POP_EIGHT_BEAT.sounds},drums:structuredClone(POP_EIGHT_BEAT.drums),
+   progressions:{major:[[0,'major'],[5,'major'],[7,'major'],[0,'major']],minor:[[9,'minor'],[2,'minor'],[4,'major'],[9,'minor']]}});
+ }
+ return {...old,enabled:manual.enabled?old.enabled:true,genre:type,rhythm:arrangement.patternId&&!manual.rhythm?POP_EIGHT_BEAT.rhythm:rhythm,imageChoice:{...choice},imageArrangement:arrangement};
 }

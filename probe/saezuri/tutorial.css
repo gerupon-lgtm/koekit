@@ -57,7 +57,7 @@
 .melody-app.learning-active #learning-guide{margin:2px 0 4px;padding:2px 6px}
 .melody-app.learning-active #learning-message{font-size:12px;line-height:16px;margin:2px 0 4px}
 .melody-app.learning-active #learning-action{font-size:16px;line-height:22px}
-.melody-app.editor-focus.learning-active #learning-next,.melody-app.editor-focus.learning-active #learning-position,.melody-app.editor-focus.learning-active #learning-backing{min-height:44px;margin:4px 0;font-size:14px;width:100%;padding:6px}
+.melody-app.editor-focus.learning-active #learning-next,.melody-app.editor-focus.learning-active #learning-position{min-height:44px;margin:4px 0;font-size:14px;width:100%;padding:6px}
 .melody-app.editor-focus.learning-active #composer-lengths{display:block;margin:0;padding:0;border:0}
 .melody-app.learning-active #composer-lengths legend{font-size:12px;line-height:16px;padding:0}
 .melody-app.editor-focus.learning-active #composer-length-buttons{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
@@ -135,3 +135,12 @@
 
 /* Keep the post-listening focus visible for touch as well as keyboard users. */
 .melody-app.editor-focus #learning-preview-return:enabled:focus{outline:3px solid #0876b0;outline-offset:-3px}
+
+.melody-app.learning-active[data-learning-stage="7"] #creation-tabs{display:flex}
+.melody-app.learning-active[data-learning-stage="7"] #image-chords{display:grid}
+.melody-app.learning-active[data-learning-stage="7"] #image-settings .composer-values{display:grid}
+.melody-app.learning-active[data-learning-stage="7"] #step-entry{display:none}
+.melody-app.learning-active[data-learning-stage="7"] #keyboard-options{display:none}
+.melody-app.editor-focus.learning-active[data-learning-stage="7"] .edit-toolbar{order:2}
+.melody-app.learning-active #progression-guide{font-size:13px;line-height:1.5;padding:8px;margin:4px 0;background:#fff3cf;border-radius:10px}
+.melody-app #progression-voice-hint{font-size:12px;margin:4px 0}

@@ -1,5 +1,5 @@
-import {spellPitch} from './key-signature.js?v=v0.1.0-20261018052053-f1df1c8';
-import {harmonicSegments} from '../../saezuri/music/accompaniment.js?v=v0.1.0-20261018052053-f1df1c8';
+import {spellPitch} from './key-signature.js?v=v0.1.0-20261018060645-b9da761';
+import {harmonicSegments} from '../../saezuri/music/accompaniment.js?v=v0.1.0-20261018060645-b9da761';
 
 const names=['ド','ド♯','レ','レ♯','ミ','ファ','ファ♯','ソ','ソ♯','ラ','ラ♯','シ'];
 const roots=['C','C♯','D','E♭','E','F','F♯','G','A♭','A','B♭','B'];

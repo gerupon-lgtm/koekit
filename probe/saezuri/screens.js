@@ -1,9 +1,9 @@
-import {MelodyLearning} from './learning.js?v=v0.1.0-20261018052053-f1df1c8';
-import {emptySequence,keepPhrase,sequencePlayback,proposeSequence,commitSequence,undoPlacement} from './sequence-session.js?v=v0.1.0-20261018052053-f1df1c8';
-import {readCaptureReport} from './capture-report.js?v=v0.1.0-20261018052053-f1df1c8';
-import {setupPlaybackSheet} from './sheet-controls.js?v=v0.1.0-20261018052053-f1df1c8';
-import {PlacementWorkflow} from './placement-workflow.js?v=v0.1.0-20261018052053-f1df1c8';
-import {EndingWorkflow} from './ending-workflow.js?v=v0.1.0-20261018052053-f1df1c8';
+import {MelodyLearning} from './learning.js?v=v0.1.0-20261018060645-b9da761';
+import {emptySequence,keepPhrase,sequencePlayback,proposeSequence,commitSequence,undoPlacement} from './sequence-session.js?v=v0.1.0-20261018060645-b9da761';
+import {readCaptureReport} from './capture-report.js?v=v0.1.0-20261018060645-b9da761';
+import {setupPlaybackSheet} from './sheet-controls.js?v=v0.1.0-20261018060645-b9da761';
+import {PlacementWorkflow} from './placement-workflow.js?v=v0.1.0-20261018060645-b9da761';
+import {EndingWorkflow} from './ending-workflow.js?v=v0.1.0-20261018060645-b9da761';
 const $=id=>document.getElementById(id);
 const trialBuild=new URL(import.meta.url).searchParams.get('v')||'local-20261010';
 const trialVersion=trialBuild.match(/-(\d{14})-/)?.[1]||trialBuild;
@@ -75,7 +75,7 @@ export class MelodyScreens {
   const next=document.createElement('div');next.id='after-keep';next.hidden=true;next.innerHTML='<button id="after-keep-connect">つなげるへ</button><button id="after-keep-more">もうひとつ つくる</button>';create.append(next);
   $('after-keep-connect').onclick=()=>this.go('connect');$('after-keep-more').onclick=()=>this.go('choose');
   $('keep-phrase').onclick=()=>this.keep();
-  for(const b of document.querySelectorAll('[data-mode]')) b.onclick=()=>this.setMode(b.dataset.mode);
+  for(const b of document.querySelectorAll('[data-mode]')) b.onclick=()=>{this.setMode(b.dataset.mode);this.onNavigate();};
   for(const id of ['capture-score','capture-blocks'])$(id).addEventListener('click',event=>{if(!this.busy&&!editor.pending&&event.target.closest('[data-note-id]'))this.setMode('edit');});
   for(const b of document.querySelectorAll('[data-screen-back]')){
    const destination=b.closest('#melody-create')?'choose':'home';
@@ -127,7 +127,7 @@ export class MelodyScreens {
   $('discard-message').textContent='今の音列・入力中の候補・もどす履歴は消えます。';
   this.discardDialog.showModal();this.onNavigate();$('discard-cancel').focus();
  }
- get allowsVoice(){return this.screen==='create'&&![...document.querySelectorAll('dialog[open]')].some(d=>d.id!=='learning-preview'||!this.learning?.active);}
+ get allowsVoice(){return this.screen==='create'&&![...document.querySelectorAll('dialog[open]')].some(d=>d.id!=='progression-suggestions'&&(d.id!=='learning-preview'||!this.learning?.active));}
  openSettings(){ $('creation-settings').hidden=this.screen!=='create';this.dialog.querySelector('.listen-settings').append($('instrument').closest('label'));this.dialog.showModal();this.onNavigate();}
  go(screen,{history:push=true,stop=true,focus=true}={}) {
   if(this.phase==='saving')return;
@@ -143,7 +143,15 @@ export class MelodyScreens {
   this.onNavigate();this.sync(this.phase??'idle');window.scrollTo(0,0);
   if(focus)(this.screens[screen].querySelector('h2,h1')??this.screens[screen].querySelector('button'))?.focus({preventScroll:true});
  }
- setMode(mode){this.mode=mode;if(mode==='backing')$('image-settings').open=true;document.body.dataset.createMode=mode;for(const b of document.querySelectorAll('[data-mode]'))b.setAttribute('aria-pressed',String(b.dataset.mode===mode));}
+ setMode(mode){
+  this.mode=mode;
+  if(mode==='backing'){$('image-settings').open=true;$('capture-note-panel').append($('image-settings'));}
+  const destination=document.querySelector(mode==='backing'?'#image-settings .image-more':'.keyboard-settings');
+  if(destination&&$('image-settings-open'))destination.prepend($('image-settings-open'),$('image-suggest'));
+  const genres=$('image-genre')?.closest('.composer-values');
+  if(genres&&$('backing-settings')){if(mode==='backing')$('image-settings').prepend(genres);else $('image-progression').closest('label').before(genres);}
+  document.body.dataset.createMode=mode;for(const b of document.querySelectorAll('[data-mode]'))b.setAttribute('aria-pressed',String(b.dataset.mode===mode));
+ }
  sync(phase) {
   this.phase=phase;this.busy=phase!=='idle';
   const pattern=this.editor.previewPattern;

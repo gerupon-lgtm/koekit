@@ -1,5 +1,6 @@
-import {blankPattern} from './entry-session.js?v=v0.1.0-20261018052053-f1df1c8';
-import {accompanimentEvents,harmonicSegments} from '../../saezuri/music/accompaniment.js?v=v0.1.0-20261018052053-f1df1c8';
+import {blankPattern} from './entry-session.js?v=v0.1.0-20261018060645-b9da761';
+import {accompanimentEvents,harmonicSegments} from '../../saezuri/music/accompaniment.js?v=v0.1.0-20261018060645-b9da761';
+import {POP_EIGHT_BEAT} from '../../saezuri/music/backing-patterns.js?v=v0.1.0-20261018060645-b9da761';
 
 export const TUTORIAL_TEMPO=112;
 const melody=[
@@ -10,7 +11,7 @@ const melody=[
 ];
 export function tutorialPattern({backing=false}={}){
  return {...blankPattern(),notes:melody.map(([startTick,durationTick,midi],i)=>({id:`tutorial-${i}`,startTick,durationTick,midi,origin:'manual',completedRanges:[],velocity:70})),
-  accompaniment:{enabled:backing,genre:'pop',rhythm:'tutorial',progression:'home',sounds:{chord:'fm-piano',bass:'synth-bass',drums:'electronic'}}};
+  accompaniment:{enabled:backing,genre:POP_EIGHT_BEAT.genre,rhythm:POP_EIGHT_BEAT.rhythm,progression:'home',sounds:{...POP_EIGHT_BEAT.sounds}}};
 }
 
 // The source is never resized or shifted. Audition a copy of exactly the chosen

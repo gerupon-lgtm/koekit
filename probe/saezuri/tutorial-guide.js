@@ -1,4 +1,4 @@
-import {tutorialPattern} from './tutorial-data.js?v=v0.1.0-20261018052053-f1df1c8';
+import {tutorialPattern} from './tutorial-data.js?v=v0.1.0-20261018060645-b9da761';
 const names={60:'ド',62:'レ',64:'ミ',65:'ファ',67:'ソ',69:'ラ'};
 const lengths={2:'はんぱく',4:'1ぱく',6:'1ぱく半',8:'2はく'};
 export const LESSON_TITLES=['完成形を 聴こう','2つの音を 直そう','1小節を つくろう','2小節に のばそう','3小節目を つくろう','音を 小節の先へ','4小節を しあげよう','伴奏を つけよう'];
@@ -18,7 +18,7 @@ function input(editor,expected){
  const pitch=expected.midi===null?7:[60,62,64,65,67,69,71].indexOf(expected.midi);
  return result('input',`「${names[expected.midi]??'やすみ'}」を 押そう`,`${lengths[expected.durationTick]}で置きます。声でも「${names[expected.midi]??'やすみ'} ${lengths[expected.durationTick]}」。`,{target:`[data-pitch="${pitch}"]`,expected,mode:'input'});
 }
-export function lessonGuide(editor,{stage=0,heard=false,modelHeard=false,heardOriginal=false}={}){
+export function lessonGuide(editor,{stage=0,heard=false,modelHeard=false,heardOriginal=false,backingMode=false,suggestionsOpen=false}={}){
  if(stage===0)return modelHeard?{...done(),action:'この曲を つくってみよう！'}:result('model','まずは 完成形を 聴こう','4小節の曲を、少しずつ作っていきます。',{target:'#learning-model'});
  if([2,3,4].includes(stage)&&!modelHeard)return result('model','おてほんを 聴こう','これから作るところを、先に聴いてみよう。',{target:'#learning-model'});
  const target=tutorialPattern().notes,base=editor.pattern?.notes??[],notes=editor.previewPattern?.notes??[];
@@ -41,7 +41,11 @@ export function lessonGuide(editor,{stage=0,heard=false,modelHeard=false,heardOr
  if(base.length>count)return recover(editor);
  if(stage===7){
   if(base.length!==15)return recover(editor);
-  if(!editor.previewPattern?.accompaniment?.enabled||editor.previewPattern.accompaniment.rhythm!=='tutorial')return result('backing','おてほんの 伴奏をつけよう','伴奏も、聴いてからオッケーで決めます。',{target:'#learning-backing'});
+  if(!editor.previewPattern?.accompaniment?.enabled){
+   if(!backingMode)return result('backing-mode','「伴奏」を 押そう','本番と同じ画面で、伴奏をえらびます。',{target:'[data-mode="backing"]'});
+   if(!suggestionsOpen)return result('backing-suggestions','ジャンルとリズムを えらぼう','おてほんは「ポップ」「はずむ8ビート」。ほかの伴奏でもOK。「進行のおすすめ」で聴き比べよう。',{target:'#image-suggest'});
+   return result('backing-choice','C → F → G → C を ためそう','「聴く」でたしかめて、「この候補をつかう」を押そう。ほかの候補でも大丈夫。',{target:'[data-progression-use="home"]'});
+  }
   if(!heard)return listen();if(editor.pending)return confirm();return done();
  }
  if(base.length<count){

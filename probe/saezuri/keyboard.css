@@ -24,11 +24,19 @@
 .melody-app .keyboard-octaves button{margin:0;min-height:42px;padding:6px;font-size:14px}
 .melody-app .keyboard-octaves [aria-pressed=true]{background:#d9e6de}
 .melody-app .keyboard-help{font-size:12px;line-height:1.5;margin:6px 0 10px}
+.melody-app #loop-hint{font-size:12px;line-height:1.5;margin:4px 0}
+.melody-app #loop-hint:empty,.melody-app .loop-actions:empty{display:none}
 .melody-app .keyboard-settings{grid-template-columns:repeat(2,minmax(0,1fr));padding:8px 0}
 .melody-app #keyboard-more,.melody-app #step-entry{margin:8px 0}
 .melody-app #keyboard-more>summary,.melody-app #step-entry>summary{min-height:32px;padding:6px 8px;font-size:13px}
 .melody-app #step-entry #composer-panel{margin-top:8px}
-.melody-app #image-settings{display:none}
+.melody-app:not([data-create-mode=backing]) #image-settings{display:none}
+.melody-app.editor-focus[data-create-mode=backing] #image-settings{order:1}
+.melody-app.editor-focus[data-create-mode=backing] .edit-toolbar{order:2}
+.melody-app.editor-focus[data-create-mode=backing] #image-chords{order:3}
+.melody-app.editor-focus[data-create-mode=backing] #live-keyboard{order:4}
+.melody-app[data-create-mode=backing] #keyboard-options{display:none}
+@media(min-width:650px){.melody-app.editor-focus[data-create-mode=backing] #image-settings{grid-column:2;grid-row:1}.melody-app.editor-focus[data-create-mode=backing] .edit-toolbar{grid-column:2;grid-row:2}.melody-app.editor-focus[data-create-mode=backing] #live-keyboard{grid-column:2;grid-row:3/6}}
 .melody-app #image-chords{margin:4px 0;display:flex;gap:8px;overflow-x:auto}
 .melody-app #image-chords button{flex:0 0 auto;min-width:64px;margin:0;font-size:13px;padding:8px}
 .melody-app.keyboard-recording .listen-actions,.melody-app.keyboard-humming .listen-actions{display:none}

@@ -1,5 +1,5 @@
 import test from 'node:test';import assert from 'node:assert/strict';
-import {IMAGE_TYPES,IMAGE_SPEEDS,IMAGE_MOODS,generateImageAccompaniment} from '../saezuri/music/image-arrangement.js';
+import {IMAGE_TYPES,IMAGE_SPEEDS,IMAGE_MOODS,generateImageAccompaniment,imagePatternCount} from '../saezuri/music/image-arrangement.js';
 import {accompanimentEvents,harmonicSegments,validateAccompaniment,recommendProgressions} from '../saezuri/music/accompaniment.js';
 import {blankPattern,proposeEntry,confirmEntry} from '../probe/saezuri/entry-session.js';
 import {openEditSession,stageEdit,stageAccompanimentCandidate,confirmEditSession,cancelEditSession,undoEditSession,canGenerateAccompaniment} from '../probe/saezuri/edit-session.js';
@@ -8,11 +8,11 @@ const choice={type:'pop',speed:'normal',mood:'gentle'};
 const generate=s=>stageAccompanimentCandidate(s,generateImageAccompaniment(s.working.pattern,choice));
 const pattern=()=>({...blankPattern(),notes:[{id:'held',midi:64,startTick:2,durationTick:18},{id:'end',midi:67,startTick:48,durationTick:8}]});
 const restOf=p=>{const {accompaniment,...rest}=p;return rest;};
-test('48 word combinations × 8 distinct arrangements × two keys × two lengths remain audible, bounded and fixed',()=>{
+test('48 word combinations with eight patterns, plus the ninth pop pattern, remain audible and fixed in both keys and lengths',()=>{
  let checked=0;
  for(const [type] of IMAGE_TYPES)for(const [speed] of IMAGE_SPEEDS)for(const [mood] of IMAGE_MOODS)for(const key of ['C','Am'])for(const bars of [4,8]){
   let p={...blankPattern(key),bars};const unique=new Set();
-  for(let n=0;n<8;n++){
+  for(let n=0;n<imagePatternCount(type);n++){
    const before=structuredClone(p);p.accompaniment=generateImageAccompaniment(p,{type,speed,mood});
    assert.equal(validateAccompaniment(p.accompaniment,bars),null);assert.deepEqual(restOf(p),restOf(before));
    const events=accompanimentEvents(p);unique.add(JSON.stringify(events));
@@ -21,9 +21,20 @@ test('48 word combinations × 8 distinct arrangements × two keys × two lengths
    for(let bar=0;bar<bars;bar++)for(const part of ['chord','bass','drums'])assert.ok(events.some(e=>e.part===part&&e.startTick>=bar*16&&e.startTick<(bar+1)*16),`${type}/${speed}/${mood}/${key}/${bars}/${n}/${bar}/${part}`);
    checked++;
   }
-  assert.equal(unique.size,8);
+  assert.equal(unique.size,imagePatternCount(type));
  }
- assert.equal(checked,1536);
+ assert.equal(checked,1584);
+});
+test('the additional pop pattern reproduces the agreed backing and leaves all eight existing alternatives in place',async()=>{
+ const {tutorialPattern}=await import('../probe/saezuri/tutorial-data.js');
+ const model=tutorialPattern({backing:true}),p={...blankPattern(),notes:structuredClone(model.notes)};
+ for(let index=0;index<9;index++){p.accompaniment=generateImageAccompaniment(p,{type:'pop',speed:'normal',mood:'bright'});assert.equal(p.accompaniment.imageArrangement.index,index);}
+ assert.equal(p.accompaniment.imageArrangement.patternId,'pop-eight-beat');assert.equal(p.accompaniment.rhythm,'tutorial');
+ const ordered=p=>accompanimentEvents(p).sort((a,b)=>a.startTick-b.startTick||a.part.localeCompare(b.part)||a.midi-b.midi);
+ assert.deepEqual(ordered(p),ordered(model));assert.deepEqual(p.notes,model.notes);
+ const stored=JSON.parse(JSON.stringify(p));assert.equal(validateAccompaniment(stored.accompaniment,4),null);assert.deepEqual(ordered(stored),ordered(model));
+ stored.accompaniment.imageArrangement.patternId='unknown';assert.equal(validateAccompaniment(stored.accompaniment,4)?.code,'IMAGE_INVALID');
+ const next=generateImageAccompaniment(p,{type:'pop',speed:'normal',mood:'bright'});assert.equal(next.imageArrangement.index,0);assert.equal(next.imageArrangement.patternId,undefined);
 });
 test('repeat candidate, cancel, adopt and Undo preserve melody, rests, key, length and one history entry',()=>{
  const original=pattern();let s=confirmEditSession(openEditSession(original));s.working.hasRest=true;s.confirmedHasRest=true;
@@ -43,6 +54,14 @@ test('manual chords including short slash changes, progression, rhythm, sounds a
  }
  for(const candidate of recommendProgressions(p))assert.equal(candidate.manualSettings.progression,true);
  const reset=generateImageAccompaniment(p,choice,{resetManual:true});assert.equal(reset.chords,undefined);assert.equal(reset.sounds,undefined);assert.equal(reset.manualSettings,undefined);
+});
+test('manually selected shared pop rhythm and custom sounds survive regeneration in every genre',()=>{
+ const p=pattern();p.accompaniment=generateImageAccompaniment(p,choice);
+ Object.assign(p.accompaniment,{rhythm:'tutorial',manualSettings:{rhythm:true},sounds:{chord:'strings',bass:'soft',drums:'none'}});
+ for(const [type] of IMAGE_TYPES)for(let i=0;i<imagePatternCount(type);i++){
+  p.accompaniment=generateImageAccompaniment(p,{...choice,type});assert.equal(validateAccompaniment(p.accompaniment,4),null);assert.equal(p.accompaniment.rhythm,'tutorial');
+  const events=accompanimentEvents(p);assert.ok(events.some(e=>e.instrument==='strings'));assert.equal(events.some(e=>e.part==='drums'),false);assert.deepEqual(p.notes,pattern().notes);
+ }
 });
 test('other edit or input candidates block generation; confirmed rest/chord-only save rules and draft reload remain intact',()=>{
  let s=openEditSession(pattern());s=stageEdit(s,{type:'transpose',semitones:1});assert.equal(canGenerateAccompaniment(s),false);assert.equal(generate(s).code,'DRAFT_PENDING');

@@ -1,7 +1,7 @@
-import {GENRES,CHORD_INTERVALS} from '../../saezuri/music/catalog.js?v=v0.1.0-20261018052053-f1df1c8';
-import {RHYTHMS,PROGRESSIONS,PRESETS,SOUNDS,SOUND_PRESETS,soundLabel,harmonicSegments,recommendProgressions} from '../../saezuri/music/accompaniment.js?v=v0.1.0-20261018052053-f1df1c8';
-import {setupPlaybackSheet} from './sheet-controls.js?v=v0.1.0-20261018052053-f1df1c8';
-import {ImageModeControls} from './image-mode-controls.js?v=v0.1.0-20261018052053-f1df1c8';
+import {GENRES,CHORD_INTERVALS} from '../../saezuri/music/catalog.js?v=v0.1.0-20261018060645-b9da761';
+import {RHYTHMS,PROGRESSIONS,PRESETS,SOUNDS,SOUND_PRESETS,soundLabel,harmonicSegments,recommendProgressions} from '../../saezuri/music/accompaniment.js?v=v0.1.0-20261018060645-b9da761';
+import {setupPlaybackSheet} from './sheet-controls.js?v=v0.1.0-20261018060645-b9da761';
+import {ImageModeControls} from './image-mode-controls.js?v=v0.1.0-20261018060645-b9da761';
 const pitches=['C','C♯','D','E♭','E','F','F♯','G','A♭','A','B♭','B'];
 export const chordPitches=pitches;
 const suffix={major:'',minor:'m'};
@@ -30,9 +30,9 @@ export class ImageControls {
   this.$('suggest').onclick=()=>{
    this.$('suggestions').replaceChildren();this.$('suggestions').hidden=false;
    recommendProgressions(editor.previewPattern).forEach((value,i)=>{
-    const row=document.createElement('div');row.className='suggestion-row';const label=document.createElement('p');label.textContent=`${i?'くらべる':'おすすめ'}：${PROGRESSIONS[this.key].find(p=>p.id===value.progression).label}`;
-    const listen=document.createElement('button');listen.textContent='▶ 聴く';listen.onclick=()=>this.onPreview?.({...structuredClone(editor.previewPattern),accompaniment:value},true);
-    const b=document.createElement('button');b.textContent='この候補を つかう';b.onclick=()=>{editor.changeStructure({type:'accompaniment',value});this.suggestionsSheet?.close();};row.append(label,listen,b);this.$('suggestions').append(row);
+    const row=document.createElement('div');row.className='suggestion-row';row.dataset.progression=value.progression;row.dataset.progressionIndex=i;const label=document.createElement('p');label.textContent=`${i+1} ${i?'くらべる':'おすすめ'}：${PROGRESSIONS[this.key].find(p=>p.id===value.progression).label}`;
+    const listen=document.createElement('button');listen.textContent='▶ 聴く';listen.dataset.progressionListen=value.progression;listen.onclick=()=>this.onPreview?.({...structuredClone(editor.previewPattern),accompaniment:value},true);
+    const b=document.createElement('button');b.textContent='この候補を つかう';b.dataset.progressionUse=value.progression;b.onclick=()=>{editor.changeStructure({type:'accompaniment',value});this.suggestionsSheet?.close();};row.append(label,listen,b);this.$('suggestions').append(row);
    });
   };this.createSheets();
   const loop=document.createElement('div');loop.className='loop-actions';loop.innerHTML='<button id="backing-loop">▶ 伴奏をループ</button><button id="loop-record" disabled>次の先頭から ハナウタ</button><p id="loop-hint" role="status"></p>';this.$('chords').after(loop);
@@ -44,7 +44,7 @@ export class ImageControls {
    const open=document.createElement('button');open.id='image-settings-open';open.textContent='伴奏の設定';open.onclick=()=>this.show(settings);this.$('suggest').before(open);
    const summary=document.createElement('p');summary.id='image-summary';this.$('chords').before(summary);
    $('backing-settings-close').onclick=()=>{this.onStop?.();settings.close();};settings.addEventListener('close',()=>this.onNavigate?.());
-   const suggestions=document.createElement('dialog');suggestions.id='progression-suggestions';suggestions.className='backing-sheet';suggestions.setAttribute('aria-label','進行のおすすめ');suggestions.innerHTML='<div class="screen-heading"><h2>進行を くらべよう</h2><button id="progression-close">とじる</button></div>';suggestions.append(this.$('suggestions'));
+   const suggestions=document.createElement('dialog');suggestions.id='progression-suggestions';suggestions.className='backing-sheet';suggestions.setAttribute('aria-label','進行のおすすめ');suggestions.innerHTML='<div class="screen-heading"><h2>進行を くらべよう</h2><button id="progression-close">とじる</button></div>';const guidance=document.createElement('p');guidance.id='progression-guide';guidance.hidden=true;guidance.setAttribute('role','status');const hint=document.createElement('p');hint.id='progression-voice-hint';hint.hidden=true;hint.textContent='声：1ばんをきく／1ばんをつかう／とじる';suggestions.append(guidance,hint,this.$('suggestions'));
    const stopRow=document.createElement('div');stopRow.className='sheet-stop';const stop=document.createElement('button');stop.id='progression-stop';stop.textContent='■ とめる';stop.onclick=()=>this.onStop?.();stopRow.append(stop);suggestions.append(stopRow);
    suggestions.addEventListener('close',()=>this.onNavigate?.());document.querySelector('main').append(suggestions);$('progression-close').onclick=()=>{this.onStop?.();suggestions.close();};this.suggestionsSheet=suggestions;
    const suggest=this.$('suggest').onclick;this.$('suggest').onclick=()=>{suggest();this.show(suggestions);};
@@ -53,6 +53,22 @@ export class ImageControls {
   }
   this.imageMode=new ImageModeControls({editor,onTempo,compact});
   (this.settingsSheet??this.panel).append(this.imageMode.reset);
+ }
+ handleVoice(command){
+  if(['backing-genre','backing-rhythm'].includes(command?.type)){
+   const genre=command.type==='backing-genre',target=this.$(genre?'genre':'rhythm'),value=genre?command.genre:command.rhythm;
+   if(target&&!target.disabled&&target.getClientRects().length&&[...target.options].some(o=>o.value===value)){target.value=value;target.dispatchEvent(new Event('change'));}return true;
+  }
+  if(command?.type==='backing-navigation'){
+   const target=command.action==='open'?document.querySelector('[data-mode="backing"]'):this.$('suggest');
+   if(target&&!target.disabled&&target.getClientRects().length)target.click();return true;
+  }
+  if(command?.type!=='progression-choice')return false;
+  if(!this.suggestionsSheet?.open)return true;
+  if(command.action==='close'){$('progression-close').click();return true;}
+  if(command.action==='stop'){$('progression-stop').click();return true;}
+  const target=this.$('suggestions').querySelector(`[data-progression-index="${command.index}"] [data-progression-${command.action}]`);
+  if(target&&!target.disabled)target.click();return true;
  }
  value(){return structuredClone(this.editor.previewPattern?.accompaniment??fallback);}
  follow(tick){
@@ -99,11 +115,12 @@ export class ImageControls {
   if(!this.panel)return;const pattern=this.editor.previewPattern;
   this.create.disabled=busy||this.editor.pending;this.panel.hidden=!this.editor.isOpen;if(this.panel.hidden){this.imageMode.render(busy);return;}
   const value=this.value(),key=pattern.key?.mode==='minor'?'Am':'C';this.fill('progression',PROGRESSIONS[key]);this.key=key;
+  this.fill('rhythm',RHYTHMS.filter(r=>r.id!=='tutorial'||value.genre==='pop'||value.rhythm===r.id));
   if(value.imageChoice){const automatic=document.createElement('option');automatic.value='';automatic.textContent='イメージに おまかせ';this.$('progression').prepend(automatic);}
   this.$('tempo').onclick=()=>this.onTempo?.(PRESETS[this.$('genre').value].tempo);
   this.$('enabled').checked=value.enabled;for(const id of ['genre','rhythm','progression'])this.$(id).value=value[id];this.$('tempo').textContent=`おすすめのBPM ${PRESETS[value.genre].tempo} にする`;
   if(value.imageChoice&&!value.manualSettings?.progression)this.$('progression').value='';
-  if($('image-summary'))$('image-summary').textContent=`${GENRES.find(g=>g.id===value.genre).label}・${value.enabled?'伴奏ON':'伴奏OFF'}`;
+  if($('image-summary'))$('image-summary').textContent=`${GENRES.find(g=>g.id===value.genre).label}・${RHYTHMS.find(r=>r.id===value.rhythm).label}・${value.enabled?'伴奏ON':'伴奏OFF'}`;
   const row=this.$('chords');row.replaceChildren();const segments=harmonicSegments(pattern);
   for(let bar=0;bar<pattern.bars;bar++){const chord=segments.find(c=>c.startTick===bar*16),b=document.createElement('button');b.dataset.chordBar=bar;b.textContent=`${bar+1}：${chordLabel(chord)}`;b.setAttribute('aria-label',`${bar+1}小節目 ${chordLabel(chord)} を変更`);b.onclick=()=>this.openChord(bar);row.append(b);}
   for(const control of this.panel.querySelectorAll('input,select,button'))control.disabled=busy||!!this.editor.entry;

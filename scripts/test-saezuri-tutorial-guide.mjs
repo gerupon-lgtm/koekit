@@ -38,7 +38,9 @@ test('rest is a confirmed operation and wrong edits never auto overwrite',()=>{
  assert.equal(lessonGuide(e,{stage:4,modelHeard:true}).kind,'recover');
 });
 test('backing is staged, heard and confirmed before final completion',()=>{
- const e=make(15,{hasRest:true});assert.equal(lessonGuide(e,{stage:7}).kind,'backing');
+ const e=make(15,{hasRest:true});assert.equal(lessonGuide(e,{stage:7}).kind,'backing-mode');
+ assert.equal(lessonGuide(e,{stage:7,backingMode:true}).kind,'backing-suggestions');
+ assert.equal(lessonGuide(e,{stage:7,backingMode:true,suggestionsOpen:true}).kind,'backing-choice');
  e.previewPattern.accompaniment=tutorialPattern({backing:true}).accompaniment;e.pending=true;
  assert.equal(lessonGuide(e,{stage:7}).kind,'listen');
  assert.equal(lessonGuide(e,{stage:7,heard:true}).kind,'confirm');
@@ -57,4 +59,10 @@ test('selection instruction names the actual note and identifies the target inde
  assert.equal(guide.kind,'select');assert.match(guide.action,/1ばんの「ド」/);
  assert.equal(guide.noteId,editor.pattern.notes[0].id);
  assert.notEqual(guide.noteId,editor.selectedNoteId);
+});
+
+test('the last lesson accepts another valid production candidate without forcing a private rhythm or progression',()=>{
+ const e=make(15);e.previewPattern.accompaniment={...tutorialPattern({backing:true}).accompaniment,progression:'pop',rhythm:'quarters'};e.pending=true;
+ assert.equal(lessonGuide(e,{stage:7}).kind,'listen');assert.equal(lessonGuide(e,{stage:7,heard:true}).kind,'confirm');
+ e.pattern.accompaniment=structuredClone(e.previewPattern.accompaniment);e.pending=false;assert.equal(lessonGuide(e,{stage:7,heard:true}).done,true);
 });
