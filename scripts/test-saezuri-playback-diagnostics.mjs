@@ -6,7 +6,8 @@ test('song playback uses the adopted profile while live input never inherits it'
  for(const value of [null,undefined,'','unknown','balanced','0.1','playback'])assert.equal(diagnostics.playbackLatencyHint(value,'playback'),'playback');
  assert.equal(diagnostics.playbackLatencyHint('interactive','playback'),'interactive');
  assert.equal(diagnostics.playbackLatencyHint('10ms','playback'),.01);
- for(const value of [null,'playback','10ms','interactive','unknown'])for(const purpose of ['live','keyboard','recording'])assert.equal(diagnostics.playbackLatencyHint(value,purpose),'interactive');
+ assert.equal(diagnostics.playbackLatencyHint('20ms','playback'),.02);
+ for(const value of [null,'playback','10ms','20ms','interactive','unknown'])for(const purpose of ['live','keyboard','recording'])assert.equal(diagnostics.playbackLatencyHint(value,purpose),'interactive');
 });
 test('native counters are copied and unsupported or failed readings stay unavailable',()=>{
  assert.equal(diagnostics.readPlaybackStats({}),null);

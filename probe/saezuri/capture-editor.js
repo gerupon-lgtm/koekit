@@ -1,6 +1,6 @@
-import { proposeEdit, validateNotes, resizePattern } from '../../saezuri/document.js?v=v0.1.0-20261018095008-c27f217';
-import {validateAccompaniment} from '../../saezuri/music/accompaniment.js?v=v0.1.0-20261018095008-c27f217';
-export { commitNote, undo } from '../../saezuri/document.js?v=v0.1.0-20261018095008-c27f217';
+import { proposeEdit, validateNotes, resizePattern } from '../../saezuri/document.js?v=v0.1.0-20261018101505-3b4c99f';
+import {validateAccompaniment} from '../../saezuri/music/accompaniment.js?v=v0.1.0-20261018101505-3b4c99f';
+export { commitNote, undo } from '../../saezuri/document.js?v=v0.1.0-20261018101505-3b4c99f';
 
 const error = code => ({code, details:{}});
 

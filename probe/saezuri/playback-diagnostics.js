@@ -1,6 +1,11 @@
 // Only finite auditions may trade response for playback stability. Live input
 // and recording keep one interactive clock, even on a comparison URL.
-export const playbackLatencyHint=(value,purpose='playback')=>purpose!=='playback'?'interactive':value==='interactive'?'interactive':value==='10ms'?.01:'playback';
+export function playbackLatencyHint(value,purpose='playback'){
+ if(purpose!=='playback')return 'interactive';
+ if(value==='10ms')return .01;
+ if(value==='20ms')return .02;
+ return value==='interactive'?'interactive':'playback';
+}
 const counters=['underrunEvents','underrunDuration','totalDuration'];
 export function readPlaybackStats(ctx){
  try{

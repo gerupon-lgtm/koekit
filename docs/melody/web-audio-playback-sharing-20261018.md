@@ -2,6 +2,8 @@
 
 2026-10-18／サエズリズムでの調査・Pixel 6aの本人確認に基づく。
 
+**最新追記**：Pixelで数値10ms指定を試した結果は、内部約10.67ms＋出力側36ms、出力不足3回・合計32ms、本人の聴感は「途切れあり」。100msより小さい報告値だけでは安定性を満たさなかった。次は曲だけ数値20ms指定 `?audioLatency=20ms` を比較する。playbackでの先の良好な1件、10msでの途切れの1件を区別し、他アプリでも同じ結果になるとは扱わない。鍵盤・録音はinteractiveを維持。原因特定・解消・20msの実機成功は未確認。
+
 ## 先に伝えたいこと
 
 ブラウザーの音声出力には、決められた時間までに次の音を用意する必要がある。音色が軽くても、瞬間的に間に合わなければ短い音欠けが起こる可能性がある。今回、音の準備に余裕を持たせる `latencyHint: 'playback'` を比較したところ、Pixel 6a／Chromeで、同じ曲の今回の再生は「途切れなし」と本人から報告された。
@@ -39,6 +41,9 @@ const audioContext = new AudioContext({ latencyHint: 'playback' });
 
 // 内部10msを希望する別の比較（上の生成行と置き換える）
 // const audioContext = new AudioContext({ latencyHint: 0.01 });
+
+// 10msで途切れた後の比較（同じく上の生成行と置き換える）
+// const audioContext = new AudioContext({ latencyHint: 0.02 });
 
 // 比較元：通常の即応性を優先する設定
 // const audioContext = new AudioContext({ latencyHint: 'interactive' });
@@ -100,6 +105,7 @@ const outputStats = playbackStatsDelta(before, readPlaybackStats(audioContext));
 
 - 公開した比較画面：<https://koekit.sikumilab.com/probe/saezuri/?audioLatency=playback>
 - 内部10msを希望する比較：<https://koekit.sikumilab.com/probe/saezuri/?audioLatency=10ms>
+- 内部20msを希望する次の比較：<https://koekit.sikumilab.com/probe/saezuri/?audioLatency=20ms>
 - 旧設定との比較：<https://koekit.sikumilab.com/probe/saezuri/?audioLatency=interactive>
 - 通常URL（現在は有限の試聴にplayback）：<https://koekit.sikumilab.com/probe/saezuri/>
 - 診断部品：`probe/saezuri/playback-diagnostics.js`

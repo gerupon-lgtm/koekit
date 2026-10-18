@@ -1,6 +1,6 @@
-import {derivePlacement,commitSequence} from './sequence-session.js?v=v0.1.0-20261018095008-c27f217';
-import {setupPlaybackSheet} from './sheet-controls.js?v=v0.1.0-20261018095008-c27f217';
-import {restoreCheckpoint} from './song-session.js?v=v0.1.0-20261018095008-c27f217';
+import {derivePlacement,commitSequence} from './sequence-session.js?v=v0.1.0-20261018101505-3b4c99f';
+import {setupPlaybackSheet} from './sheet-controls.js?v=v0.1.0-20261018101505-3b4c99f';
+import {restoreCheckpoint} from './song-session.js?v=v0.1.0-20261018101505-3b4c99f';
 const $=id=>document.getElementById(id);
 const button=(text,action)=>{const node=document.createElement('button');node.type='button';node.textContent=text;node.onclick=action;return node;};
 

@@ -2,7 +2,7 @@ const {chromium,webkit}=require('../.local-tools/node_modules/playwright'),asser
 const base=process.env.SAEZURI_BASE||'http://127.0.0.1:8026';
 (async()=>{const browser=process.env.SAEZURI_BROWSER==='webkit'?await webkit.launch({headless:true,executablePath:process.env.SAEZURI_WEBKIT_PATH}):await chromium.launch({channel:'chrome',headless:true,args:['--autoplay-policy=no-user-gesture-required']});try{
  const results=[];
- for(const [query,hint] of [['','playback'],['?audioLatency=10ms',.01],['?audioLatency=interactive','interactive']]){
+ for(const [query,hint] of [['','playback'],['?audioLatency=10ms',.01],['?audioLatency=20ms',.02],['?audioLatency=interactive','interactive']]){
   const context=await browser.newContext({viewport:{width:390,height:844},serviceWorkers:'block'});
   await context.addInitScript(()=>{
    if(typeof AudioContext!=='function')return;
