@@ -1,7 +1,7 @@
 const names=['ド','レ','ミ','ファ','ソ','ラ','シ'];
 const pitches=[0,2,4,5,7,9,11];
 const lengthLabel=value=>{const whole=Math.floor(value);return value%1?whole?`${whole}拍半`:'半拍':`${whole}拍`;};
-const noteIcon=value=>`<svg viewBox="0 0 32 40" aria-hidden="true" focusable="false"><ellipse cx="${value===4?16:11}" cy="30" rx="7" ry="4.5" transform="rotate(-20 ${value===4?16:11} 30)" fill="${value>=2?'none':'currentColor'}" stroke="currentColor" stroke-width="2"/>${value===4?'':'<path d="M18 29V6" fill="none" stroke="currentColor" stroke-width="2"/>'}${value===.5?'<path d="M18 6c0 7 13 8 6 17 1-7-5-7-6-11" fill="currentColor"/>':''}</svg>`;
+const noteIcon=value=>`<svg viewBox="0 0 32 40" aria-hidden="true" focusable="false"><ellipse cx="${value===4?16:11}" cy="30" rx="7" ry="4.5" transform="rotate(-20 ${value===4?16:11} 30)" fill="${value>=2?'none':'currentColor'}" stroke="currentColor" stroke-width="2"/>${value===4?'':'<path d="M18 29V6" fill="none" stroke="currentColor" stroke-width="2"/>'}${value===1.5?'<circle cx="25" cy="28" r="2" fill="currentColor"/>':''}${value===.5?'<path d="M18 6c0 7 13 8 6 17 1-7-5-7-6-11" fill="currentColor"/>':''}</svg>`;
 export class ComposerControls {
   constructor({editor,onNew}) {
     this.editor=editor;
@@ -32,8 +32,8 @@ export class ComposerControls {
         ...(this.$('replace').checked?{replaceNoteId:editor.selectedNoteId}:{} )});
     }
     this.$('duration').onchange=()=>{if(editor.entry) editor.inputNote({...editor.entry.input,durationTick:Number(this.$('duration').value)*4});else this.render(this.busy);};
-    const chooseLength=value=>{if(this.busy||editor.pending&&!editor.entry)return;this.$('duration').value=value;this.$('duration').onchange();};
-    for(const [value,label,kind] of [[.5,'はんぱく','八分音符'],[1,'1ぱく','四分音符'],[2,'2はく','二分音符'],[4,'4はく','全音符']]){
+    const chooseLength=value=>{if(this.busy||editor.pending&&!editor.entry)return;this.$('duration').value=value;this.$('duration').dispatchEvent(new Event('change'));};
+    for(const [value,label,kind] of [[.5,'はんぱく','八分音符'],[1,'1ぱく','四分音符'],[1.5,'1ぱく半','付点四分音符'],[2,'2はく','二分音符'],[4,'4はく','全音符']]){
       const b=document.createElement('button');b.type='button';b.dataset.duration=String(value);b.setAttribute('aria-label',`${lengthLabel(value)}・${kind}`);b.innerHTML=noteIcon(value)+`<span>${label}</span>`;b.onclick=()=>chooseLength(value);this.$('length-buttons').append(b);
     }
     this.$('other-duration').replaceChildren(...Array.from({length:64},(_,i)=>{const o=document.createElement('option');o.value=(i+1)/2;o.textContent=lengthLabel((i+1)/2);return o;}));
@@ -64,7 +64,7 @@ export class ComposerControls {
     if(entry) this.$('duration').value=entry.input.durationTick/4;
     const duration=Number(this.$('duration').value);this.$('other-duration').value=String(duration);
     for(const b of this.$('length-buttons').children)b.setAttribute('aria-pressed',String(Number(b.dataset.duration)===duration));
-    this.$('other-lengths').querySelector('summary').textContent=[.5,1,2,4].includes(duration)?'ほかの長さ':`ほかの長さ：${lengthLabel(duration)}`;
+    this.$('other-lengths').querySelector('summary').textContent=[.5,1,1.5,2,4].includes(duration)?'ほかの長さ':`ほかの長さ：${lengthLabel(duration)}`;
     const bar=Math.min(pattern.bars,Math.floor(cursor/16)+1);
     const displayTick=entry?.input.replaceNoteId?pattern.notes.find(n=>n.id===entry.input.replaceNoteId)?.startTick??cursor:cursor;
     if(busy)this.displayTick=null;

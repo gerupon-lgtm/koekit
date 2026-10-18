@@ -37,3 +37,7 @@ for(const manual of [false,true])for(const image of [false,true])profiles.set(`$
  parse:raw=>parseCreationCommand(raw,{manual,image}),
 });
 export const creationVoiceProfile=pattern=>profiles.get(`${pattern?.source==='manual'}:${!!pattern?.accompaniment?.imageChoice}`);
+
+const tutorialPhrases=[['つぎへ','next'],['次へ','next'],['つくってみよう','next'],['おてほん','model'],['お手本','model'],['ばんそうをつける','backing'],['伴奏をつける','backing'],['とじる','close'],['閉じる','close']];
+export const TUTORIAL_VOICE_PROFILE={words:[...new Set([...ENTRY_WORDS,...['次 へ','つくっ て みよう','お手本','伴奏 を つける','閉じる']])],parse:raw=>{const phrase=tutorialPhrases.find(p=>normalize(p[0])===normalize(raw));return phrase?{type:'tutorial',action:phrase[1]}:parseCreationCommand(raw,{manual:true});}};
+export const TUTORIAL_PLAY_PROFILE={words:[...STOP_VOICE_PROFILE.words,'とじる','閉じる'],parse:raw=>['とじる','閉じる'].some(w=>normalize(w)===normalize(raw))?{type:'tutorial',action:'close'}:STOP_VOICE_PROFILE.parse(raw)};

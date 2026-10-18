@@ -41,3 +41,11 @@ test('free editing never accepts image words, preserves note/edit phrases, and p
  const tapping={...image,source:'tap'};assert.notEqual(creationVoiceProfile(tapping),creationVoiceProfile(image));assert.deepEqual(creationVoiceProfile(tapping).parse('ロック'),{type:'image-choice',field:'type',value:'rock'});
  assert.equal(creationVoiceProfile({source:'manual'}).words.includes('ロック'),false);assert.equal(creationVoiceProfile(image).words.includes('ロック'),true);
 });
+
+test('tutorial navigation is bounded and keeps ordinary next and stop meanings',async()=>{
+ const {TUTORIAL_VOICE_PROFILE:p,TUTORIAL_PLAY_PROFILE:playing}=await import('../probe/saezuri/creation-voice.js');
+ for(const [word,action] of [['次 へ','next'],['お手本','model'],['伴奏 を つける','backing'],['閉じる','close']])assert.deepEqual(p.parse(word),{type:'tutorial',action});
+ assert.equal(p.parse('つぎ'),'next');assert.deepEqual(p.parse('ミ 付 点 一'),{type:'note',midi:64,durationTick:6});
+ assert.equal(playing.parse('オッケー'),null);assert.deepEqual(playing.parse('ストップ'),{type:'loop-stop'});
+ assert.equal(parseCreationCommand('伴奏 を つける',{manual:true}),null);
+});

@@ -35,11 +35,11 @@
 
 **Interfaces:** Produce `tutorialPattern({backing=false}={})` (fresh validated 4-bar manual pattern), `tutorialExcerpt(pattern,startTick,endTick)` (clipped/shifted display pattern, notes, accompaniment, totalTicks), `CaptureEditorView.changeNoteLength(durationTick)` (candidate only). The accompaniment rhythm id `tutorial` has the spec's exact event pattern and a visible label. Ordinary rhythm ids retain behavior.
 
-- [ ] Write tests for exact 15 attacks, cross-bar split/hold, fresh copies, 140 accompaniment events and excerpt clipping; 1.5-beat spoken aliases and standalone duration commands, rejecting fragments/ambiguous text.
-- [ ] Run `node --test scripts/test-saezuri-tutorial-data.mjs scripts/test-saezuri-entry-voice.mjs`; Expected: new requirements fail before implementation.
-- [ ] Implement target/excerpts, the tutorial rhythm, duration parsing and candidate-only length changes. Follow the endpoint when editing the last note, preserving pitch and overlapping-note validation.
-- [ ] Run the above plus `test-saezuri-accompaniment.mjs`, `test-saezuri-entry-session.mjs`, `test-saezuri-capture-editor.mjs`; Expected: all pass.
-- [ ] Commit Task 1 with its tests.
+- [x] Write tests for exact 15 attacks, cross-bar split/hold, fresh copies, 140 accompaniment events and excerpt clipping; 1.5-beat spoken aliases and standalone duration commands, rejecting fragments/ambiguous text.
+- [x] Run `node --test scripts/test-saezuri-tutorial-data.mjs scripts/test-saezuri-entry-voice.mjs`; Expected: new requirements fail before implementation.
+- [x] Implement target/excerpts, the tutorial rhythm, duration parsing and candidate-only length changes. Follow the endpoint when editing the last note, preserving pitch and overlapping-note validation.
+- [x] Run the above plus `test-saezuri-accompaniment.mjs`, `test-saezuri-entry-session.mjs`, `test-saezuri-capture-editor.mjs`; Expected: all pass.
+- [x] Commit Task 1 with its tests.
 
 ### Task 2: Counted compact audition and shared melody view
 
@@ -47,11 +47,11 @@
 
 **Interfaces:** Produce `TutorialPreview` with `open(data,{onHeard,onClose})`, `play()`, `follow()`, `stop()` and `close()`, using injected shared playback callbacks; `renderTutorialView(container,pattern,{display,selectedId,onSelect})`. Extend `ProbeTransport.start` with optional `preRollTicks=0,preRollStep=1` while keeping ordinary starts unchanged.
 
-- [ ] Add failing timing checks for 16 count attacks before music, no early music/active notes, count cancellation and ordinary transport defaults.
-- [ ] Implement one-bar count in the shared transport; implement cards/compact staff and audition controls from approved layout14. No duplicated synthesis engine or standalone copied app.
-- [ ] Verify `node scripts/test-saezuri-tutorial-preview-browser.cjs`; Expected: four bars fit 320×568 and other target viewports, chord labels at bar heads, notes/rest/dot/tie correct, view switch preserves anchor, close/stop cancel audio, no JS errors.
-- [ ] Run existing count/loop/default-sound browser checks once; Expected: pass without changing their ordinary expectations.
-- [ ] Commit Task 2 with its checks.
+- [x] Add failing timing checks for 16 count attacks before music, no early music/active notes, count cancellation and ordinary transport defaults.
+- [x] Implement one-bar count in the shared transport; implement cards/compact staff and audition controls from approved layout14. No duplicated synthesis engine or standalone copied app.
+- [x] Verify `node scripts/test-saezuri-tutorial-preview-browser.cjs`; Expected: four bars fit 320×568 and other target viewports, chord labels at bar heads, notes/rest/dot/tie correct, view switch preserves anchor, close/stop cancel audio, no JS errors.
+- [x] Run existing count/loop/default-sound browser checks once; Expected: pass without changing their ordinary expectations.
+- [x] Commit Task 2 with its checks.
 
 ### Task 3: Progressive lesson, editing UI and voice path
 
@@ -59,12 +59,12 @@
 
 **Interfaces:** Consume Task1 target/excerpt/length API and Task2 view/preview. Produce `lessonGuide(editor,{stage,heard})` with one action/target and a completion flag; `MelodyLearning.handleVoice(command)` for bounded tutorial navigation/preview/backing commands. Keep tutorial source ephemeral until explicit normal registration.
 
-- [ ] Write failing guide and browser cases for intro→2 notes→1 bar→2 bars→3 bars→tie→4 bars→backing, including rest-confirmation cursor, wrong input/Undo/cancel and explicit next.
-- [ ] Implement one action at a time, existing pitch-edit guidance, visible half/1/1.5/2 lengths, selected-note duration editing, endpoint following and backing candidate. Reuse all core edit transactions.
-- [ ] Wire counted auditions to existing audio/mixer/stop lifecycle. Voice commands must reach replay/close/confirm/next after an audition; recognition remains bounded to the appropriate interval.
-- [ ] Run `node --test scripts/test-saezuri-tutorial-guide.mjs scripts/test-saezuri-learning.mjs` and `node scripts/test-saezuri-tutorial-browser.cjs`; Expected: full touch and injected voice paths pass, no automatic confirmation, no tutorial save-slot consumption, all target sizes fit minimum operations.
-- [ ] Run existing learning/layout, composer, creation-voice, songs, keyboard and navigation regressions; Expected: pass (update old two-note-only assertions to approved multi-stage behavior where needed).
-- [ ] Commit Task 3 with its checks.
+- [x] Write failing guide and browser cases for intro→2 notes→1 bar→2 bars→3 bars→tie→4 bars→backing, including rest-confirmation cursor, wrong input/Undo/cancel and explicit next.
+- [x] Implement one action at a time, existing pitch-edit guidance, visible half/1/1.5/2 lengths, selected-note duration editing, endpoint following and backing candidate. Reuse all core edit transactions.
+- [x] Wire counted auditions to existing audio/mixer/stop lifecycle. Voice commands must reach replay/close/confirm/next after an audition; recognition remains bounded to the appropriate interval.
+- [x] Run `node --test scripts/test-saezuri-tutorial-guide.mjs scripts/test-saezuri-learning.mjs` and `node scripts/test-saezuri-tutorial-browser.cjs`; Expected: full touch and injected voice paths pass, no automatic confirmation, no tutorial save-slot consumption, all target sizes fit minimum operations.
+- [x] Run existing learning/layout, composer, creation-voice, songs, keyboard and navigation regressions; Expected: pass (update old two-note-only assertions to approved multi-stage behavior where needed).
+- [x] Commit Task 3 with its checks.
 
 ### Task 4: Review, cache/version and delivery evidence
 

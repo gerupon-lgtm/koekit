@@ -67,6 +67,7 @@ export class CaptureEditorView {
   get pending() { return !!this.entry || hasDraftChanges(this._active?.session); }
   get entry() {return this._active?.session.entry ?? null;}
   get cursor() {return this._active?.state.cursor ?? 0;}
+  get hasRest(){return !!this._active?.session.working.hasRest;}
   get selectedNoteId() {return this._active?.state.selectedNoteId ?? null;}
 
   inputNote(input) {

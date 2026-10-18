@@ -10,8 +10,8 @@ const trialVersion=trialBuild.match(/-(\d{14})-/)?.[1]||trialBuild;
 const button=(text,fn)=>{const b=document.createElement('button');b.type='button';b.textContent=text;b.onclick=fn;return b;};
 
 export class MelodyScreens {
- constructor({editor,onStop,onNavigate,onPlay,onDiscard,onOpenPattern,onAudition,onEditWorkspace}) {
-  Object.assign(this,{editor,onStop,onNavigate,onPlay,onDiscard,onOpenPattern,onAudition});
+ constructor({editor,onStop,onNavigate,onPlay,onDiscard,onOpenPattern,onAudition,onEditWorkspace,onTutorialPlay}) {
+  Object.assign(this,{editor,onStop,onNavigate,onPlay,onDiscard,onOpenPattern,onAudition,onTutorialPlay});
   this.screen='home';this.sequence=emptySequence();this.proposal=null;this.selected=null;this.mode='input';this.busy=false;
   document.body.classList.add('melody-app');
   document.querySelector('#composer-panel .composer-values').append(document.querySelector('[data-pitch="7"]'));
@@ -127,7 +127,7 @@ export class MelodyScreens {
   $('discard-message').textContent='今の音列・入力中の候補・もどす履歴は消えます。';
   this.discardDialog.showModal();this.onNavigate();$('discard-cancel').focus();
  }
- get allowsVoice(){return this.screen==='create'&&!document.querySelector('dialog[open]');}
+ get allowsVoice(){return this.screen==='create'&&![...document.querySelectorAll('dialog[open]')].some(d=>d.id!=='learning-preview'||!this.learning?.active);}
  openSettings(){ $('creation-settings').hidden=this.screen!=='create';this.dialog.querySelector('.listen-settings').append($('instrument').closest('label'));this.dialog.showModal();this.onNavigate();}
  go(screen,{history:push=true,stop=true,focus=true}={}) {
   if(this.phase==='saving')return;

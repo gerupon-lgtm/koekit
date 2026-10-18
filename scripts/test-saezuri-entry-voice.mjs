@@ -21,5 +21,5 @@ test('dotted-beat aliases create the same unconfirmed note and duration-only com
  for(const raw of ['ミ いっぱくはん','ミ ふてんいち','ミ ふてんいっぱく','ミ 付点 一','ミ 一 拍 半'])assert.deepEqual(parse(raw),{type:'note',midi:64,durationTick:6},raw);
  for(const [raw,length] of [['にはく',8],['二 拍',8],['いっぱく',4],['はんぱく',2],['ふてんいち',6],['ふてんいっぱく',6]])assert.deepEqual(parse(raw),{type:'duration',durationTick:length},raw);
  for(const raw of ['ふてん','いっぱくはんくらい','ミふてんいちオッケー','にはくにする'])assert.equal(parse(raw),null,raw);
- assert.ok(ENTRY_WORDS.includes('ミ 付点 一'));assert.ok(ENTRY_WORDS.includes('二 拍'));
+ assert.ok(ENTRY_WORDS.includes('ミ 付 点 一'));assert.ok(ENTRY_WORDS.includes('二 拍'));
 });

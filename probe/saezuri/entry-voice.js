@@ -21,7 +21,7 @@ export function parseEntryCommand(raw) {
  return parseEditCommand(raw);
 }
 const pitchWords=['ド','レ','ミ','ファ','ソ','ラ','シ'];
-const lengthWords=['一','二','四','半 拍','半分','一 拍','二 拍','四 拍','一 拍 半','付点 一','付点 一 拍'];
+const lengthWords=['一','二','四','半 拍','半分','一 拍','二 拍','四 拍','一 拍 半','付 点 一','付 点 一 拍'];
 export const ENTRY_WORDS=[...EDIT_WORDS,'スタート',
  ...['', '上 '].flatMap(prefix=>pitchWords.flatMap(p=>lengthWords.map(l=>`${prefix}${p} ${l}`))),
  ...lengthWords.map(l=>`上 上 ド ${l}`),...lengthWords.map(l=>`休み ${l}`),

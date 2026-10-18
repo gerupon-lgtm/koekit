@@ -35,3 +35,46 @@
 .melody-app.editor-focus #learning-preview .tutorial-play-actions{display:flex;gap:8px;width:100%}
 .melody-app.editor-focus #learning-preview .tutorial-play-actions button{flex:1;min-width:0;min-height:44px;margin:0;font-size:.8125rem;padding:6px 8px;background:#e7ddef}
 @media(pointer:coarse){.melody-app.editor-focus .tutorial-display-switch button{min-height:44px}}
+
+/* Keep the active measure, pitch/length choice and confirmation in one workspace. */
+.melody-app.learning-active #capture-score,.melody-app.learning-active #capture-blocks{display:none!important}
+.melody-app.editor-focus.learning-active #learning-workspace{order:1;grid-column:1/-1;min-width:0;margin:0 0 4px}
+.melody-app.learning-active #learning-workspace[hidden]{display:none}
+.melody-app.learning-active .learning-view-heading{display:flex;gap:8px;margin:0 0 4px;align-items:center}
+.melody-app.learning-active .learning-view-heading .tutorial-display-switch{flex:1}
+.melody-app.editor-focus.learning-active #learning-voice{font-size:12px;min-height:44px;margin:0;padding:4px 8px}
+.melody-app.learning-active #learning-length-edit{display:flex;align-items:center;gap:8px;margin-top:6px;font-size:13px}
+.melody-app.learning-active #learning-length-edit[hidden]{display:none}
+.melody-app.editor-focus.learning-active #learning-length-edit button{min-height:44px;margin:0;flex:1;font-size:14px;padding:6px}
+.melody-app.learning-active .learning-heading strong{font-size:12px;line-height:1.3;flex:1}
+.melody-app.editor-focus.learning-active #learning-close,.melody-app.editor-focus.learning-active #learning-model{min-height:44px;font-size:12px;padding:4px;margin:0;background:transparent;white-space:nowrap}
+.melody-app.learning-active #learning-guide{margin:2px 0 4px;padding:2px 6px}
+.melody-app.learning-active #learning-message{font-size:12px;line-height:16px;margin:2px 0 4px}
+.melody-app.learning-active #learning-action{font-size:16px;line-height:22px}
+.melody-app.editor-focus.learning-active #learning-next,.melody-app.editor-focus.learning-active #learning-position,.melody-app.editor-focus.learning-active #learning-backing{min-height:44px;margin:4px 0;font-size:14px;width:100%;padding:6px}
+.melody-app.editor-focus.learning-active #composer-lengths{display:block;margin:0;padding:0;border:0}
+.melody-app.learning-active #composer-lengths legend{font-size:12px;line-height:16px;padding:0}
+.melody-app.editor-focus.learning-active #composer-length-buttons{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
+.melody-app.editor-focus.learning-active #composer-length-buttons button{min-height:48px;padding:2px;margin:0;font-size:12px;display:flex;align-items:center;justify-content:center;gap:2px}
+.melody-app.learning-active #composer-length-buttons button svg{height:30px;width:24px}
+.melody-app.editor-focus.learning-active #composer-length-buttons [data-duration="4"]{display:none}
+.melody-app.learning-active[data-learning-stage="1"] #composer-lengths{display:none}
+.melody-app.learning-active .composer-voice-hint{display:none}
+.melody-app.editor-focus.learning-active #composer-keys{gap:6px;margin:4px 0}
+.melody-app.editor-focus.learning-active #composer-keys button{min-height:44px;margin:0;font-size:16px;padding:4px}
+.melody-app.learning-active .listen-actions{gap:6px;margin:4px 0}
+.melody-app.editor-focus.learning-active .listen-actions button{min-height:44px;margin:0;padding:4px;font-size:14px}
+.melody-app.learning-active .note-actions{gap:6px}
+.melody-app.editor-focus.learning-active .note-actions button{min-height:44px;padding:4px;font-size:14px}
+.melody-app.learning-active[data-learning-stage="0"] #learning-workspace,.melody-app.learning-active[data-learning-stage="0"] #keyboard-options,.melody-app.learning-active[data-learning-stage="0"] .edit-toolbar{display:none!important}
+@media(min-width:650px){.melody-app.editor-focus.learning-active #learning-workspace{grid-column:1;grid-row:1/4}.melody-app.editor-focus.learning-active #keyboard-options{grid-column:2;grid-row:1}.melody-app.editor-focus.learning-active #capture-note-panel>.edit-toolbar{grid-column:2;grid-row:2}}
+
+.melody-app.editor-focus.learning-active #learning-cancel{min-height:44px;width:100%;margin:4px 0;padding:6px;font-size:14px;background:#e7ddef}
+
+.melody-app.editor-focus.learning-active #learning-workspace{padding:0;border:0;background:transparent}
+.melody-app.editor-focus.learning-active .tutorial-bar{padding:0;border:0;background:transparent}
+.melody-app.learning-active[data-learning-kind="done"] #keyboard-options{display:none}
+@media(max-height:600px){.melody-app.learning-active #learning-message{display:none}}
+
+.melody-app.editor-focus.learning-active #learning-workspace{margin-bottom:0}
+.melody-app.editor-focus.learning-active #capture-note-panel{gap:2px}

@@ -1,5 +1,9 @@
 import {blankPattern} from './entry-session.js?v=v0.1.0-20261017214607-f706a29';
-import {practicePhrases,practicePhrase,tutorialGuide} from './learning-data.js?v=v0.1.0-20261017214607-f706a29';
+import {practicePhrases,practicePhrase} from './learning-data.js?v=v0.1.0-20261017214607-f706a29';
+import {lessonGuide,lessonFingerprint,LESSON_TITLES,LESSON_RANGES} from './tutorial-guide.js?v=v0.1.0-20261017214607-f706a29';
+import {tutorialPattern,tutorialExcerpt,TUTORIAL_TEMPO} from './tutorial-data.js?v=v0.1.0-20261017214607-f706a29';
+import {TutorialPreview} from './tutorial-preview.js?v=v0.1.0-20261017214607-f706a29';
+import {renderTutorialView} from './tutorial-view.js?v=v0.1.0-20261017214607-f706a29';
 const $=id=>document.getElementById(id);
 export class MelodyLearning {
  constructor(shell){
@@ -27,40 +31,87 @@ export class MelodyLearning {
    row.append(listen,edit);card.append(title,desc,row);$('practice-list').append(card);
   }
   const guide=document.createElement('aside');guide.id='learning-guide';guide.hidden=true;guide.setAttribute('aria-label','おてほんの案内');
-  guide.innerHTML='<div class="learning-heading"><strong id="learning-step"></strong><button id="learning-close">案内をとじる</button></div><div role="status" aria-live="polite" aria-atomic="true"><strong id="learning-action"></strong><p id="learning-message"></p></div><button id="learning-next" hidden>つぎは おためしをアレンジ</button>';
-  $('creation-tabs').before(guide);
+  guide.innerHTML='<div class="learning-heading"><strong id="learning-step"></strong><button id="learning-close">案内をとじる</button></div><div role="status" aria-live="polite" aria-atomic="true"><strong id="learning-action"></strong><p id="learning-message"></p></div><div class="learning-guide-actions"><button id="learning-model">おてほんを聴く</button><button id="learning-next" hidden>つぎへ</button></div><button id="learning-cancel" hidden>とりけす</button><button id="learning-position" hidden>つぎの場所へ</button><button id="learning-backing" hidden>おてほんの伴奏をつける</button>';
+  $('creation-tabs').before(guide);guide.querySelector('.learning-heading').insertBefore(guide.querySelector('#learning-model'),guide.querySelector('#learning-close'));
   const reopen=document.createElement('button');reopen.id='learning-reopen';reopen.textContent='案内をひらく';reopen.hidden=true;guide.after(reopen);
+  const workspace=document.createElement('section');workspace.id='learning-workspace';workspace.hidden=true;
+  workspace.innerHTML='<div class="learning-view-heading"><div class="tutorial-display-switch" role="group" aria-label="メロディーの表示"><button data-learning-view="cards">カード</button><button data-learning-view="score">五線譜</button></div><button id="learning-voice" aria-pressed="false">声 OFF</button></div><div id="learning-melody"></div><div id="learning-length-edit"><span>選んだ音の長さ</span><button data-lesson-length="4">1ぱく</button><button data-lesson-length="8">2はく</button></div>';
+  $('capture-score').before(workspace);
+  this.preview=new TutorialPreview({onPlay:data=>shell.onTutorialPlay(data),onStop:()=>shell.onStop(),onNavigate:()=>shell.onNavigate(),onDisplay:display=>{this.display=display;this.sync(shell.phase);}});this.display='cards';
+  for(const b of workspace.querySelectorAll('[data-learning-view]'))b.onclick=()=>{this.display=b.dataset.learningView;this.preview.setDisplay(this.display);this.sync(shell.phase);};
+  for(const b of workspace.querySelectorAll('[data-lesson-length]'))b.onclick=()=>shell.editor.changeNoteLength(Number(b.dataset.lessonLength));
+  $('learning-voice').onclick=()=>{const enabled=!$('edit-voice').checked;if(enabled&&$('mic').getAttribute('aria-pressed')!=='true')$('mic').click();$('edit-voice').checked=enabled;$('edit-voice').dispatchEvent(new Event('change'));this.sync(shell.phase);};
   $('learning-close').onclick=()=>{this.guideHidden=true;this.sync(shell.phase);};
   reopen.onclick=()=>{this.guideHidden=false;this.sync(shell.phase);};
-  $('learning-next').onclick=()=>shell.go('samples');
+  $('learning-cancel').onclick=()=>shell.editor.command('cancel');
+  $('learning-next').onclick=()=>this.next();$('learning-model').onclick=()=>this.audition(true);
+  $('learning-position').onclick=()=>{const guide=this.currentGuide();if(guide.kind==='position')shell.editor.moveCursor(guide.tick);};
+  $('learning-backing').onclick=()=>{if(this.stage===7&&!shell.busy)shell.editor.stageImageAccompaniment(tutorialPattern({backing:true}).accompaniment);};
+  $('composer-duration').addEventListener('change',()=>this.sync(shell.phase));
  }
+
  openNew(action){this.shell.requestDiscard(async()=>{if(this.shell.songWorkflow&&!await this.shell.songWorkflow.allowNew())return;action();});}
  start(){
-    if($('step-entry'))$('step-entry').open=true;
-  this.active=true;this.guideHidden=false;this.heard=false;this.lastStep=null;
-  $('composer-duration').value='1';$('composer-octave').value='0';$('composer-replace').checked=false;
-  this.shell.onOpenPattern(blankPattern(),'tutorial',120);this.shell.go('create');this.shell.setMode('input');
+  this.end();$('composer-length-buttons').append($('composer-rest'));if($('step-entry'))$('step-entry').open=true;
+  this.active=true;this.guideHidden=false;this.stage=0;this.modelHeard=false;this.heardOriginal=false;this.heardKey=null;this.display='cards';this.preview.setDisplay('cards');
+  $('composer-duration').value='1';$('composer-octave').value='0';$('composer-replace').checked=false;$('instrument').value='fm-piano';
+  this.shell.onOpenPattern(blankPattern(),'tutorial',TUTORIAL_TEMPO);this.shell.go('create');this.shell.setMode('input');this.sync(this.shell.phase);
  }
- end(){document.body.classList.remove('learning-active','learning-complete','learning-guide-hidden');this.active=false;this.guideHidden=false;this.heard=false;this.lastStep=null;$('learning-guide').hidden=true;$('learning-reopen').hidden=true;this.clearHighlight();}
+ end(){document.querySelector('#composer-panel .composer-values').append($('composer-rest'));this.active=false;this.preview?.close();document.body.classList.remove('learning-active','learning-complete','learning-guide-hidden');this.guideHidden=false;this.heardKey=null;this.lastStep=null;$('learning-guide').hidden=true;$('learning-reopen').hidden=true;$('learning-workspace').hidden=true;this.clearHighlight();}
  clearHighlight(){for(const node of document.querySelectorAll('[data-learning-target]'))node.removeAttribute('data-learning-target');}
+ currentGuide(){const editor=this.shell.editor;return lessonGuide({pattern:editor.pattern,previewPattern:editor.previewPattern,pending:editor.pending,entry:editor.entry,cursor:editor.cursor,selectedNoteId:editor.selectedNoteId,hasRest:editor.hasRest,inputDuration:Number($('composer-duration').value)*4},{stage:this.stage,modelHeard:this.modelHeard,heardOriginal:this.heardOriginal,heard:this.heardKey===lessonFingerprint(editor.previewPattern)});}
+ next(){
+  if(!this.active||this.shell.busy||!this.currentGuide().done)return;
+  if(this.stage===7){this.end();this.shell.go('samples');return;}
+  this.preview.close();this.stage++;this.modelHeard=false;this.heardKey=null;
+  const starts={1:0,2:8,3:16,4:32,5:48,6:50,7:64};this.shell.editor.moveCursor(starts[this.stage]);
+  $('composer-duration').value='1';this.shell.setMode('input');this.sync(this.shell.phase);window.scrollTo(0,0);
+ }
+ audition(model=false){
+  if(!this.active||this.shell.busy||this.shell.editor.entry?.proposal.code)return;
+  const range=LESSON_RANGES[this.stage],pattern=model?tutorialPattern({backing:this.stage===0}):this.shell.editor.previewPattern;
+  let [start,end]=range;if(!model){end=Math.max(start+2,...pattern.notes.filter(n=>n.startTick>=start||n.startTick+n.durationTick>start).map(n=>n.startTick+n.durationTick));end=Math.min(range[1],end);}
+  const key=lessonFingerprint(pattern),stage=this.stage;
+  this.preview.setDisplay(this.display);this.preview.open(tutorialExcerpt(pattern,start,end),{title:model?'おてほんを 聴く':'いまの曲を 聴く',onHeard:()=>{if(!this.active||stage!==this.stage)return;if(model)this.modelHeard=true;else {this.heardKey=key;if(stage===1&&pattern.notes[0]?.midi===60)this.heardOriginal=true;}this.sync(this.shell.phase);}});this.preview.play();
+ }
+ handleVoice(command){
+  if(!this.active||this.shell.screen!=='create')return false;
+  if(command?.type==='tutorial'){
+   if(command.action==='close'){this.preview.close();return true;}
+   if(this.shell.busy)return true;
+   if(command.action==='next'){this.preview.close();this.next();}
+   if(command.action==='model')this.preview.openNow?this.preview.play():this.audition(true);
+   if(command.action==='backing'){$('learning-backing').click();}
+   return true;
+  }
+  if(command?.type==='loop-stop'){if(this.preview.openNow)this.preview.stop();else this.shell.onStop();return true;}
+  if(this.shell.busy)return true;
+  if(command==='preview'){this.preview.openNow?this.preview.play():this.audition();return true;}
+  if(command==='next'&&this.currentGuide().done){this.preview.close();this.next();return true;}
+  if(this.preview.openNow){if(command==='confirm'){this.preview.close();this.shell.editor.command('confirm');}return true;}
+  return false;
+ }
  sync(phase){
-  $('new-tutorial').disabled=this.shell.busy;
-  for(const b of $('practice-list').querySelectorAll('button'))b.disabled=this.shell.busy;
+  $('new-tutorial').disabled=this.shell.busy;for(const b of $('practice-list').querySelectorAll('button'))b.disabled=this.shell.busy;
   const editor=this.shell.editor;if(this.active&&!editor.isOpen)this.end();const show=this.active&&editor.isOpen;
-  $('learning-guide').hidden=!show||this.guideHidden;$('learning-reopen').hidden=!show||!this.guideHidden;
+  $('learning-guide').hidden=!show||this.guideHidden;$('learning-reopen').hidden=!show||!this.guideHidden;$('learning-workspace').hidden=!show;
   document.body.classList.toggle('learning-active',show);document.body.classList.toggle('learning-guide-hidden',show&&this.guideHidden);this.clearHighlight();if(!show)return;
-  const notes=editor.previewPattern?.notes??[];
-  if(notes[0]?.midi!==62)this.heard=false;
-  if(phase==='playing'&&this.shell.screen==='create'&&notes.length===2&&notes[0].midi===62)this.heard=true;
-  const guide=tutorialGuide(editor,this.heard);
-  $('learning-step').textContent=guide.done?'おてほん 完了':`おてほん ${guide.step||'やりなおし'} / 6`;
-  const actions={0:'「もどす」で やりなおそう',1:'「ド」を 押そう',2:'「ミ」を 押そう',3:'1ばんの カードを 選ぼう',4:notes[0]?.midi===61?'もう1回 「たかく」':'「たかく」を 2回',5:'「聴く」で たしかめよう',6:'「オッケー」で 決めよう',7:'できた！ つぎはアレンジ'};
-  $('learning-action').textContent=guide.target==='#capture-edit-confirm'?'「オッケー」で 決めよう':actions[guide.step];
-  document.body.classList.toggle('learning-complete',!!guide.done);
-  const detail={1:editor.entry?'点線の音が候補です。決めると音符になります。':'高さは「ふつう」、長さは1拍です。',2:editor.entry?'つぎの音も、オッケーで置きます。':'つぎの場所に、1拍のミを置きます。',3:'譜面の音を押しても選べます。',4:notes[0]?.midi===61?'もう一度押すと、ドがレになります。':'ドをレに変えます。まだ仮の変更です。',5:'変えた音の流れを聴いてみよう。',6:'よければ、変えた高さを確定します。',7:'音を置く・直す・聴く・決めるを体験しました。'};
-  $('learning-message').textContent=detail[guide.step]??guide.text;$('learning-next').hidden=!guide.done;
-  if(guide.mode&&guide.step!==this.lastStep&&!this.shell.busy)this.shell.setMode(guide.mode);
-  this.lastStep=guide.step;
+  const guide=this.currentGuide();this.guide=guide;$('learning-guide').dataset.stage=this.stage;$('learning-guide').dataset.kind=guide.kind;document.body.dataset.learningKind=guide.kind;
+  $('learning-step').textContent=`${this.stage+1} / 8・${LESSON_TITLES[this.stage]}`;$('learning-action').textContent=guide.action;$('learning-message').textContent=guide.text;
+  $('learning-next').hidden=!guide.done;$('learning-next').textContent=this.stage===0?'つくってみよう':this.stage===7?'おためしをアレンジ':'つぎへ';
+  $('learning-model').textContent='♪ おてほん';$('learning-model').setAttribute('aria-label','おてほんを聴く');
+  $('learning-cancel').hidden=guide.kind!=='recover'||!editor.pending;
+  $('learning-position').hidden=guide.kind!=='position';$('learning-backing').hidden=guide.kind!=='backing';
+  for(const id of ['learning-next','learning-model','learning-position','learning-backing','learning-cancel'])$(id).disabled=this.shell.busy;
+  document.body.classList.toggle('learning-complete',this.stage===7&&!!guide.done);document.body.dataset.learningStage=String(this.stage);
+  if(guide.mode&&!this.shell.busy)this.shell.setMode(guide.mode);
+  $('learning-length-edit').hidden=![3,5].includes(this.stage)||this.shell.mode!=='edit';
+  for(const b of $('learning-length-edit').querySelectorAll('button'))b.disabled=this.shell.busy||!!editor.entry;
+  (this.stage===0?$('learning-guide'):document.querySelector('.learning-view-heading')).append($('learning-voice'));
+  $('learning-voice').textContent=$('edit-voice').checked&&$('mic').getAttribute('aria-pressed')==='true'?'声 ON':'声 OFF';$('learning-voice').setAttribute('aria-pressed',String($('edit-voice').checked));
+  for(const b of $('learning-workspace').querySelectorAll('[data-learning-view]'))b.setAttribute('aria-pressed',String(b.dataset.learningView===this.display));
+  const pattern=editor.previewPattern,selected=pattern.notes.find(n=>n.id===editor.selectedNoteId),focus=guide.mode==='edit'?selected?.startTick:editor.cursor;
+  renderTutorialView($('learning-melody'),pattern,{display:this.display,barStart:Math.min(3,Math.floor((focus??0)/16)),barCount:1,selectedId:editor.selectedNoteId,onSelect:id=>{if(!this.shell.busy&&!editor.entry){const index=pattern.notes.findIndex(n=>n.id===id);editor.command(`select:${index+1}`);}}});
   if(guide.target&&!this.shell.busy&&this.shell.screen==='create')document.querySelector(guide.target)?.setAttribute('data-learning-target','');
  }
 }

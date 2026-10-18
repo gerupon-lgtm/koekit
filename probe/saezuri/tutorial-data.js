@@ -14,14 +14,15 @@ export function tutorialPattern({backing=false}={}){
 }
 
 // The source is never resized or shifted. Audition a copy of exactly the chosen
-// interval, including any note already sounding at its beginning.
+// interval. The returned pattern may have 1/2 display bars and is never an editor document.
+// This includes any note already sounding at its beginning.
 export function tutorialExcerpt(pattern,startTick,endTick){
  if(!Number.isInteger(startTick)||!Number.isInteger(endTick)||startTick%2||endTick%2||startTick<0||endTick<=startTick||endTick>pattern.bars*16)throw new RangeError('TUTORIAL_RANGE');
  const clip=events=>events.filter(n=>n.startTick<endTick&&n.startTick+n.durationTick>startTick).map(n=>{
   const start=Math.max(startTick,n.startTick),end=Math.min(endTick,n.startTick+n.durationTick);
   return {...structuredClone(n),startTick:start-startTick,durationTick:end-start};
  });
- const result=structuredClone(pattern),notes=clip(pattern.notes),accompaniment=clip(accompanimentEvents(pattern));
+ const result=structuredClone(pattern),notes=clip(pattern.notes).map(n=>({...n,velocity:70})),accompaniment=clip(accompanimentEvents(pattern));
  result.bars=Math.ceil((endTick-startTick)/16);result.notes=notes;
  if(result.accompaniment){result.accompaniment.chords=clip(harmonicSegments(pattern)).map(n=>({...n,manual:true}));}
  return {pattern:result,notes,accompaniment,totalTicks:endTick-startTick,offsetTick:startTick,tempo:TUTORIAL_TEMPO};
