@@ -1,7 +1,7 @@
-import {GENRES,CHORD_INTERVALS} from '../../saezuri/music/catalog.js?v=v0.1.0-20261018110633-34954e3';
-import {RHYTHMS,PROGRESSIONS,PRESETS,SOUNDS,SOUND_PRESETS,soundLabel,harmonicSegments,recommendProgressions} from '../../saezuri/music/accompaniment.js?v=v0.1.0-20261018110633-34954e3';
-import {setupPlaybackSheet} from './sheet-controls.js?v=v0.1.0-20261018110633-34954e3';
-import {ImageModeControls} from './image-mode-controls.js?v=v0.1.0-20261018110633-34954e3';
+import {GENRES,CHORD_INTERVALS} from '../../saezuri/music/catalog.js?v=v0.1.0-20261018120410-8ca67c2';
+import {RHYTHMS,PROGRESSIONS,PRESETS,SOUNDS,SOUND_PRESETS,soundLabel,harmonicSegments,recommendProgressions} from '../../saezuri/music/accompaniment.js?v=v0.1.0-20261018120410-8ca67c2';
+import {setupPlaybackSheet} from './sheet-controls.js?v=v0.1.0-20261018120410-8ca67c2';
+import {ImageModeControls} from './image-mode-controls.js?v=v0.1.0-20261018120410-8ca67c2';
 const pitches=['C','C♯','D','E♭','E','F','F♯','G','A♭','A','B♭','B'];
 export const chordPitches=pitches;
 const suffix={major:'',minor:'m'};
@@ -10,7 +10,7 @@ const fallback={enabled:false,genre:'nursery',rhythm:'quarters',progression:'hom
 const $=id=>document.getElementById(id);
 function fill(node,items){node.replaceChildren(...items.map(([id,label])=>{const o=document.createElement('option');o.value=id;o.textContent=label;return o;}));}
 export class ImageControls {
- constructor({editor,onNew,onTempo,onPreview,onStop,onNavigate,compact=false,engine='classic'}) {
+ constructor({editor,onNew,onTempo,onPreview,onStop,onNavigate,onRecord,compact=false,engine='classic'}) {
   Object.assign(this,{editor,onTempo,onPreview,onStop,onNavigate,engine});
   const source=document.querySelector('.source-actions');if(!source)return;
   this.create=document.createElement('button');this.create.id='new-image';this.create.textContent='イメージからつくる';this.create.onclick=onNew;source.prepend(this.create);
@@ -51,7 +51,7 @@ export class ImageControls {
    setupPlaybackSheet(settings,{closeId:'backing-settings-close',stopId:'backing-settings-stop',onStop:()=>this.onStop?.()});
    setupPlaybackSheet(suggestions,{closeId:'progression-close',stopId:'progression-stop',onStop:()=>this.onStop?.()});
   }
-  this.imageMode=new ImageModeControls({editor,onTempo,compact});
+  this.imageMode=new ImageModeControls({editor,onTempo,onRecord,compact});
   (this.settingsSheet??this.panel).append(this.imageMode.reset);
  }
  handleVoice(command){
@@ -60,8 +60,8 @@ export class ImageControls {
    if(target&&!target.disabled&&target.getClientRects().length&&[...target.options].some(o=>o.value===value)){target.value=value;target.dispatchEvent(new Event('change'));}return true;
   }
   if(command?.type==='backing-navigation'){
-   const target=command.action==='open'?document.querySelector('[data-mode="backing"]'):this.$('suggest');
-   if(target&&!target.disabled&&target.getClientRects().length)target.click();return true;
+   const image=this.imageMode.active,target=command.action==='open'?(image?this.imageMode.reopen:document.querySelector('[data-mode="backing"]')):this.$('suggest');
+   if(target&&!target.disabled&&(target.getClientRects().length||image&&command.action==='suggestions'))target.click();return true;
   }
   if(command?.type!=='progression-choice')return false;
   if(!this.suggestionsSheet?.open)return true;

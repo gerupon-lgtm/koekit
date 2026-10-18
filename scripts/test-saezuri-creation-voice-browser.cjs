@@ -11,7 +11,7 @@ const base=process.env.SAEZURI_BASE||'http://127.0.0.1:8018';
  const report=async()=>{await click('report');return JSON.parse(await page.locator('#metrics').textContent());};
  const pending=async()=>{const r=await report();return r.captureEditing.editCandidate??r.captureCandidate;};
  const listen=word=>page.waitForFunction(word=>document.querySelector('#edit-voice-status').textContent==='声を受け付けています'&&window.recognizers.at(-1)?.grammar.includes(word),word);
- const say=async word=>{await page.evaluate(word=>window.recognizers.at(-1).events.result({result:{text:word}}),word);};
+ const say=async word=>{await page.waitForFunction(()=>document.querySelector('#edit-voice-status').textContent==='声を受け付けています');await page.evaluate(word=>window.recognizers.at(-1).events.result({result:{text:word}}),word);};
  await page.goto(base+'/probe/saezuri/');
  try{await click('home-create');}catch(error){console.error('startup state:',await page.evaluate(()=>({url:location.href,ready:document.readyState,title:document.title,body:document.body.innerText.slice(0,600)})));throw error;}
  await click('new-image');await page.locator('#edit-voice').check();await listen('ロック');
@@ -21,6 +21,7 @@ const base=process.env.SAEZURI_BASE||'http://127.0.0.1:8018';
  }
  const before=JSON.stringify((await pending()).accompaniment.imageArrangement);await say('別 の パターン');assert.notEqual(JSON.stringify((await pending()).accompaniment.imageArrangement),before);assert.equal((await report()).captureEditing.undoDepth,1);
  await say('もどす');assert.equal((await report()).captureEditing.pending,false);await say('別のパターン');await say('オッケー');assert.equal((await report()).captureEditing.pending,false);
+ await say('伴奏');assert.equal(await page.locator('#image-words').isVisible(),true);await say('進行 の おすすめ');await page.locator('#progression-suggestions').waitFor({state:'visible'});await say('とじる');await page.locator('#progression-suggestions').waitFor({state:'hidden'});await click('image-record-return');
  // Recording words outside a loop do not start playback or alter data.
  await say('ろくおん');await say('はなうた');assert.equal(await page.locator('#status').getAttribute('data-state'),'idle');
  await say('スタート');await page.waitForFunction(()=>document.querySelector('#status').dataset.state==='playing');await listen('録音');

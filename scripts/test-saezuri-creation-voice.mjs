@@ -6,6 +6,7 @@ import {DEFAULT_IMAGE} from '../saezuri/music/image-arrangement.js';
 test('every image word and category-qualified phrase selects exactly one field without colliding with existing commands',()=>{
  for(const [field,value,aliases] of IMAGE_VOICE_CHOICES)for(const alias of aliases){
   assert.deepEqual(parseCreationCommand(alias,{image:true}),{type:'image-choice',field,value});
+  assert.deepEqual(parseCreationCommand(alias,{image:true,backing:true}),{type:'image-choice',field,value},'the image choice also owns its words while the backing tab is active');
   assert.equal(parseEditCommand(alias),null);assert.equal(parseEntryCommand(alias),null);
  }
  for(const word of IMAGE_VOICE_WORDS){assert.equal(parseEditCommand(word),null,word);assert.equal(parseEntryCommand(word),null,word);assert.ok(parseCreationCommand(word,{manual:true,image:true}),word);}

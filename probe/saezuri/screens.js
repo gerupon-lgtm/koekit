@@ -1,9 +1,9 @@
-import {MelodyLearning} from './learning.js?v=v0.1.0-20261018110633-34954e3';
-import {emptySequence,keepPhrase,sequencePlayback,proposeSequence,commitSequence,undoPlacement} from './sequence-session.js?v=v0.1.0-20261018110633-34954e3';
-import {readCaptureReport} from './capture-report.js?v=v0.1.0-20261018110633-34954e3';
-import {setupPlaybackSheet} from './sheet-controls.js?v=v0.1.0-20261018110633-34954e3';
-import {PlacementWorkflow} from './placement-workflow.js?v=v0.1.0-20261018110633-34954e3';
-import {EndingWorkflow} from './ending-workflow.js?v=v0.1.0-20261018110633-34954e3';
+import {MelodyLearning} from './learning.js?v=v0.1.0-20261018120410-8ca67c2';
+import {emptySequence,keepPhrase,sequencePlayback,proposeSequence,commitSequence,undoPlacement} from './sequence-session.js?v=v0.1.0-20261018120410-8ca67c2';
+import {readCaptureReport} from './capture-report.js?v=v0.1.0-20261018120410-8ca67c2';
+import {setupPlaybackSheet} from './sheet-controls.js?v=v0.1.0-20261018120410-8ca67c2';
+import {PlacementWorkflow} from './placement-workflow.js?v=v0.1.0-20261018120410-8ca67c2';
+import {EndingWorkflow} from './ending-workflow.js?v=v0.1.0-20261018120410-8ca67c2';
 const $=id=>document.getElementById(id);
 const trialBuild=new URL(import.meta.url).searchParams.get('v')||'local-20261010';
 const trialVersion=trialBuild.match(/-(\d{14})-/)?.[1]||trialBuild;
@@ -149,7 +149,7 @@ export class MelodyScreens {
   const destination=document.querySelector(mode==='backing'?'#image-settings .image-more':'.keyboard-settings');
   if(destination&&$('image-settings-open'))destination.prepend($('image-settings-open'),$('image-suggest'));
   const genres=$('image-genre')?.closest('.composer-values');
-  if(genres&&$('backing-settings')){if(mode==='backing')$('image-settings').prepend(genres);else $('image-progression').closest('label').before(genres);}
+  if(genres&&$('backing-settings')){if(mode==='backing')(this.editor.previewPattern?.accompaniment?.imageChoice&&$('image-backing-detail')?$('image-backing-detail'):$('image-settings')).prepend(genres);else $('image-progression').closest('label').before(genres);}
   document.body.dataset.createMode=mode;for(const b of document.querySelectorAll('[data-mode]'))b.setAttribute('aria-pressed',String(b.dataset.mode===mode));
  }
  sync(phase) {

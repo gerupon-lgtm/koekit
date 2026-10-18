@@ -72,8 +72,8 @@ body.melody-app{background:#faf5ed;color:#443b36}
 .melody-app .composer-position-hint{font-size:11px;line-height:15px;margin:0 0 4px}
 .melody-app #creation-voice-hint{font-size:11px;line-height:15px;margin:0 0 4px}
 .melody-app #creation-displays{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:4px 0}
-.melody-app #creation-displays label{font-size:12px;gap:2px;min-width:0}
-.melody-app #creation-displays select{width:100%;min-height:44px;padding:4px 8px;font-size:14px}
+.melody-app #creation-displays label{display:flex;flex-direction:row;align-items:center;font-size:12px;gap:6px;min-width:0;white-space:nowrap}
+.melody-app #creation-displays select{width:100%;min-width:0;min-height:44px;padding:4px;font-size:14px}
 .melody-app #composition-cards{order:0;height:132px;overflow:auto;min-width:0;overscroll-behavior:contain}
 .melody-app #composition-cards .tutorial-card{opacity:1}
 .melody-app #composition-cards .tutorial-bar{border:0;border-radius:0;background:none}

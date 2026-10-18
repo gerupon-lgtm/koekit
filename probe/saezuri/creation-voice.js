@@ -1,5 +1,5 @@
-import {EDIT_WORDS,parseEditCommand} from './edit-voice.js?v=v0.1.0-20261018110633-34954e3';
-import {ENTRY_WORDS,parseEntryCommand} from './entry-voice.js?v=v0.1.0-20261018110633-34954e3';
+import {EDIT_WORDS,parseEditCommand} from './edit-voice.js?v=v0.1.0-20261018120410-8ca67c2';
+import {ENTRY_WORDS,parseEntryCommand} from './entry-voice.js?v=v0.1.0-20261018120410-8ca67c2';
 const normalize=text=>String(text).normalize('NFKC').replace(/\s/g,'').replace(/[ァ-ヶ]/g,c=>String.fromCharCode(c.charCodeAt(0)-0x60)).toLowerCase();
 // Exact phrases only. Never use a fragment such as 次 for regeneration.
 export const IMAGE_VOICE_CHOICES=[
@@ -30,7 +30,7 @@ export const LOOP_VOICE_PROFILE={words:[...STOP_VOICE_PROFILE.words,'鼻歌','�
  const phrase=transportPhrases.find(p=>['loop-stop','record-standby'].includes(p.command.type)&&normalize(p.word)===normalize(raw));return phrase?{...phrase.command}:null;
 }};
 export function parseCreationCommand(raw,{manual=false,image=false,backing=false}={}){
- const word=normalize(raw),phrase=[...transportPhrases,...backingPhrases,...(backing?backingChoices:[]),...(image?imagePhrases:[])].find(p=>normalize(p.word)===word);
+ const word=normalize(raw),phrase=[...transportPhrases,...backingPhrases,...(image?imagePhrases:[]),...(backing?backingChoices:[])].find(p=>normalize(p.word)===word);
  return phrase?{...phrase.command}:manual?parseEntryCommand(raw):parseEditCommand(raw);
 }
 // Stable profiles avoid restarting the recognizer on every render or selection.

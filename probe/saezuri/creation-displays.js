@@ -1,4 +1,4 @@
-import {renderTutorialView,highlightTutorialView} from './tutorial-view.js?v=v0.1.0-20261018110633-34954e3';
+import {renderTutorialView,highlightTutorialView} from './tutorial-view.js?v=v0.1.0-20261018120410-8ca67c2';
 const $=id=>document.getElementById(id),storageKey='saezuri.creationDisplays.v1';
 
 // Display preferences never enter the song, candidate, cursor or undo history.
@@ -8,7 +8,7 @@ export class CreationDisplays{
   try{saved=JSON.parse(localStorage.getItem(storageKey));}catch{}
   this.note=saved?.note==='cards'?'cards':'score';this.input=saved?.input==='cards'?'cards':'keyboard';
   this.row=document.createElement('div');this.row.id='creation-displays';
-  this.row.innerHTML='<label>ノート表示<select id="creation-note-display"><option value="cards">カード</option><option value="score">五線譜</option></select></label><label>入力表示<select id="creation-input-display"><option value="cards">カード</option><option value="keyboard">鍵盤</option></select></label>';
+  this.row.innerHTML='<label>見る<select id="creation-note-display" aria-label="ノート表示"><option value="cards">カード</option><option value="score">五線譜</option></select></label><label>入力<select id="creation-input-display" aria-label="入力表示"><option value="cards">カード</option><option value="keyboard">鍵盤</option></select></label>';
   $('creation-tabs').after(this.row);
   this.cards=document.createElement('div');this.cards.id='composition-cards';this.cards.setAttribute('aria-label','メロディーのカード');$('capture-score').before(this.cards);
   this.voiceHint=document.createElement('p');this.voiceHint.id='creation-voice-hint';this.voiceHint.textContent='声：「きく」「もういちど」で聴く。';document.querySelector('.listen-actions').after(this.voiceHint);
@@ -26,6 +26,9 @@ export class CreationDisplays{
  }
  render(phase){
   this.phase=phase;const learning=this.shell.learning?.active,pattern=this.editor.previewPattern;
+  const imageReady=!!pattern?.accompaniment?.imageChoice&&!this.editor.imageCandidate&&!learning;
+  if(imageReady&&!this.imageReady){this.input='keyboard';this.apply();}
+  this.imageReady=imageReady;
   this.syncVoice();
   document.body.dataset.entryPending=String(!!this.editor.entry);
   this.row.hidden=learning||!this.editor.isOpen||this.shell.screen!=='create';

@@ -11,3 +11,30 @@
 #image-audition[hidden]{display:none}
 .melody-app.image-empty .edit-toolbar{display:none}
 @media(min-width:650px){.melody-app.editor-focus #image-audition{grid-column:1;grid-row:4}.melody-app.image-mode .edit-toolbar{grid-row:5}}
+
+/* Choose the backing once, then keep the recording surface free of setup. */
+#image-flow-heading{display:flex;align-items:center;justify-content:space-between;gap:8px;font-weight:700;font-size:15px;margin:6px 0}
+.melody-app.editor-focus #image-record-return{font-size:12px;min-height:44px;margin:0;padding:6px 10px;flex-shrink:0}
+#image-flow-heading[hidden],#image-adopted-summary[hidden],#image-edit-tools[hidden],#image-backing-detail[hidden]{display:none}
+.melody-app #image-backing-detail{padding:0;margin:0;border:0}
+.melody-app #image-backing-detail>summary,.melody-app #image-edit-tools>summary{min-height:44px;line-height:28px;padding:8px;font-size:13px;cursor:pointer;box-sizing:border-box}
+.melody-app #image-edit-tools{order:5;margin:8px 0;border-top:1px solid #ddd4c5}
+.melody-app #image-edit-tools #creation-tabs{margin:8px 0}
+.melody-app #image-edit-tools #creation-displays{margin:8px 0}
+.melody-app #image-adopted-summary{font-size:12px;align-self:center;line-height:1.4}
+.melody-app.editor-focus.image-mode #edit-workspace{padding-top:4px}
+.melody-app.image-performing #phrase-shape{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+.melody-app.image-performing #phrase-shape>label{display:none}
+.melody-app.image-choosing #live-keyboard,.melody-app.image-empty #capture-score,.melody-app.image-empty #composition-cards{display:none}
+.melody-app.image-performing:not([data-create-mode=backing]) #image-chords{display:none}
+.melody-app.image-performing #capture-score{height:112px;min-height:112px}
+.melody-app.editor-focus.image-performing #capture-score svg{height:108px;width:100%;display:block}
+.melody-app.image-performing #composition-cards{height:112px}
+@media(min-width:650px){
+ .melody-app.editor-focus.image-mode #image-edit-tools{grid-column:1/-1;grid-row:auto}
+ .melody-app.editor-focus.image-choosing #image-settings{grid-column:1;grid-row:1}
+ .melody-app.editor-focus.image-choosing #image-audition{grid-column:2;grid-row:1}
+ .melody-app.editor-focus.image-choosing #image-chords{grid-column:1/-1;grid-row:2}
+ .melody-app.editor-focus.image-performing #capture-score,.melody-app.editor-focus.image-performing #composition-cards{grid-column:1;grid-row:1;height:180px;min-height:112px}
+ .melody-app.editor-focus.image-performing #capture-score svg{height:176px}
+}
