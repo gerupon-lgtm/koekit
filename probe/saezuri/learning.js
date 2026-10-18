@@ -80,13 +80,13 @@ export class MelodyLearning {
    if(command.action==='close'){this.preview.close();return true;}
    if(this.shell.busy)return true;
    if(command.action==='next'){this.preview.close();this.next();}
-   if(command.action==='model')this.preview.openNow?this.preview.play():this.audition(true);
-   if(command.action==='backing'){$('learning-backing').click();}
+   if(command.action==='model'){this.preview.close();this.audition(true);}
+   if(command.action==='backing'&&this.stage===7){this.preview.close();$('learning-backing').click();}
    return true;
   }
   if(command?.type==='loop-stop'){if(this.preview.openNow)this.preview.stop();else this.shell.onStop();return true;}
   if(this.shell.busy)return true;
-  if(command==='preview'){this.preview.openNow?this.preview.play():this.audition();return true;}
+  if(command==='preview'){this.preview.close();this.audition(this.stage===0);return true;}
   if(command==='next'&&this.currentGuide().done){this.preview.close();this.next();return true;}
   if(this.preview.openNow){if(command==='confirm'){this.preview.close();this.shell.editor.command('confirm');}return true;}
   return false;

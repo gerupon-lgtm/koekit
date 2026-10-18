@@ -5,7 +5,8 @@ const base=process.env.SAEZURI_BASE||'http://127.0.0.1:8000';
  const browser=await chromium.launch({channel:'chrome',headless:true,args:['--autoplay-policy=no-user-gesture-required']});
  try{
   const page=await browser.newPage({viewport:{width:390,height:640},hasTouch:true}),errors=[];page.on('pageerror',e=>errors.push(e.message));
-  await page.goto(base+'/probe/saezuri/');await page.locator('html[data-app-ui-ready]').waitFor();
+  // The shared component gets its own host; the full app now owns another instance.
+  await page.goto(base+'/probe/saezuri/?view=editor');await page.locator('html[data-app-ui-ready]').waitFor();await page.evaluate(()=>document.body.classList.add('melody-app'));
   const timing=await page.evaluate(async()=>{
    const {ProbeTransport}=await import('./audio.js');const ctx=new AudioContext();await ctx.resume();
    const starts=[],oscillators=[],buffer=ctx.createBufferSource.bind(ctx),oscillator=ctx.createOscillator.bind(ctx);
