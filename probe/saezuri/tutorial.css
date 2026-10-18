@@ -7,7 +7,7 @@
 .tutorial-length{font-size:.75rem;line-height:16px}
 .tutorial-view .is-rest{background:#e5eae4}
 .tutorial-view .tutorial-card[aria-pressed="true"]{outline:2px solid #8b6d32;outline-offset:-2px}
-.tutorial-view .tutorial-card[data-playing],.melody-app.editor-focus .tutorial-view button.tutorial-card[data-playing]{background:#ff3b91;color:#302033;outline:2px solid #ff3b91;outline-offset:-2px}
+.tutorial-view .tutorial-card[data-playing],.melody-app.editor-focus .tutorial-view button.tutorial-card[data-playing]{background:#ffe34d;color:#27221e;font-weight:700;outline:3px solid #5b4312;outline-offset:-3px}
 .tutorial-staff{display:none;width:100%;height:76px;color:#514479;overflow:visible}
 .tutorial-view[data-display="score"] .tutorial-staff{display:block}
 .tutorial-view[data-display="score"] .tutorial-cards,.tutorial-view[data-display="score"] .tutorial-bar-heading{display:none}
