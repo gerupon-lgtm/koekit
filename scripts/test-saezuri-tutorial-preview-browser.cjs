@@ -36,6 +36,7 @@ const base=process.env.SAEZURI_BASE||'http://127.0.0.1:8000';
     const bounds=await page.locator('#learning-preview').evaluate(n=>{const b=n.getBoundingClientRect();return {top:b.top,bottom:b.bottom,width:b.width,height:b.height,scrollWidth:n.scrollWidth,clientWidth:n.clientWidth};});
     assert.ok(bounds.top>=0&&bounds.bottom<=height+1,`${width}x${height}/${mode} fits`);assert.ok(bounds.scrollWidth<=bounds.clientWidth+1);
     assert.equal(await page.locator('#learning-preview .tutorial-bar:visible').count(),4);
+    const last=await page.locator('#learning-preview .tutorial-bar').last().boundingBox(),footer=await page.locator('#learning-preview .sheet-stop').boundingBox();assert.ok(last.y+last.height<=footer.y+1,'all four bars visible above audition actions');
     layout.push({width,height,mode,dialogHeight:bounds.height});
    }
   }

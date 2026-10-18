@@ -1,5 +1,5 @@
-import {spellPitch} from './key-signature.js?v=v0.1.0-20261018023617-9fb21c5';
-import {harmonicSegments} from '../../saezuri/music/accompaniment.js?v=v0.1.0-20261018023617-9fb21c5';
+import {spellPitch} from './key-signature.js?v=v0.1.0-20261018031532-dbed0a8';
+import {harmonicSegments} from '../../saezuri/music/accompaniment.js?v=v0.1.0-20261018031532-dbed0a8';
 
 const names=['ド','ド♯','レ','レ♯','ミ','ファ','ファ♯','ソ','ソ♯','ラ','ラ♯','シ'];
 const roots=['C','C♯','D','E♭','E','F','F♯','G','A♭','A','B♭','B'];
@@ -46,7 +46,8 @@ export function renderTutorialView(container,pattern,{display='cards',selectedId
    const x=left+(event.startTick%16)/16*span,y=event.midi===null?42:yFor(event.midi);
    const group=timed(svg('g',{class:'tutorial-note-shape'}),event);group.append(svg('title',{},`${label} ${beats}拍${event.tieIn?'・前の小節から続く':event.tieOut?'・次の小節へ続く':''}`));
    group.append(svg('rect',{x:x-10,y:y-27,width:22,height:39,rx:11,class:'note-playback-halo','aria-hidden':'true'}));
-   if(event.noteId===selectedId)group.classList.add('is-selected');
+   if(event.noteId&&event.noteId===selectedId)group.classList.add('is-selected');
+   group.append(svg('rect',{x:x-13,y:y-28,width:28,height:44,rx:8,class:'learning-target-halo','aria-hidden':'true'}),svg('text',{x:x+13,y:y-19,'font-size':10,class:'learning-target-label','aria-hidden':'true'},'◀ここ'));
    if(onSelect&&event.noteId){group.setAttribute('role','button');group.setAttribute('tabindex','0');group.setAttribute('aria-label',`${label} ${beats}拍を選ぶ`);group.addEventListener('click',()=>onSelect(event.noteId));group.addEventListener('keydown',e=>{if(['Enter',' '].includes(e.key)){e.preventDefault();onSelect(event.noteId);}});}
    if(event.midi===null)group.append(svg('text',{x:x-4,y:50,'font-size':25,'font-family':'Segoe UI Symbol,serif'},event.durationTick===2?'𝄾':event.durationTick===4?'𝄽':event.durationTick>=16?'𝄻':'𝄼'));
    else{

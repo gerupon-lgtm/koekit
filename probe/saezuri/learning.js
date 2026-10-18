@@ -1,9 +1,10 @@
-import {blankPattern} from './entry-session.js?v=v0.1.0-20261018023617-9fb21c5';
-import {practicePhrases,practicePhrase} from './learning-data.js?v=v0.1.0-20261018023617-9fb21c5';
-import {lessonGuide,lessonFingerprint,LESSON_TITLES,LESSON_RANGES} from './tutorial-guide.js?v=v0.1.0-20261018023617-9fb21c5';
-import {tutorialPattern,tutorialExcerpt,TUTORIAL_TEMPO} from './tutorial-data.js?v=v0.1.0-20261018023617-9fb21c5';
-import {TutorialPreview} from './tutorial-preview.js?v=v0.1.0-20261018023617-9fb21c5';
-import {renderTutorialView} from './tutorial-view.js?v=v0.1.0-20261018023617-9fb21c5';
+import {inputSteps} from './input-help.js?v=v0.1.0-20261018031532-dbed0a8';
+import {blankPattern} from './entry-session.js?v=v0.1.0-20261018031532-dbed0a8';
+import {practicePhrases,practicePhrase} from './learning-data.js?v=v0.1.0-20261018031532-dbed0a8';
+import {lessonGuide,lessonFingerprint,LESSON_TITLES,LESSON_RANGES} from './tutorial-guide.js?v=v0.1.0-20261018031532-dbed0a8';
+import {tutorialPattern,tutorialExcerpt,TUTORIAL_TEMPO} from './tutorial-data.js?v=v0.1.0-20261018031532-dbed0a8';
+import {TutorialPreview} from './tutorial-preview.js?v=v0.1.0-20261018031532-dbed0a8';
+import {renderTutorialView} from './tutorial-view.js?v=v0.1.0-20261018031532-dbed0a8';
 const $=id=>document.getElementById(id);
 export class MelodyLearning {
  constructor(shell){
@@ -31,15 +32,16 @@ export class MelodyLearning {
    row.append(listen,edit);card.append(title,desc,row);$('practice-list').append(card);
   }
   const guide=document.createElement('aside');guide.id='learning-guide';guide.hidden=true;guide.setAttribute('aria-label','おてほんの案内');
-  guide.innerHTML='<div class="learning-heading"><strong id="learning-step"></strong><button id="learning-close">案内をとじる</button></div><div role="status" aria-live="polite" aria-atomic="true"><strong id="learning-action"></strong><p id="learning-message"></p></div><div class="learning-guide-actions"><button id="learning-model">おてほんを聴く</button><button id="learning-next" hidden>つぎへ</button></div><button id="learning-cancel" hidden>とりけす</button><button id="learning-position" hidden>つぎの場所へ</button><button id="learning-backing" hidden>おてほんの伴奏をつける</button>';
+  guide.innerHTML='<div class="learning-heading"><strong id="learning-step"></strong><button id="learning-close">案内をとじる</button></div><div role="status" aria-live="polite" aria-atomic="true"><strong id="learning-action"></strong><p id="learning-message"></p></div><div id="learning-input-rule"><strong>音は、この順番で置くよ</strong>' + inputSteps + '<p>声なら「ド いっぱく」→「オッケー」。声 ON にして、受付の表示を待とう。</p></div><div id="learning-transition" hidden><small id="learning-next-label"></small><div class="learning-guide-actions"><button id="learning-model">おてほんを聴く</button><button id="learning-next" hidden>つぎへ</button></div></div><button id="learning-cancel" hidden>とりけす</button><button id="learning-position" hidden>つぎの場所へ</button><button id="learning-backing" hidden>おてほんの伴奏をつける</button>';
   $('creation-tabs').before(guide);guide.querySelector('.learning-heading').insertBefore(guide.querySelector('#learning-model'),guide.querySelector('#learning-close'));
   const reopen=document.createElement('button');reopen.id='learning-reopen';reopen.textContent='案内をひらく';reopen.hidden=true;guide.after(reopen);
   const workspace=document.createElement('section');workspace.id='learning-workspace';workspace.hidden=true;
-  workspace.innerHTML='<div class="learning-view-heading"><div class="tutorial-display-switch" role="group" aria-label="メロディーの表示"><button data-learning-view="cards">カード</button><button data-learning-view="score">五線譜</button></div><button id="learning-voice" aria-pressed="false">声 OFF</button></div><div id="learning-melody"></div><div id="learning-length-edit"><span>選んだ音の長さ</span><button data-lesson-length="4">1ぱく</button><button data-lesson-length="8">2はく</button></div>';
+  workspace.innerHTML='<div class="learning-view-heading"><div class="tutorial-display-switch" role="group" aria-label="メロディーの表示"><button data-learning-view="cards">カード</button><button data-learning-view="score">五線譜</button></div><button id="learning-how" aria-label="音の置き方と声の使い方">？</button><button id="learning-voice" aria-pressed="false">声 OFF</button></div><div id="learning-melody"></div><div id="learning-length-edit"><span>選んだ音の長さ</span><button data-lesson-length="4">1ぱく</button><button data-lesson-length="8">2はく</button></div>';
   $('capture-score').before(workspace);
   this.preview=new TutorialPreview({onPlay:data=>shell.onTutorialPlay(data),onStop:()=>shell.onStop(),onNavigate:()=>shell.onNavigate(),onDisplay:display=>{this.display=display;this.sync(shell.phase);}});this.display='cards';
   for(const b of workspace.querySelectorAll('[data-learning-view]'))b.onclick=()=>{this.display=b.dataset.learningView;this.preview.setDisplay(this.display);this.sync(shell.phase);};
   for(const b of workspace.querySelectorAll('[data-lesson-length]'))b.onclick=()=>shell.editor.changeNoteLength(Number(b.dataset.lessonLength));
+  $('learning-how').onclick=()=>$('composer-help').click();
   $('learning-voice').onclick=()=>{const enabled=!$('edit-voice').checked;if(enabled&&$('mic').getAttribute('aria-pressed')!=='true')$('mic').click();$('edit-voice').checked=enabled;$('edit-voice').dispatchEvent(new Event('change'));this.sync(shell.phase);};
   $('learning-close').onclick=()=>{this.guideHidden=true;this.sync(shell.phase);};
   reopen.onclick=()=>{this.guideHidden=false;this.sync(shell.phase);};
@@ -102,7 +104,10 @@ export class MelodyLearning {
   document.body.classList.toggle('learning-active',show);document.body.classList.toggle('learning-guide-hidden',show&&this.guideHidden);this.clearHighlight();if(!show)return;
   const guide=this.currentGuide();this.guide=guide;$('learning-guide').dataset.stage=this.stage;$('learning-guide').dataset.kind=guide.kind;document.body.dataset.learningKind=guide.kind;
   $('learning-step').textContent=`${this.stage+1} / 8・${LESSON_TITLES[this.stage]}`;$('learning-action').textContent=guide.action;$('learning-message').textContent=guide.text;
-  $('learning-next').hidden=!guide.done;$('learning-next').textContent=this.stage===0?'つくってみよう':this.stage===7?'おためしをアレンジ':'つぎへ';
+  $('learning-next').hidden=!guide.done;$('learning-next').textContent=this.stage===0?'つくってみよう →':this.stage===7?'おためしを アレンジ →':`つぎへ：${LESSON_TITLES[this.stage+1]} →`;
+  $('learning-transition').hidden=!guide.done;$('learning-next-label').textContent=this.stage===7?'8つのれんしゅうが できました！':'このれんしゅうは おわり。つぎは…';
+  $('learning-input-rule').hidden=this.stage!==0;
+  $('learning-how').disabled=this.shell.busy;
   $('learning-model').textContent='♪ おてほん';$('learning-model').setAttribute('aria-label','おてほんを聴く');
   $('learning-cancel').hidden=guide.kind!=='recover'||!editor.pending;
   $('learning-position').hidden=guide.kind!=='position';$('learning-backing').hidden=guide.kind!=='backing';
@@ -114,8 +119,13 @@ export class MelodyLearning {
   (this.stage===0?$('learning-guide'):document.querySelector('.learning-view-heading')).append($('learning-voice'));
   $('learning-voice').textContent=$('edit-voice').checked&&$('mic').getAttribute('aria-pressed')==='true'?'声 ON':'声 OFF';$('learning-voice').setAttribute('aria-pressed',String($('edit-voice').checked));
   for(const b of $('learning-workspace').querySelectorAll('[data-learning-view]'))b.setAttribute('aria-pressed',String(b.dataset.learningView===this.display));
-  const pattern=editor.previewPattern,selected=pattern.notes.find(n=>n.id===editor.selectedNoteId),focus=guide.mode==='edit'?selected?.startTick:editor.cursor;
+  const pattern=editor.previewPattern,selected=pattern.notes.find(n=>n.id===editor.selectedNoteId),focus=guide.noteId?pattern.notes.find(n=>n.id===guide.noteId)?.startTick:guide.mode==='edit'?selected?.startTick:editor.cursor;
   renderTutorialView($('learning-melody'),pattern,{display:this.display,barStart:Math.min(3,Math.floor((focus??0)/16)),barCount:1,selectedId:editor.selectedNoteId,onSelect:id=>{if(!this.shell.busy&&!editor.entry){const index=pattern.notes.findIndex(n=>n.id===id);editor.command(`select:${index+1}`);}}});
-  if(guide.target&&!this.shell.busy&&this.shell.screen==='create')document.querySelector(guide.target)?.setAttribute('data-learning-target','');
+  if(guide.target&&!this.shell.busy&&this.shell.screen==='create'){
+   for(const node of document.querySelectorAll(guide.target)){
+    if(guide.noteId&&node.dataset.noteId!==guide.noteId)continue;
+    if(node.getClientRects().length)node.setAttribute('data-learning-target','');
+   }
+  }
  }
 }

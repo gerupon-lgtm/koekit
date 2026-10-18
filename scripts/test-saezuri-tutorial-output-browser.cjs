@@ -15,7 +15,7 @@ const base=process.env.SAEZURI_BASE||'http://127.0.0.1:8026';
  await page.evaluate(async()=>{const url=performance.getEntriesByType('resource').find(r=>/\/audio\.js\?/.test(r.name)).name;const {ProbeTransport}=await import(url),start=ProbeTransport.prototype.start;ProbeTransport.prototype.start=function(notes,options){const result=start.call(this,notes,options);window.audioTake={ctx:this.ctx,transport:this,notes,options,anchor:this.anchor,countAnchor:this.countAnchor};return result;};});
  const results=[];
  for(let pass=0;pass<2;pass++){
-  if(!pass)await page.locator('#learning-model').click();else await page.locator('#learning-preview-melody').click();
+  if(!pass)await page.locator('#learning-model').click();else {await page.locator('#learning-preview-sound').selectOption('melody');await page.locator('#learning-preview-play').click();}
   await page.waitForFunction(()=>document.querySelector('#learning-preview').dataset.phase==='count-in');await page.evaluate(()=>{const until=performance.now()+700;while(performance.now()<until){}});await page.waitForFunction(()=>document.querySelector('#learning-preview').dataset.phase==='music');
   await page.evaluate(()=>{const until=performance.now()+700;while(performance.now()<until){}});
   await page.waitForFunction(()=>document.querySelector('#learning-preview').dataset.phase==='idle',null,{timeout:18000});

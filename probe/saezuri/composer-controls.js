@@ -1,15 +1,16 @@
+import {createInputHelp} from './input-help.js?v=v0.1.0-20261018031532-dbed0a8';
 const names=['ド','レ','ミ','ファ','ソ','ラ','シ'];
 const pitches=[0,2,4,5,7,9,11];
 const lengthLabel=value=>{const whole=Math.floor(value);return value%1?whole?`${whole}拍半`:'半拍':`${whole}拍`;};
 const noteIcon=value=>`<svg viewBox="0 0 32 40" aria-hidden="true" focusable="false"><ellipse cx="${value===4?16:11}" cy="30" rx="7" ry="4.5" transform="rotate(-20 ${value===4?16:11} 30)" fill="${value>=2?'none':'currentColor'}" stroke="currentColor" stroke-width="2"/>${value===4?'':'<path d="M18 29V6" fill="none" stroke="currentColor" stroke-width="2"/>'}${value===1.5?'<circle cx="25" cy="28" r="2" fill="currentColor"/>':''}${value===.5?'<path d="M18 6c0 7 13 8 6 17 1-7-5-7-6-11" fill="currentColor"/>':''}</svg>`;
 export class ComposerControls {
-  constructor({editor,onNew}) {
+  constructor({editor,onNew,onPitch=()=>{},onNavigate=()=>{}}) {
     this.editor=editor;
     const source=document.querySelector('.source-actions');
     if(!source) return;
     const create=document.createElement('button');create.id='new-manual';create.textContent='じゆうにつくる（空の4小節）';source.prepend(create);create.onclick=onNew;
     const panel=document.createElement('div');panel.id='composer-panel';panel.hidden=true;
-    panel.innerHTML=`<button id="composer-position" type="button" aria-controls="composer-location" aria-expanded="false"></button>
+    panel.innerHTML=`<button id="composer-help" type="button">音の置き方・声の使い方</button><button id="composer-position" type="button" aria-controls="composer-location" aria-expanded="false"></button>
       <details><summary>入力する位置・小節数・キー</summary>
        <label>表示<select id="composer-view"><option value="both">譜面とカード</option><option value="score">譜面</option><option value="blocks">カード</option></select></label>
        <label>小節 <select id="composer-bar"></select></label><div id="composer-beats" aria-label="入力位置"></div>
@@ -19,13 +20,14 @@ export class ComposerControls {
       </details>
       <div class="composer-values"><label>高さ<select id="composer-octave"><option value="0">ふつう</option><option value="1">うえ</option><option value="2">うえうえ（ド）</option></select></label>
        <label class="duration-number">長さ（拍）<input id="composer-duration" type="number" min="0.5" max="32" step="0.5" value="1"></label></div>
-      <div id="composer-keys" aria-label="音の候補を作る"></div>
-      <fieldset id="composer-lengths"><legend>音の長さ</legend><div id="composer-length-buttons"></div><details id="composer-other-lengths"><summary>ほかの長さ</summary><label>長さ<select id="composer-other-duration"></select></label></details></fieldset>
+      <fieldset id="composer-lengths"><legend>① 音の長さ</legend><div id="composer-length-buttons"></div><details id="composer-other-lengths"><summary>ほかの長さ</summary><label>長さ<select id="composer-other-duration"></select></label></details></fieldset>
+      <div id="composer-keys" aria-label="② 音の高さをえらぶ"></div>
       <label class="composer-replace"><input id="composer-replace" type="checkbox">選んだ音を置き換える</label>
       <p id="composer-candidate" role="status">音または休符を選んで、オッケーで置きます。</p><p class="composer-voice-hint">声でも「ド1」「うえミ2」「やすみ はんぱく」→「オッケー」</p>`;
     document.querySelector('.listen-actions').before(panel);
     this.panel=panel;this.create=create;
     this.$=id=>document.getElementById(`composer-${id}`);
+    const help=createInputHelp();this.$('help').onclick=()=>{help.showModal();onNavigate();};help.addEventListener('close',onNavigate);
     const position=document.createElement('div');position.id='composer-position-controls';
     position.innerHTML='<div class="composer-position-row"><button id="composer-position-previous" type="button" aria-label="入力位置を半拍前へ">← 半拍</button><div></div><button id="composer-position-next" type="button" aria-label="入力位置を半拍先へ">半拍 →</button></div><details id="composer-location"><summary>小節と拍をえらぶ</summary></details><p class="composer-position-hint">オッケーで次へ。場所は中央でえらべます。</p>';
     position.querySelector('.composer-position-row>div').append(this.$('position'));
@@ -36,8 +38,11 @@ export class ComposerControls {
     for(const [name,step] of [['previous',-1],['next',1]])this.$(`position-${name}`).onclick=()=>{if(!this.busy&&!editor.pending)editor.moveCursor(editor.cursor+step*editor.previewPattern.gridStep);};
     for(const [i,name] of [...names,'やすみ'].entries()) {
       const b=document.createElement('button');b.type='button';b.textContent=name;b.dataset.pitch=String(i);this.$('keys').append(b);
-      b.onclick=()=>editor.inputNote({midi:i===7?null:60+Number(this.$('octave').value)*12+pitches[i],durationTick:Number(this.$('duration').value)*4,
-        ...(this.$('replace').checked?{replaceNoteId:editor.selectedNoteId}:{} )});
+      b.onclick=()=>{
+       const midi=i===7?null:60+Number(this.$('octave').value)*12+pitches[i];
+       editor.inputNote({midi,durationTick:Number(this.$('duration').value)*4,...(this.$('replace').checked?{replaceNoteId:editor.selectedNoteId}:{})});
+       if(editor.entry?.input.midi===midi)onPitch(midi);
+      };
     }
     this.$('duration').onchange=()=>{if(editor.entry) editor.inputNote({...editor.entry.input,durationTick:Number(this.$('duration').value)*4});else this.render(this.busy);};
     const chooseLength=value=>{if(this.busy||editor.pending&&!editor.entry)return;this.$('duration').value=value;this.$('duration').dispatchEvent(new Event('change'));};

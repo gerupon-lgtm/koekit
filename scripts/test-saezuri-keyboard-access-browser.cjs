@@ -5,7 +5,7 @@ const base=process.env.SAEZURI_BASE||'http://127.0.0.1:8020';
  try{
   const context=await browser.newContext({viewport:{width:390,height:760},serviceWorkers:'block'}),page=await context.newPage(),errors=[];
   page.on('pageerror',error=>{errors.push(error.message);console.error(error.message);});
-  await page.addInitScript(()=>{window.voices=[];const make=AudioContext.prototype.createOscillator;AudioContext.prototype.createOscillator=function(){const node=make.call(this),voice={ended:false};window.voices.push(voice);node.addEventListener('ended',()=>voice.ended=true);return node;};});
+  await page.addInitScript(()=>{window.voices=[];const make=AudioContext.prototype.createOscillator;AudioContext.prototype.createOscillator=function(){const node=make.call(this),voice={ended:false};const set=node.frequency.setValueAtTime.bind(node.frequency);node.frequency.setValueAtTime=(value,time)=>{voice.frequency=value;return set(value,time);};window.voices.push(voice);node.addEventListener('ended',()=>voice.ended=true);return node;};});
   const click=id=>page.locator('#'+id).click();
   const report=async()=>{await page.locator('#report').evaluate(n=>n.click());return JSON.parse(await page.locator('#metrics').textContent());};
   await page.goto(base+'/probe/saezuri/');await click('home-create');await click('new-image');
@@ -21,7 +21,7 @@ const base=process.env.SAEZURI_BASE||'http://127.0.0.1:8020';
   await click('image-next');await click('capture-edit-confirm');assert.equal(await page.locator('#image-words').isVisible(),false);
   const beforeTone=(await report()).captureEditing;await page.locator('#instrument').selectOption('sine');assert.deepEqual((await report()).captureEditing,beforeTone,'front tone selection changes no notes or edit history');
   const key=page.locator('#piano-keys [data-midi="60"]');await key.scrollIntoViewIfNeeded();const box=await key.boundingBox();await page.mouse.move(box.x+box.width/2,box.y+box.height-10);await page.mouse.down();await page.waitForTimeout(180);
-  assert.equal(await page.evaluate(()=>voices.filter(voice=>!voice.ended).length),1,'practice uses the selected sine tone');await page.mouse.up();await page.waitForFunction(()=>voices.every(voice=>voice.ended));
+  assert.equal(await page.evaluate(()=>voices.filter(voice=>!voice.ended).length),1,'practice uses the selected sine tone');assert.ok(Math.abs(await page.evaluate(()=>voices.find(voice=>!voice.ended).frequency)-440*2**((60-69)/12))<.01,'normal keyboard plays the indicated C');await page.mouse.up();await page.waitForFunction(()=>voices.every(voice=>voice.ended));
   await click('backing-loop');await page.waitForFunction(()=>document.querySelector('#status').dataset.state==='playing');
   assert.equal(await page.locator('#instrument').isDisabled(),true);assert.equal(await page.locator('#image-words').isVisible(),false);assert.equal(await page.locator('#image-choice-reopen').isDisabled(),true);await click('stop');assert.equal(await page.locator('#instrument').isEnabled(),true);
   await click('screen-settings');assert.equal(await page.locator('#melody-settings #instrument').count(),1);await page.locator('#instrument').selectOption('strings');await click('settings-close');await page.locator('#keyboard-instrument #instrument').waitFor({state:'visible'});assert.equal(await page.locator('#keyboard-instrument #instrument').count(),1);

@@ -1,11 +1,11 @@
-import { openEditSession, stageEdit, stageDuration, selectEditNote, confirmEditSession, cancelEditSession, undoEditSession, hasDraftChanges } from './edit-session.js?v=v0.1.0-20261018023617-9fb21c5';
-import {canGenerateAccompaniment,stageAccompanimentCandidate} from './edit-session.js?v=v0.1.0-20261018023617-9fb21c5';
-import { analyzeFrames, quantizeSegments } from './analyzer.js?v=v0.1.0-20261018023617-9fb21c5';
-import { decodePitchTrace } from './analysis-comparison.js?v=v0.1.0-20261018023617-9fb21c5';
-import { pitchName } from './score.js?v=v0.1.0-20261018023617-9fb21c5';
-import { orderedNotes, selectionTarget } from './note-selection.js?v=v0.1.0-20261018023617-9fb21c5';
-import {proposeEntry,confirmEntry,cancelEntry,moveEntryCursor,entryPreview} from './entry-session.js?v=v0.1.0-20261018023617-9fb21c5';
-import {songCheckpoint,restoreCheckpoint} from './song-session.js?v=v0.1.0-20261018023617-9fb21c5';
+import { openEditSession, stageEdit, stageDuration, selectEditNote, confirmEditSession, cancelEditSession, undoEditSession, hasDraftChanges } from './edit-session.js?v=v0.1.0-20261018031532-dbed0a8';
+import {canGenerateAccompaniment,stageAccompanimentCandidate} from './edit-session.js?v=v0.1.0-20261018031532-dbed0a8';
+import { analyzeFrames, quantizeSegments } from './analyzer.js?v=v0.1.0-20261018031532-dbed0a8';
+import { decodePitchTrace } from './analysis-comparison.js?v=v0.1.0-20261018031532-dbed0a8';
+import {registerLabel as pitchName} from './pitch-label.js?v=v0.1.0-20261018031532-dbed0a8';
+import { orderedNotes, selectionTarget } from './note-selection.js?v=v0.1.0-20261018031532-dbed0a8';
+import {proposeEntry,confirmEntry,cancelEntry,moveEntryCursor,entryPreview} from './entry-session.js?v=v0.1.0-20261018031532-dbed0a8';
+import {songCheckpoint,restoreCheckpoint} from './song-session.js?v=v0.1.0-20261018031532-dbed0a8';
 
 const clone = value => value == null ? value : structuredClone(value);
 const labels = { current: '現在の設定', detail: '細かい変化', unsmoothed: 'ならしなし' };
@@ -27,8 +27,8 @@ const messages = {
 // Original diagnostics stay immutable. Each source owns a working melody and
 // session history; only explicit confirmation updates the main melody.
 export class CaptureEditorView {
-  constructor({ onChange } = {}) {
-    this.onChange = onChange;
+  constructor({ onChange,onPitch=()=>{} } = {}) {
+    this.onChange = onChange;this.onPitch=onPitch;
     this._variants = new Map();
     this._variant = 'current';
     this._busy = false;
@@ -268,6 +268,7 @@ export class CaptureEditorView {
     this._active.session=next;
     this._emit(false);
     this._revealSelection(true);
+    this.onPitch(this.previewPattern.notes.find(n=>n.id===noteId)?.midi);
   }
 
   command(command) {
@@ -303,6 +304,7 @@ export class CaptureEditorView {
       ? '仮に消しました。その場所は休符になります。「もどす」で戻せます。確認してからオッケー。'
       : '仮の変更です。ほかの音も直せます。「流れを聴く」で確認してからオッケー。');
     this._emit(false);
+    if(command.type==='replace'&&Number.isFinite(command.midi))this.onPitch(command.midi);
   }
 
   _propose(type) {

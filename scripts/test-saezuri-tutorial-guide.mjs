@@ -50,3 +50,11 @@ test('Undo recovery can be explicitly confirmed before continuing',()=>{
  const e=make(3);e.pattern.notes[2].midi=69;e.previewPattern.notes.pop();e.pending=true;e.cursor=8;
  assert.equal(lessonGuide(e,{stage:2,modelHeard:true}).kind,'confirm');
 });
+
+test('selection instruction names the actual note and identifies the target independently of current selection',()=>{
+ const editor=make(2);editor.pattern.notes[0].midi=editor.previewPattern.notes[0].midi=60;
+ const guide=lessonGuide(editor,{stage:1,heardOriginal:true});
+ assert.equal(guide.kind,'select');assert.match(guide.action,/1ばんの「ド」/);
+ assert.equal(guide.noteId,editor.pattern.notes[0].id);
+ assert.notEqual(guide.noteId,editor.selectedNoteId);
+});
