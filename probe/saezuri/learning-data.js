@@ -1,4 +1,4 @@
-import {blankPattern} from './entry-session.js?v=v0.1.0-20261018083007-a4d4b63';
+import {blankPattern} from './entry-session.js?v=v0.1.0-20261018091246-9ef79c3';
 const make=(id,name,description,key,tempo,genre,rhythm,progression,notes)=>({id,name,description,tempo,pattern:{...blankPattern(key),accompaniment:{enabled:false,genre,rhythm,progression},notes:notes.map(([startTick,durationTick,midi],i)=>({id:`${id}-${i}`,startTick,durationTick,midi,origin:'manual',completedRanges:[]}))}});
 // Original practice melodies. Public access always returns an independent copy.
 const examples=[

@@ -1,7 +1,7 @@
 // Audition proposals, not an approved musical catalog. Store the complete
 // arrangement recipe so playback never depends on random numbers or UI state.
-import {CHORD_INTERVALS} from './catalog.js?v=v0.1.0-20261018083007-a4d4b63';
-import {POP_EIGHT_BEAT} from './backing-patterns.js?v=v0.1.0-20261018083007-a4d4b63';
+import {CHORD_INTERVALS} from './catalog.js?v=v0.1.0-20261018091246-9ef79c3';
+import {POP_EIGHT_BEAT} from './backing-patterns.js?v=v0.1.0-20261018091246-9ef79c3';
 export const IMAGE_TYPES=[['nursery','どうよう'],['pop','ポップ'],['rock','ロック'],['ballad','バラード']];
 export const IMAGE_SPEEDS=[['slow','ゆっくり'],['normal','ふつう'],['fast','はやい']];
 export const IMAGE_MOODS=[['bright','あかるい'],['gentle','やさしい'],['cool','かっこいい'],['sad','かなしい']];

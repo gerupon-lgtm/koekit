@@ -1,8 +1,9 @@
 // ML-T01 only: locally synthesized comparison voices, not approved instrument assets.
-import { tickSeconds } from '../../saezuri/document.js?v=v0.1.0-20261018083007-a4d4b63';
-import { schedulePlaybackCount, COUNT_STYLES } from './playback-count.js?v=v0.1.0-20261018083007-a4d4b63';
-import { createLightVoice, LIGHT_ENGINES, LIGHT_ONLY_INSTRUMENTS } from './light-voice.js?v=v0.1.0-20261018083007-a4d4b63';
-import { DEFAULT_SOUND_ENGINE } from './sound-engine.js?v=v0.1.0-20261018083007-a4d4b63';
+import { tickSeconds } from '../../saezuri/document.js?v=v0.1.0-20261018091246-9ef79c3';
+import { schedulePlaybackCount, COUNT_STYLES } from './playback-count.js?v=v0.1.0-20261018091246-9ef79c3';
+import { createLightVoice, LIGHT_ENGINES, LIGHT_ONLY_INSTRUMENTS } from './light-voice.js?v=v0.1.0-20261018091246-9ef79c3';
+import { DEFAULT_SOUND_ENGINE } from './sound-engine.js?v=v0.1.0-20261018091246-9ef79c3';
+import {readPlaybackStats,playbackStatsDelta} from './playback-diagnostics.js?v=v0.1.0-20261018091246-9ef79c3';
 export function scheduleVoice(ctx, output, { midi, time, duration, instrument = 'piano', gain = 0.16, velocity = 70, engine = DEFAULT_SOUND_ENGINE }) {
   if(/^(electro-)?(kick|snare|hat)$/.test(instrument))return schedulePercussion(ctx,output,{time,duration,instrument,gain});
   if (engine !== 'classic' && !LIGHT_ENGINES.includes(engine)) throw new Error('VOICE_ENGINE_UNKNOWN');
@@ -82,6 +83,8 @@ export class ProbeTransport {
     this.loop=loop;
     this.active = true;
     this.metrics = { engine:this.engine, scheduleMode:scheduleAll?'phrase':'window',events: 0, accompanimentEvents:0, countEvents: 0, maxVoices:0, maxTimerGapMs: 0, aheadMs: ahead * 1000, leadMs: lead * 1000 };
+    this.outputStatsStart=readPlaybackStats(this.ctx);
+    this.metrics.audioOutputStats=this.outputStatsStart?{status:'pending'}:{status:'unavailable'};
     const queue = [...notes.map(n=>({...n,accompaniment:false})),...accompaniment.map(n=>({...n,accompaniment:true}))].sort((a,b) => a.startTick - b.startTick);
     let index = 0, cycle = 0, countTick = 0, preRollTick=0, previous = performance.now();
     const pump = (prime = false) => {
@@ -131,7 +134,12 @@ export class ProbeTransport {
   }
   position() {const tick=Math.max(0,(this.ctx.currentTime-this.anchor)*this.tempo*4/60);return this.active?(this.loop?tick%this.totalTicks:Math.min(this.totalTicks,tick)):0;}
   get counting(){return this.active&&this.preRollTicks>0&&this.ctx.currentTime<this.anchor;}
+  sampleOutputStats(){
+    if(this.active)this.metrics.audioOutputStats=playbackStatsDelta(this.outputStatsStart,readPlaybackStats(this.ctx));
+    return this.metrics?.audioOutputStats??{status:'unavailable'};
+  }
   stop(notify = true, reason = 'STOPPED') {
+    if(this.active)this.sampleOutputStats();
     this.serial++;
     clearInterval(this.timer);
     for (const voice of this.voices) voice.stop();
