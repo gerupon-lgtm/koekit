@@ -10,8 +10,22 @@
 .melody-app #loop-record{background:#eae5ef}
 .melody-app #keyboard-status{font-size:13px;text-align:center;margin:6px 0}
 .melody-app .keyboard-heading{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:8px 0}
-.melody-app .keyboard-heading #keyboard-status{margin:0;min-width:0}
-.melody-app #keyboard-instrument{width:60%;max-width:240px;min-width:0}
+.melody-app .keyboard-heading #keyboard-status{margin:0;min-width:0;flex:1;text-align:left;line-height:16px}
+.melody-app #keyboard-instrument{width:45%;max-width:240px;min-width:0}
+.melody-app #keyboard-status>span{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.melody-app .recording-state{font-size:12px}
+.melody-app .recording-place{font-size:15px;font-weight:700}
+.melody-app .recording-chord{font-size:14px;font-weight:700;color:#51406a}
+.melody-app #recording-guide{margin:4px 0 0}
+.melody-app #recording-chords{display:grid;grid-auto-flow:column;grid-auto-columns:calc((100% - (var(--guide-bars) - 1)*3px)/var(--guide-bars));gap:3px;overflow-x:auto;scrollbar-width:none}
+.melody-app #recording-chords>span{box-sizing:border-box;min-width:0;height:30px;display:flex;flex-direction:column;align-items:center;justify-content:center;border:1px solid #d4ccc0;border-radius:5px;background:#eee9df;color:#514b42;line-height:14px;overflow:hidden}
+.melody-app #recording-chords small{font-size:10px;line-height:11px}
+.melody-app #recording-chords b{font-size:12px;line-height:15px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.melody-app #recording-chords [data-playing]{background:#ffe36a;border-color:#8c6610;color:#352808;box-shadow:inset 0 0 0 1px #8c6610}
+.melody-app #recording-guide.following~#loop-hint{display:none}
+.melody-app:not(.image-mode) #recording-guide:not(.following){display:none}
+.melody-app:has(#recording-guide.following) #image-chords{display:none}
+.melody-app.keyboard-humming:has(#live-keyboard:not([hidden])) #capture-position{display:none}
 .melody-app #keyboard-instrument label{display:flex;flex-direction:row;align-items:center;gap:6px;margin:0;font-size:13px;white-space:nowrap}
 .melody-app #keyboard-instrument select{width:100%;min-width:0;min-height:44px;padding:5px;font-size:14px}
 .melody-app #piano-keys{height:112px;position:relative;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}

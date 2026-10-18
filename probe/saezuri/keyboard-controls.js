@@ -1,4 +1,5 @@
-import {pianoKeys,TapRecording} from './tap-recording.js?v=v0.1.0-20261018120410-8ca67c2';
+import {pianoKeys,TapRecording} from './tap-recording.js?v=v0.1.0-20261018123833-2ec184f';
+import {RecordingGuide} from './recording-guide.js?v=v0.1.0-20261018123833-2ec184f';
 const $=id=>document.getElementById(id);
 export class KeyboardControls {
  constructor({editor,prepareVoice,onStart,onActivity,onPreview,clock}){
@@ -10,6 +11,7 @@ export class KeyboardControls {
   const instrument=document.createElement('div');instrument.id='keyboard-instrument';instrument.append($('instrument').closest('label'));heading.append($('keyboard-status'),instrument);
   const actions=panel.querySelector('.keyboard-actions');actions.prepend($('backing-loop'));actions.append($('loop-record'));
   actions.after($('loop-hint'));
+  this.guide=new RecordingGuide(panel,$('keyboard-status'));
   $('backing-loop').innerHTML='伴奏<br>ループ';$('loop-record').innerHTML='ハナウタ<br>で録る';
   panel.before($('image-chords'));
   panel.querySelector('.keyboard-settings').append($('image-settings-open'),$('image-suggest'));
@@ -42,7 +44,7 @@ export class KeyboardControls {
  async press(button,pointer){
   this.release();const held={button,pointer,midi:Number(button.dataset.midi)};this.held=held;button.setAttribute('data-held','');this.onActivity();this.captureHeld();
   try{const startVoice=await this.prepareVoice();if(this.held!==held)return;held.voice=startVoice(held.midi);this.captureHeld();}
-  catch(error){if(this.held===held){this.release();$('keyboard-status').textContent=`音を出せません：${error.message}`;}}
+  catch(error){if(this.held===held){this.release();this.guide.message(`音を出せません：${error.message}`);}}
  }
  captureHeld(){if(this.take&&this.held&&!this.take.model.held&&this.tick()>=0)this.take.model.press(this.held.midi,this.tick());}
  tick(){return this.take?(this.clock()-this.take.anchor)*this.take.tempo*4/60:0;}
@@ -53,8 +55,7 @@ export class KeyboardControls {
  begin(pattern,anchor,tempo){this.take={model:new TapRecording(pattern),anchor,tempo,previewKey:null};this.captureHeld();this.frame();}
  finish(){this.release();const take=this.take;this.take=null;return take?.model.events?take.model.pattern:null;}
  frame(){
-  if(!this.take)return;this.captureHeld();const tick=this.tick(),remaining=Math.ceil(-tick/4);
-  $('keyboard-status').textContent=tick<0?`次の先頭から：${remaining} → タップ録音`:`タップ録音中 ${Math.floor((tick%this.take.model.totalTicks)/16)+1}小節・${Math.floor(tick/4)%4+1}拍`;
+  if(!this.take)return;this.captureHeld();const tick=this.tick();
   if(tick>=0){const key=`${this.take.model.events}:${this.take.model.held?.midi??''}:${this.take.model.held?Math.round(tick):''}`;if(key!==this.take.previewKey){this.take.previewKey=key;this.onPreview(this.take.model.preview(tick));}}
  }
  render({phase,loop=false,screen='create'}){
@@ -68,7 +69,8 @@ export class KeyboardControls {
   $('loop-record').disabled=!!this.take||!playable||this.editor.pending||!document.querySelector('#mic').getAttribute('aria-pressed').includes('true');
   for(const b of document.querySelectorAll('.keyboard-settings button'))b.disabled=phase!=='idle';
   for(const b of $('image-chords').children)b.disabled=phase!=='idle'||!!this.editor.entry;
-  if(!this.take)$('keyboard-status').textContent=humming?'ハナウタを録っています':playable?'れんしゅう中':'再生中';
+  this.guide.configure(this.editor.previewPattern);
   document.body.classList.toggle('keyboard-recording',!!this.take);document.body.classList.toggle('keyboard-humming',humming);
  }
+ follow({phase,transport,capture}){this.guide.follow({phase,transport,capture,take:this.take,now:this.clock()});}
 }

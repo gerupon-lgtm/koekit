@@ -1,34 +1,34 @@
-import { proposeNote, commitNote, undo } from '../../saezuri/document.js?v=v0.1.0-20261018120410-8ca67c2';
+import { proposeNote, commitNote, undo } from '../../saezuri/document.js?v=v0.1.0-20261018123833-2ec184f';
 import { microphoneEnabled, setMicrophoneEnabled, onMicrophoneChange } from '../../src/speech/microphone.js';
 import { createSpeechInput, METHODS } from '../../src/speech/index.js';
-import { EditVoice } from './edit-voice.js?v=v0.1.0-20261018120410-8ca67c2';
-import {PitchPreview} from './pitch-preview.js?v=v0.1.0-20261018120410-8ca67c2';
-import { ProbeTransport,preparePlaybackOutput,scheduleVoice } from './audio.js?v=v0.1.0-20261018120410-8ca67c2';
-import { ProbeCapture } from './capture.js?v=v0.1.0-20261018120410-8ca67c2';
-import { renderScore, pitchName } from './score.js?v=v0.1.0-20261018120410-8ca67c2';
-import { alignCaptureStart } from './capture-support.js?v=v0.1.0-20261018120410-8ca67c2';
-import { inferSignature, signature } from './key-signature.js?v=v0.1.0-20261018120410-8ca67c2';
-import { CaptureEditorView } from './capture-editor-view.js?v=v0.1.0-20261018120410-8ca67c2';
-import { readCaptureReport } from './capture-report.js?v=v0.1.0-20261018120410-8ca67c2';
-import { releaseCaptureDetails } from './capture-retention.js?v=v0.1.0-20261018120410-8ca67c2';
-import { setupEditorLayout, syncEditorLayout, focusEditor } from './editor-layout.js?v=v0.1.0-20261018120410-8ca67c2';
-import {ComposerControls} from './composer-controls.js?v=v0.1.0-20261018120410-8ca67c2';
-import {blankPattern} from './entry-session.js?v=v0.1.0-20261018120410-8ca67c2';
-import {creationVoiceProfile,TUTORIAL_VOICE_PROFILE,TUTORIAL_BACKING_VOICE_PROFILE,TUTORIAL_PLAY_PROFILE,PROGRESSION_VOICE_PROFILE,PROGRESSION_PLAY_PROFILE,LOOP_VOICE_PROFILE,STOP_VOICE_PROFILE} from './creation-voice.js?v=v0.1.0-20261018120410-8ca67c2';
-import {ImageControls} from './image-controls.js?v=v0.1.0-20261018120410-8ca67c2';
-import {accompanimentEvents,SOUNDS,soundLabel} from '../../saezuri/music/accompaniment.js?v=v0.1.0-20261018120410-8ca67c2';
-import {MelodyScreens} from './screens.js?v=v0.1.0-20261018120410-8ca67c2';
-import {SongWorkflow} from './song-workflow.js?v=v0.1.0-20261018120410-8ca67c2';
-import {nextLoopHead} from './loop-timing.js?v=v0.1.0-20261018120410-8ca67c2';
-import {alignScreenHeadings} from './headings.js?v=v0.1.0-20261018120410-8ca67c2';
-import {VolumeControls,AudioMixer} from './volume.js?v=v0.1.0-20261018120410-8ca67c2';
-import {KeyboardControls} from './keyboard-controls.js?v=v0.1.0-20261018120410-8ca67c2';
-import {heldVoice} from './live-keyboard-audio.js?v=v0.1.0-20261018120410-8ca67c2';
-import {stopLightVoices,lightVoiceStats} from './light-voice.js?v=v0.1.0-20261018120410-8ca67c2';
-import {resolveSoundEngine,SOUND_POLICY_REVISION} from './sound-engine.js?v=v0.1.0-20261018120410-8ca67c2';
-import {playbackLatencyHint,playbackScheduleAll} from './playback-diagnostics.js?v=v0.1.0-20261018120410-8ca67c2';
-import {DEFAULT_IMAGE} from '../../saezuri/music/image-arrangement.js?v=v0.1.0-20261018120410-8ca67c2';
-import {CreationDisplays} from './creation-displays.js?v=v0.1.0-20261018120410-8ca67c2';
+import { EditVoice } from './edit-voice.js?v=v0.1.0-20261018123833-2ec184f';
+import {PitchPreview} from './pitch-preview.js?v=v0.1.0-20261018123833-2ec184f';
+import { ProbeTransport,preparePlaybackOutput,scheduleVoice } from './audio.js?v=v0.1.0-20261018123833-2ec184f';
+import { ProbeCapture } from './capture.js?v=v0.1.0-20261018123833-2ec184f';
+import { renderScore, pitchName } from './score.js?v=v0.1.0-20261018123833-2ec184f';
+import { alignCaptureStart } from './capture-support.js?v=v0.1.0-20261018123833-2ec184f';
+import { inferSignature, signature } from './key-signature.js?v=v0.1.0-20261018123833-2ec184f';
+import { CaptureEditorView } from './capture-editor-view.js?v=v0.1.0-20261018123833-2ec184f';
+import { readCaptureReport } from './capture-report.js?v=v0.1.0-20261018123833-2ec184f';
+import { releaseCaptureDetails } from './capture-retention.js?v=v0.1.0-20261018123833-2ec184f';
+import { setupEditorLayout, syncEditorLayout, focusEditor } from './editor-layout.js?v=v0.1.0-20261018123833-2ec184f';
+import {ComposerControls} from './composer-controls.js?v=v0.1.0-20261018123833-2ec184f';
+import {blankPattern} from './entry-session.js?v=v0.1.0-20261018123833-2ec184f';
+import {creationVoiceProfile,TUTORIAL_VOICE_PROFILE,TUTORIAL_BACKING_VOICE_PROFILE,TUTORIAL_PLAY_PROFILE,PROGRESSION_VOICE_PROFILE,PROGRESSION_PLAY_PROFILE,LOOP_VOICE_PROFILE,STOP_VOICE_PROFILE} from './creation-voice.js?v=v0.1.0-20261018123833-2ec184f';
+import {ImageControls} from './image-controls.js?v=v0.1.0-20261018123833-2ec184f';
+import {accompanimentEvents,SOUNDS,soundLabel} from '../../saezuri/music/accompaniment.js?v=v0.1.0-20261018123833-2ec184f';
+import {MelodyScreens} from './screens.js?v=v0.1.0-20261018123833-2ec184f';
+import {SongWorkflow} from './song-workflow.js?v=v0.1.0-20261018123833-2ec184f';
+import {nextLoopHead} from './loop-timing.js?v=v0.1.0-20261018123833-2ec184f';
+import {alignScreenHeadings} from './headings.js?v=v0.1.0-20261018123833-2ec184f';
+import {VolumeControls,AudioMixer} from './volume.js?v=v0.1.0-20261018123833-2ec184f';
+import {KeyboardControls} from './keyboard-controls.js?v=v0.1.0-20261018123833-2ec184f';
+import {heldVoice} from './live-keyboard-audio.js?v=v0.1.0-20261018123833-2ec184f';
+import {stopLightVoices,lightVoiceStats} from './light-voice.js?v=v0.1.0-20261018123833-2ec184f';
+import {resolveSoundEngine,SOUND_POLICY_REVISION} from './sound-engine.js?v=v0.1.0-20261018123833-2ec184f';
+import {playbackLatencyHint,playbackScheduleAll} from './playback-diagnostics.js?v=v0.1.0-20261018123833-2ec184f';
+import {DEFAULT_IMAGE} from '../../saezuri/music/image-arrangement.js?v=v0.1.0-20261018123833-2ec184f';
+import {CreationDisplays} from './creation-displays.js?v=v0.1.0-20261018123833-2ec184f';
 const compactEditor=setupEditorLayout();
 const requestedEngine=new URLSearchParams(location.search).get('sound');
 const voiceEngine=resolveSoundEngine(requestedEngine);
@@ -185,6 +185,7 @@ function setPhase(next, message) {
   }
   keyboard?.render({phase:next,loop:!!transport?.active&&transport.loop,screen:shell?.screen});
   creationDisplays?.render(next);
+  keyboard?.follow({phase,transport,capture});
 }
 function draw() {
   drawPattern('score', state.pattern);
@@ -278,6 +279,7 @@ function animate() {
   if(playbackPreview && transport.active && ctx.currentTime>=transport.anchor){captureEditor.followPlayback(visualTick,{scrollPage:creationDisplays?.note!=='cards'});creationDisplays?.follow(visualTick);}
   if(tutorialPlayback&&transport.active)shell?.learning?.preview.follow(visualTick,{countBeat:transport.counting?Math.max(0,Math.floor((ctx.currentTime-transport.countAnchor)*transport.tempo/60)):null});
   keyboard?.frame();
+  keyboard?.follow({phase,transport,capture});
   if(transport.active&&transport.loop&&ctx.currentTime>=transport.anchor){captureEditor.followPlayback(tick,{notes:false,scrollPage:false});creationDisplays?.follow(tick,{notes:false});}
   if(shell?.screen==='connect' && transport.active && ctx.currentTime>=transport.anchor)shell.follow(visualTick);
   if(transport.active&&ctx.currentTime>=transport.anchor)imageControls?.follow(visualTick);

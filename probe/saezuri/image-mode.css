@@ -30,6 +30,13 @@
 .melody-app.image-performing #capture-score{height:112px;min-height:112px}
 .melody-app.editor-focus.image-performing #capture-score svg{height:108px;width:100%;display:block}
 .melody-app.image-performing #composition-cards{height:112px}
+.melody-app.image-performing .keyboard-heading{margin-top:4px}
+.melody-app.image-performing #image-flow-heading{margin:4px 0}
+@media(max-width:649px){
+ .melody-app.image-performing #piano-keys{height:clamp(96px,17svh,112px)}
+ .melody-app.image-performing #piano-keys .piano-white{height:100%}
+ .melody-app.image-performing #piano-keys .piano-black{height:62%}
+}
 @media(min-width:650px){
  .melody-app.editor-focus.image-mode #image-edit-tools{grid-column:1/-1;grid-row:auto}
  .melody-app.editor-focus.image-choosing #image-settings{grid-column:1;grid-row:1}
