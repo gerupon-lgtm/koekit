@@ -1,11 +1,12 @@
-import {inputSteps} from './input-help.js?v=v0.1.0-20261018031532-dbed0a8';
-import {blankPattern} from './entry-session.js?v=v0.1.0-20261018031532-dbed0a8';
-import {practicePhrases,practicePhrase} from './learning-data.js?v=v0.1.0-20261018031532-dbed0a8';
-import {lessonGuide,lessonFingerprint,LESSON_TITLES,LESSON_RANGES} from './tutorial-guide.js?v=v0.1.0-20261018031532-dbed0a8';
-import {tutorialPattern,tutorialExcerpt,TUTORIAL_TEMPO} from './tutorial-data.js?v=v0.1.0-20261018031532-dbed0a8';
-import {TutorialPreview} from './tutorial-preview.js?v=v0.1.0-20261018031532-dbed0a8';
-import {renderTutorialView} from './tutorial-view.js?v=v0.1.0-20261018031532-dbed0a8';
+import {inputSteps} from './input-help.js?v=v0.1.0-20261018044544-927f7b8';
+import {blankPattern} from './entry-session.js?v=v0.1.0-20261018044544-927f7b8';
+import {practicePhrases,practicePhrase} from './learning-data.js?v=v0.1.0-20261018044544-927f7b8';
+import {lessonGuide,lessonFingerprint,LESSON_TITLES,LESSON_RANGES} from './tutorial-guide.js?v=v0.1.0-20261018044544-927f7b8';
+import {tutorialPattern,tutorialExcerpt,TUTORIAL_TEMPO} from './tutorial-data.js?v=v0.1.0-20261018044544-927f7b8';
+import {TutorialPreview} from './tutorial-preview.js?v=v0.1.0-20261018044544-927f7b8';
+import {renderTutorialView} from './tutorial-view.js?v=v0.1.0-20261018044544-927f7b8';
 const $=id=>document.getElementById(id);
+const modelTitles=['完成形','2つの音','1小節','2小節','3小節目','つなぐ音','4小節','伴奏つき'];
 export class MelodyLearning {
  constructor(shell){
   this.shell=shell;this.active=false;this.guideHidden=false;this.heard=false;this.lastStep=null;
@@ -68,13 +69,14 @@ export class MelodyLearning {
   this.preview.close();this.stage++;this.modelHeard=false;this.heardKey=null;
   const starts={1:0,2:8,3:16,4:32,5:48,6:50,7:64};this.shell.editor.moveCursor(starts[this.stage]);
   $('composer-duration').value='1';this.shell.setMode('input');this.sync(this.shell.phase);window.scrollTo(0,0);
+  this.audition(true);
  }
  audition(model=false){
   if(!this.active||this.shell.busy||this.shell.editor.entry?.proposal.code)return;
-  const range=LESSON_RANGES[this.stage],pattern=model?tutorialPattern({backing:this.stage===0}):this.shell.editor.previewPattern;
+  const range=LESSON_RANGES[this.stage],pattern=model?tutorialPattern({backing:this.stage===0||this.stage===7}):this.shell.editor.previewPattern;
   let [start,end]=range;if(!model){end=Math.max(start+2,...pattern.notes.filter(n=>n.startTick>=start||n.startTick+n.durationTick>start).map(n=>n.startTick+n.durationTick));end=Math.min(range[1],end);}
   const key=lessonFingerprint(pattern),stage=this.stage;
-  this.preview.setDisplay(this.display);this.preview.open(tutorialExcerpt(pattern,start,end),{title:model?'おてほんを 聴く':'いまの曲を 聴く',onHeard:()=>{if(!this.active||stage!==this.stage)return;if(model)this.modelHeard=true;else {this.heardKey=key;if(stage===1&&pattern.notes[0]?.midi===60)this.heardOriginal=true;}this.sync(this.shell.phase);}});this.preview.play();
+  this.preview.setDisplay(this.display);this.preview.open(tutorialExcerpt(pattern,start,end),{title:model?`${modelTitles[this.stage]}の おてほん`:'いまの曲を 聴く',onHeard:()=>{if(!this.active||stage!==this.stage)return;if(model)this.modelHeard=true;else {this.heardKey=key;if(stage===1&&pattern.notes[0]?.midi===60)this.heardOriginal=true;}this.sync(this.shell.phase);}});this.preview.play();
  }
  handleVoice(command){
   if(!this.active||this.shell.screen!=='create')return false;

@@ -1,5 +1,5 @@
-import {renderTutorialView,highlightTutorialView} from './tutorial-view.js?v=v0.1.0-20261018031532-dbed0a8';
-import {setupPlaybackSheet} from './sheet-controls.js?v=v0.1.0-20261018031532-dbed0a8';
+import {renderTutorialView,highlightTutorialView} from './tutorial-view.js?v=v0.1.0-20261018044544-927f7b8';
+import {setupPlaybackSheet} from './sheet-controls.js?v=v0.1.0-20261018044544-927f7b8';
 
 export class TutorialPreview{
  constructor({onPlay,onStop,onNavigate=()=>{},onDisplay=()=>{}}){

@@ -1,5 +1,5 @@
-import { scoreEvents } from '../../saezuri/document.js?v=v0.1.0-20261018031532-dbed0a8';
-import { signature, spellPitch } from './key-signature.js?v=v0.1.0-20261018031532-dbed0a8';
+import { scoreEvents } from '../../saezuri/document.js?v=v0.1.0-20261018044544-927f7b8';
+import { signature, spellPitch } from './key-signature.js?v=v0.1.0-20261018044544-927f7b8';
 const ns = 'http://www.w3.org/2000/svg';
 function svgElement(tag, attrs = {}, text) {
   const node = document.createElementNS(ns, tag);

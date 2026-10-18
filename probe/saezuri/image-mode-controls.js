@@ -1,4 +1,4 @@
-import {IMAGE_TYPES,IMAGE_SPEEDS,IMAGE_MOODS,DEFAULT_IMAGE,IMAGE_TEMPOS,generateImageAccompaniment} from '../../saezuri/music/image-arrangement.js?v=v0.1.0-20261018031532-dbed0a8';
+import {IMAGE_TYPES,IMAGE_SPEEDS,IMAGE_MOODS,DEFAULT_IMAGE,IMAGE_TEMPOS,generateImageAccompaniment} from '../../saezuri/music/image-arrangement.js?v=v0.1.0-20261018044544-927f7b8';
 const $=id=>document.getElementById(id);
 export class ImageModeControls {
  constructor({editor,onTempo,compact=false}){
