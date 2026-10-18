@@ -73,5 +73,5 @@
 - [x] Run the focused Node suite and representative sequential browser regression under the resource-safe runner; Expected: green, with actual outputs recorded.
 - [x] Run a fresh whole-branch review using the spec, this plan, ledger and branch diff. Fix important findings with a reproducing test; record remaining boundaries.
 - [x] Run canonical cache stamp and version/cache checks, and rerun only affected release checks; Expected: new BUILD, all runtime import/style paths stamped, ordinary storage and routes intact.
-- [ ] Commit release records and changes. Deliver the approved implementation; honor the current deployment authorization only after checking the latest repository/publication instructions.
-- [ ] Record what was verified locally/publicly and what remains for Pixel/iPhone real voice/listening; do not call the entire Saezurhythm project complete.
+- [x] Commit release records and changes. Deliver the approved implementation; honor the current deployment authorization only after checking the latest repository/publication instructions.
+- [x] Record what was verified locally/publicly and what remains for Pixel/iPhone real voice/listening; do not call the entire Saezurhythm project complete.
