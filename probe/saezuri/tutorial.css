@@ -7,7 +7,7 @@
 .tutorial-length{font-size:.75rem;line-height:16px}
 .tutorial-view .is-rest{background:#e5eae4}
 .tutorial-view .tutorial-card[aria-pressed="true"]{outline:2px solid #8b6d32;outline-offset:-2px}
-.tutorial-view .tutorial-card[data-playing],.melody-app.editor-focus .tutorial-view button.tutorial-card[data-playing]{background:#b43d0d;color:#fff;outline:2px solid #b43d0d;outline-offset:-2px}
+.tutorial-view .tutorial-card[data-playing],.melody-app.editor-focus .tutorial-view button.tutorial-card[data-playing]{background:#ff3b91;color:#302033;outline:2px solid #ff3b91;outline-offset:-2px}
 .tutorial-staff{display:none;width:100%;height:76px;color:#514479;overflow:visible}
 .tutorial-view[data-display="score"] .tutorial-staff{display:block}
 .tutorial-view[data-display="score"] .tutorial-cards,.tutorial-view[data-display="score"] .tutorial-bar-heading{display:none}
@@ -16,7 +16,7 @@
 .tutorial-note-shape{fill:currentColor;stroke:currentColor;stroke-width:1}
 .tutorial-note-shape .tutorial-hollow{fill:#faf5ed}
 .tutorial-note-shape.is-selected{color:#9a6d12}
-.tutorial-note-shape[data-playing]{color:#b43d0d;stroke-width:2}
+.tutorial-note-shape[data-playing]{color:#ff3b91;stroke-width:2}
 .tutorial-display-switch{display:flex;gap:4px;background:#e5eae4;border-radius:16px;padding:3px;min-width:0}
 .melody-app.editor-focus .tutorial-display-switch button{flex:1;min-width:0;margin:0;min-height:40px;background:transparent;border:0;border-radius:14px;font-size:.875rem;padding:4px 8px}
 .melody-app.editor-focus .tutorial-display-switch button[aria-pressed="true"]{background:#fff;color:#514479}

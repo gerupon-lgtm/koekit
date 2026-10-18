@@ -1,5 +1,5 @@
-import { scoreEvents } from '../../saezuri/document.js?v=v0.1.0-20261018011234-fcb9386';
-import { signature, spellPitch } from './key-signature.js?v=v0.1.0-20261018011234-fcb9386';
+import { scoreEvents } from '../../saezuri/document.js?v=v0.1.0-20261018012034-9a24d99';
+import { signature, spellPitch } from './key-signature.js?v=v0.1.0-20261018012034-9a24d99';
 const ns = 'http://www.w3.org/2000/svg';
 function svgElement(tag, attrs = {}, text) {
   const node = document.createElementNS(ns, tag);
@@ -41,6 +41,7 @@ export function renderScore(container, pattern, { fifths = 0, displayOctave = 0,
       const pitch = spellPitch(e.midi + displayOctave * 12,fifths), y = yFor(e.midi);
       const group = svgElement('g', { 'data-note-id': e.noteId, 'data-start-tick': e.startTick, 'data-duration-tick':e.durationTick, 'data-midi': e.midi, fill: e.origin === 'completed' ? '#b25c19' : '#514479' });
       group.append(svgElement('title', {}, `${pitch.name}${displayOctave?`（実音 ${spellPitch(e.midi,fifths).name}）`:''} ${e.durationTick / 4}拍${e.tieIn ? ' タイ継続' : ''}${e.origin === 'completed' ? ' 補完候補' : ''}`));
+      group.append(svgElement('rect', { x:x-15, y:y-39, width:33, height:57, rx:16, class:'note-playback-halo', 'aria-hidden':'true' }));
       if (y >= 112) for (let line = 112; line <= y; line += 12) group.append(svgElement('line', { x1: x - 12, y1: line, x2: x + 12, y2: line, stroke: '#514479' }));
       if (y <= 40) for (let line = 40; line >= y; line -= 12) group.append(svgElement('line', { x1: x - 12, y1: line, x2: x + 12, y2: line, stroke: '#514479' }));
       group.append(svgElement('ellipse', { cx: x, cy: y, rx: 8, ry: 5, transform: `rotate(-20 ${x} ${y})` }));

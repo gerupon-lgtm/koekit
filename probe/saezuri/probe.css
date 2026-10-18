@@ -24,10 +24,14 @@ button[aria-pressed=true]{border:2px solid #77599b;background:#ded5ef}
 .note-actions{grid-template-columns:repeat(4,minmax(0,1fr))}#capture-edit-delete{background:#fff0e6;border-color:#b67850}
 #capture-score.is-playing [data-editor-selected=true]{outline:none}
 #capture-score.is-playing [data-editor-selected=true] ellipse{fill:inherit;stroke:none;stroke-width:0}
-#capture-score [data-playing=note] ellipse{fill:#b43d0d!important;stroke:#b43d0d!important;stroke-width:3!important}
+.note-playback-halo{display:none;fill:#ffd2e8;stroke:none;pointer-events:none}
+[data-playing=note]>.note-playback-halo{display:block}
+#capture-score [data-playing=note] ellipse{fill:#ff3b91!important;stroke:#ff3b91!important;stroke-width:3!important}
+#capture-score [data-playing=note] line,#capture-score [data-playing=note] path{stroke:#ff3b91!important}
+#capture-score [data-playing=note] text{fill:#ff3b91!important}
 #capture-score svg[data-playing=bar]{background:#fff7e8}
 #capture-blocks.is-playing button[aria-pressed=true]{background:#ede9f7;color:#44345d;box-shadow:none;border:1px solid #a99bb8}
-#capture-blocks button[data-playing=note]{background:#b44b20!important;color:#fff!important;box-shadow:0 0 0 2px #b44b20!important;opacity:1}
+#capture-blocks button[data-playing=note]{background:#ff3b91!important;color:#302033!important;box-shadow:0 0 0 2px #ff3b91!important;opacity:1}
 .editor-focus #capture-score svg{width:100%;max-width:100%;height:auto}
 #composer-panel{border:1px solid #d9cfe5;background:#faf8fd;border-radius:10px;padding:8px;margin:8px 0}
 #composer-panel p{font-size:13px;margin:5px 0;line-height:1.4}
