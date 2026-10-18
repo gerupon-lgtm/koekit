@@ -122,9 +122,10 @@
 .input-voice-example{padding:8px;background:#eee6f2;border-radius:10px}
 .tutorial-preview-options{display:flex;gap:6px;align-items:center}
 .tutorial-preview-options .tutorial-display-switch{flex:1}
-.melody-app.editor-focus #learning-preview .tutorial-sound-choice{display:flex;align-items:center;gap:4px;margin:0;font-size:12px;min-width:0}
+.melody-app.editor-focus #learning-preview .tutorial-preview-options .tutorial-display-switch button{min-height:44px}
+.melody-app.editor-focus #learning-preview .tutorial-sound-choice{display:flex;flex-direction:row;flex:none;align-items:center;gap:4px;margin:0;font-size:14px;min-width:0;white-space:nowrap}
 .melody-app.editor-focus #learning-preview .tutorial-sound-choice[hidden]{display:none}
-.melody-app.editor-focus #learning-preview-sound{width:118px;min-height:44px;margin:0;padding:4px;font-size:12px}
+.melody-app.editor-focus #learning-preview-sound{width:132px;height:44px;min-height:44px;margin:0;padding:4px;font-size:14px}
 .melody-app.editor-focus #learning-preview-close{background:#e7ddef;color:#493b61;font-weight:700;border:2px solid #cbb9da}
 .melody-app.editor-focus #learning-preview-return{background:#dcece0;color:#254f41;font-weight:700}
 

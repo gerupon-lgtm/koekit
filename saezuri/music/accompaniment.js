@@ -1,7 +1,7 @@
 // Editable audition presets. These concrete arrangements are trial data.
-import {GENRES,CHORD_INTERVALS,chordTones} from './catalog.js?v=v0.1.0-20261018060645-b9da761';
-import {validImageChoice,validateImageArrangement} from './image-arrangement.js?v=v0.1.0-20261018060645-b9da761';
-import {POP_EIGHT_BEAT} from './backing-patterns.js?v=v0.1.0-20261018060645-b9da761';
+import {GENRES,CHORD_INTERVALS,chordTones} from './catalog.js?v=v0.1.0-20261018064821-0593820';
+import {validImageChoice,validateImageArrangement} from './image-arrangement.js?v=v0.1.0-20261018064821-0593820';
+import {POP_EIGHT_BEAT} from './backing-patterns.js?v=v0.1.0-20261018064821-0593820';
 export const RHYTHMS=[{id:'quarters',label:'4つずつ'},{id:'offbeat',label:'うらで弾く'},{id:'arpeggio',label:'音をばらして弾く'},{id:POP_EIGHT_BEAT.rhythm,label:POP_EIGHT_BEAT.label}];
 export const PROGRESSIONS={
  C:[{id:'home',label:'C → F → G → C',chords:[[0,'major'],[5,'major'],[7,'major'],[0,'major']]},
