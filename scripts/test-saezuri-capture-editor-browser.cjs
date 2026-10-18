@@ -89,6 +89,11 @@ const base = process.env.SAEZURI_BASE || 'http://127.0.0.1:8000';
     assert.equal((await report()).captureCandidate.notes[0].startTick, 0, 'alignment stays with its source');
     await page.locator('#align-start').click();
     assert.deepEqual(rows((await report()).captureCandidate.notes), rows(baseline));
+    // Alignment is intentionally available only before any manual correction.
+    // Exercise moving recorded humming after those existing alignment checks.
+    await page.locator('#capture-time-earlier').click();
+    const shiftedHum=await report();assert.equal(shiftedHum.captureEditing.editCandidate.notes[0].startTick,3);assert.equal(shiftedHum.captureEditing.editCandidate.notes[0].durationTick,4);assert.equal(shiftedHum.captureEditing.editCandidate.notes[0].midi,60);assert.deepEqual(shiftedHum.captureCandidate.notes,expected.notes,'recorded humming remains confirmed only after OK');
+    await page.locator('#capture-edit-undo').click();assert.deepEqual((await report()).captureCandidate.notes,expected.notes);assert.equal((await report()).captureEditing.pending,false);assert.equal(await page.locator('#align-start').isDisabled(),true,'manual-correction guard remains active after undo');
     await page.locator('#capture-note').selectOption(firstId);
     assert.deepEqual(await page.locator('#capture-score [data-editor-selected="true"]').evaluateAll(nodes => [...new Set(nodes.map(n => n.dataset.noteId))]), [firstId]);
     await page.locator('#capture-octave-up').click();

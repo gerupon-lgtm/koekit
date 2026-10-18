@@ -1,6 +1,6 @@
-import { validateNotes } from '../../saezuri/document.js?v=v0.1.0-20261018123833-2ec184f';
-import { decodePitchTrace } from './analysis-comparison.js?v=v0.1.0-20261018123833-2ec184f';
-import {validateAccompaniment} from '../../saezuri/music/accompaniment.js?v=v0.1.0-20261018123833-2ec184f';
+import { validateNotes } from '../../saezuri/document.js?v=v0.1.0-20261018134304-5dbbaa0';
+import { decodePitchTrace } from './analysis-comparison.js?v=v0.1.0-20261018134304-5dbbaa0';
+import {validateAccompaniment} from '../../saezuri/music/accompaniment.js?v=v0.1.0-20261018134304-5dbbaa0';
 
 // Reopen numerical diagnostics locally. This never requests a microphone or
 // restores a waveform. Manual candidates are separate from the original input.
@@ -10,7 +10,7 @@ export function readCaptureReport(text) {
   try { report = JSON.parse(text); } catch { throw new Error('JSON全体を貼り付けてください。'); }
   if(['manual','tap'].includes(report?.captureCandidate?.source) && !report.capture) {
     const pattern=report.captureCandidate,tempo=report.compositionOptions?.tempo;
-    if(validateNotes(pattern)||pattern.gridStep!==(pattern.source==='tap'?1:2)||pattern.notes.length>pattern.bars*16||pattern.notes.some(n=>typeof n.id!=='string')||
+    if(validateNotes(pattern)||(pattern.source==='tap'&&pattern.gridStep!==1)||pattern.notes.length>pattern.bars*16||pattern.notes.some(n=>typeof n.id!=='string')||
        !Number.isFinite(tempo)||tempo<60||tempo>180||
        !((pattern.source==='tap'&&!pattern.key)||(pattern.key?.tonicPitchClass===0&&pattern.key?.mode==='major')||(pattern.key?.tonicPitchClass===9&&pattern.key?.mode==='minor'))||
        (pattern.accompaniment && validateAccompaniment(pattern.accompaniment))) throw new Error('通常作成の記録を読み込めません。');

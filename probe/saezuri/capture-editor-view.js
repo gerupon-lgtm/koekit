@@ -1,11 +1,11 @@
-import { openEditSession, stageEdit, stageDuration, selectEditNote, confirmEditSession, cancelEditSession, undoEditSession, hasDraftChanges } from './edit-session.js?v=v0.1.0-20261018123833-2ec184f';
-import {canGenerateAccompaniment,stageAccompanimentCandidate} from './edit-session.js?v=v0.1.0-20261018123833-2ec184f';
-import { analyzeFrames, quantizeSegments } from './analyzer.js?v=v0.1.0-20261018123833-2ec184f';
-import { decodePitchTrace } from './analysis-comparison.js?v=v0.1.0-20261018123833-2ec184f';
-import {registerLabel as pitchName} from './pitch-label.js?v=v0.1.0-20261018123833-2ec184f';
-import { orderedNotes, selectionTarget } from './note-selection.js?v=v0.1.0-20261018123833-2ec184f';
-import {proposeEntry,confirmEntry,cancelEntry,moveEntryCursor,entryPreview} from './entry-session.js?v=v0.1.0-20261018123833-2ec184f';
-import {songCheckpoint,restoreCheckpoint} from './song-session.js?v=v0.1.0-20261018123833-2ec184f';
+import { openEditSession, stageEdit, stageDuration, selectEditNote, confirmEditSession, cancelEditSession, undoEditSession, hasDraftChanges } from './edit-session.js?v=v0.1.0-20261018134304-5dbbaa0';
+import {canGenerateAccompaniment,stageAccompanimentCandidate} from './edit-session.js?v=v0.1.0-20261018134304-5dbbaa0';
+import { analyzeFrames, quantizeSegments } from './analyzer.js?v=v0.1.0-20261018134304-5dbbaa0';
+import { decodePitchTrace } from './analysis-comparison.js?v=v0.1.0-20261018134304-5dbbaa0';
+import {registerLabel as pitchName} from './pitch-label.js?v=v0.1.0-20261018134304-5dbbaa0';
+import { orderedNotes, selectionTarget } from './note-selection.js?v=v0.1.0-20261018134304-5dbbaa0';
+import {proposeEntry,confirmEntry,cancelEntry,moveEntryCursor,entryPreview} from './entry-session.js?v=v0.1.0-20261018134304-5dbbaa0';
+import {songCheckpoint,restoreCheckpoint} from './song-session.js?v=v0.1.0-20261018134304-5dbbaa0';
 
 const clone = value => value == null ? value : structuredClone(value);
 const labels = { current: '現在の設定', detail: '細かい変化', unsmoothed: 'ならしなし' };
@@ -14,6 +14,7 @@ const messages = {
   NOTE_PITCH: '音高は0〜127の整数で指定してください。',
   NOTE_GRID: '開始位置と長さは16分音符単位の整数で指定してください。',
   NOTE_OVERFLOW: '最後の小節を超えています。開始位置か長さを調整してください。',
+  NOTE_MOVE_START:'曲のはじめより、まえには動かせません。',
   ENTRY_PITCH:'ド〜うえうえドの白鍵から選んでください。',
   ENTRY_REST_REPLACE:'音を休符にするときは「けす」を使ってください。',
   DRAFT_PENDING:'仮の編集をオッケーで確定するか、戻してから音を追加してください。',
@@ -36,10 +37,11 @@ export class CaptureEditorView {
     for (const id of ['capture-variant', 'capture-note', 'capture-edit-midi', 'capture-edit-start',
       'capture-edit-length', 'capture-split-at', 'capture-edit-replace', 'capture-edit-delete',
       'capture-edit-split', 'capture-edit-merge', 'capture-edit-confirm', 'capture-edit-cancel',
-      'capture-edit-undo', 'capture-edit-status', 'capture-score', 'capture-pitch-up', 'capture-pitch-down', 'capture-previous', 'capture-next', 'capture-first', 'capture-last', 'capture-selection', 'capture-blocks']) {
+      'capture-edit-undo', 'capture-edit-status', 'capture-score', 'capture-pitch-up', 'capture-pitch-down', 'capture-previous', 'capture-next', 'capture-first', 'capture-last', 'capture-selection', 'capture-blocks', 'capture-time-edit', 'capture-time-position', 'capture-time-earlier', 'capture-time-later']) {
       this._elements[id] = document.getElementById(id);
       if (!this._elements[id]) throw new Error(`CAPTURE_EDITOR_ELEMENT: ${id}`);
     }
+    for(const command of ['earlier','later'])this._elements[`capture-time-${command}`].onclick=()=>this.command(command);
     this._elements['capture-variant'].addEventListener('change', event => this._switch(event.target.value));
     this._elements['capture-note'].addEventListener('change', event => this._select(event.target.value));
     this._elements['capture-score'].addEventListener('click', event => {
@@ -293,18 +295,20 @@ export class CaptureEditorView {
       return;
     }
     if(command==='up' || command==='down') this._stage({type:'replace',noteId:note.id,midi:note.midi+(command==='up'?1:-1),startTick:note.startTick,durationTick:note.durationTick});
+    if(command==='earlier'||command==='later')return this._stage({type:'move',noteId:note.id,deltaTick:command==='earlier'?-1:1});
   }
 
   _stage(command) {
     if(this.entry) {this._status('入力候補を確定するか取り消してください。');return;}
     const next=stageEdit(this._active.session,command);
-    if(next.code) {this._status(messages[next.code] ?? 'この変更はできません。');return;}
+    if(next.code) {this._status(command.type==='move'&&next.code==='NOTE_OVERLAP'?'ほかの音と重なるので、動かせません。':messages[next.code] ?? 'この変更はできません。');return;}
     this._active.session=next; this._active.edited=true;
-    this._status(command.type==='delete'
+    this._status(command.type==='move'?`16分音符1つ分${command.deltaTick<0?'まえ':'あと'}へ動かす候補です。聴いて、オッケーで決めよう。`:command.type==='delete'
       ? '仮に消しました。その場所は休符になります。「もどす」で戻せます。確認してからオッケー。'
       : '仮の変更です。ほかの音も直せます。「流れを聴く」で確認してからオッケー。');
     this._emit(false);
     if(command.type==='replace'&&Number.isFinite(command.midi))this.onPitch(command.midi);
+    if(command.type==='move')this._revealSelection(true);
   }
 
   _propose(type) {
@@ -353,6 +357,10 @@ export class CaptureEditorView {
     }
     const selected = notes.find(note => note.id === active?.state.selectedNoteId);
     const selectedIndex=notes.indexOf(selected);
+    elements['capture-time-edit'].hidden=!selected;
+    elements['capture-time-position'].textContent=selected?`音の位置：${Math.floor(selected.startTick/16)+1}小節目・${Math.floor(selected.startTick%16/4)+1}拍目${selected.startTick%4?`＋16分${selected.startTick%4}つ`:''}`:'音符を選んでください';
+    elements['capture-time-earlier'].disabled=locked||!selected||!!this.entry||selected.startTick===0;
+    elements['capture-time-later'].disabled=locked||!selected||!!this.entry||selected.startTick+selected.durationTick>=active.state.pattern.bars*16;
     elements['capture-selection'].textContent=selected
       ? `${selectedIndex+1} / ${notes.length} ばんめの音・${Math.floor(selected.startTick/16)+1}小節目・${pitchName(selected.midi)}`
       : '音がありません';
@@ -418,6 +426,8 @@ export class CaptureEditorView {
     const toolbar=document.querySelector('.edit-toolbar').getBoundingClientRect();
     if(!manual && !document.body.classList.contains('melody-app') && (visibleHead.top<Math.max(0,toolbar.bottom) || visibleHead.bottom>footer.top)) {
       document.getElementById('capture-note-panel').scrollIntoView({block:'start',behavior:'instant'});
+      const headAfter=head.getBoundingClientRect(),bottom=document.querySelector('footer').getBoundingClientRect().top-8;
+      if(headAfter.bottom>bottom)window.scrollBy({top:headAfter.bottom-bottom,behavior:'instant'});
     }
   }
 

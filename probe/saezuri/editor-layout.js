@@ -42,6 +42,9 @@ export function setupEditorLayout() {
   toolbar.append(listen);
   // Status is adjacent to the confirmation buttons, including voice results.
   move('capture-edit-status',toolbar);
+  // Keep the legacy sticky toolbar short on a phone. The normal app places
+  // this same group beside its other note edits in MelodyScreens.
+  toolbar.after($('capture-time-edit'));
   const voice=document.createElement('div');voice.className='editor-voice';
   review.append(voice);
   move('edit-voice',voice,true);label('edit-voice','声で操作');move('mic',voice);move('edit-voice-status',voice);

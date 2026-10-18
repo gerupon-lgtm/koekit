@@ -11,6 +11,12 @@ button[aria-pressed=true]{border:2px solid #77599b;background:#ded5ef}
 .edit-toolbar{position:sticky;top:0;z-index:3;background:#fffaf2;border:1px solid #ded0ba;border-radius:10px;padding:6px;gap:6px}.edit-toolbar button{font-size:14px;padding:7px;min-height:44px;margin:0}
 
 #capture-selection{margin:0 0 6px;font-weight:700;color:#503069;font-size:15px;line-height:1.5}
+#capture-time-edit{margin-top:8px}
+#capture-time-position{margin:0 0 8px;font-size:13px;line-height:1.4;font-weight:700}
+.note-time-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.note-time-actions button{margin:0;min-height:44px;padding:6px;font-size:14px;background:#e6edf0}
+.melody-app.learning-active #capture-time-edit{display:none}
+@media(max-height:500px){.editor-focus:not(.melody-app) .edit-toolbar{position:static}}
 .note-navigation,.note-actions{display:grid;gap:6px}.note-navigation{grid-template-columns:repeat(4,minmax(0,1fr))}.note-actions{grid-template-columns:repeat(3,minmax(0,1fr));margin-top:6px}
 #capture-blocks{position:relative;scroll-behavior:auto}#capture-blocks button[aria-pressed=true]{background:#624383;color:white;box-shadow:0 0 0 2px #624383;outline-offset:2px}
 #capture-score{height:280px;max-height:42svh;min-height:150px;border:1px solid #d9cfe5;border-radius:10px;overscroll-behavior:contain;scroll-behavior:auto;margin:6px 0}

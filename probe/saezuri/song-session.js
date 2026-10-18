@@ -1,6 +1,6 @@
-import {openEditSession, hasDraftChanges} from './edit-session.js?v=v0.1.0-20261018123833-2ec184f';
-import {proposeEntry} from './entry-session.js?v=v0.1.0-20261018123833-2ec184f';
-import {validateNotes} from '../../saezuri/document.js?v=v0.1.0-20261018123833-2ec184f';
+import {openEditSession, hasDraftChanges} from './edit-session.js?v=v0.1.0-20261018134304-5dbbaa0';
+import {proposeEntry} from './entry-session.js?v=v0.1.0-20261018134304-5dbbaa0';
+import {validateNotes} from '../../saezuri/document.js?v=v0.1.0-20261018134304-5dbbaa0';
 const clone=value=>structuredClone(value);
 
 export function songCheckpoint(session,{existing=false}={}) {

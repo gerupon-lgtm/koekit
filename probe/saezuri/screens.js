@@ -1,9 +1,9 @@
-import {MelodyLearning} from './learning.js?v=v0.1.0-20261018123833-2ec184f';
-import {emptySequence,keepPhrase,sequencePlayback,proposeSequence,commitSequence,undoPlacement} from './sequence-session.js?v=v0.1.0-20261018123833-2ec184f';
-import {readCaptureReport} from './capture-report.js?v=v0.1.0-20261018123833-2ec184f';
-import {setupPlaybackSheet} from './sheet-controls.js?v=v0.1.0-20261018123833-2ec184f';
-import {PlacementWorkflow} from './placement-workflow.js?v=v0.1.0-20261018123833-2ec184f';
-import {EndingWorkflow} from './ending-workflow.js?v=v0.1.0-20261018123833-2ec184f';
+import {MelodyLearning} from './learning.js?v=v0.1.0-20261018134304-5dbbaa0';
+import {emptySequence,keepPhrase,sequencePlayback,proposeSequence,commitSequence,undoPlacement} from './sequence-session.js?v=v0.1.0-20261018134304-5dbbaa0';
+import {readCaptureReport} from './capture-report.js?v=v0.1.0-20261018134304-5dbbaa0';
+import {setupPlaybackSheet} from './sheet-controls.js?v=v0.1.0-20261018134304-5dbbaa0';
+import {PlacementWorkflow} from './placement-workflow.js?v=v0.1.0-20261018134304-5dbbaa0';
+import {EndingWorkflow} from './ending-workflow.js?v=v0.1.0-20261018134304-5dbbaa0';
 const $=id=>document.getElementById(id);
 const trialBuild=new URL(import.meta.url).searchParams.get('v')||'local-20261010';
 const trialVersion=trialBuild.match(/-(\d{14})-/)?.[1]||trialBuild;
@@ -65,7 +65,7 @@ export class MelodyScreens {
   };
   const toolbar=document.querySelector('.edit-toolbar'),listen=document.querySelector('.listen-actions');
   const edit=document.createElement('div');edit.id='screen-note-edit';
-  edit.append($('capture-selection'),document.querySelector('.note-navigation'),document.querySelector('.note-actions'));
+  edit.append($('capture-selection'),document.querySelector('.note-navigation'),document.querySelector('.note-actions'),$('capture-time-edit'));
   toolbar.prepend(edit);
   // Keep the candidate, confirm and audition together, independent of editor tab.
   toolbar.append($('composer-candidate'),listen,$('capture-edit-status'));

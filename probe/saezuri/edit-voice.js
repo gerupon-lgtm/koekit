@@ -2,6 +2,7 @@ const aliases = {
   up:['たかく','高く','あげる','上げる','はんおんたかく','半音高く','はんおんあげる','半音上げる'],
   down:['ひくく','低く','さげる','下げる','はんおんひくく','半音低く','はんおんさげる','半音下げる'],
   next:['つぎ','次'], previous:['まえ','前'],
+  earlier:['音を前へ','音をまえへ','おとをまえへ'],later:['音を後ろへ','音をうしろへ','おとをうしろへ'],
   first:['さいしょ','最初'], last:['さいご','最後'],
   preview:['きく','聴く','聞く','もういちど','もう一度','もういっかい','もう一回'], confirm:['オッケー','オーケー','おっけー','おーけー','決定','けってい'],
   undo:['もどす','戻す'], cancel:['とりけし','取り消し'],
@@ -26,7 +27,7 @@ for(let number=1;number<=64;number++) {
 for (const direction of ['up','down']) for (const word of aliases[direction].slice(0,4)) {
   aliases[direction].push(`半音${word}`,`はんおん${word}`);
 }
-export const EDIT_WORDS = [...Object.entries(aliases).filter(([key])=>!key.includes(':')).flatMap(([,forms])=>forms).filter(word=>!word.startsWith('もう')),'もう 一度','もう 一回',...numberedGrammar];
+export const EDIT_WORDS = [...Object.entries(aliases).filter(([key])=>!key.includes(':')&&!['earlier','later'].includes(key)).flatMap(([,forms])=>forms).filter(word=>!word.startsWith('もう')),'もう 一度','もう 一回','音 を 前 へ','音 を 後ろ へ',...numberedGrammar];
 export const parseEditCommand = raw => Object.keys(aliases).find(key=>aliases[key].some(word=>normalize(word)===normalize(raw))) ?? null;
 
 // Gate the shared local recognizer by the editing interval. Disposing an

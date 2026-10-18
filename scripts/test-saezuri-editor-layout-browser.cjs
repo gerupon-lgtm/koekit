@@ -57,6 +57,7 @@ const base=process.env.SAEZURI_BASE||'http://127.0.0.1:8014';
    await page.locator('#capture-first').click();
   }
   await page.setViewportSize({width:390,height:844});await page.evaluate(()=>window.scrollTo(0,0));
+  await page.locator('#capture-time-later').click();assert.match(await page.locator('#capture-edit-status').textContent(),/重なる/);assert.equal((await report()).captureEditing.pending,false,'legacy compact editor exposes the same guarded movement buttons');
   await page.screenshot({path:'.local-tools/saezuri-v19-editor-mobile.png'});
   await page.evaluate(()=>{navigator.clipboard.writeText=async()=>{throw Error('clipboard denied');};});
   await page.locator('#copy-capture-report').click();

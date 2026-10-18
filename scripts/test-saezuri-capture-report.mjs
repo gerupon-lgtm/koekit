@@ -8,7 +8,7 @@ test('manual diagnostics reopen the confirmed 8-bar melody and accompaniment, ne
  const pattern={source:'manual',bars:8,gridStep:2,key:{tonicPitchClass:9,mode:'minor'},notes:[{id:'a',midi:60,startTick:100,durationTick:8}],accompaniment:{enabled:true,genre:'rock',rhythm:'quarters',progression:'pop'}};
  const report={capture:null,captureCandidate:pattern,compositionOptions:{tempo:140},captureEditing:{editCandidate:{notes:[]}}};
  const imported=readCaptureReport(JSON.stringify(report));assert.deepEqual(imported.pattern,pattern);assert.equal(imported.options.tempo,140);
- for(const bad of [{...pattern,bars:5},{...pattern,gridStep:1},{...pattern,key:{mode:'major',tonicPitchClass:1}},{...pattern,accompaniment:{enabled:true}}]) assert.throws(()=>readCaptureReport(JSON.stringify({...report,captureCandidate:bad})),/通常作成/);
+ for(const bad of [{...pattern,bars:5},{...pattern,gridStep:3},{...pattern,key:{mode:'major',tonicPitchClass:1}},{...pattern,accompaniment:{enabled:true}}]) assert.throws(()=>readCaptureReport(JSON.stringify({...report,captureCandidate:bad})),/通常作成/);
  assert.throws(()=>readCaptureReport(JSON.stringify({...report,compositionOptions:null})),/通常作成/);
 });
 

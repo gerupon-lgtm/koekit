@@ -1,8 +1,8 @@
-import {CHORD_INTERVALS} from '../../saezuri/music/catalog.js?v=v0.1.0-20261018123833-2ec184f';
-import {automaticEndingChord,endingDescription,endingEvents} from '../../saezuri/music/ending.js?v=v0.1.0-20261018123833-2ec184f';
-import {proposeSequence} from './sequence-session.js?v=v0.1.0-20261018123833-2ec184f';
-import {chordLabel,chordPitches} from './image-controls.js?v=v0.1.0-20261018123833-2ec184f';
-import {setupPlaybackSheet} from './sheet-controls.js?v=v0.1.0-20261018123833-2ec184f';
+import {CHORD_INTERVALS} from '../../saezuri/music/catalog.js?v=v0.1.0-20261018134304-5dbbaa0';
+import {automaticEndingChord,endingDescription,endingEvents} from '../../saezuri/music/ending.js?v=v0.1.0-20261018134304-5dbbaa0';
+import {proposeSequence} from './sequence-session.js?v=v0.1.0-20261018134304-5dbbaa0';
+import {chordLabel,chordPitches} from './image-controls.js?v=v0.1.0-20261018134304-5dbbaa0';
+import {setupPlaybackSheet} from './sheet-controls.js?v=v0.1.0-20261018134304-5dbbaa0';
 const $=id=>document.getElementById(id);
 const normalized=e=>({enabled:e?.enabled??false,bars:e?.bars||1,mode:e?.mode??'auto',bassMode:e?.bassMode??'root',customChord:e?.customChord??null});
 export class EndingWorkflow {

@@ -1,6 +1,6 @@
-import { proposeEdit, validateNotes, resizePattern } from '../../saezuri/document.js?v=v0.1.0-20261018123833-2ec184f';
-import {validateAccompaniment} from '../../saezuri/music/accompaniment.js?v=v0.1.0-20261018123833-2ec184f';
-export { commitNote, undo } from '../../saezuri/document.js?v=v0.1.0-20261018123833-2ec184f';
+import { proposeEdit, validateNotes, resizePattern } from '../../saezuri/document.js?v=v0.1.0-20261018134304-5dbbaa0';
+import {validateAccompaniment} from '../../saezuri/music/accompaniment.js?v=v0.1.0-20261018134304-5dbbaa0';
+export { commitNote, undo } from '../../saezuri/document.js?v=v0.1.0-20261018134304-5dbbaa0';
 
 const error = code => ({code, details:{}});
 
@@ -30,7 +30,7 @@ function proposePattern(state, pattern, cursor) {
 export function proposeCaptureEdit(state, command) {
   const invalid = validateNotes(state?.pattern);
   if (invalid) return invalid;
-  if (!command || !['replace','delete','split','merge-next','transpose','resize','key','accompaniment'].includes(command.type)) return error('COMMAND_UNKNOWN');
+  if (!command || !['replace','delete','split','merge-next','transpose','resize','key','accompaniment','move'].includes(command.type)) return error('COMMAND_UNKNOWN');
   if (command.type === 'replace' || command.type === 'delete') return proposeEdit(state, command);
 
   const pattern = structuredClone(state.pattern);
@@ -58,6 +58,16 @@ export function proposeCaptureEdit(state, command) {
   const index = pattern.notes.findIndex(note => note.id === command.noteId);
   if (index < 0) return error('NOTE_NOT_FOUND');
   const note = pattern.notes[index];
+  if(command.type==='move') {
+    if(![-1,1].includes(command.deltaTick))return error('NOTE_GRID');
+    const startTick=note.startTick+command.deltaTick;
+    if(startTick<0)return error('NOTE_MOVE_START');
+    if(startTick+note.durationTick>pattern.bars*16)return error('NOTE_OVERFLOW');
+    // A coarse imported score can still be corrected by a single sixteenth.
+    pattern.gridStep=1;
+    pattern.notes[index]={...note,startTick,origin:'input',...('completedRanges' in note?{completedRanges:[]}: {})};
+    return proposePattern(state,pattern,state.cursor);
+  }
   if (command.type === 'split') {
     const offset = command.offsetTick;
     if (!Number.isInteger(offset) || offset % pattern.gridStep) return error('NOTE_GRID');

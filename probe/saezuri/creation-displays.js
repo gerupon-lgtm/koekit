@@ -1,4 +1,4 @@
-import {renderTutorialView,highlightTutorialView} from './tutorial-view.js?v=v0.1.0-20261018123833-2ec184f';
+import {renderTutorialView,highlightTutorialView} from './tutorial-view.js?v=v0.1.0-20261018134304-5dbbaa0';
 const $=id=>document.getElementById(id),storageKey='saezuri.creationDisplays.v1';
 
 // Display preferences never enter the song, candidate, cursor or undo history.
@@ -47,7 +47,7 @@ export class CreationDisplays{
    if(!this.cards.hidden){const tick=this.shell.mode==='input'?this.editor.cursor:pattern.notes.find(n=>n.id===this.editor.selectedNoteId)?.startTick??0;this.reveal(tick);}
   }else for(const card of this.cards.querySelectorAll('[data-input-cursor]'))card.removeAttribute('data-input-cursor');
  }
- syncVoice(){this.voiceHint.hidden=this.phase!=='idle'||this.shell.learning?.active||!$('edit-voice').checked||$('mic').getAttribute('aria-pressed')!=='true'||$('edit-voice-status').textContent!=='声を受け付けています';}
+ syncVoice(){this.voiceHint.hidden=this.phase!=='idle'||this.shell.learning?.active||!$('edit-voice').checked||$('mic').getAttribute('aria-pressed')!=='true'||$('edit-voice-status').textContent!=='声を受け付けています';this.voiceHint.textContent=this.shell.mode==='edit'?'声：「音をまえへ」「音をうしろへ」で16分ずつ。':'声：「きく」「もういちど」で聴く。';}
  reveal(tick){const bar=Math.min(this.editor.previewPattern.bars-1,Math.floor(tick/16)),node=this.cards.querySelector(`[data-bar="${bar}"]`);if(node)this.cards.scrollTop+=node.getBoundingClientRect().top-this.cards.getBoundingClientRect().top;}
  follow(tick,{notes=true}={}){
   if(this.cards.hidden)return;
