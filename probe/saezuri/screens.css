@@ -267,6 +267,11 @@ body.melody-app{background:#faf5ed;color:#443b36}
 .melody-app .sheet-actions{display:flex;gap:8px}
 .melody-app .sheet-actions button{flex:1;margin:0;padding:8px 4px;font-size:14px}
 .melody-app #chord-confirm{background:#dce9d5}.melody-app #chord-preview{background:#e7ddef}
+#chord-sheet .sheet-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+#chord-sheet .sheet-actions button{min-height:44px;min-width:0;margin:0}
+#chord-sheet #chord-confirm{grid-column:1/-1}
+#chord-single-preview{background:#e7ddef}
+#chord-basic button[aria-pressed="true"]{outline:3px solid #6b9991;outline-offset:1px}
 .melody-app .loop-actions{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0}
 .melody-app .loop-actions button{flex:1;min-width:0;font-size:13px;padding:6px;margin:0}
 .melody-app .loop-actions p{flex-basis:100%;margin:0;font-size:12px}

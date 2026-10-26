@@ -1,7 +1,7 @@
 // Audition proposals, not an approved musical catalog. Store the complete
 // arrangement recipe so playback never depends on random numbers or UI state.
-import {CHORD_INTERVALS} from './catalog.js?v=v0.1.0-20261018134304-5dbbaa0';
-import {POP_EIGHT_BEAT} from './backing-patterns.js?v=v0.1.0-20261018134304-5dbbaa0';
+import {CHORD_INTERVALS} from './catalog.js?v=v0.1.0-20261026144257-8931fa1';
+import {POP_EIGHT_BEAT} from './backing-patterns.js?v=v0.1.0-20261026144257-8931fa1';
 export const IMAGE_TYPES=[['nursery','どうよう'],['pop','ポップ'],['rock','ロック'],['ballad','バラード']];
 export const IMAGE_SPEEDS=[['slow','ゆっくり'],['normal','ふつう'],['fast','はやい']];
 export const IMAGE_MOODS=[['bright','あかるい'],['gentle','やさしい'],['cool','かっこいい'],['sad','かなしい']];
@@ -30,7 +30,7 @@ const minor=[
  [[9,'minor'],[5,'major'],[2,'minor'],[4,'7']],
 ];
 const profiles={
- nursery:{sounds:{chord:'wood',bass:'soft',drums:'acoustic'},rhythm:'quarters',bass:[0,8]},
+ nursery:{sounds:{chord:'piano',bass:'soft',drums:'acoustic'},rhythm:'quarters',bass:[0,8]},
  pop:{sounds:{chord:'piano',bass:'sine',drums:'electronic'},rhythm:'offbeat',bass:[0,6,8,14]},
  rock:{sounds:{chord:'lead',bass:'soft',drums:'acoustic'},rhythm:'quarters',bass:[0,4,8,12]},
  ballad:{sounds:{chord:'piano',bass:'sine',drums:'acoustic'},rhythm:'arpeggio',bass:[0,8]},
@@ -61,7 +61,7 @@ export function generateImageAccompaniment(pattern,choice=DEFAULT_IMAGE,{resetMa
  const chordTicks=rhythm==='arpeggio'?(sparse?[0,4,8,12]:[0,2,4,6,8,10,12,14]):rhythm==='offbeat'?(sparse?[2,10]:[2,6,10,14]):sparse?[0,8]:[0,4,8,12];
  const bassTicks=sparse?[0,8]:choice.speed==='fast'?[0,2,4,6,8,10,12,14]:profile.bass;
  const shift={bright:0,gentle:2,cool:4,sad:5}[choice.mood];
- const sounds={...profile.sounds};if(gentle)sounds.chord=type==='nursery'?'wood':'piano';
+ const sounds={...profile.sounds};if(gentle)sounds.chord='piano';
  const voicing=rhythm==='arpeggio'?(index%2?'falling':'rising'):gentle||index%2?'broken':'block';
  const arrangement={version:1,choice:{...choice},index,progressions:{major:structuredClone(major[(index+shift)%8]),minor:structuredClone(minor[(index+shift)%8])},rhythm:rhythm===POP_EIGHT_BEAT.rhythm?'offbeat':rhythm,voicing,chordTicks,bassTicks,
   bassIntervals:bassTicks.map((_,i)=>i%2===0?0:index%3===0?7:index%3===1?12:0),inversion:index%3,

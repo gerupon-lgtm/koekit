@@ -1,7 +1,7 @@
 // Editable audition presets. These concrete arrangements are trial data.
-import {GENRES,CHORD_INTERVALS,chordTones} from './catalog.js?v=v0.1.0-20261018134304-5dbbaa0';
-import {validImageChoice,validateImageArrangement} from './image-arrangement.js?v=v0.1.0-20261018134304-5dbbaa0';
-import {POP_EIGHT_BEAT} from './backing-patterns.js?v=v0.1.0-20261018134304-5dbbaa0';
+import {GENRES,CHORD_INTERVALS,chordTones} from './catalog.js?v=v0.1.0-20261026144257-8931fa1';
+import {validImageChoice,validateImageArrangement} from './image-arrangement.js?v=v0.1.0-20261026144257-8931fa1';
+import {POP_EIGHT_BEAT} from './backing-patterns.js?v=v0.1.0-20261026144257-8931fa1';
 export const RHYTHMS=[{id:'quarters',label:'4つずつ'},{id:'offbeat',label:'うらで弾く'},{id:'arpeggio',label:'音をばらして弾く'},{id:POP_EIGHT_BEAT.rhythm,label:POP_EIGHT_BEAT.label}];
 export const PROGRESSIONS={
  C:[{id:'home',label:'C → F → G → C',chords:[[0,'major'],[5,'major'],[7,'major'],[0,'major']]},
@@ -17,7 +17,14 @@ export const PRESETS={nursery:{tempo:120,rhythm:'quarters',progression:'home'},p
 export const SOUNDS=[{id:'piano',label:'ピアノ風',lightLabel:'エレピ'},{id:'wood',label:'木琴風',lightLabel:'ベル'},{id:'soft',label:'やわらかい電子音'},{id:'sine',label:'まるい電子音'},{id:'lead',label:'シンセ',lightLabel:'シンセリード'},
  {id:'fm-piano',label:'FMエレピ'},{id:'synth-bass',label:'シンセベース'},{id:'strings',label:'ストリングス'},{id:'brass',label:'ブラス'}];
 export function soundLabel(id,engine='classic'){const sound=SOUNDS.find(item=>item.id===id);return engine==='classic'?sound?.label:(sound?.lightLabel??sound?.label);}
-export const SOUND_PRESETS={nursery:{chord:'wood',bass:'soft',drums:'acoustic'},pop:{chord:'piano',bass:'sine',drums:'electronic'},ballad:{chord:'soft',bass:'wood',drums:'acoustic'},rock:{chord:'lead',bass:'soft',drums:'electronic'}};
+export const SOUND_PRESETS={nursery:{chord:'piano',bass:'soft',drums:'acoustic'},pop:{chord:'piano',bass:'sine',drums:'electronic'},ballad:{chord:'soft',bass:'wood',drums:'acoustic'},rock:{chord:'lead',bass:'soft',drums:'electronic'}};
+// Playback and the sound picker must agree, including older saved image recipes.
+// An explicit part sound is the user's choice; never replace it with the default.
+export function accompanimentSounds(value){
+ const sounds={...SOUND_PRESETS[value.genre],...value.imageArrangement?.sounds,...(value.rhythm===POP_EIGHT_BEAT.rhythm?POP_EIGHT_BEAT.sounds:{}),...value.sounds};
+ if(value.genre==='nursery'&&!value.sounds?.chord&&sounds.chord==='wood')sounds.chord='piano';
+ return sounds;
+}
 export function validateAccompaniment(value,bars=8) {
  if(!value || typeof value.enabled!=='boolean'||!GENRES.some(g=>g.id===value.genre)||!RHYTHMS.some(r=>r.id===value.rhythm)||!PROGRESSIONS.C.some(p=>p.id===value.progression)) return {code:'ACCOMPANIMENT_INVALID'};
  if(value.imageChoice!==undefined&&!validImageChoice(value.imageChoice))return {code:'IMAGE_INVALID'};
@@ -64,7 +71,7 @@ export function accompanimentEvents(pattern) {
  const value=pattern.accompaniment;
  if(!value?.enabled||validateAccompaniment(value,pattern.bars)) return [];
  const arrangement=value.imageArrangement;
- const events=[],sounds={...SOUND_PRESETS[value.genre],...arrangement?.sounds,...(value.rhythm===POP_EIGHT_BEAT.rhythm?POP_EIGHT_BEAT.sounds:{}),...value.sounds};let previous=[];
+ const events=[],sounds=accompanimentSounds(value),nursery=value.genre==='nursery';let previous=[];
  for(const segment of harmonicSegments(pattern)){
   const {startTick,durationTick,root,quality,bass}=segment;
   let chord=chordVoicing({root,quality},previous);previous=chord;
@@ -73,7 +80,7 @@ export function accompanimentEvents(pattern) {
    for(let i=0;i<arrangement.inversion;i++){const low=chord.shift();chord.push(low+12<=79?low+12:low);}
    chord.sort((a,b)=>a-b);if(arrangement.voicing==='falling')chord.reverse();
   }
-  const push=(tick,length,midi,instrument,gain,part)=>events.push({startTick:startTick+tick,durationTick:Math.min(length,durationTick-tick),midi,instrument,gain,part,...(value.rhythm==='tutorial'?{velocity:55}:{})});
+  const push=(tick,length,midi,instrument,gain,part)=>events.push({startTick:startTick+tick,durationTick:Math.min(length,durationTick-tick),midi,instrument,gain:gain*(nursery?(part==='chord'?.65:part==='bass'?.8:1):1),part,...(value.rhythm==='tutorial'||nursery&&part!=='drums'?{velocity:55}:{})});
   if(value.rhythm==='tutorial'){
    for(const tick of POP_EIGHT_BEAT.bassTicks)if(tick<durationTick)push(tick,2,36+bass,sounds.bass,.12,'bass');
    for(const tick of POP_EIGHT_BEAT.chordTicks)if(tick<durationTick)for(const midi of chord)push(tick,2,midi,sounds.chord,tick===0?.06:.045,'chord');
@@ -106,6 +113,18 @@ export function accompanimentEvents(pattern) {
   }
  }
  return events;
+}
+// A detached two-beat harmony check. Use the same sounds, voicing and balance as
+// backing playback, but strike the whole chord and slash bass once, with no drums.
+export function chordAuditionEvents(pattern,chord){
+ if(chordTones(chord).code)return [];
+ const value=structuredClone(pattern.accompaniment??{genre:'nursery',progression:'home'});
+ Object.assign(value,{enabled:true,rhythm:'quarters',chords:[{...chord,startTick:0,durationTick:16}],sounds:{...value.sounds,drums:'none'}});
+ if(value.imageArrangement){
+  value.manualSettings={...value.manualSettings,rhythm:true};
+  value.imageArrangement.bassTicks=[0];value.imageArrangement.bassIntervals=[0];
+ }
+ return accompanimentEvents({...pattern,accompaniment:value}).filter(e=>e.startTick===0&&e.part!=='drums').map(e=>({...e,durationTick:8}));
 }
 // Shared register selection, including chords that finish the whole song.
 export function chordVoicing({root,quality},previous=[]){
