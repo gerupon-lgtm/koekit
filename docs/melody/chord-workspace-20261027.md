@@ -49,4 +49,9 @@ PC Chromeでは実際の発音開始が曲の600ms待ちを通らないことと
 - コード単独試聴は曲再生を開始せず、interactiveで和音とベースを同時予約する。コードを選ぶ／聴く操作では候補と保存を変えず、「つかう」後の内容だけが編集候補へ保存され、未使用の候補は最終確定に混ざらないことを確認した。
 - バージョン整合・キャッシュ更新・差分確認が成功。動作変更はapp.js／image-controls.js／pitch-preview.js／screens.cssの4ファイルで、ほかの実行ファイル53件の変更は更新参照だけ。BUILD `v0.1.0-20261027101401-f1ac0ce`。
 
-公開検証はこれから行う。Pixel 6a／iPhone XRでの実操作・聴感・操作から耳までの時間は引き続き実機で確認する。
+### 公開結果
+
+- 実装コミット `312d1d33da600cac43c3bcbec38cb6ff14841062` を公開。GitHub Pages [40487779232](https://github.com/gerupon-lgtm/koekit/actions/runs/40487779232) のbuild／deploy／report-build-statusがすべて成功した。
+- 公開99ファイルについてHTTPS・HTTP成功・形式・長さ・SHA-256がコミットのGitデータと一致した。
+- [通常URL](https://koekit.sikumilab.com/probe/saezuri/)でもPC Chromeの2スクリプトが成功。自由制作／イメージ制作のコード選択・短い実音開始・使用・最終確定・全音階と分数コード・小節移動・4サイズ・保存再開と、曲20ms／入力interactiveの切替・録音用の音の時計を確認した。
+- 更新参照は上記BUILDへ統一し、既存キャッシュからの再読込もローカルで確認済み。Pixel 6a／iPhone XRでの実操作・聴感・操作から耳までの時間は引き続き実機で確認する。
