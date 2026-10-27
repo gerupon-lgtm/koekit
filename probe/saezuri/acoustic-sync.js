@@ -1,4 +1,4 @@
-import { shakerSamples } from './capture-support.js?v=v0.1.0-20261027203252-3fea222';
+import { shakerSamples } from './capture-support.js?v=v0.1.0-20261027205519-89482f0';
 
 const median = values => { const a=[...values].sort((x,y)=>x-y); return (a[Math.floor((a.length-1)/2)]+a[Math.floor(a.length/2)])/2; };
 // A second difference suppresses voice fundamentals. Apply the identical,
