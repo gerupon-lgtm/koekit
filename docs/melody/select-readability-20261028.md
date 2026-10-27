@@ -22,4 +22,10 @@ PC WebKitでも共通表示10場面とコード操作／保存2制作ケース�
 
 キャッシュの参照グラフ検証1件、バージョン整合と差分確認が成功。動作を変えたファイルはscreens.css／keyboard.css／image-mode.css／tutorial.cssの4件のみで、ほか55ファイルは更新参照の変更だけ。
 
-BUILD `v0.1.0-20261027205519-89482f0`。公開確認はこれから行う。
+BUILD `v0.1.0-20261027205519-89482f0`。
+
+## 公開
+
+実装コミット `4a8e5bb5a069d5775bb26e59aae35b22263d29c7` を公開。Pages [40582812753](https://github.com/gerupon-lgtm/koekit/actions/runs/40582812753) の全3ジョブが成功した。公開99ファイルはHTTPS・HTTP成功・形式・長さ・SHA-256がコミットと一致。
+
+[通常URL](https://koekit.sikumilab.com/probe/saezuri/)のPC Chromeでも共通表示10場面、全選択欄の字体と無効時の文字、コード2制作ケース／4サイズと保存再開が成功。公開した画面の計測でも、確認対象のページ高さは変更前と同じだった。
