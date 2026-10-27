@@ -1,7 +1,7 @@
-import {GENRES,CHORD_INTERVALS} from '../../saezuri/music/catalog.js?v=v0.1.0-20261027205519-89482f0';
-import {RHYTHMS,PROGRESSIONS,PRESETS,SOUNDS,accompanimentSounds,soundLabel,harmonicSegments,recommendProgressions} from '../../saezuri/music/accompaniment.js?v=v0.1.0-20261027205519-89482f0';
-import {setupPlaybackSheet} from './sheet-controls.js?v=v0.1.0-20261027205519-89482f0';
-import {ImageModeControls} from './image-mode-controls.js?v=v0.1.0-20261027205519-89482f0';
+import {GENRES,CHORD_INTERVALS} from '../../saezuri/music/catalog.js?v=v0.1.0-20261027225318-1250ffd';
+import {RHYTHMS,PROGRESSIONS,PRESETS,SOUNDS,accompanimentSounds,soundLabel,harmonicSegments,recommendProgressions} from '../../saezuri/music/accompaniment.js?v=v0.1.0-20261027225318-1250ffd';
+import {setupPlaybackSheet} from './sheet-controls.js?v=v0.1.0-20261027225318-1250ffd';
+import {ImageModeControls} from './image-mode-controls.js?v=v0.1.0-20261027225318-1250ffd';
 const pitches=['C','C♯','D','E♭','E','F','F♯','G','A♭','A','B♭','B'];
 export const chordPitches=pitches;
 const suffix={major:'',minor:'m'};
@@ -134,7 +134,7 @@ export class ImageControls {
   for(const part of ['root','quality','bass'])$(`chord-${part}`).value=chord[part];this.bassLinked=chord.root===chord.bass;
   const basic=$('chord-basic');basic.replaceChildren();
   const chords=this.key==='Am'?[[9,'minor'],[11,'m7♭5'],[0,'major'],[2,'minor'],[4,'major'],[5,'major'],[7,'major']]:[[0,'major'],[2,'minor'],[4,'minor'],[5,'major'],[7,'major'],[9,'minor'],[11,'m7♭5']];
-  for(const [root,quality] of chords){const b=document.createElement('button');b.textContent=chordLabel({root,quality,bass:root});b.dataset.root=root;b.dataset.quality=quality;b.onclick=()=>{for(const [part,v] of [['root',root],['quality',quality],['bass',root]])$(`chord-${part}`).value=v;this.bassLinked=true;$('chord-root').onchange();};basic.append(b);}
+  for(const [root,quality] of chords){const b=document.createElement('button');b.textContent=chordLabel({root,quality,bass:root});b.dataset.root=root;b.dataset.quality=quality;b.onclick=()=>{for(const [part,v] of [['root',root],['quality',quality],['bass',root]])$(`chord-${part}`).value=v;this.bassLinked=true;$('chord-root').onchange();this.onChordPreview?.(this.sheetChord());};basic.append(b);}
   this.setChordPicker(this.chordPickerMode==='all'||!chords.some(([root,quality])=>root===chord.root&&quality===chord.quality&&chord.bass===root)?'all':'basic');
   this.updateChordChoice();
   if(!this.chordSheet.open){

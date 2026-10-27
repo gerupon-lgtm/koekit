@@ -7,16 +7,18 @@ const base=process.env.SAEZURI_BASE||'http://127.0.0.1:8026',layoutOnly=process.
   await page.addInitScript(()=>{
    window.toneNodes=[];window.audioContexts=[];if(typeof AudioContext!=='function')return;const Native=AudioContext,make=Native.prototype.createOscillator;
    window.AudioContext=class extends Native{constructor(options){super(options);this.testHint=options?.latencyHint;audioContexts.push(this);}};
-   Native.prototype.createOscillator=function(){const oscillator=make.call(this),ctx=this,row={started:false,ended:false},start=oscillator.start.bind(oscillator);
-    oscillator.start=(time=ctx.currentTime)=>{Object.assign(row,{started:true,lead:time-ctx.currentTime});return start(time);};
+   Native.prototype.createOscillator=function(){const oscillator=make.call(this),ctx=this,row={started:false,ended:false},start=oscillator.start.bind(oscillator),set=oscillator.frequency.setValueAtTime.bind(oscillator.frequency);let frequency;
+    oscillator.frequency.setValueAtTime=(value,time)=>{frequency=value;return set(value,time);};
+    oscillator.start=(time=ctx.currentTime)=>{Object.assign(row,{started:true,lead:time-ctx.currentTime,frequency:frequency??oscillator.frequency.value});return start(time);};
     oscillator.addEventListener('ended',()=>row.ended=true);toneNodes.push(row);return oscillator;
    };
   });
   await page.goto(base+'/probe/saezuri/');
   const original=await page.evaluate(async({source,bars})=>{
-   const {SongStore}=await import('/saezuri/song-store.js'),{emptySequence}=await import('./sequence-session.js'),{generateImageAccompaniment}=await import('/saezuri/music/image-arrangement.js');
+   const {SongStore}=await import('/saezuri/song-store.js'),{emptySequence}=await import('./sequence-session.js'),{generateImageAccompaniment}=await import('/saezuri/music/image-arrangement.js'),{chordAuditionEvents}=await import('/saezuri/music/accompaniment.js');
    const pattern={bars,gridStep:1,key:{tonicPitchClass:0,mode:'major'},notes:[{id:'first',midi:60,startTick:0,durationTick:4},{id:'later',midi:67,startTick:32,durationTick:4}],accompaniment:{enabled:true,genre:'nursery',rhythm:'quarters',progression:'home'}};
    if(source==='image')pattern.accompaniment=generateImageAccompaniment(pattern,{type:'nursery',speed:'normal',mood:'bright'});
+   window.expectedTapMidi=chordAuditionEvents(pattern,{root:2,quality:'minor',bass:2}).map(n=>n.midi);
    await new SongStore().save('chord-choice',{title:'コードを選ぶ確認',checkpoint:{confirmed:{pattern,cursor:36,hasRest:false},draft:null},sequence:emptySequence(),settings:{tempo:120,instrument:'piano'}});
    const url=performance.getEntriesByType('resource').find(r=>/\/audio\.js\?/.test(r.name)).name,{ProbeTransport}=await import(url),start=ProbeTransport.prototype.start;
    ProbeTransport.prototype.start=function(notes,options){window.chordStarts??=[];chordStarts.push({notes,options});return start.call(this,notes,options);};return pattern;
@@ -26,15 +28,24 @@ const base=process.env.SAEZURI_BASE||'http://127.0.0.1:8026',layoutOnly=process.
   const open=async()=>{await click('home-songs');await page.locator('[data-song-open="chord-choice"]').click();if(await page.locator('#song-continue').isVisible())await click('song-continue');await revealCreationControl(page,'[data-mode="backing"]');await page.locator('[data-mode="backing"]').click();};
   await open();const initialHeight=await page.evaluate(()=>document.documentElement.scrollHeight);
   await page.locator('[data-chord-bar="1"]').click();assert.equal(await page.locator('dialog:modal').count(),0);assert.equal(await page.locator('#live-keyboard').isVisible(),false);assert.ok(await page.evaluate(()=>document.querySelector('#image-chords').getBoundingClientRect().bottom<=document.querySelector('#chord-sheet').getBoundingClientRect().top),'bar buttons stay above the inline editor');
+  if(!layoutOnly)await page.evaluate(()=>window.tapBefore=toneNodes.length);
   await choose('Dm');assert.equal((await report()).captureEditing.pending,false,'choose does not apply');
+  if(!layoutOnly){
+   await page.waitForFunction(()=>toneNodes.slice(tapBefore).filter(n=>n.started).length===7,{},{timeout:1500});
+   const first=await page.evaluate(()=>({nodes:toneNodes.slice(tapBefore),expected:expectedTapMidi,transportStarts:window.chordStarts?.length??0}));assert.equal(first.transportStarts,0,'a common chord tap uses the short audition, not song playback');
+   for(const midi of first.expected)assert.ok(first.nodes.some(n=>Math.abs(n.frequency-440*2**((midi-69)/12))<.01),'tap sounds the chosen Dm chord and bass');
+   await page.evaluate(()=>window.tapBefore=toneNodes.length);await choose('Dm');await page.waitForFunction(()=>toneNodes.slice(tapBefore).filter(n=>n.started).length===7);
+   await page.waitForFunction(()=>toneNodes.slice(0,tapBefore).every(n=>n.ended));
+  }
   if(!layoutOnly){await page.evaluate(()=>window.quickBefore=toneNodes.length);await click('chord-single-preview');await page.waitForFunction(()=>toneNodes.slice(quickBefore).filter(n=>n.started).length===7);
   const quick=await page.evaluate(()=>({nodes:toneNodes.slice(quickBefore),hint:audioContexts.at(-1).testHint,transportStarts:window.chordStarts?.length??0}));
   assert.equal(quick.hint,'interactive');assert.equal(quick.transportStarts,0);assert.ok(quick.nodes.every(n=>n.lead>=-.01&&n.lead<=.04),'no 600ms song lead');}
   assert.equal((await report()).captureEditing.pending,false);assert.deepEqual((await report()).captureCandidate,original);
   await click('chord-use');const used=await report(),working=used.captureEditing.editCandidate;assert.equal(used.captureEditing.pending,true);assert.equal(working.accompaniment.chords[0].root,2);assert.deepEqual(used.captureCandidate,original);
   await click('chord-next');await choose('Am');await click('chord-previous');assert.equal(await page.locator('#chord-root').inputValue(),'2');assert.deepEqual((await report()).captureEditing.editCandidate,working);assert.equal((await report()).captureEditing.undoDepth,used.captureEditing.undoDepth);
-  await click('chord-next');await click('chord-all-mode');await page.locator('#chord-root').selectOption('6');assert.equal(await page.locator('#chord-bass').inputValue(),'6');
+  await click('chord-next');if(!layoutOnly)await page.evaluate(()=>window.tapBefore=toneNodes.length);await click('chord-all-mode');await page.locator('#chord-root').selectOption('6');assert.equal(await page.locator('#chord-bass').inputValue(),'6');
   await page.locator('#chord-quality').selectOption('m7♭5');await page.locator('#chord-bass').selectOption('1');assert.equal(await page.locator('#chord-root option').count(),12);assert.deepEqual((await report()).captureEditing.editCandidate,working);
+  if(!layoutOnly)assert.equal(await page.evaluate(()=>toneNodes.length),await page.evaluate(()=>tapBefore),'all-chord selects remain silent until the listen button');
   if(!layoutOnly){await page.evaluate(()=>window.quickBefore=toneNodes.length);await click('chord-single-preview');await page.waitForFunction(()=>toneNodes.slice(quickBefore).filter(n=>n.started).length===9);}assert.deepEqual((await report()).captureEditing.editCandidate,working);
   await click('chord-use');const applied=await report(),chord=applied.captureEditing.editCandidate.accompaniment.chords.find(c=>c.startTick===32);assert.deepEqual([chord.root,chord.quality,chord.bass],[6,'m7♭5',1]);
   for(const [width,height] of [[320,568],[390,740],[844,390],[1280,800]]){
