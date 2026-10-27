@@ -1,4 +1,4 @@
-import { analyzeFrames, quantizeSegments } from './analyzer.js?v=v0.1.0-20261026144257-8931fa1';
+import { analyzeFrames, quantizeSegments } from './analyzer.js?v=v0.1.0-20261027101401-f1ac0ce';
 
 // These are alternatives on the SAME detected pitch frames, not new recordings
 // or a prediction of the correct melody. Real-voice accuracy remains unverified.

@@ -24,3 +24,16 @@ test('selection labels identify solfege and register instead of English pitch no
  assert.equal(registerLabel(72),'うえのド');assert.equal(registerLabel(57),'したのラ');
  assert.equal(registerLabel(null),'休み');
 });
+
+test('a short harmony owns a snapshot and only the latest preparation may start it',async()=>{
+ const pending=[],started=[],stopped=[];
+ const preview=new PitchPreview({isValid:value=>Array.isArray(value)&&value.length>0,timeoutMs:950,prepareVoice:()=>new Promise(resolve=>pending.push(resolve))});
+ const events=[{midi:60},{midi:64},{midi:67}],first=preview.play(events);
+ events[0].midi=72;
+ const next=[{midi:62},{midi:65},{midi:69}],second=preview.play(next);
+ const start=notes=>{started.push(notes);return ()=>stopped.push(notes);};
+ pending[1](start);await second;pending[0](start);await first;
+ assert.deepEqual(started,[next]);preview.cancel();assert.deepEqual(stopped,[next]);
+ const third=preview.play(events);events[0].midi=84;pending[2](start);await third;
+ assert.equal(started.at(-1)[0].midi,72,'rapid later selection cannot mutate a pending chord');preview.cancel();
+});
