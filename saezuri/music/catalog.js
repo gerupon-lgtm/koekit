@@ -1,4 +1,6 @@
 // Agreed musical vocabulary only. Genre arrangements/voicings await trial listening.
+export const CHORD_PITCH_NAMES=Object.freeze(['C','D♭','D','E♭','E','F','G♭','G','A♭','A','B♭','B']);
+export const chordLabel=chord=>chord?`${CHORD_PITCH_NAMES[chord.root]}${({major:'',minor:'m'})[chord.quality]??chord.quality}${chord.bass===chord.root?'':`/${CHORD_PITCH_NAMES[chord.bass]}`}`:'';
 export const CHORD_INTERVALS = Object.freeze(Object.fromEntries(Object.entries({
   major: [0, 4, 7], minor: [0, 3, 7], '7': [0, 4, 7, 10],
   maj7: [0, 4, 7, 11], m7: [0, 3, 7, 10], sus4: [0, 5, 7],

@@ -1,13 +1,12 @@
-import {GENRES,CHORD_INTERVALS} from '../../saezuri/music/catalog.js?v=v0.1.0-20261029192917-e89e384';
-import {RHYTHMS,PROGRESSIONS,PRESETS,SOUNDS,accompanimentSounds,soundLabel,harmonicSegments,recommendProgressions} from '../../saezuri/music/accompaniment.js?v=v0.1.0-20261029192917-e89e384';
-import {setupPlaybackSheet} from './sheet-controls.js?v=v0.1.0-20261029192917-e89e384';
-import {ImageModeControls} from './image-mode-controls.js?v=v0.1.0-20261029192917-e89e384';
-import {readChordSlots,writeChordSlots} from './chord-slots.js?v=v0.1.0-20261029192917-e89e384';
-import {ChordMetronome} from './chord-metronome.js?v=v0.1.0-20261029192917-e89e384';
-const pitches=['C','C♯','D','E♭','E','F','F♯','G','A♭','A','B♭','B'];
+import {GENRES,CHORD_INTERVALS,CHORD_PITCH_NAMES,chordLabel} from '../../saezuri/music/catalog.js?v=v0.1.0-20261029223719-140f1b5';
+import {RHYTHMS,PROGRESSIONS,PRESETS,SOUNDS,accompanimentSounds,soundLabel,harmonicSegments,recommendProgressions} from '../../saezuri/music/accompaniment.js?v=v0.1.0-20261029223719-140f1b5';
+import {setupPlaybackSheet} from './sheet-controls.js?v=v0.1.0-20261029223719-140f1b5';
+import {ImageModeControls} from './image-mode-controls.js?v=v0.1.0-20261029223719-140f1b5';
+import {readChordSlots,writeChordSlots} from './chord-slots.js?v=v0.1.0-20261029223719-140f1b5';
+import {ChordMetronome} from './chord-metronome.js?v=v0.1.0-20261029223719-140f1b5';
+const pitches=CHORD_PITCH_NAMES;
 export const chordPitches=pitches;
-const suffix={major:'',minor:'m'};
-export const chordLabel=c=>`${pitches[c.root]}${suffix[c.quality]??c.quality}${c.bass===c.root?'':`/${pitches[c.bass]}`}`;
+export {chordLabel};
 const fallback={enabled:false,genre:'nursery',rhythm:'quarters',progression:'home'};
 const $=id=>document.getElementById(id);
 function fill(node,items){node.replaceChildren(...items.map(([id,label])=>{const o=document.createElement('option');o.value=id;o.textContent=label;return o;}));}

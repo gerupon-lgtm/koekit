@@ -1,4 +1,4 @@
-import {tutorialPattern} from './tutorial-data.js?v=v0.1.0-20261029192917-e89e384';
+import {tutorialPattern} from './tutorial-data.js?v=v0.1.0-20261029223719-140f1b5';
 const names={60:'ド',62:'レ',64:'ミ',65:'ファ',67:'ソ',69:'ラ'};
 const lengths={2:'はんぱく',4:'1ぱく',6:'1ぱく半',8:'2はく'};
 export const LESSON_TITLES=['完成形を 聴こう','2つの音を 直そう','1小節を つくろう','2小節に のばそう','3小節目を つくろう','音を 小節の先へ','4小節を しあげよう','伴奏を つけよう'];

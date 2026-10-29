@@ -1,9 +1,9 @@
-import {spellPitch} from './key-signature.js?v=v0.1.0-20261029192917-e89e384';
-import {harmonicSegments} from '../../saezuri/music/accompaniment.js?v=v0.1.0-20261029192917-e89e384';
-import {createRestSymbol,restParts} from './rest-symbol.js?v=v0.1.0-20261029192917-e89e384';
+import {spellPitch} from './key-signature.js?v=v0.1.0-20261029223719-140f1b5';
+import {harmonicSegments} from '../../saezuri/music/accompaniment.js?v=v0.1.0-20261029223719-140f1b5';
+import {createRestSymbol,restParts} from './rest-symbol.js?v=v0.1.0-20261029223719-140f1b5';
+import {chordLabel} from '../../saezuri/music/catalog.js?v=v0.1.0-20261029223719-140f1b5';
 
 const names=['ド','ド♯','レ','レ♯','ミ','ファ','ファ♯','ソ','ソ♯','ラ','ラ♯','シ'];
-const roots=['C','C♯','D','E♭','E','F','F♯','G','A♭','A','B♭','B'];
 const ns='http://www.w3.org/2000/svg';
 const svg=(tag,attrs={},text)=>{const node=document.createElementNS(ns,tag);for(const [key,value] of Object.entries(attrs))node.setAttribute(key,value);if(text!==undefined)node.textContent=text;return node;};
 
@@ -18,7 +18,6 @@ function displayEvents(pattern,endTick){
  }
  append(cursor,endTick,null);return result;
 }
-const chordLabel=segment=>segment?roots[segment.root]+({major:'',minor:'m',7:'7',maj7:'maj7',m7:'m7',m7b5:'m7♭5',dim:'dim'}[segment.quality]??''):'';
 function timed(node,event){node.dataset.startTick=event.startTick;node.dataset.durationTick=event.durationTick;if(event.noteId)node.dataset.noteId=event.noteId;return node;}
 
 export function renderTutorialView(container,pattern,{display='cards',selectedId=null,onSelect=null,barStart=0,barCount=pattern.bars,endTick=pattern.bars*16}={}){
