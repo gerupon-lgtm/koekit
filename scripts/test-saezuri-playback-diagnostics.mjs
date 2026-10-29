@@ -16,6 +16,11 @@ test('song playback bounds future voices by default, with a short phrase compari
  for(const ticks of [16,64,128])assert.equal(diagnostics.playbackScheduleAll('phrase',ticks),true);
  assert.equal(diagnostics.playbackScheduleAll('phrase',256),false,'long songs never allocate the full phrase graph');
 });
+test('chord audition has its own stable profile without changing the recording clock',()=>{
+ for(const value of [null,undefined,'','10ms','20ms','playback','unknown'])assert.equal(diagnostics.playbackLatencyHint(value,'chord'),.02);
+ assert.equal(diagnostics.playbackLatencyHint('interactive','chord'),'interactive');
+ for(const purpose of ['live','keyboard','recording'])assert.equal(diagnostics.playbackLatencyHint(null,purpose),'interactive');
+});
 test('native counters are copied and unsupported or failed readings stay unavailable',()=>{
  assert.equal(diagnostics.readPlaybackStats({}),null);
  assert.equal(diagnostics.readPlaybackStats({get playbackStats(){throw new Error('unsupported');}}),null);

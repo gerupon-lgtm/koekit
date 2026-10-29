@@ -31,22 +31,22 @@ const base=process.env.SAEZURI_BASE||'http://127.0.0.1:8026',layoutOnly=process.
   if(!layoutOnly)await page.evaluate(()=>window.tapBefore=toneNodes.length);
   await choose('Dm');assert.equal((await report()).captureEditing.pending,false,'choose does not apply');
   if(!layoutOnly){
-   await page.waitForFunction(()=>toneNodes.slice(tapBefore).filter(n=>n.started).length===7,{},{timeout:1500});
+   await page.waitForFunction(()=>toneNodes.slice(tapBefore).filter(n=>n.started).length===4,{},{timeout:1500});
    const first=await page.evaluate(()=>({nodes:toneNodes.slice(tapBefore),expected:expectedTapMidi,transportStarts:window.chordStarts?.length??0}));assert.equal(first.transportStarts,0,'a common chord tap uses the short audition, not song playback');
    for(const midi of first.expected)assert.ok(first.nodes.some(n=>Math.abs(n.frequency-440*2**((midi-69)/12))<.01),'tap sounds the chosen Dm chord and bass');
-   await page.evaluate(()=>window.tapBefore=toneNodes.length);await choose('Dm');await page.waitForFunction(()=>toneNodes.slice(tapBefore).filter(n=>n.started).length===7);
+   await page.evaluate(()=>window.tapBefore=toneNodes.length);await choose('Dm');await page.waitForFunction(()=>toneNodes.slice(tapBefore).filter(n=>n.started).length===4);
    await page.waitForFunction(()=>toneNodes.slice(0,tapBefore).every(n=>n.ended));
   }
-  if(!layoutOnly){await page.evaluate(()=>window.quickBefore=toneNodes.length);await click('chord-single-preview');await page.waitForFunction(()=>toneNodes.slice(quickBefore).filter(n=>n.started).length===7);
+  if(!layoutOnly){await page.evaluate(()=>window.quickBefore=toneNodes.length);await click('chord-single-preview');await page.waitForFunction(()=>toneNodes.slice(quickBefore).filter(n=>n.started).length===4);
   const quick=await page.evaluate(()=>({nodes:toneNodes.slice(quickBefore),hint:audioContexts.at(-1).testHint,transportStarts:window.chordStarts?.length??0}));
-  assert.equal(quick.hint,'interactive');assert.equal(quick.transportStarts,0);assert.ok(quick.nodes.every(n=>n.lead>=-.01&&n.lead<=.04),'no 600ms song lead');}
+  assert.equal(quick.hint,.02);assert.equal(quick.transportStarts,0);assert.ok(quick.nodes.every(n=>n.lead>=-.01&&n.lead<=.04),'no 600ms song lead');}
   assert.equal((await report()).captureEditing.pending,false);assert.deepEqual((await report()).captureCandidate,original);
   await click('chord-use');const used=await report(),working=used.captureEditing.editCandidate;assert.equal(used.captureEditing.pending,true);assert.equal(working.accompaniment.chords[0].root,2);assert.deepEqual(used.captureCandidate,original);
   await click('chord-next');await choose('Am');await click('chord-previous');assert.equal(await page.locator('#chord-root').inputValue(),'2');assert.deepEqual((await report()).captureEditing.editCandidate,working);assert.equal((await report()).captureEditing.undoDepth,used.captureEditing.undoDepth);
   await click('chord-next');if(!layoutOnly)await page.evaluate(()=>window.tapBefore=toneNodes.length);await click('chord-all-mode');await page.locator('#chord-root').selectOption('6');assert.equal(await page.locator('#chord-bass').inputValue(),'6');
   await page.locator('#chord-quality').selectOption('m7♭5');await page.locator('#chord-bass').selectOption('1');assert.equal(await page.locator('#chord-root option').count(),12);assert.deepEqual((await report()).captureEditing.editCandidate,working);
   if(!layoutOnly)assert.equal(await page.evaluate(()=>toneNodes.length),await page.evaluate(()=>tapBefore),'all-chord selects remain silent until the listen button');
-  if(!layoutOnly){await page.evaluate(()=>window.quickBefore=toneNodes.length);await click('chord-single-preview');await page.waitForFunction(()=>toneNodes.slice(quickBefore).filter(n=>n.started).length===9);}assert.deepEqual((await report()).captureEditing.editCandidate,working);
+  if(!layoutOnly){await page.evaluate(()=>window.quickBefore=toneNodes.length);await click('chord-single-preview');await page.waitForFunction(()=>toneNodes.slice(quickBefore).filter(n=>n.started).length===5);}assert.deepEqual((await report()).captureEditing.editCandidate,working);
   await click('chord-use');const applied=await report(),chord=applied.captureEditing.editCandidate.accompaniment.chords.find(c=>c.startTick===32);assert.deepEqual([chord.root,chord.quality,chord.bass],[6,'m7♭5',1]);
   for(const [width,height] of [[320,568],[390,740],[844,390],[1280,800]]){
    await page.setViewportSize({width,height});const heights=[];

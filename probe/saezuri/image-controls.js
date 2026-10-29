@@ -1,8 +1,9 @@
-import {GENRES,CHORD_INTERVALS} from '../../saezuri/music/catalog.js?v=v0.1.0-20261029101743-3e500af';
-import {RHYTHMS,PROGRESSIONS,PRESETS,SOUNDS,accompanimentSounds,soundLabel,harmonicSegments,recommendProgressions} from '../../saezuri/music/accompaniment.js?v=v0.1.0-20261029101743-3e500af';
-import {setupPlaybackSheet} from './sheet-controls.js?v=v0.1.0-20261029101743-3e500af';
-import {ImageModeControls} from './image-mode-controls.js?v=v0.1.0-20261029101743-3e500af';
-import {readChordSlots,writeChordSlots} from './chord-slots.js?v=v0.1.0-20261029101743-3e500af';
+import {GENRES,CHORD_INTERVALS} from '../../saezuri/music/catalog.js?v=v0.1.0-20261029110808-9b7f849';
+import {RHYTHMS,PROGRESSIONS,PRESETS,SOUNDS,accompanimentSounds,soundLabel,harmonicSegments,recommendProgressions} from '../../saezuri/music/accompaniment.js?v=v0.1.0-20261029110808-9b7f849';
+import {setupPlaybackSheet} from './sheet-controls.js?v=v0.1.0-20261029110808-9b7f849';
+import {ImageModeControls} from './image-mode-controls.js?v=v0.1.0-20261029110808-9b7f849';
+import {readChordSlots,writeChordSlots} from './chord-slots.js?v=v0.1.0-20261029110808-9b7f849';
+import {ChordMetronome} from './chord-metronome.js?v=v0.1.0-20261029110808-9b7f849';
 const pitches=['C','C♯','D','E♭','E','F','F♯','G','A♭','A','B♭','B'];
 export const chordPitches=pitches;
 const suffix={major:'',minor:'m'};
@@ -11,8 +12,8 @@ const fallback={enabled:false,genre:'nursery',rhythm:'quarters',progression:'hom
 const $=id=>document.getElementById(id);
 function fill(node,items){node.replaceChildren(...items.map(([id,label])=>{const o=document.createElement('option');o.value=id;o.textContent=label;return o;}));}
 export class ImageControls {
- constructor({editor,onNew,onTempo,onPreview,onChordPreview,onStop,onNavigate,onRecord,compact=false,engine='classic'}) {
-  Object.assign(this,{editor,onTempo,onPreview,onChordPreview,onStop,onNavigate,engine});this.inlineChords=compact;this.chordSlots=readChordSlots();this.selectedSlot=null;
+ constructor({editor,onNew,onTempo,onPreview,onChordPreview,prepareMetronome,onStop,onNavigate,onRecord,compact=false,engine='classic'}) {
+  Object.assign(this,{editor,onTempo,onPreview,onChordPreview,prepareMetronome,onStop,onNavigate,engine});this.inlineChords=compact;this.chordSlots=readChordSlots();this.selectedSlot=null;
   const source=document.querySelector('.source-actions');if(!source)return;
   this.create=document.createElement('button');this.create.id='new-image';this.create.textContent='イメージからつくる';this.create.onclick=onNew;source.prepend(this.create);
   const panel=document.createElement('details');panel.id='image-settings';
@@ -91,6 +92,8 @@ export class ImageControls {
    <p id="chord-candidate" role="status"></p>
    <div class="sheet-actions"><button id="chord-single-preview">▶ このコードをきく</button><button id="chord-use">つかう</button><button id="chord-preview">▶ 曲をはじめから聴く</button><button id="chord-stop">■ とめる</button><button id="chord-confirm">オッケー</button></div>`;
   document.querySelector('main').append(d);this.chordSheet=d;
+  this.metronome=new ChordMetronome({parent:d,tempoInput:$('tempo'),prepareTrack:()=>this.prepareMetronome(),onError:message=>{$('chord-candidate').textContent=message;}});
+  d.querySelector('.chord-picker-tabs').after(this.metronome.row);
   for(const id of ['chord-root','chord-bass'])fill($(id),pitches.map((p,i)=>[i,p]));
   fill($('chord-quality'),Object.keys(CHORD_INTERVALS).map(q=>[q,q==='major'?'メジャー':q==='minor'?'マイナー':q]));
   for(const id of ['chord-root','chord-quality','chord-bass'])$(id).onchange=()=>{
@@ -112,7 +115,7 @@ export class ImageControls {
   document.addEventListener('visibilitychange',()=>{if(document.hidden){this.cancelSlotPress();if(menu.open)menu.close();}});
   for(const mode of ['basic','all'])$(`chord-${mode}-mode`).onclick=()=>this.setChordPicker(mode);
   $('chord-previous').onclick=()=>this.openChord(this.bar-1);$('chord-next').onclick=()=>this.openChord(this.bar+1);
-  $('chord-close').onclick=()=>d.close();d.addEventListener('close',()=>{this.cancelSlotPress();if(menu.open)menu.close();document.body.classList.remove('chord-editing');this.onNavigate?.();});
+  $('chord-close').onclick=()=>d.close();d.addEventListener('close',()=>{this.metronome.stop();this.cancelSlotPress();if(menu.open)menu.close();document.body.classList.remove('chord-editing');this.onNavigate?.();});
   $('chord-single-preview').onclick=()=>this.onChordPreview?.(this.sheetChord());
   $('chord-preview').onclick=()=>this.onPreview?.();$('chord-stop').onclick=()=>this.onStop?.();
   $('chord-use').onclick=()=>{this.onNavigate?.();this.stageChord();this.updateChordChoice();};
@@ -199,7 +202,7 @@ export class ImageControls {
   if(this.busy||this.editor.entry||!this.editor.isOpen)return;
   this.cancelSlotPress();if(this.slotMenu.open)this.slotMenu.close();
   bar=Math.max(0,Math.min(this.editor.previewPattern.bars-1,bar));
-  this.onStop?.();
+  if(!this.chordSheet.open)this.onStop?.();else this.onNavigate?.();
   this.bar=bar;const chord=harmonicSegments(this.editor.previewPattern).find(c=>c.startTick===bar*16);
   $('chord-title').textContent=`${bar+1} / ${this.editor.previewPattern.bars} 小節`;$('chord-title').setAttribute('aria-label',`${bar+1}小節目のコード`);
   for(const part of ['root','quality','bass'])$(`chord-${part}`).value=chord[part];this.bassLinked=chord.root===chord.bass;
@@ -233,6 +236,7 @@ export class ImageControls {
   if(this.settingsSheet)for(const control of this.settingsSheet.querySelectorAll('input,select,button'))control.disabled=['backing-settings-close','backing-settings-stop'].includes(control.id)?false:busy||!!this.editor.entry;
   for(const control of this.$('suggestions').querySelectorAll('button'))control.disabled=busy;
   for(const control of this.chordSheet.querySelectorAll('input,select,button'))control.disabled=['chord-close','chord-stop'].includes(control.id)?false:busy;
+  this.metronome.render(busy);
   for(const button of row.children)button.setAttribute('aria-pressed',String(this.chordSheet.open&&Number(button.dataset.chordBar)===this.bar));
   if(this.chordSheet.open&&this.bar<pattern.bars){this.updateChordChoice();this.revealChordBar();}
   this.imageMode.render(busy);

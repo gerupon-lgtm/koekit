@@ -1,6 +1,7 @@
 // Only finite auditions may trade response for playback stability. Live input
 // and recording keep one interactive clock, even on a comparison URL.
 export function playbackLatencyHint(value,purpose='playback'){
+ if(purpose==='chord')return value==='interactive'?'interactive':.02;
  if(purpose!=='playback')return 'interactive';
  if(value==='10ms')return .01;
  if(value==='20ms')return .02;

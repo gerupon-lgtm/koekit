@@ -1,4 +1,4 @@
-import {chordTones} from '../../saezuri/music/catalog.js?v=v0.1.0-20261029101743-3e500af';
+import {chordTones} from '../../saezuri/music/catalog.js?v=v0.1.0-20261029110808-9b7f849';
 
 export const CHORD_SLOT_COUNT=9;
 const storageKey='saezuri.chordSlots.v1';
