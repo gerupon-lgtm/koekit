@@ -31,4 +31,6 @@
 
 ## 公開
 
-公開前。最終結果を追記する。
+- 実装コミット `36c589d7f277ce6638157eadd423d6d9a0e4a153` を公開。GitHub Pages [40857101486](https://github.com/gerupon-lgtm/koekit/actions/runs/40857101486) のbuild／deploy／report-build-statusの全3ジョブが成功。
+- 公開100ファイルのHTTPS・HTTP成功・形式・長さ・SHA-256が、コミット内のGitデータと一致した。新規の保存モジュールも含めて更新参照を確認。
+- [通常URL](https://koekit.sikumilab.com/probe/saezuri/)のPC Chromeでも、個人枠と既存コード操作の計4制作ケースが成功。登録・単独実音・長押し／指離し／スクロール取消・確認クリア・満杯・曲／候補／Undoの保持・別曲／短調と保存再開、4サイズを確認した。実機の長押しの操作感・聴感は継続確認。
