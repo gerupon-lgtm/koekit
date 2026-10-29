@@ -1,7 +1,8 @@
-import {GENRES,CHORD_INTERVALS} from '../../saezuri/music/catalog.js?v=v0.1.0-20261027225318-1250ffd';
-import {RHYTHMS,PROGRESSIONS,PRESETS,SOUNDS,accompanimentSounds,soundLabel,harmonicSegments,recommendProgressions} from '../../saezuri/music/accompaniment.js?v=v0.1.0-20261027225318-1250ffd';
-import {setupPlaybackSheet} from './sheet-controls.js?v=v0.1.0-20261027225318-1250ffd';
-import {ImageModeControls} from './image-mode-controls.js?v=v0.1.0-20261027225318-1250ffd';
+import {GENRES,CHORD_INTERVALS} from '../../saezuri/music/catalog.js?v=v0.1.0-20261029101743-3e500af';
+import {RHYTHMS,PROGRESSIONS,PRESETS,SOUNDS,accompanimentSounds,soundLabel,harmonicSegments,recommendProgressions} from '../../saezuri/music/accompaniment.js?v=v0.1.0-20261029101743-3e500af';
+import {setupPlaybackSheet} from './sheet-controls.js?v=v0.1.0-20261029101743-3e500af';
+import {ImageModeControls} from './image-mode-controls.js?v=v0.1.0-20261029101743-3e500af';
+import {readChordSlots,writeChordSlots} from './chord-slots.js?v=v0.1.0-20261029101743-3e500af';
 const pitches=['C','C♯','D','E♭','E','F','F♯','G','A♭','A','B♭','B'];
 export const chordPitches=pitches;
 const suffix={major:'',minor:'m'};
@@ -11,7 +12,7 @@ const $=id=>document.getElementById(id);
 function fill(node,items){node.replaceChildren(...items.map(([id,label])=>{const o=document.createElement('option');o.value=id;o.textContent=label;return o;}));}
 export class ImageControls {
  constructor({editor,onNew,onTempo,onPreview,onChordPreview,onStop,onNavigate,onRecord,compact=false,engine='classic'}) {
-  Object.assign(this,{editor,onTempo,onPreview,onChordPreview,onStop,onNavigate,engine});this.inlineChords=compact;
+  Object.assign(this,{editor,onTempo,onPreview,onChordPreview,onStop,onNavigate,engine});this.inlineChords=compact;this.chordSlots=readChordSlots();this.selectedSlot=null;
   const source=document.querySelector('.source-actions');if(!source)return;
   this.create=document.createElement('button');this.create.id='new-image';this.create.textContent='イメージからつくる';this.create.onclick=onNew;source.prepend(this.create);
   const panel=document.createElement('details');panel.id='image-settings';
@@ -81,18 +82,37 @@ export class ImageControls {
  show(dialog){this.onStop?.();dialog.showModal();this.onNavigate?.();}
  createSheets(){
   const d=document.createElement('dialog');d.id='chord-sheet';d.className='backing-sheet';d.setAttribute('aria-labelledby','chord-title');
-  d.innerHTML='<div class="screen-heading chord-heading"><div class="heading-actions heading-actions-end"><button id="chord-close">とじる</button></div><h2 id="chord-title"></h2><button id="chord-previous" aria-label="まえの小節">←</button><button id="chord-next" aria-label="つぎの小節">→</button></div><div class="chord-picker-tabs" role="tablist" aria-label="コードのえらびかた"><button id="chord-basic-mode" role="tab" aria-controls="chord-basic">よくつかう</button><button id="chord-all-mode" role="tab" aria-controls="chord-detail">すべて</button></div><div class="chord-picker"><div id="chord-basic" role="tabpanel" aria-label="キーに合うコード"></div><div id="chord-detail" role="tabpanel" hidden><div class="chord-fields"><label>ルート<select id="chord-root"></select></label><label>種類<select id="chord-quality"></select></label><label>ベース<select id="chord-bass"></select></label></div></div></div><p id="chord-candidate" role="status"></p><div class="sheet-actions"><button id="chord-single-preview">▶ このコードをきく</button><button id="chord-use">つかう</button><button id="chord-preview">▶ 曲をはじめから聴く</button><button id="chord-stop">■ とめる</button><button id="chord-confirm">オッケー</button></div>';
+  d.innerHTML=`<div class="screen-heading chord-heading"><div class="heading-actions heading-actions-end"><button id="chord-close">とじる</button></div><h2 id="chord-title"></h2><button id="chord-previous" aria-label="まえの小節">←</button><button id="chord-next" aria-label="つぎの小節">→</button></div>
+   <div class="chord-picker-tabs" role="tablist" aria-label="コードのえらびかた"><button id="chord-basic-mode" role="tab" aria-controls="chord-basic">よくつかう</button><button id="chord-all-mode" role="tab" aria-controls="chord-detail">すべて</button></div>
+   <div class="chord-picker"><div id="chord-basic" role="tabpanel" aria-label="プリセットと自分のコード"><div id="chord-grid"></div><p class="chord-slot-guide">黄色の枠：＋で登録・長押しでクリア</p></div>
+    <div id="chord-detail" role="tabpanel" hidden><div class="chord-fields"><label>ルート<select id="chord-root"></select></label><label>種類<select id="chord-quality"></select></label><label>ベース<select id="chord-bass"></select></label></div>
+     <div class="chord-slot-register"><span id="chord-slot-target"></span><button id="chord-slot-add">よくつかうに登録</button></div><p class="chord-slot-guide">黄色の枠に保存します。曲がかわっても使えます。</p>
+    </div></div>
+   <p id="chord-candidate" role="status"></p>
+   <div class="sheet-actions"><button id="chord-single-preview">▶ このコードをきく</button><button id="chord-use">つかう</button><button id="chord-preview">▶ 曲をはじめから聴く</button><button id="chord-stop">■ とめる</button><button id="chord-confirm">オッケー</button></div>`;
   document.querySelector('main').append(d);this.chordSheet=d;
   for(const id of ['chord-root','chord-bass'])fill($(id),pitches.map((p,i)=>[i,p]));
   fill($('chord-quality'),Object.keys(CHORD_INTERVALS).map(q=>[q,q==='major'?'メジャー':q==='minor'?'マイナー':q]));
   for(const id of ['chord-root','chord-quality','chord-bass'])$(id).onchange=()=>{
    if(id==='chord-root'&&this.bassLinked)$('chord-bass').value=$('chord-root').value;
    if(id==='chord-bass')this.bassLinked=$('chord-bass').value===$('chord-root').value;
-   this.onNavigate?.();this.updateChordChoice();
+   this.selectedSlot=null;this.slotNotice='';this.onNavigate?.();this.updateChordChoice();
   };
+  $('chord-slot-add').onclick=()=>this.registerChordSlot();
+  const menu=document.createElement('dialog');menu.id='chord-slot-menu';menu.setAttribute('role','alertdialog');menu.setAttribute('aria-labelledby','chord-slot-menu-title');menu.setAttribute('aria-describedby','chord-slot-menu-description');
+  menu.innerHTML='<div class="chord-slot-heading"><h2 id="chord-slot-menu-title"></h2><button id="chord-slot-menu-close" autofocus>とじる</button></div><p id="chord-slot-menu-description"></p><button id="chord-slot-clear">この枠をクリア</button>';
+  document.querySelector('main').append(menu);this.slotMenu=menu;
+  $('chord-slot-menu-close').onclick=()=>menu.close();$('chord-slot-clear').onclick=()=>{const i=this.slotMenuIndex;menu.close();this.clearChordSlot(i);};
+  menu.addEventListener('close',()=>{this.slotMenuIndex=null;});
+  // A touch release can send its compatibility click to a button in the new
+  // dialog. Consume that gesture; a fresh press or key always remains usable.
+  document.addEventListener('pointerdown',e=>{if(e.isPrimary)this.slotReleaseGuard=false;},true);
+  document.addEventListener('keydown',()=>{this.slotReleaseGuard=false;},true);
+  document.addEventListener('click',e=>{if(this.slotReleaseGuard&&e.isTrusted&&e.detail>0){this.slotReleaseGuard=false;e.preventDefault();e.stopImmediatePropagation();}},true);
+  document.addEventListener('visibilitychange',()=>{if(document.hidden){this.cancelSlotPress();if(menu.open)menu.close();}});
   for(const mode of ['basic','all'])$(`chord-${mode}-mode`).onclick=()=>this.setChordPicker(mode);
   $('chord-previous').onclick=()=>this.openChord(this.bar-1);$('chord-next').onclick=()=>this.openChord(this.bar+1);
-  $('chord-close').onclick=()=>d.close();d.addEventListener('close',()=>{document.body.classList.remove('chord-editing');this.onNavigate?.();});
+  $('chord-close').onclick=()=>d.close();d.addEventListener('close',()=>{this.cancelSlotPress();if(menu.open)menu.close();document.body.classList.remove('chord-editing');this.onNavigate?.();});
   $('chord-single-preview').onclick=()=>this.onChordPreview?.(this.sheetChord());
   $('chord-preview').onclick=()=>this.onPreview?.();$('chord-stop').onclick=()=>this.onStop?.();
   $('chord-use').onclick=()=>{this.onNavigate?.();this.stageChord();this.updateChordChoice();};
@@ -108,9 +128,57 @@ export class ImageControls {
   setupPlaybackSheet(s,{closeId:'sounds-close',stopId:'sounds-stop',onStop:()=>this.onStop?.()});
  }
  sheetChord(){return {startTick:this.bar*16,durationTick:16,root:Number($('chord-root').value),quality:$('chord-quality').value,bass:Number($('chord-bass').value),manual:true};}
+ chooseChord(chord,slot=null){
+  for(const part of ['root','quality','bass'])$(`chord-${part}`).value=chord[part];
+  this.bassLinked=chord.bass===chord.root;this.selectedSlot=slot;this.slotNotice='';this.onNavigate?.();this.updateChordChoice();this.onChordPreview?.(this.sheetChord());
+ }
+ renderChordButtons(){
+  this.cancelSlotPress();
+  const grid=$('chord-grid');grid.replaceChildren();
+  for(const [root,quality] of this.basicChords){const chord={root,quality,bass:root},b=document.createElement('button');b.textContent=chordLabel(chord);b.dataset.root=root;b.dataset.quality=quality;b.dataset.bass=root;b.onclick=()=>this.chooseChord(chord);grid.append(b);}
+  this.chordSlots.forEach((chord,i)=>{
+   const b=document.createElement('button');b.dataset.chordSlot=i;b.className='chord-user-slot';b.textContent=chord?chordLabel(chord):'＋';b.title=chord?chordLabel(chord):`追加枠 ${i+1} に登録`;
+   b.setAttribute('aria-label',chord?`自分のコード ${i+1}：${chordLabel(chord)} を選んで聴く`:`空き枠 ${i+1}：コードを登録`);
+   if(chord){
+    b.dataset.root=chord.root;b.dataset.quality=chord.quality;b.dataset.bass=chord.bass;b.title+='（長押しで枠をクリア）';b.setAttribute('aria-haspopup','dialog');
+    b.onclick=e=>{if(e.detail>0&&this.consumedSlotPress===b)return;this.consumedSlotPress=null;this.chooseChord(chord,i);};
+    b.onpointerdown=e=>{
+     this.cancelSlotPress();this.consumedSlotPress=null;if(e.button!==0||!e.isPrimary||this.busy)return;
+     const press={button:b,x:e.clientX,y:e.clientY,pointer:e.pointerId};this.slotPress=press;b.toggleAttribute('data-holding',true);
+     press.timer=setTimeout(()=>{this.cancelSlotPress();this.consumedSlotPress=b;this.slotReleaseGuard=true;this.openSlotMenu(i);},550);
+    };
+    b.onpointermove=e=>{const press=this.slotPress;if(press?.pointer===e.pointerId&&Math.hypot(e.clientX-press.x,e.clientY-press.y)>10)this.cancelSlotPress();};
+    for(const event of ['pointerup','pointercancel','pointerleave'])b.addEventListener(event,()=>this.cancelSlotPress());
+    b.oncontextmenu=e=>{e.preventDefault();this.cancelSlotPress();this.consumedSlotPress=b;this.slotReleaseGuard=true;this.openSlotMenu(i);};
+    b.onkeydown=e=>{if(e.key==='ContextMenu'||e.key==='F10'&&e.shiftKey){e.preventDefault();this.openSlotMenu(i);}};
+   }
+   else {b.classList.add('chord-empty-slot');b.onclick=()=>{this.slotTarget=i;this.slotNotice='';this.onNavigate?.();this.setChordPicker('all');$('chord-root').focus({preventScroll:true});};}
+   b.disabled=!!this.busy;grid.append(b);
+  });
+ }
+ cancelSlotPress(){const press=this.slotPress;if(press){clearTimeout(press.timer);press.button.removeAttribute('data-holding');this.slotPress=null;}}
+ openSlotMenu(i){
+  if(this.busy||!this.chordSheet.open||!this.chordSlots[i]||this.slotMenu.open)return;
+  this.onNavigate?.();this.slotMenuIndex=i;$('chord-slot-menu-title').textContent=`追加枠 ${i+1}`;
+  $('chord-slot-menu-description').textContent=`${chordLabel(this.chordSlots[i])} を、この枠から外しますか？ 曲のコードは変わりません。`;this.slotMenu.showModal();
+ }
+ availableChordSlot(){return this.chordSlots[this.slotTarget]===null?this.slotTarget:this.chordSlots.indexOf(null);}
+ registerChordSlot(){
+  if(this.busy)return;const i=this.availableChordSlot();if(i<0)return;
+  this.onNavigate?.();const {root,quality,bass}=this.sheetChord();this.chordSlots[i]={root,quality,bass};this.selectedSlot=i;this.slotTarget=null;
+  this.slotNotice=writeChordSlots(this.chordSlots)?'':'この画面のみ：端末に保存できませんでした。';
+  this.renderChordButtons();this.setChordPicker('basic');$('chord-grid').querySelector(`[data-chord-slot="${i}"]`)?.focus({preventScroll:true});
+ }
+ clearChordSlot(i){
+  if(this.busy||!Number.isInteger(i)||!this.chordSlots[i])return;
+  this.onNavigate?.();this.chordSlots[i]=null;if(this.selectedSlot===i)this.selectedSlot=null;this.slotTarget=i;
+  this.slotNotice=writeChordSlots(this.chordSlots)?'':'この画面のみ：端末に保存できませんでした。';
+  this.renderChordButtons();this.updateChordChoice();$('chord-grid').querySelector(`[data-chord-slot="${i}"]`)?.focus({preventScroll:true});
+ }
  setChordPicker(mode){
   this.chordPickerMode=mode;$('chord-basic').hidden=mode!=='basic';$('chord-detail').hidden=mode!=='all';
   for(const kind of ['basic','all'])$(`chord-${kind}-mode`).setAttribute('aria-selected',String(kind===mode));
+  this.updateChordChoice();
  }
  revealChordBar(){
   const row=this.$('chords'),button=row.querySelector(`[data-chord-bar="${this.bar}"]`);if(!button)return;
@@ -119,23 +187,25 @@ export class ImageControls {
  updateChordChoice(){
   const chord=this.sheetChord(),current=harmonicSegments(this.editor.previewPattern).find(c=>c.startTick===this.bar*16);
   const same=current&&['root','quality','bass'].every(k=>current[k]===chord[k]);
-  $('chord-candidate').textContent=same?`いま ${chordLabel(current)}${current.manual?'（この小節に入っています）':''}`:`いま ${chordLabel(current)} → 候補 ${chordLabel(chord)}`;
+  $('chord-candidate').textContent=this.slotNotice||(same?`いま ${chordLabel(current)}${current.manual?'（この小節に入っています）':''}`:`いま ${chordLabel(current)} → 候補 ${chordLabel(chord)}`);
   $('chord-candidate').setAttribute('aria-label',`${this.bar+1}小節目。${$('chord-candidate').textContent}。「つかう」で入れて、最後に「オッケー」。`);
-  for(const button of $('chord-basic').children)button.setAttribute('aria-pressed',String(Number(button.dataset.root)===chord.root&&button.dataset.quality===chord.quality&&chord.bass===chord.root));
+  for(const button of $('chord-grid').children)button.setAttribute('aria-pressed',String(button.dataset.chordSlot!==undefined?Number(button.dataset.chordSlot)===this.selectedSlot&&!!this.chordSlots[this.selectedSlot]:this.selectedSlot===null&&Number(button.dataset.root)===chord.root&&button.dataset.quality===chord.quality&&chord.bass===chord.root));
+  const target=this.availableChordSlot();$('chord-slot-add').disabled=!!this.busy||target<0;
+  $('chord-slot-target').textContent=target<0?'9枠とも登録ずみ':`追加枠 ${target+1} / ${this.chordSlots.length}`;
   $('chord-use').disabled=!!this.busy||!!(same&&current.manual);$('chord-previous').disabled=!!this.busy||this.bar===0;$('chord-next').disabled=!!this.busy||this.bar>=this.editor.previewPattern.bars-1;
  }
  stageChord(){const before=this.value(),value=structuredClone(before),start=this.bar*16;value.enabled=true;value.chords=[...(value.chords??[]).filter(c=>c.startTick+c.durationTick<=start||c.startTick>=start+16),this.sheetChord()].sort((a,b)=>a.startTick-b.startTick);if(JSON.stringify(value)!==JSON.stringify(before))this.editor.changeStructure({type:'accompaniment',value});}
  openChord(bar){
   if(this.busy||this.editor.entry||!this.editor.isOpen)return;
+  this.cancelSlotPress();if(this.slotMenu.open)this.slotMenu.close();
   bar=Math.max(0,Math.min(this.editor.previewPattern.bars-1,bar));
   this.onStop?.();
   this.bar=bar;const chord=harmonicSegments(this.editor.previewPattern).find(c=>c.startTick===bar*16);
   $('chord-title').textContent=`${bar+1} / ${this.editor.previewPattern.bars} 小節`;$('chord-title').setAttribute('aria-label',`${bar+1}小節目のコード`);
   for(const part of ['root','quality','bass'])$(`chord-${part}`).value=chord[part];this.bassLinked=chord.root===chord.bass;
-  const basic=$('chord-basic');basic.replaceChildren();
   const chords=this.key==='Am'?[[9,'minor'],[11,'m7♭5'],[0,'major'],[2,'minor'],[4,'major'],[5,'major'],[7,'major']]:[[0,'major'],[2,'minor'],[4,'minor'],[5,'major'],[7,'major'],[9,'minor'],[11,'m7♭5']];
-  for(const [root,quality] of chords){const b=document.createElement('button');b.textContent=chordLabel({root,quality,bass:root});b.dataset.root=root;b.dataset.quality=quality;b.onclick=()=>{for(const [part,v] of [['root',root],['quality',quality],['bass',root]])$(`chord-${part}`).value=v;this.bassLinked=true;$('chord-root').onchange();this.onChordPreview?.(this.sheetChord());};basic.append(b);}
-  this.setChordPicker(this.chordPickerMode==='all'||!chords.some(([root,quality])=>root===chord.root&&quality===chord.quality&&chord.bass===root)?'all':'basic');
+  this.basicChords=chords;this.selectedSlot=this.chordSlots.findIndex(c=>c&&['root','quality','bass'].every(k=>c[k]===chord[k]));if(this.selectedSlot<0)this.selectedSlot=null;this.slotTarget=null;this.slotNotice='';this.renderChordButtons();
+  this.setChordPicker(this.chordPickerMode==='all'||this.selectedSlot===null&&!chords.some(([root,quality])=>root===chord.root&&quality===chord.quality&&chord.bass===root)?'all':'basic');
   this.updateChordChoice();
   if(!this.chordSheet.open){
    if(this.inlineChords){this.$('chords').after(this.chordSheet);document.body.classList.add('chord-editing');this.chordSheet.show();}
@@ -147,6 +217,7 @@ export class ImageControls {
  }
  render(busy=false){
   if(!this.panel)return;this.busy=busy;const pattern=this.editor.previewPattern;
+  if(busy||!this.editor.isOpen){this.cancelSlotPress();if(this.slotMenu.open)this.slotMenu.close();}
   if((!this.editor.isOpen||this.bar>=pattern.bars)&&this.chordSheet.open)this.chordSheet.close();
   this.create.disabled=busy||this.editor.pending;this.panel.hidden=!this.editor.isOpen;if(this.panel.hidden){this.imageMode.render(busy);return;}
   const value=this.value(),key=pattern.key?.mode==='minor'?'Am':'C';this.fill('progression',PROGRESSIONS[key]);this.key=key;

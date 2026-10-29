@@ -7,7 +7,7 @@ const base=process.env.SAEZURI_BASE||'http://127.0.0.1:8018';
  const click=async id=>{await revealCreationControl(page,'#'+id);await page.locator('#'+id).click();};
  const pending=async()=>{const r=await report();return r.captureEditing.editCandidate??r.captureCandidate;};
  const recipe=p=>JSON.stringify(p.accompaniment.imageArrangement);
- await page.goto(base+'/probe/saezuri/');await click('home-create');await click('new-image');
+ await page.goto(base+'/probe/saezuri/');await click('home-create');await click('new-image');await page.locator('#image-word-type').waitFor({state:'visible'});
  assert.equal(await page.locator('#image-words select').count(),3);let r=await report();assert.equal(r.captureEditing.pending,true);assert.equal(r.captureEditing.undoDepth,1);
  for(let i=0;i<12;i++)await click('image-next');r=await report();assert.equal(r.captureEditing.undoDepth,1);assert.equal(r.captureEditing.accepted,false);
  await click('preview');assert.equal(await page.locator('#image-next').isDisabled(),true);assert.equal(await page.locator('#image-word-speed').isDisabled(),true);await click('stop');await click('capture-edit-undo');assert.equal((await report()).captureEditing.pending,false);
