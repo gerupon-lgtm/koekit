@@ -1,10 +1,10 @@
-import {SongStore,SONG_LIMIT} from '../../saezuri/song-store.js?v=v0.1.0-20261029223719-140f1b5';
-import {checkpointFingerprint,restoreCheckpoint} from './song-session.js?v=v0.1.0-20261029223719-140f1b5';
-import {emptySequence} from './sequence-session.js?v=v0.1.0-20261029223719-140f1b5';
-import {validateComposition} from '../../saezuri/sequence.js?v=v0.1.0-20261029223719-140f1b5';
-import {sequencePlayback} from './sequence-session.js?v=v0.1.0-20261029223719-140f1b5';
-import {entryPreview} from './entry-session.js?v=v0.1.0-20261029223719-140f1b5';
-import {setupPlaybackSheet} from './sheet-controls.js?v=v0.1.0-20261029223719-140f1b5';
+import {SongStore,SONG_LIMIT} from '../../saezuri/song-store.js?v=v0.1.0-20261029225948-ef4bb5a';
+import {checkpointFingerprint,restoreCheckpoint} from './song-session.js?v=v0.1.0-20261029225948-ef4bb5a';
+import {emptySequence} from './sequence-session.js?v=v0.1.0-20261029225948-ef4bb5a';
+import {validateComposition} from '../../saezuri/sequence.js?v=v0.1.0-20261029225948-ef4bb5a';
+import {sequencePlayback} from './sequence-session.js?v=v0.1.0-20261029225948-ef4bb5a';
+import {entryPreview} from './entry-session.js?v=v0.1.0-20261029225948-ef4bb5a';
+import {setupPlaybackSheet} from './sheet-controls.js?v=v0.1.0-20261029225948-ef4bb5a';
 const $=id=>document.getElementById(id);
 const copy=value=>structuredClone(value);
 const messages={SONG_LIMIT:`${SONG_LIMIT}きょく いっぱいです。きょくを けすと、新しく ほぞんできます。`,SONG_CONFLICT:'ほかの画面で きょくが変わりました。この画面のつくりかけは残っています。',SONG_DELETED:'ほかの画面で このきょくが消されました。この画面のつくりかけは残っています。'};
@@ -21,12 +21,36 @@ export class SongWorkflow {
   this.makeDialog('song-resume','つくりかけがあるよ。どうする？','<p id="song-resume-copy"></p><div class="song-actions"><button id="song-continue">つづきから つくる</button><button id="song-discard-draft">つくりかけを けす</button><button data-close>やめておく</button></div>');
   this.makeDialog('song-failure','まだ ほぞんできていないよ','<p id="song-failure-copy"></p><div class="song-actions"><button id="song-retry">もういちど ほぞん</button><button data-close>つくるのを つづける</button><button id="song-leave">ほぞんせず やめる</button></div>');
   this.makeDialog('song-delete','このきょくを けす？','<p>きめたところと つくりかけを けすよ。</p><div class="song-actions"><button id="song-delete-confirm">このきょくを けす</button><button data-close>やめておく</button></div>');
+  const rename=this.makeDialog('song-rename','名前を かえる','<label for="song-rename-title">きょくの名前</label><input id="song-rename-title" maxlength="24"><p id="song-rename-status" role="status"></p><div class="song-actions"><button id="song-rename-confirm">この名前にする</button><button id="song-rename-cancel" data-close>やめておく</button></div>');
+  const heading=document.createElement('div');heading.className='screen-heading';const close=document.createElement('button');close.id='song-rename-close';close.textContent='とじる';close.onclick=()=>rename.close();heading.append(rename.querySelector('h2'),close);rename.prepend(heading);
+  $('song-rename-confirm').onclick=()=>this.commitName();
+  rename.addEventListener('cancel',event=>{if(this.renaming)event.preventDefault();});
+  $('song-rename-title').addEventListener('keydown',event=>{if(event.key==='Enter'&&!event.isComposing){event.preventDefault();this.commitName();}});
   for(const id of ['tempo','instrument'])$(id).addEventListener('change',()=>this.schedule());
   const name=document.createElement('label');name.textContent='きょくの名前';const input=document.createElement('input');input.id='song-title';input.maxLength=24;input.placeholder='わたしのきょく';input.onchange=()=>this.schedule();name.append(input);$('creation-settings').prepend(name);
   document.addEventListener('visibilitychange',()=>{if(document.hidden)this.schedule();});
  }
  makeDialog(id,title,body){const d=document.createElement('dialog');d.id=id;d.className='song-dialog';d.setAttribute('aria-label',title);const h=document.createElement('h2');h.textContent=title;d.append(h);const content=document.createElement('div');content.innerHTML=body;d.append(content);document.querySelector('main').append(d);for(const b of d.querySelectorAll('[data-close]'))b.onclick=()=>d.close();d.addEventListener('close',()=>this.shell.onNavigate());return d;}
  show(id){this.shell.onStop();$(id).showModal();this.shell.onNavigate();}
+ rename(record){
+  if(this.renaming)return;this.renameTarget=record;$('song-rename-title').value=record.title;$('song-rename-status').textContent='';this.show('song-rename');$('song-rename-title').focus();$('song-rename-title').select();
+ }
+ async commitName(){
+  const record=this.renameTarget;if(this.renaming||!record||!$('song-rename').open)return;
+  const name=$('song-rename-title').value.trim();if(!name){$('song-rename-status').textContent='名前を 入れてね。';$('song-rename-title').focus();return;}
+  this.renaming=true;const suspended=this.suspended,controls=['song-rename-title','song-rename-confirm','song-rename-cancel','song-rename-close'];for(const id of controls)$(id).disabled=true;
+  let changed=false;
+  try{
+   if(this.id===record.id&&!await this.flush()){$('song-rename-status').textContent=messages[this.error?.code]??'今のつくりかけを ほぞんしてから、名前をかえてね。';return;}
+   this.suspended=true;
+   const saved=await this.store.rename(record.id,name,this.id===record.id?this.revision:record.revision);
+   Object.assign(record,saved);
+   if(this.id===saved.id){this.revision=saved.revision;this.title=saved.title;$('song-title').value=saved.title;this.savedFingerprint=this.requestedFingerprint=checkpointFingerprint(saved.data);this.error=null;this.status('ほぞんしたよ',true);}
+   changed=true;
+  }catch(error){$('song-rename-status').textContent=messages[error.code]??'まだ 名前をかえられませんでした。もういちど試してね。';}
+  finally{this.suspended=suspended;this.renaming=false;for(const id of controls)$(id).disabled=false;if(changed)this.schedule();}
+  if(changed&&$('song-rename').open){$('song-rename').close();await this.library();document.querySelector(`[data-song-rename="${CSS.escape(record.id)}"]`)?.focus({preventScroll:true});}
+ }
  snapshot(){
   if(this.practice)return null;
   const placement=this.shell.placementWorkflow;
@@ -79,11 +103,12 @@ export class SongWorkflow {
   $('song-list').replaceChildren();$('song-list-status').textContent='よみこんでいます…';this.show('song-library');
   try{const songs=await this.store.list();$('song-list-status').textContent=`${songs.length} / ${this.store.limit}きょく`;
    for(const record of songs){const row=document.createElement('div');row.className='song-row';const open=document.createElement('button');open.dataset.songOpen=record.id;open.textContent=record.title;open.onclick=()=>this.open(record);
+    const rename=document.createElement('button');rename.textContent='名前';rename.dataset.songRename=record.id;rename.setAttribute('aria-label',`${record.title}の名前をかえる`);rename.onclick=()=>this.rename(record);
     const listen=document.createElement('button');listen.textContent='▶ 聴く';listen.onclick=()=>{try{if(record.data.sequence.placements.length){const data=sequencePlayback(record.data.sequence);if(data.code)throw new Error(data.code);this.onAudition(data,record.data.settings.tempo);}else{const session=restoreCheckpoint(record.data.checkpoint);if(!session)return;this.onAudition({pattern:record.data.checkpoint.confirmed?.pattern??entryPreview(session)},record.data.settings.tempo);}}catch{$('song-list-status').textContent='このきょくは 聴けませんでした。';}};
     const duplicate=document.createElement('button');duplicate.textContent='コピー';duplicate.onclick=async()=>{this.shell.onStop();try{await this.store.duplicate(record.id,record.revision);$('song-library').close();await this.library();}catch(error){$('song-list-status').textContent=messages[error.code]??'まだ コピーできていないよ';}};
     const time=document.createElement('small');time.textContent=new Intl.DateTimeFormat('ja-JP',{dateStyle:'short',timeStyle:'short',timeZone:Intl.DateTimeFormat().resolvedOptions().timeZone}).format(new Date(record.updatedAt));
     const remove=document.createElement('button');remove.textContent='けす';remove.setAttribute('aria-label',`${record.title}をけす`);remove.onclick=()=>{
-     $('song-delete-confirm').onclick=async()=>{try{await this.store.remove(record.id,record.revision);$('song-delete').close();if(this.id===record.id){this.suspended=true;this.onDiscard();this.shell.sequence=emptySequence();this.shell.proposal=null;this.id=null;this.revision=null;this.savedFingerprint=this.requestedFingerprint=null;this.suspended=false;}row.remove();$('song-list-status').textContent=`${$('song-list').children.length} / ${this.store.limit}きょく`;}catch(error){$('song-list-status').textContent=messages[error.code]??'まだ けせていないよ';$('song-delete').close();}};this.show('song-delete');};row.append(open,listen,duplicate,remove,time);$('song-list').append(row);}
+     $('song-delete-confirm').onclick=async()=>{try{await this.store.remove(record.id,record.revision);$('song-delete').close();if(this.id===record.id){this.suspended=true;this.onDiscard();this.shell.sequence=emptySequence();this.shell.proposal=null;this.id=null;this.revision=null;this.savedFingerprint=this.requestedFingerprint=null;this.suspended=false;}row.remove();$('song-list-status').textContent=`${$('song-list').children.length} / ${this.store.limit}きょく`;}catch(error){$('song-list-status').textContent=messages[error.code]??'まだ けせていないよ';$('song-delete').close();}};this.show('song-delete');};row.append(open,rename,listen,duplicate,remove,time);$('song-list').append(row);}
   }catch{$('song-list-status').textContent='きょくを よみこめませんでした。ほぞんしたものは残しています。';}
  }
  async open(record){

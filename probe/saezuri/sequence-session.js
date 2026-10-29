@@ -1,15 +1,19 @@
-import {validateNotes} from '../../saezuri/document.js?v=v0.1.0-20261029223719-140f1b5';
-import {validateComposition,proposeSequence,commitSequence,undoSequence} from '../../saezuri/sequence.js?v=v0.1.0-20261029223719-140f1b5';
-import {accompanimentEvents} from '../../saezuri/music/accompaniment.js?v=v0.1.0-20261029223719-140f1b5';
-import {endingEvents,endingDescription} from '../../saezuri/music/ending.js?v=v0.1.0-20261029223719-140f1b5';
+import {validateNotes} from '../../saezuri/document.js?v=v0.1.0-20261029225948-ef4bb5a';
+import {validateComposition,proposeSequence,commitSequence,undoSequence} from '../../saezuri/sequence.js?v=v0.1.0-20261029225948-ef4bb5a';
+import {accompanimentEvents,validateAccompaniment} from '../../saezuri/music/accompaniment.js?v=v0.1.0-20261029225948-ef4bb5a';
+import {endingEvents,endingDescription} from '../../saezuri/music/ending.js?v=v0.1.0-20261029225948-ef4bb5a';
 export const emptySequence=()=>({patterns:[],placements:[],revision:0,undoStack:[]});
+export function canKeepPhrase(pattern){
+ if(validateNotes(pattern))return false;
+ return !!pattern.notes.length || (pattern.accompaniment?.enabled===true&&!validateAccompaniment(pattern.accompaniment,pattern.bars));
+}
 function phraseId(draft){
  const used=new Set([...draft.patterns,...(draft.undoStack??[]).flatMap(item=>item.patterns??[])].map(p=>p.id));
  let number=0,id;do{id=`phrase-${draft.revision}-${number++}`;}while(used.has(id));return id;
 }
 export function keepPhrase(draft,pattern,name) {
  const error=validateNotes(pattern);if(error)return error;
- if(!pattern.notes.length)return {code:'EMPTY_PHRASE'};
+ if(!canKeepPhrase(pattern))return {code:'EMPTY_PHRASE'};
  const id=phraseId(draft);
  return {...draft,revision:draft.revision+1,patterns:[...draft.patterns,{...structuredClone(pattern),id,familyId:id,name:name.trim().slice(0,24)||`フレーズ${draft.patterns.length+1}`} ]};
 }

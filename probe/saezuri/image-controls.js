@@ -1,9 +1,9 @@
-import {GENRES,CHORD_INTERVALS,CHORD_PITCH_NAMES,chordLabel} from '../../saezuri/music/catalog.js?v=v0.1.0-20261029223719-140f1b5';
-import {RHYTHMS,PROGRESSIONS,PRESETS,SOUNDS,accompanimentSounds,soundLabel,harmonicSegments,recommendProgressions} from '../../saezuri/music/accompaniment.js?v=v0.1.0-20261029223719-140f1b5';
-import {setupPlaybackSheet} from './sheet-controls.js?v=v0.1.0-20261029223719-140f1b5';
-import {ImageModeControls} from './image-mode-controls.js?v=v0.1.0-20261029223719-140f1b5';
-import {readChordSlots,writeChordSlots} from './chord-slots.js?v=v0.1.0-20261029223719-140f1b5';
-import {ChordMetronome} from './chord-metronome.js?v=v0.1.0-20261029223719-140f1b5';
+import {GENRES,CHORD_INTERVALS,CHORD_PITCH_NAMES,chordLabel} from '../../saezuri/music/catalog.js?v=v0.1.0-20261029225948-ef4bb5a';
+import {RHYTHMS,PROGRESSIONS,PRESETS,SOUNDS,accompanimentSounds,soundLabel,harmonicSegments,recommendProgressions} from '../../saezuri/music/accompaniment.js?v=v0.1.0-20261029225948-ef4bb5a';
+import {setupPlaybackSheet} from './sheet-controls.js?v=v0.1.0-20261029225948-ef4bb5a';
+import {ImageModeControls} from './image-mode-controls.js?v=v0.1.0-20261029225948-ef4bb5a';
+import {readChordSlots,writeChordSlots} from './chord-slots.js?v=v0.1.0-20261029225948-ef4bb5a';
+import {ChordMetronome} from './chord-metronome.js?v=v0.1.0-20261029225948-ef4bb5a';
 const pitches=CHORD_PITCH_NAMES;
 export const chordPitches=pitches;
 export {chordLabel};

@@ -1,6 +1,6 @@
 // A held voice owns its nodes. Releasing it never stops the accompaniment.
-import { createLightVoice, LIGHT_ENGINES, LIGHT_ONLY_INSTRUMENTS } from './light-voice.js?v=v0.1.0-20261029223719-140f1b5';
-import { DEFAULT_SOUND_ENGINE } from './sound-engine.js?v=v0.1.0-20261029223719-140f1b5';
+import { createLightVoice, LIGHT_ENGINES, LIGHT_ONLY_INSTRUMENTS } from './light-voice.js?v=v0.1.0-20261029225948-ef4bb5a';
+import { DEFAULT_SOUND_ENGINE } from './sound-engine.js?v=v0.1.0-20261029225948-ef4bb5a';
 export function heldVoice(ctx,output,midi,instrument='piano',{engine=DEFAULT_SOUND_ENGINE}={}){
  if(engine!=='classic'&&!LIGHT_ENGINES.includes(engine))throw new Error('VOICE_ENGINE_UNKNOWN');
  if(LIGHT_ENGINES.includes(engine)||LIGHT_ONLY_INSTRUMENTS.includes(instrument))return createLightVoice(ctx,output,{midi,instrument,engine:engine==='classic'?'light':engine});

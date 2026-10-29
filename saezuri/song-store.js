@@ -31,6 +31,16 @@ export class SongStore {
  }
  list(){return this.read(async songs=>(await request(songs.getAll())).sort((a,b)=>b.updatedAt.localeCompare(a.updatedAt)));}
  get(id){return this.read(songs=>request(songs.get(id)));}
+ rename(id,title,expectedRevision){return this.read(async(songs,deleted)=>{
+  const [source,tombstone]=await Promise.all([request(songs.get(id)),request(deleted.get(id))]);
+  if(!source||tombstone)throw issue('SONG_DELETED');
+  if(source.schemaVersion!==1)throw issue('SONG_SCHEMA');
+  if(source.revision!==expectedRevision)throw issue('SONG_CONFLICT');
+  const name=String(title??'').trim().slice(0,24);if(!name)throw issue('SONG_TITLE_EMPTY');
+  if(name===source.title&&name===source.data.title)return source;
+  const record={...structuredClone(source),title:name,revision:source.revision+1,updatedAt:new Date().toISOString()};record.data.title=name;
+  await request(songs.put(record));return record;
+ },'readwrite');}
  duplicate(id,expectedRevision){return this.read(async(songs,deleted)=>{
   const source=await request(songs.get(id));
   if(!source)throw issue('SONG_DELETED');if(source.revision!==expectedRevision)throw issue('SONG_CONFLICT');if(source.schemaVersion!==1)throw issue('SONG_SCHEMA');

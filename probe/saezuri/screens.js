@@ -1,9 +1,9 @@
-import {MelodyLearning} from './learning.js?v=v0.1.0-20261029223719-140f1b5';
-import {emptySequence,keepPhrase,sequencePlayback,proposeSequence,commitSequence,undoPlacement} from './sequence-session.js?v=v0.1.0-20261029223719-140f1b5';
-import {readCaptureReport} from './capture-report.js?v=v0.1.0-20261029223719-140f1b5';
-import {setupPlaybackSheet} from './sheet-controls.js?v=v0.1.0-20261029223719-140f1b5';
-import {PlacementWorkflow} from './placement-workflow.js?v=v0.1.0-20261029223719-140f1b5';
-import {EndingWorkflow} from './ending-workflow.js?v=v0.1.0-20261029223719-140f1b5';
+import {MelodyLearning} from './learning.js?v=v0.1.0-20261029225948-ef4bb5a';
+import {emptySequence,canKeepPhrase,keepPhrase,sequencePlayback,proposeSequence,commitSequence,undoPlacement} from './sequence-session.js?v=v0.1.0-20261029225948-ef4bb5a';
+import {readCaptureReport} from './capture-report.js?v=v0.1.0-20261029225948-ef4bb5a';
+import {setupPlaybackSheet} from './sheet-controls.js?v=v0.1.0-20261029225948-ef4bb5a';
+import {PlacementWorkflow} from './placement-workflow.js?v=v0.1.0-20261029225948-ef4bb5a';
+import {EndingWorkflow} from './ending-workflow.js?v=v0.1.0-20261029225948-ef4bb5a';
 const $=id=>document.getElementById(id);
 const trialBuild=new URL(import.meta.url).searchParams.get('v')||'local-20261010';
 const trialVersion=trialBuild.match(/-(\d{14})-/)?.[1]||trialBuild;
@@ -169,7 +169,7 @@ export class MelodyScreens {
   $('choose-resume').hidden=!this.editor.isOpen;
   $('choose-notice').textContent=this.editor.isOpen?'作業を残しています。別の作り方を選ぶと、今の作業をほぞんします。':'';
   $('capture-position').hidden=!['preparing','count-in','recording','analyzing'].includes(phase);
-  $('keep-phrase').disabled=this.busy||!!this.placementWorkflow?.active||!this.editor.isOpen||this.editor.pending||!!this.proposal||!this.editor.pattern?.notes.length;
+  $('keep-phrase').disabled=this.busy||!!this.placementWorkflow?.active||!this.editor.isOpen||this.editor.pending||!!this.proposal||!canKeepPhrase(this.editor.pattern);
   if(this.proposal)$('phrase-feedback').textContent='つなげる画面の候補を確定か取消してから登録できます。';
   $('phrase-name').disabled=this.busy;
   for(const id of ['after-keep-connect','after-keep-more'])$(id).disabled=this.busy;
@@ -179,7 +179,7 @@ export class MelodyScreens {
   this.renderSequence();this.learning?.sync(phase);
  }
   async keep() {
-  if(this.busy||this.placementWorkflow?.active||!this.editor.isOpen||this.editor.pending||this.proposal||!this.editor.pattern)return;
+  if(this.busy||this.placementWorkflow?.active||!this.editor.isOpen||this.editor.pending||this.proposal||!canKeepPhrase(this.editor.pattern))return;
     if(this.songWorkflow?.practice){
      const pattern=JSON.stringify(this.editor.pattern);
      if(!await this.songWorkflow.allowNew())return;

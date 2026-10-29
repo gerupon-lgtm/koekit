@@ -32,7 +32,23 @@ const {chromium}=require('../.local-tools/node_modules/playwright');const assert
  await p3.locator('#home-create').click();await p3.locator('#new-manual').click();await p3.locator('#song-library').waitFor({state:'visible'});
  assert.equal(await p3.locator('#melody-create').isVisible(),false,'full capacity prevents new composition before data entry');assert.match(await p3.locator('#song-list-status').textContent(),/いっぱい/);
  await p3.locator('#song-library [data-close]').click();await p3.locator('#new-tutorial').click();await p3.locator('#learning-guide').waitFor({state:'visible'});
- await revealCreationControl(p3,'[data-pitch="0"]');await p3.locator('[data-pitch="0"]').click();await p3.locator('#capture-edit-confirm').click();await p3.locator('#learning-close').click();await p3.locator('#keep-phrase').click();await p3.locator('#song-library').waitFor({state:'visible'});assert.equal(await p3.locator('#phrase-shelf [data-phrase]').count(),0,'full capacity permits practice but prevents registering it');
+ const tutorialClick=async selector=>{await revealCreationControl(p3,selector);await p3.locator(selector).click();};
+ const closeModel=async()=>{await p3.waitForFunction(()=>document.querySelector('#learning-preview').dataset.phase==='music');await tutorialClick('#learning-preview-close');};
+ const tutorialHear=async()=>{await tutorialClick('#preview');await closeModel();};
+ const tutorialNext=async stage=>{await tutorialClick('#learning-next');await p3.waitForFunction(stage=>document.querySelector('#learning-guide').dataset.stage===String(stage),stage);await closeModel();};
+ const tutorialPut=async(pitch,length)=>{const duration=`[data-duration="${length}"]`;if(await p3.locator(duration).isVisible())await tutorialClick(duration);await tutorialClick(`[data-pitch="${pitch}"]`);await tutorialClick('#capture-edit-confirm');};
+ // Registration appears only after the present eight-stage tutorial is complete.
+ await tutorialClick('#learning-model');await closeModel();await tutorialNext(1);
+ await tutorialPut(0,1);await tutorialPut(2,1);await tutorialHear();await p3.locator('#learning-melody button[data-note-id]').first().click();await tutorialClick('#capture-pitch-up');await tutorialClick('#capture-pitch-up');await tutorialHear();await tutorialClick('#capture-edit-confirm');await tutorialNext(2);
+ await tutorialPut(4,.5);await tutorialPut(2,1.5);await tutorialHear();await tutorialNext(3);
+ await tutorialPut(3,1);await tutorialPut(2,1);await tutorialPut(1,1);await tutorialClick('[data-lesson-length="8"]');await tutorialHear();await tutorialClick('#capture-edit-confirm');await tutorialNext(4);
+ await tutorialPut(4,1);await tutorialPut(7,.5);await tutorialPut(4,.5);await tutorialPut(5,.5);await tutorialPut(4,1);await tutorialPut(2,.5);await tutorialHear();await tutorialNext(5);
+ await tutorialClick('[data-lesson-length="4"]');await tutorialHear();await tutorialClick('#capture-edit-confirm');await tutorialNext(6);
+ await tutorialPut(1,1);await tutorialPut(0,.5);await tutorialPut(0,2);await tutorialHear();await tutorialNext(7);
+ await tutorialClick('[data-mode="backing"]');await p3.locator('#image-genre').selectOption('pop');await p3.locator('#image-rhythm').selectOption('tutorial');await tutorialClick('#image-suggest');await tutorialClick('[data-progression-use="home"]');await tutorialHear();await tutorialClick('#capture-edit-confirm');
+ assert.equal(await p3.locator('body').evaluate(node=>node.classList.contains('learning-complete')),true,'full capacity permits finishing tutorial practice');
+ assert.equal(await p3.evaluate(async()=>{const {SongStore}=await import('/saezuri/song-store.js');return (await new SongStore().list()).length;}),10,'tutorial practice does not claim a storage frame');
+ await tutorialClick('#learning-close');await tutorialClick('#keep-phrase');await p3.locator('#song-library').waitFor({state:'visible'});assert.equal(await p3.locator('#phrase-shelf [data-phrase]').count(),0,'full capacity permits practice but prevents registering it');
  await p3.locator('#song-library [data-close]').click();await p3.locator('#melody-create [data-screen-back]').click();await p3.locator('#choose-example').click();await p3.locator('[data-practice-edit="walk"]').click();await p3.locator('#song-library').waitFor({state:'visible'});assert.equal(await p3.locator('#melody-create').isVisible(),false,'full capacity also prevents a preset copy');
  assert.deepEqual(errors,[]);console.log('cancel draft, save deletion, quota revert/retry, two-tab CAS, active draft deletion, full capacity: PASS');
  }finally{await browser.close();}})().catch(e=>{console.error(e);process.exitCode=1;});

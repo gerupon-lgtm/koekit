@@ -12,7 +12,7 @@ const base=process.env.SAEZURI_BASE||'http://127.0.0.1:8026';
   const reopen=async()=>{await saved();await page.reload();await page.locator('#home-songs').click();await page.locator('[data-song-open]').first().click();if(await page.locator('#song-continue').isVisible())await page.locator('#song-continue').click();};
   const phrase=async(key,name,pitch)=>{
    await page.locator('#new-manual').click();if(key==='Am'){await page.locator('#composer-key').selectOption('Am');await page.locator('#capture-edit-confirm').click();}
-   await revealCreationControl(page,`[data-pitch="${pitch}"]`);await page.locator(`[data-pitch="${pitch}"]`).click();await page.locator('#capture-edit-confirm').click();await page.locator('#phrase-name').fill(name);await page.locator('#keep-phrase').click();
+   await revealCreationControl(page,`[data-pitch="${pitch}"]`);await page.locator(`[data-pitch="${pitch}"]`).click();await page.locator('#capture-edit-confirm').click();await revealCreationControl(page,'#phrase-name');await page.locator('#phrase-name').fill(name);await page.locator('#keep-phrase').click();
   };
   await page.goto(base+'/probe/saezuri/');await page.locator('#home-create').click();await phrase('Am','A',5);await page.locator('#after-keep-more').click();await phrase('C','B',0);
   await page.locator('#screen-settings').click();await page.locator('#tempo').fill('180');await page.locator('#tempo').dispatchEvent('change');await page.locator('#settings-close').click();await connect();
