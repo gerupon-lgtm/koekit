@@ -39,4 +39,7 @@ PC Chromeで100回の連続試聴とCPU速度を4倍遅くする検証を実施�
 
 ## 公開
 
-公開前。最終結果を追記する。
+- 実装コミット `4cd454a3499e30779a2e1b5c5fcd4eb3b1958fb9` を公開。Pages [40863429376](https://github.com/gerupon-lgtm/koekit/actions/runs/40863429376) のbuild／deploy／report-build-status全3ジョブが成功。
+- 公開101ファイルのHTTPS・HTTP成功・形式・長さ・SHA-256が、コミット内のGitデータと一致した。
+- [通常URL](https://koekit.sikumilab.com/probe/saezuri/)のPC Chromeでも3スクリプトが成功。ドンカマの2制作ケースと850msの画面停止、双方向テンポ／保存、コード編集・単独実音・最終確定と4サイズ、100回ずつの単独／併用を確認。発振器最大5個・終了後0個、鍵盤のinteractiveを維持した。
+- 公開先の100回検証でも出力不足は単独1回・約9.1ms、併用1回・約6.4msだった。機能・所有権・負荷上限の確認成功と、音切れの完全解消を区別する。原因特定とPixel 6aでの更新後の確認は継続する。
