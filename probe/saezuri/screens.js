@@ -1,9 +1,9 @@
-import {MelodyLearning} from './learning.js?v=v0.1.0-20261029133022-8d1641e';
-import {emptySequence,keepPhrase,sequencePlayback,proposeSequence,commitSequence,undoPlacement} from './sequence-session.js?v=v0.1.0-20261029133022-8d1641e';
-import {readCaptureReport} from './capture-report.js?v=v0.1.0-20261029133022-8d1641e';
-import {setupPlaybackSheet} from './sheet-controls.js?v=v0.1.0-20261029133022-8d1641e';
-import {PlacementWorkflow} from './placement-workflow.js?v=v0.1.0-20261029133022-8d1641e';
-import {EndingWorkflow} from './ending-workflow.js?v=v0.1.0-20261029133022-8d1641e';
+import {MelodyLearning} from './learning.js?v=v0.1.0-20261029192917-e89e384';
+import {emptySequence,keepPhrase,sequencePlayback,proposeSequence,commitSequence,undoPlacement} from './sequence-session.js?v=v0.1.0-20261029192917-e89e384';
+import {readCaptureReport} from './capture-report.js?v=v0.1.0-20261029192917-e89e384';
+import {setupPlaybackSheet} from './sheet-controls.js?v=v0.1.0-20261029192917-e89e384';
+import {PlacementWorkflow} from './placement-workflow.js?v=v0.1.0-20261029192917-e89e384';
+import {EndingWorkflow} from './ending-workflow.js?v=v0.1.0-20261029192917-e89e384';
 const $=id=>document.getElementById(id);
 const trialBuild=new URL(import.meta.url).searchParams.get('v')||'local-20261010';
 const trialVersion=trialBuild.match(/-(\d{14})-/)?.[1]||trialBuild;
@@ -151,6 +151,7 @@ export class MelodyScreens {
   const genres=$('image-genre')?.closest('.composer-values');
   if(genres&&$('backing-settings')){if(mode==='backing')(this.editor.previewPattern?.accompaniment?.imageChoice&&$('image-backing-detail')?$('image-backing-detail'):$('image-settings')).prepend(genres);else $('image-progression').closest('label').before(genres);}
   document.body.dataset.createMode=mode;for(const b of document.querySelectorAll('[data-mode]'))b.setAttribute('aria-pressed',String(b.dataset.mode===mode));
+  this.onModeChange?.();
  }
  sync(phase) {
   this.phase=phase;this.busy=phase!=='idle';

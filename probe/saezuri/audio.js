@@ -1,9 +1,9 @@
 // ML-T01 only: locally synthesized comparison voices, not approved instrument assets.
-import { tickSeconds } from '../../saezuri/document.js?v=v0.1.0-20261029133022-8d1641e';
-import { schedulePlaybackCount, COUNT_STYLES } from './playback-count.js?v=v0.1.0-20261029133022-8d1641e';
-import { createLightVoice, LIGHT_ENGINES, LIGHT_ONLY_INSTRUMENTS } from './light-voice.js?v=v0.1.0-20261029133022-8d1641e';
-import { DEFAULT_SOUND_ENGINE } from './sound-engine.js?v=v0.1.0-20261029133022-8d1641e';
-import {readPlaybackStats,playbackStatsDelta} from './playback-diagnostics.js?v=v0.1.0-20261029133022-8d1641e';
+import { tickSeconds } from '../../saezuri/document.js?v=v0.1.0-20261029192917-e89e384';
+import { schedulePlaybackCount, COUNT_STYLES } from './playback-count.js?v=v0.1.0-20261029192917-e89e384';
+import { createLightVoice, LIGHT_ENGINES, LIGHT_ONLY_INSTRUMENTS } from './light-voice.js?v=v0.1.0-20261029192917-e89e384';
+import { DEFAULT_SOUND_ENGINE } from './sound-engine.js?v=v0.1.0-20261029192917-e89e384';
+import {readPlaybackStats,playbackStatsDelta} from './playback-diagnostics.js?v=v0.1.0-20261029192917-e89e384';
 export function scheduleVoice(ctx, output, { midi, time, duration, instrument = 'piano', gain = 0.16, velocity = 70, engine = DEFAULT_SOUND_ENGINE }) {
   if(/^(electro-)?(kick|snare|hat)$/.test(instrument))return schedulePercussion(ctx,output,{time,duration,instrument,gain});
   if (engine !== 'classic' && !LIGHT_ENGINES.includes(engine)) throw new Error('VOICE_ENGINE_UNKNOWN');
@@ -69,11 +69,12 @@ export async function preparePlaybackOutput(ctx,valid=()=>true){
 }
 export class ProbeTransport {
   constructor(ctx, onStop, mixer=null, {engine=DEFAULT_SOUND_ENGINE}={}) { this.ctx = ctx; this.onStop = onStop; this.mixer=mixer;this.engine=engine;this.serial = 0; this.voices = new Set(); this.active = false; }
-  start(notes, { tempo = 120, totalTicks = 64, instrument = 'piano', lead = 0.35, ahead = 0.15, countSound = false, countVolume = 1, countStyle = 'rim', accompaniment = [], loop = false, preRollTicks=0, preRollStep=1, scheduleAll=false } = {}) {
+  start(notes, { tempo = 120, totalTicks = 64, instrument = 'piano', lead = 0.35, ahead = 0.15, countSound = false, countVolume = 1, countStyle = 'rim', accompaniment = [], loop = false, preRollTicks=0, preRollStep=1, preRollBeats=null, scheduleAll=false } = {}) {
     this.stop(false);
     if (!COUNT_STYLES.includes(countStyle)) throw new Error('COUNT_STYLE_UNKNOWN');
     if (this.ctx.state !== 'running') throw new Error('AUDIO_NOT_READY');
     if(!Number.isInteger(preRollTicks)||preRollTicks<0||!Number.isInteger(preRollStep)||preRollStep<1)throw new Error('PRE_ROLL_INVALID');
+    if(preRollBeats!==null&&(!Array.isArray(preRollBeats)||!preRollBeats.length||!preRollBeats.every((beat,i)=>Number.isFinite(beat)&&Number.isInteger(beat*4)&&beat>=0&&beat*4<preRollTicks&&(i===0||beat>preRollBeats[i-1]))))throw new Error('PRE_ROLL_INVALID');
     if(scheduleAll&&loop)throw new Error('SCHEDULE_ALL_LOOP');
     const serial = this.serial;
     this.countAnchor=this.ctx.currentTime+lead;this.preRollTicks=preRollTicks;
@@ -86,7 +87,7 @@ export class ProbeTransport {
     this.outputStatsStart=readPlaybackStats(this.ctx);
     this.metrics.audioOutputStats=this.outputStatsStart?{status:'pending'}:{status:'unavailable'};
     const queue = [...notes.map(n=>({...n,accompaniment:false})),...accompaniment.map(n=>({...n,accompaniment:true}))].sort((a,b) => a.startTick - b.startTick);
-    let index = 0, cycle = 0, countTick = 0, preRollTick=0, previous = performance.now();
+    let index = 0, cycle = 0, countTick = 0, preRollIndex=0, preRollTick=preRollBeats?preRollBeats[0]*4:0, previous = performance.now();
     const pump = (prime = false) => {
       if (serial !== this.serial) return;
       const wall = performance.now();
@@ -103,7 +104,7 @@ export class ProbeTransport {
         if(time<now-.04)return this.stop(true,'SCHEDULER_LATE');
         const accent=preRollTick%4===0;
         const stop=schedulePlaybackCount(this.ctx,Math.max(now,time),accent,(this.mixer?1:countVolume)*(accent?.85:.6),countStyle,this.mixer?.count??this.ctx.destination);
-        this.voices.add({stop,end:time+.15});preRollTick+=preRollStep;this.metrics.countEvents++;
+        this.voices.add({stop,end:time+.15});preRollTick=preRollBeats?(preRollBeats[++preRollIndex]??Infinity)*4:preRollTick+preRollStep;this.metrics.countEvents++;
       }
       while (countSound && (loop || countTick < totalTicks)) {
         const time = this.anchor + tickSeconds(countTick, tempo);

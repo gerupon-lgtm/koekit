@@ -1,11 +1,13 @@
 // Local synthesis and analysis helpers; no samples or device settings leave the page.
+export const RECORDING_COUNT_BEATS=Object.freeze([0,2,4,5,6,7]);
+export const RECORDING_COUNT_TICKS=32;
 export function captureTiming({ anchor, tempo, sampleRate, baseLatency, outputLatency, inputLatency, manualMs = 0, audibleCount = true }) {
   const known = value => Number.isFinite(value) && value >= 0 ? value : 0;
   const estimatedLatencySeconds = (audibleCount ? known(baseLatency) + known(outputLatency) : 0) + known(inputLatency);
   const correctionSeconds = Math.max(-0.2, Math.min(1, estimatedLatencySeconds + manualMs / 1000));
   const beat = 60 / tempo, musicalStart = anchor + 8 * beat;
   const startFrame = Math.round((musicalStart + correctionSeconds) * sampleRate);
-  const countBeats = [0, 2, 4, 5, 6, 7, ...Array.from({length:16},(_,i)=>8+i)];
+  const countBeats = [...RECORDING_COUNT_BEATS, ...Array.from({length:16},(_,i)=>8+i)];
   return { musicalStart, startFrame, endFrame: startFrame + Math.round(16 * beat * sampleRate), correctionSeconds, estimatedLatencySeconds,
     countBeats, countTimes: countBeats.map(index => anchor + index * beat) };
 }

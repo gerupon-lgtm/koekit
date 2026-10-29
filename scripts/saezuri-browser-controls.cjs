@@ -4,7 +4,7 @@ async function revealCreationControl(page,selector){
  if(!await control.isVisible()&&await page.locator('#creation-options-toggle').isVisible()&&await control.evaluate(n=>!!n.closest('#creation-options')))await page.locator('#creation-options-toggle').click();
  if(!await control.isVisible()&&await page.locator('#image-record-return').isVisible()&&await control.evaluate(n=>!!n.closest('#image-edit-tools')))await page.locator('#image-record-return').click();
  const disclose=async()=>{
-  const ids=await control.evaluate(n=>{const ids=[];for(let d=n.parentElement;d;d=d.parentElement)if(d.matches('details#image-edit-tools,details#image-backing-detail,details#step-entry,details#keyboard-more,details#phrase-tools')&&!d.open)ids.unshift(d.id);return ids;});
+  const ids=await control.evaluate(n=>{const ids=[];for(let d=n.parentElement;d;d=d.parentElement)if(d.matches('details#image-edit-tools,details#image-backing-detail,details#step-entry,details#keyboard-more,details#phrase-tools,details#keyboard-practice-tools')&&!d.open&&!(n.tagName==='SUMMARY'&&n.parentElement===d))ids.unshift(d.id);return ids;});
   for(const id of ids)if(await page.locator(`#${id}>summary`).isVisible())await page.locator(`#${id}>summary`).click();
  };
  if(!await control.isVisible()&&await page.locator('#image-choice-reopen').isVisible()&&await control.evaluate(n=>n.matches('#composer-key,#phrase-bars')||!!n.closest('#image-words,#image-chords')))await page.locator('#image-choice-reopen').click();

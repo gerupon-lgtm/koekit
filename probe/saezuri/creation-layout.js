@@ -1,9 +1,9 @@
 const $=id=>document.getElementById(id);
 
-// Move only setup controls. The score, keys and their held pointers stay alive.
+// Reuse the existing controls and audio handlers when changing the layout.
 export class CreationLayout{
- constructor({editor,shell}){
-  Object.assign(this,{editor,shell});this.focus=false;this.revision=0;
+ constructor({editor,shell,keyboard}){
+  Object.assign(this,{editor,shell,keyboard});this.focus=false;this.revision=0;
   this.parts=['phrase-shape','phrase-shape-hint','creation-displays'].map(id=>$(id));this.parts.push(document.querySelector('.editor-voice'));
   this.homes=this.parts.map(node=>{const home=document.createComment('creation layout');node.before(home);return home;});
   this.setup=document.createElement('div');this.setup.id='creation-setup';
@@ -12,8 +12,14 @@ export class CreationLayout{
   this.toggle.onclick=()=>{this.options.hidden=!this.options.hidden;this.toggle.setAttribute('aria-expanded',String(!this.options.hidden));};
   this.phrase=document.createElement('details');this.phrase.id='phrase-tools';this.phrase.innerHTML='<summary>フレーズをつなげる</summary>';
   this.register=document.querySelector('.phrase-register');this.registerHome=document.createComment('phrase registration');this.register.before(this.registerHome,this.phrase);
+  this.panel=$('live-keyboard');this.panelHome=document.createComment('keyboard workspace');this.panel.before(this.panelHome);
+  this.instrument=$('keyboard-instrument');this.instrumentHome=document.createComment('front instrument');this.instrument.before(this.instrumentHome);
+  this.keyboardOptions=$('keyboard-options');this.keyboardOptionsHome=document.createComment('keyboard settings');this.keyboardOptions.before(this.keyboardOptionsHome);
+  this.performance=document.createElement('details');this.performance.id='keyboard-practice-tools';this.performance.innerHTML='<summary>鍵盤で れんしゅう・録音</summary>';this.panel.before(this.performance);
+  this.performance.addEventListener('toggle',()=>{if(!this.performance.open&&!this.focus)this.keyboard.release();});
  }
  render(){
+  const scrollBefore=scrollY;
   const free=this.editor.isOpen&&this.shell.screen==='create'&&!document.body.classList.contains('image-mode')&&!this.shell.learning?.active;
   document.body.classList.toggle('free-creation',free);
   if(free!==this.free){
@@ -24,8 +30,22 @@ export class CreationLayout{
   this.setup.hidden=!free;
   this.phrase.hidden=!free;
   document.body.dataset.editCandidate=String(this.editor.pending);
+  document.body.dataset.hasMelody=String(!!this.editor.previewPattern?.notes.length);
   const focus=this.shell.screen==='create'&&!this.shell.learning?.active&&(document.body.classList.contains('keyboard-recording')||document.body.classList.contains('keyboard-humming'));
-  if(focus&&!this.focus)this.scroll=scrollY;
+  const fold=free&&(this.shell.mode!=='input'||document.body.dataset.inputDisplay==='cards'),context=`${free}:${this.shell.mode}:${this.shell.mode==='input'?document.body.dataset.inputDisplay:''}`;
+  if(fold!==this.fold){
+   this.fold=fold;
+   if(fold){this.performance.append(this.panel);document.querySelector('.listen-actions').before(this.instrument);}
+   else{this.panelHome.after(this.panel);this.instrumentHome.after(this.instrument);}
+  }
+  if(fold&&this.shell.mode!=='input'){if(this.keyboardOptions.parentNode!==this.performance)this.performance.append(this.keyboardOptions);}
+  else if(this.performance.contains(this.keyboardOptions))this.keyboardOptionsHome.after(this.keyboardOptions);
+  this.performance.hidden=!fold;
+  if(fold&&context!==this.toolContext&&!focus){this.performance.open=false;this.keyboard.release();}
+  this.toolContext=context;
+  if(fold&&focus){if(!this.focus)this.performanceWasOpen=this.performance.open;this.performance.open=true;}
+  else if(fold&&this.focus)this.performance.open=!!this.performanceWasOpen;
+  if(focus&&!this.focus)this.scroll=scrollBefore;
   document.body.classList.toggle('recording-focus',focus);
   if(focus!==this.focus){
    this.focus=focus;const revision=++this.revision;

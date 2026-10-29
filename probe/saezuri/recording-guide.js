@@ -1,5 +1,5 @@
-import {harmonicSegments} from '../../saezuri/music/accompaniment.js?v=v0.1.0-20261029133022-8d1641e';
-import {chordLabel} from './image-controls.js?v=v0.1.0-20261029133022-8d1641e';
+import {harmonicSegments} from '../../saezuri/music/accompaniment.js?v=v0.1.0-20261029192917-e89e384';
+import {chordLabel} from './image-controls.js?v=v0.1.0-20261029192917-e89e384';
 
 // Display only: use the existing audio clock and anchors, never a second timer.
 export function recordingPosition({now,bars,tempo,anchor=null,loop=false,kind=null,recordAnchor=null,phase='idle'}){
@@ -47,7 +47,7 @@ export class RecordingGuide {
   const key=`${this.revision}:${mode}:${bar}:${beat}:${remaining}:${index}`;
   if(key===this.key)return;this.key=key;
   Object.assign(this.root.dataset,{mode,bar:bar===null?'':String(bar+1),beat:beat===null?'':String(beat+1),chord:current,next});
-  const state=mode.endsWith('-wait')?`次の先頭から：あと${remaining}拍`:({ready:'れんしゅう中',loop:'伴奏ループ中',tap:'タップ録音中',hum:'ハナウタ録音中',count:`開始まで あと${remaining}拍`,play:'再生中',preparing:'音を準備中',analyzing:'音を取り込み中'}[mode]);
+  const state=mode.endsWith('-wait')?(transport?.counting?`録音まで あと${Math.min(transport.preRollTicks/4,remaining)}拍`:`次の先頭から：あと${remaining}拍`):({ready:'れんしゅう中',loop:'伴奏ループ中',tap:'タップ録音中',hum:'ハナウタ録音中',count:`開始まで あと${remaining}拍`,play:'再生中',preparing:'音を準備中',analyzing:'音を取り込み中'}[mode]);
   const place=bar===null?`${this.bars}小節のコード`:`${bar+1}小節目・${beat+1}拍`;
   if(!this.status.querySelector('.recording-place')){
    this.status.replaceChildren(...['recording-state','recording-place','recording-chord'].map(name=>{const span=document.createElement('span');span.className=name;return span;}));

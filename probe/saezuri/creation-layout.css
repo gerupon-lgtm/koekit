@@ -23,6 +23,20 @@
 .melody-app.free-creation .keyboard-heading{margin:4px 0}
 .melody-app.free-creation .keyboard-actions button{min-height:48px}
 .melody-app.free-creation:not([data-edit-candidate=true]):has(#mic[aria-pressed=true]) #loop-hint{display:none}
+.melody-app.free-creation[data-has-melody=false] #screen-note-edit .note-navigation,
+.melody-app.free-creation[data-has-melody=false] #screen-note-edit .note-actions{display:none}
+.melody-app #keyboard-practice-tools{order:3;border-top:1px solid #ddd4c5;margin:4px 0 8px}
+.melody-app #keyboard-practice-tools>summary{box-sizing:border-box;min-height:44px;padding:8px;font-size:13px;line-height:28px;cursor:pointer}
+.melody-app #keyboard-practice-tools[open]>#live-keyboard{margin-top:8px}
+.melody-app.free-creation .edit-toolbar>#keyboard-instrument{width:min(100%,260px);max-width:none;margin:8px 0 8px auto}
+.melody-app.free-creation #keyboard-practice-tools[open] .keyboard-actions{display:grid}
+.melody-app.free-creation:not(.recording-focus) #keyboard-practice-tools[open] #keyboard-status{display:block}
+.melody-app.free-creation:not(.keyboard-humming) #keyboard-practice-tools[open] #piano-keys{display:block}
+.melody-app.free-creation:not(.keyboard-humming) #keyboard-practice-tools[open] .keyboard-octaves{display:grid}
+.melody-app.free-creation:not(.recording-focus):not(.keyboard-humming) #keyboard-practice-tools[open] .keyboard-help{display:block}
+.melody-app.free-creation:not([data-create-mode=input]) #keyboard-practice-tools #step-entry{display:none}
+.melody-app.free-creation:has(#keyboard-practice-tools:not([open]):not([hidden])) #image-chords{display:flex}
+.melody-app.chord-editing #keyboard-practice-tools{display:none}
 
 /* Recording owns the screen from the next-head wait through analysis. Keep
    the chosen notation, live bar/beat/chords, tap keys/octaves, and fixed stop. */
@@ -48,6 +62,8 @@
 .melody-app.recording-focus #after-keep,
 .melody-app.recording-focus #loop-hint,
 .melody-app.recording-focus #composer-position-controls{display:none}
+.melody-app.recording-focus #keyboard-practice-tools{border:0;margin:0}
+.melody-app.recording-focus #keyboard-practice-tools>summary{display:none}
 .melody-app.recording-focus #recording-guide{display:block}
 .melody-app.recording-focus:not([data-note-display=cards]) #capture-score{display:block}
 .melody-app.recording-focus[data-note-display=cards] #composition-cards{display:block}
@@ -60,4 +76,6 @@
 @media(min-width:650px){
  .melody-app.recording-focus #capture-note-panel{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
  .melody-app.recording-focus #live-keyboard{grid-column:2;grid-row:1/4}
+ .melody-app.free-creation #keyboard-practice-tools{grid-column:2;grid-row:auto}
+ .melody-app.recording-focus #keyboard-practice-tools{grid-column:2;grid-row:1/4}
 }

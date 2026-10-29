@@ -1,11 +1,12 @@
 const {chromium,webkit}=require('../.local-tools/node_modules/playwright'),assert=require('node:assert/strict'),fs=require('node:fs');
 const base=process.env.SAEZURI_BASE||'http://127.0.0.1:8026',layoutOnly=process.env.SAEZURI_BROWSER==='webkit';
+const {revealCreationControl}=require('./saezuri-browser-controls.cjs');
 (async()=>{const browser=layoutOnly?await webkit.launch({headless:true,executablePath:process.env.SAEZURI_WEBKIT_PATH}):await chromium.launch({channel:'chrome',headless:true,args:['--autoplay-policy=no-user-gesture-required','--use-fake-device-for-media-stream','--use-fake-ui-for-media-stream']});try{
  const results=[],folder='.local-tools/free-layout-20261029';fs.mkdirSync(folder,{recursive:true});
  for(const [width,height] of [[320,568],[390,740],[412,840],[844,390]]){
   const page=await browser.newPage({viewport:{width,height},permissions:layoutOnly?[]:['microphone'],serviceWorkers:'block'}),errors=[];page.on('pageerror',e=>errors.push(e.message));
   await page.addInitScript(()=>{window.requestedContexts=[];window.micRequests=0;if(typeof AudioContext!=='function')return;const Native=AudioContext;window.AudioContext=class extends Native{constructor(options){super(options);requestedContexts.push(options.latencyHint);}};const original=navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);navigator.mediaDevices.getUserMedia=(...args)=>{micRequests++;return original(...args);};});
-  const click=id=>page.locator('#'+id).click();
+  const click=async id=>{await revealCreationControl(page,'#'+id);await page.locator('#'+id).click();};
   const report=async()=>{await page.locator('#report').evaluate(n=>n.click());const r=JSON.parse(await page.locator('#metrics').textContent());return {pattern:r.captureCandidate,edit:r.captureEditing};};
   const fits=selectors=>page.evaluate(selectors=>{const footer=document.querySelector('body>footer').getBoundingClientRect().top;return selectors.map(selector=>{const r=document.querySelector(selector).getBoundingClientRect();return {selector,top:r.top,bottom:r.bottom,within:r.top>=0&&r.bottom<=footer-8,width:r.width,height:r.height};});},selectors);
   await page.goto(base+'/probe/saezuri/');await click('home-create');await click('new-manual');await page.locator('#piano-keys').waitFor({state:'visible'});await page.evaluate(()=>document.fonts.ready);await page.evaluate(()=>scrollTo(0,0));

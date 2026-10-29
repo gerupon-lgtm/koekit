@@ -1,4 +1,4 @@
-import { smoothPitches } from './pitch-smoothing.js?v=v0.1.0-20261029133022-8d1641e';
+import { smoothPitches } from './pitch-smoothing.js?v=v0.1.0-20261029192917-e89e384';
 
 // ML-T01 experimental normalized difference detector. Thresholds are NOT accepted product defaults.
 export function analyzeSamples(samples, sampleRate, { windowSize = 4096, hop = 1024, boundaryMode = 'energy-gated', adaptiveWindow = true, ...options } = {}) {
@@ -130,4 +130,4 @@ function gapHasReattack(frames, first, last) {
   return reference > 0 && valley <= reference * .4;
 }
 
-export { quantizeSegments } from './capture-quantization.js?v=v0.1.0-20261029133022-8d1641e';
+export { quantizeSegments } from './capture-quantization.js?v=v0.1.0-20261029192917-e89e384';
