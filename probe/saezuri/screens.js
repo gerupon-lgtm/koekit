@@ -1,9 +1,9 @@
-import {MelodyLearning} from './learning.js?v=v0.1.0-20261029225948-ef4bb5a';
-import {emptySequence,canKeepPhrase,keepPhrase,sequencePlayback,proposeSequence,commitSequence,undoPlacement} from './sequence-session.js?v=v0.1.0-20261029225948-ef4bb5a';
-import {readCaptureReport} from './capture-report.js?v=v0.1.0-20261029225948-ef4bb5a';
-import {setupPlaybackSheet} from './sheet-controls.js?v=v0.1.0-20261029225948-ef4bb5a';
-import {PlacementWorkflow} from './placement-workflow.js?v=v0.1.0-20261029225948-ef4bb5a';
-import {EndingWorkflow} from './ending-workflow.js?v=v0.1.0-20261029225948-ef4bb5a';
+import {MelodyLearning} from './learning.js?v=v0.1.0-20261029232900-c4e5b66';
+import {emptySequence,canKeepPhrase,keepPhrase,sequencePlayback,proposeSequence,commitSequence,undoPlacement} from './sequence-session.js?v=v0.1.0-20261029232900-c4e5b66';
+import {readCaptureReport} from './capture-report.js?v=v0.1.0-20261029232900-c4e5b66';
+import {setupPlaybackSheet} from './sheet-controls.js?v=v0.1.0-20261029232900-c4e5b66';
+import {PlacementWorkflow} from './placement-workflow.js?v=v0.1.0-20261029232900-c4e5b66';
+import {EndingWorkflow} from './ending-workflow.js?v=v0.1.0-20261029232900-c4e5b66';
 const $=id=>document.getElementById(id);
 const trialBuild=new URL(import.meta.url).searchParams.get('v')||'local-20261010';
 const trialVersion=trialBuild.match(/-(\d{14})-/)?.[1]||trialBuild;
@@ -73,7 +73,7 @@ export class MelodyScreens {
   save.innerHTML='<label>フレーズの名前<input id="phrase-name" maxlength="24" placeholder="フレーズ1"></label><button id="keep-phrase">フレーズにする</button><p id="phrase-feedback" role="status"></p>';
   create.append(save);
   const next=document.createElement('div');next.id='after-keep';next.hidden=true;next.innerHTML='<button id="after-keep-connect">つなげるへ</button><button id="after-keep-more">もうひとつ つくる</button>';create.append(next);
-  $('after-keep-connect').onclick=()=>this.go('connect');$('after-keep-more').onclick=()=>this.go('choose');
+  $('after-keep-connect').onclick=()=>this.connectKeptPhrase();$('after-keep-more').onclick=()=>this.go('choose');
   $('keep-phrase').onclick=()=>this.keep();
   for(const b of document.querySelectorAll('[data-mode]')) b.onclick=()=>{this.setMode(b.dataset.mode);this.onNavigate();};
   for(const id of ['capture-score','capture-blocks'])$(id).addEventListener('click',event=>{if(!this.busy&&!editor.pending&&event.target.closest('[data-note-id]'))this.setMode('edit');});
@@ -189,11 +189,22 @@ export class MelodyScreens {
   if(!this.editor.accepted)this.editor.command('confirm');
   const next=keepPhrase(this.sequence,this.editor.pattern,$('phrase-name').value);
   if(next.code)return;
-  this.sequence=next;this.proposal=null;
+  this.sequence=next;this.proposal=null;this.keptPhrase=next.patterns.at(-1);
   $('phrase-feedback').textContent=`「${next.patterns.at(-1).name}」をつなげる画面に追加しました。`;
   $('after-keep').hidden=false;
   $('phrase-name').value='';$('phrase-name').placeholder=`フレーズ${next.patterns.length+1}`;
   this.renderSequence();
+ }
+ connectKeptPhrase(){
+  this.go('connect');
+  if(this.screen!=='connect'||!this.sequence.patterns.includes(this.keptPhrase))return;
+  const shelf=$('phrase-shelf'),target=[...shelf.querySelectorAll('[data-phrase]')].find(b=>b.dataset.phrase===this.keptPhrase.id);
+  if(!target)return;
+  const row=target.closest('.phrase-shelf-row')??target,bounds=shelf.getBoundingClientRect(),rect=row.getBoundingClientRect();
+  // Reveal within the bounded shelf without scrolling the whole page away from its heading.
+  if(rect.top<bounds.top)shelf.scrollTop-=Math.ceil(bounds.top-rect.top);
+  else if(rect.bottom>bounds.bottom)shelf.scrollTop+=Math.ceil(rect.bottom-bounds.bottom);
+  target.focus({preventScroll:true});
  }
  stage(command) {
   if(this.busy||this.proposal||this.placementWorkflow?.active)return;
@@ -211,7 +222,7 @@ export class MelodyScreens {
   $('sequence-empty').hidden=!!this.sequence.patterns.length;
   $('sequence-create').hidden=!!this.sequence.patterns.length;
   const shelf=$('phrase-shelf');shelf.replaceChildren();
-  for(const p of this.sequence.patterns){const b=button(`${p.name} ・ ${p.bars}小節`,()=>this.stage({type:'append',placement:{id:`place-${this.sequence.revision}`,patternId:p.id}}));b.dataset.phrase=p.id;b.disabled=locked||draft.placements.length>=16;shelf.append(b);}
+  for(const p of this.sequence.patterns){const b=button(`${p.name} ・ ${p.bars}小節`,()=>this.stage({type:'append',placement:{id:`place-${this.sequence.revision}`,patternId:p.id}}));b.dataset.phrase=p.id;b.toggleAttribute('data-kept-phrase',p===this.keptPhrase);b.disabled=locked||draft.placements.length>=16;shelf.append(b);}
   const line=$('sequence-line');line.replaceChildren();
   if(!draft.placements.some(p=>p.id===this.selected))this.selected=draft.placements[0]?.id??null;
   for(const [i,p] of draft.placements.entries()){

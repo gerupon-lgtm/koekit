@@ -133,6 +133,7 @@ body.melody-app{background:#faf5ed;color:#443b36}
 .melody-app dialog #composer-view{width:100%}
 .melody-app #phrase-shelf{display:flex;gap:8px;flex-wrap:wrap;max-height:180px;overflow:auto}
 .melody-app #phrase-shelf button{background:#e7ddef;margin:0;font-size:14px}
+.melody-app #phrase-shelf [data-kept-phrase]{background:#dce9d5;box-shadow:inset 0 0 0 2px #6d9791}
 .melody-app #sequence-line{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;max-height:32svh;overflow:auto;min-height:70px;background:#fff;padding:8px;border-radius:12px}
 .melody-app #sequence-line:empty::before{content:'ここに順番にならびます';font-size:13px;grid-column:1/-1;color:#746575;align-self:center;text-align:center}
 .melody-app #sequence-line button{font-size:14px;margin:0;overflow-wrap:anywhere}

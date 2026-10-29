@@ -1,7 +1,7 @@
-import {validateNotes} from '../../saezuri/document.js?v=v0.1.0-20261029225948-ef4bb5a';
-import {validateComposition,proposeSequence,commitSequence,undoSequence} from '../../saezuri/sequence.js?v=v0.1.0-20261029225948-ef4bb5a';
-import {accompanimentEvents,validateAccompaniment} from '../../saezuri/music/accompaniment.js?v=v0.1.0-20261029225948-ef4bb5a';
-import {endingEvents,endingDescription} from '../../saezuri/music/ending.js?v=v0.1.0-20261029225948-ef4bb5a';
+import {validateNotes} from '../../saezuri/document.js?v=v0.1.0-20261029232900-c4e5b66';
+import {validateComposition,proposeSequence,commitSequence,undoSequence} from '../../saezuri/sequence.js?v=v0.1.0-20261029232900-c4e5b66';
+import {accompanimentEvents,validateAccompaniment} from '../../saezuri/music/accompaniment.js?v=v0.1.0-20261029232900-c4e5b66';
+import {endingEvents,endingDescription} from '../../saezuri/music/ending.js?v=v0.1.0-20261029232900-c4e5b66';
 export const emptySequence=()=>({patterns:[],placements:[],revision:0,undoStack:[]});
 export function canKeepPhrase(pattern){
  if(validateNotes(pattern))return false;
