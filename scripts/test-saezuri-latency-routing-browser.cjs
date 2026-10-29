@@ -1,5 +1,6 @@
 const {chromium,webkit}=require('../.local-tools/node_modules/playwright'),assert=require('node:assert/strict');
 const base=process.env.SAEZURI_BASE||'http://127.0.0.1:8026';
+const {revealCreationControl}=require('./saezuri-browser-controls.cjs');
 (async()=>{const browser=process.env.SAEZURI_BROWSER==='webkit'?await webkit.launch({headless:true,executablePath:process.env.SAEZURI_WEBKIT_PATH}):await chromium.launch({channel:'chrome',headless:true,args:['--autoplay-policy=no-user-gesture-required']});try{
  const results=[];
  for(const [query,hint] of [['',.02],['?audioLatency=10ms',.01],['?audioLatency=20ms',.02],['?audioLatency=interactive','interactive'],['?audioLatency=20ms&audioSchedule=window',.02],['?audioLatency=playback&audioSchedule=phrase','playback']]){
@@ -39,7 +40,7 @@ const base=process.env.SAEZURI_BASE||'http://127.0.0.1:8026';
   // must neither start a transport nor disturb the newer live voice.
   await page.evaluate(()=>deferResume=true);await play();await page.waitForFunction(()=>typeof releaseResume==='function');await page.locator('#stop').click();await press();
   await page.evaluate(()=>{releaseResume();releaseResume=null;});await status('idle');assert.equal(await page.locator('#piano-keys [data-held]').count(),1);await page.mouse.up();
-  if(await page.locator('#mic').getAttribute('aria-pressed')==='true')await page.locator('#mic').click();
+  if(await page.locator('#mic').getAttribute('aria-pressed')==='true'){await revealCreationControl(page,'#mic');await page.locator('#mic').click();await page.locator('#creation-options-toggle').click();}
   await page.locator('#backing-loop').click();await status('playing');const loopCount=await page.evaluate(()=>audioContexts.length),loopBefore=await report();assert.equal(loopBefore.playback.loop,true);assert.equal(loopBefore.playback.latencyHint,'interactive');
   await press();await page.mouse.up();assert.equal(await page.evaluate(()=>audioContexts.length),loopCount,'playing over a backing loop shares its audio clock');await page.locator('#stop').click();
   const after=await report();assert.deepEqual(after.captureCandidate,before.captureCandidate);assert.deepEqual(after.captureEditing,before.captureEditing,'practice and context switches do not change notes, cursor, candidate or undo');

@@ -1,5 +1,5 @@
-import {proposeNote,proposeEdit,commitNote} from '../../saezuri/document.js?v=v0.1.0-20261029110808-9b7f849';
-import {hasDraftChanges} from './edit-session.js?v=v0.1.0-20261029110808-9b7f849';
+import {proposeNote,proposeEdit,commitNote} from '../../saezuri/document.js?v=v0.1.0-20261029133022-8d1641e';
+import {hasDraftChanges} from './edit-session.js?v=v0.1.0-20261029133022-8d1641e';
 const copy=value=>structuredClone(value);
 const error=(code,details={})=>({code,details});
 export const blankPattern=(key='C')=>({bars:4,gridStep:2,source:'manual',key:{tonicPitchClass:key==='Am'?9:0,mode:key==='Am'?'minor':'major'},notes:[]});

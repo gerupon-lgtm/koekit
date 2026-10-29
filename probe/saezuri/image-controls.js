@@ -1,9 +1,9 @@
-import {GENRES,CHORD_INTERVALS} from '../../saezuri/music/catalog.js?v=v0.1.0-20261029110808-9b7f849';
-import {RHYTHMS,PROGRESSIONS,PRESETS,SOUNDS,accompanimentSounds,soundLabel,harmonicSegments,recommendProgressions} from '../../saezuri/music/accompaniment.js?v=v0.1.0-20261029110808-9b7f849';
-import {setupPlaybackSheet} from './sheet-controls.js?v=v0.1.0-20261029110808-9b7f849';
-import {ImageModeControls} from './image-mode-controls.js?v=v0.1.0-20261029110808-9b7f849';
-import {readChordSlots,writeChordSlots} from './chord-slots.js?v=v0.1.0-20261029110808-9b7f849';
-import {ChordMetronome} from './chord-metronome.js?v=v0.1.0-20261029110808-9b7f849';
+import {GENRES,CHORD_INTERVALS} from '../../saezuri/music/catalog.js?v=v0.1.0-20261029133022-8d1641e';
+import {RHYTHMS,PROGRESSIONS,PRESETS,SOUNDS,accompanimentSounds,soundLabel,harmonicSegments,recommendProgressions} from '../../saezuri/music/accompaniment.js?v=v0.1.0-20261029133022-8d1641e';
+import {setupPlaybackSheet} from './sheet-controls.js?v=v0.1.0-20261029133022-8d1641e';
+import {ImageModeControls} from './image-mode-controls.js?v=v0.1.0-20261029133022-8d1641e';
+import {readChordSlots,writeChordSlots} from './chord-slots.js?v=v0.1.0-20261029133022-8d1641e';
+import {ChordMetronome} from './chord-metronome.js?v=v0.1.0-20261029133022-8d1641e';
 const pitches=['C','C♯','D','E♭','E','F','F♯','G','A♭','A','B♭','B'];
 export const chordPitches=pitches;
 const suffix={major:'',minor:'m'};

@@ -1,0 +1,63 @@
+/* Free practice keeps the two song choices at hand; display/voice options open
+   only when requested. Existing controls and preferences are reused. */
+.melody-app #creation-setup{display:grid;grid-template-columns:minmax(0,1fr) 80px;gap:0 8px;margin:4px 0 8px}
+.melody-app #creation-setup #phrase-shape{margin:0;gap:8px}
+.melody-app #creation-setup #phrase-shape>label{font-size:0;gap:0}
+.melody-app #creation-setup #phrase-shape select{font-size:16px;width:100%}
+.melody-app.editor-focus #creation-options-toggle{min-height:44px;margin:0;padding:4px;font-size:12px;background:#e5ebe4}
+.melody-app #creation-options{grid-column:1/-1;padding-top:4px}
+.melody-app #creation-setup #phrase-shape-hint{grid-column:1/-1}
+.melody-app #phrase-tools{margin:8px 0;border-top:1px solid #ddd4c5}
+.melody-app #phrase-tools>summary{box-sizing:border-box;min-height:44px;padding:8px;font-size:13px;line-height:28px;cursor:pointer}
+.melody-app #phrase-tools .phrase-register{border-top:0;margin-top:0}
+.melody-app.learning-active #phrase-tools{display:none}
+.melody-app.chord-editing #creation-setup,.melody-app.chord-editing #phrase-tools{display:none}
+.melody-app.free-creation[data-input-display=keyboard] #composer-candidate{display:none}
+.melody-app.free-creation[data-create-mode=input][data-input-display=keyboard]:not([data-edit-candidate=true]) #capture-edit-status{display:none}
+.melody-app.free-creation[data-input-display=cards]:not(.recording-focus) #live-keyboard #keyboard-status{display:none}
+.melody-app.editor-focus.free-creation[data-create-mode=edit] .edit-toolbar{order:1}
+.melody-app.free-creation:not(.keyboard-humming):not(.keyboard-recording) #keyboard-status .recording-place,
+.melody-app.free-creation:not(.keyboard-humming):not(.keyboard-recording) #keyboard-status .recording-chord{display:none}
+.melody-app.free-creation:has(#recording-guide.following) #keyboard-status .recording-place,
+.melody-app.free-creation:has(#recording-guide.following) #keyboard-status .recording-chord{display:block}
+.melody-app.free-creation .keyboard-heading{margin:4px 0}
+.melody-app.free-creation .keyboard-actions button{min-height:48px}
+.melody-app.free-creation:not([data-edit-candidate=true]):has(#mic[aria-pressed=true]) #loop-hint{display:none}
+
+/* Recording owns the screen from the next-head wait through analysis. Keep
+   the chosen notation, live bar/beat/chords, tap keys/octaves, and fixed stop. */
+.melody-app.recording-focus #creation-tabs,
+.melody-app.recording-focus #creation-setup,
+.melody-app.recording-focus #creation-displays,
+.melody-app.recording-focus #phrase-shape,
+.melody-app.recording-focus #phrase-shape-hint,
+.melody-app.recording-focus #image-words,
+.melody-app.recording-focus #image-flow-heading,
+.melody-app.recording-focus #image-adopted-summary,
+.melody-app.recording-focus #image-settings,
+.melody-app.recording-focus #image-audition,
+.melody-app.recording-focus .editor-voice,
+.melody-app.recording-focus .keyboard-actions,
+.melody-app.recording-focus #keyboard-instrument,
+.melody-app.recording-focus .keyboard-help,
+.melody-app.recording-focus #keyboard-options,
+.melody-app.recording-focus #image-edit-tools,
+.melody-app.recording-focus #phrase-tools,
+.melody-app.recording-focus .phrase-register,
+.melody-app.recording-focus .edit-toolbar,
+.melody-app.recording-focus #after-keep,
+.melody-app.recording-focus #loop-hint,
+.melody-app.recording-focus #composer-position-controls{display:none}
+.melody-app.recording-focus #recording-guide{display:block}
+.melody-app.recording-focus:not([data-note-display=cards]) #capture-score{display:block}
+.melody-app.recording-focus[data-note-display=cards] #composition-cards{display:block}
+.melody-app.recording-focus .recording-state{font-weight:700}
+.melody-app.recording-focus #keyboard-status{display:flex;flex-wrap:wrap;gap:2px 12px;width:100%;font-size:14px}
+.melody-app.recording-focus #keyboard-status .recording-state{width:100%;font-size:14px}
+.melody-app.recording-focus .keyboard-heading{margin:8px 0}
+.melody-app.recording-focus #image-chords{display:none}
+.melody-app.recording-focus .keyboard-octaves{display:grid}
+@media(min-width:650px){
+ .melody-app.recording-focus #capture-note-panel{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+ .melody-app.recording-focus #live-keyboard{grid-column:2;grid-row:1/4}
+}

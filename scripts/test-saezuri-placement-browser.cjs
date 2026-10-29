@@ -14,7 +14,7 @@ const base=process.env.SAEZURI_BASE||'http://127.0.0.1:8026';
   const reopen=async()=>{await saved();await page.reload();await page.locator('#home-songs').click();await page.locator('[data-song-open]').first().click();if(await page.locator('#song-continue').isVisible())await page.locator('#song-continue').click();};
   await page.goto(base+'/probe/saezuri/');await page.locator('#home-create').click();await page.locator('#new-manual').click();
   await revealCreationControl(page,'[data-pitch="0"]');await page.locator('[data-pitch="0"]').click();await page.locator('#capture-edit-confirm').click();
-  await page.locator('#phrase-name').fill('A');await page.locator('#keep-phrase').click();
+  await revealCreationControl(page,'#phrase-name');await page.locator('#phrase-name').fill('A');await page.locator('#keep-phrase').click();
   const sourceId=await page.locator('[data-phrase]').getAttribute('data-phrase');
   await page.locator('[data-mode="edit"]').click();await page.locator('#capture-pitch-up').click();const original=await report();
   assert.equal(original.captureEditing.pending,true);assert.ok(original.captureEditing.undoDepth>0);
