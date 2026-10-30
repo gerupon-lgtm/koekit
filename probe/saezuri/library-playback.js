@@ -1,6 +1,6 @@
-import {restoreCheckpoint} from './song-session.js?v=v0.1.0-20261030101941-321839b';
-import {sequencePlayback} from './sequence-session.js?v=v0.1.0-20261030101941-321839b';
-import {entryPreview} from './entry-session.js?v=v0.1.0-20261030101941-321839b';
+import {restoreCheckpoint} from './song-session.js?v=v0.1.0-20261030102318-2f22e53';
+import {sequencePlayback} from './sequence-session.js?v=v0.1.0-20261030102318-2f22e53';
+import {entryPreview} from './entry-session.js?v=v0.1.0-20261030102318-2f22e53';
 
 const TICKS_PER_BAR=16;
 

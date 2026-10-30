@@ -136,6 +136,8 @@ body.melody-app{background:#faf5ed;color:#443b36}
 .melody-app #sequence-song-name{font-size:13px;line-height:18px;margin:8px 0 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .melody-app .phrase-source-actions button{margin:0;padding:8px 6px;min-width:0;font-size:14px;background:#dce9d5}
 .melody-app #sequence-import{background:#ece5da}
+.melody-app #sequence-create{word-break:keep-all}
+@media(max-width:360px){.melody-app .phrase-source-actions button{font-size:13px;padding:8px 4px}}
 .melody-app #phrase-shelf button{background:#e7ddef;margin:0;font-size:14px}
 .melody-app #phrase-shelf [data-kept-phrase]{background:#dce9d5;box-shadow:inset 0 0 0 2px #6d9791}
 .melody-app #sequence-line{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;max-height:32svh;overflow:auto;min-height:70px;background:#fff;padding:8px;border-radius:12px}

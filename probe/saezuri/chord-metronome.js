@@ -1,4 +1,4 @@
-import {ProbeTransport,preparePlaybackOutput} from './audio.js?v=v0.1.0-20261030101941-321839b';
+import {ProbeTransport,preparePlaybackOutput} from './audio.js?v=v0.1.0-20261030102318-2f22e53';
 const validTempo=value=>Number.isFinite(value)&&value>=60&&value<=180;
 
 // Own only a silent, looping count track. Song playback and live recording

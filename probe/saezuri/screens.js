@@ -1,9 +1,9 @@
-import {MelodyLearning} from './learning.js?v=v0.1.0-20261030101941-321839b';
-import {emptySequence,canKeepPhrase,keepPhrase,sequencePlayback,proposeSequence,commitSequence,undoPlacement} from './sequence-session.js?v=v0.1.0-20261030101941-321839b';
-import {readCaptureReport} from './capture-report.js?v=v0.1.0-20261030101941-321839b';
-import {setupPlaybackSheet} from './sheet-controls.js?v=v0.1.0-20261030101941-321839b';
-import {PlacementWorkflow} from './placement-workflow.js?v=v0.1.0-20261030101941-321839b';
-import {EndingWorkflow} from './ending-workflow.js?v=v0.1.0-20261030101941-321839b';
+import {MelodyLearning} from './learning.js?v=v0.1.0-20261030102318-2f22e53';
+import {emptySequence,canKeepPhrase,keepPhrase,sequencePlayback,proposeSequence,commitSequence,undoPlacement} from './sequence-session.js?v=v0.1.0-20261030102318-2f22e53';
+import {readCaptureReport} from './capture-report.js?v=v0.1.0-20261030102318-2f22e53';
+import {setupPlaybackSheet} from './sheet-controls.js?v=v0.1.0-20261030102318-2f22e53';
+import {PlacementWorkflow} from './placement-workflow.js?v=v0.1.0-20261030102318-2f22e53';
+import {EndingWorkflow} from './ending-workflow.js?v=v0.1.0-20261030102318-2f22e53';
 const $=id=>document.getElementById(id);
 const trialBuild=new URL(import.meta.url).searchParams.get('v')||'local-20261010';
 const trialVersion=trialBuild.match(/-(\d{14})-/)?.[1]||trialBuild;
@@ -233,7 +233,7 @@ export class MelodyScreens {
  renderSequence() {
   const draft=this.proposal?.next??this.sequence,locked=this.busy||!!this.proposal||!!this.placementWorkflow?.active;
   $('sequence-empty').hidden=!!this.sequence.patterns.length;
-  $('sequence-create').textContent=this.sequence.patterns.length?'もうひとつ つくる':'フレーズをつくる';
+  $('sequence-create').textContent=this.sequence.patterns.length?'もうひとつ つくる':'フレーズを つくる';
   $('sequence-create').disabled=locked;$('sequence-import').disabled=locked;
   $('sequence-song').disabled=this.busy;$('sequence-song-name').textContent=this.songWorkflow?.id?`いまの曲：${$('song-title')?.value||this.songWorkflow.title||'わたしのきょく'}`:'新しい曲';
   $('home-connect').querySelector('small').textContent=this.sequence.patterns.length?`フレーズ${this.sequence.patterns.length}こ・ならべた順番${draft.placements.length}こ`:'フレーズをならべて、長い曲に';

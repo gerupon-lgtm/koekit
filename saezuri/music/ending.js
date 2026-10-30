@@ -1,5 +1,5 @@
-import {chordTones} from './catalog.js?v=v0.1.0-20261030101941-321839b';
-import {SOUND_PRESETS,chordVoicing,harmonicSegments,validateAccompaniment} from './accompaniment.js?v=v0.1.0-20261030101941-321839b';
+import {chordTones} from './catalog.js?v=v0.1.0-20261030102318-2f22e53';
+import {SOUND_PRESETS,chordVoicing,harmonicSegments,validateAccompaniment} from './accompaniment.js?v=v0.1.0-20261030102318-2f22e53';
 const error=()=>({code:'ENDING_INVALID'});
 const lastPattern=draft=>draft.patterns.find(p=>p.id===draft.placements.at(-1)?.patternId);
 export const endingBars=ending=>ending?.enabled?(ending.bars??1):0;
