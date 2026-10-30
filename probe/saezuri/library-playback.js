@@ -1,6 +1,7 @@
-import {restoreCheckpoint} from './song-session.js?v=v0.1.0-20261030102318-2f22e53';
-import {sequencePlayback} from './sequence-session.js?v=v0.1.0-20261030102318-2f22e53';
-import {entryPreview} from './entry-session.js?v=v0.1.0-20261030102318-2f22e53';
+import {restoreCheckpoint} from './song-session.js?v=v0.1.0-20261030201633-6a8c11c';
+import {sequencePlayback} from './sequence-session.js?v=v0.1.0-20261030201633-6a8c11c';
+import {entryPreview} from './entry-session.js?v=v0.1.0-20261030201633-6a8c11c';
+import {extractSongPhrases} from './phrase-transfer.js?v=v0.1.0-20261030201633-6a8c11c';
 
 const TICKS_PER_BAR=16;
 
@@ -35,8 +36,10 @@ export class LibraryPlayback {
    let data;
    if(record.data.sequence.placements.length){data=sequencePlayback(record.data.sequence);if(data.code)throw new Error(data.code);}
    else{
-    const session=restoreCheckpoint(record.data.checkpoint);if(!session)throw new Error('NO_PLAYBACK_SOURCE');
-    data={pattern:record.data.checkpoint.confirmed?.pattern??entryPreview(session)};
+    const session=restoreCheckpoint(record.data.checkpoint);
+    const pattern=session?(record.data.checkpoint.confirmed?.pattern??entryPreview(session)):extractSongPhrases(record)[0]?.pattern;
+    if(!pattern)throw new Error('NO_PLAYBACK_SOURCE');
+    data={pattern,...(!session?{previewName:pattern.name??'フレーズ'}:{})};
    }
    const totalTicks=data.pattern.bars*TICKS_PER_BAR;
    if(!Number.isFinite(totalTicks)||totalTicks<=0)throw new Error('INVALID_PLAYBACK_LENGTH');
@@ -44,13 +47,15 @@ export class LibraryPlayback {
    const started=await this.onPlay(data,record.data.settings.tempo);
    if(this.pending!==pending||pending.serial!==this.serial)return;
    this.pending=null;
-   if(started!==true){this.failed(binding);return;}
-   this.active={binding,totalTicks,bars:Math.ceil(totalTicks/TICKS_PER_BAR),lastTick:null,lastBar:null};
+   if(started!==true){this.lastError={songId:record.id,code:'START_FAILED',detail:document.getElementById('status')?.textContent??''};this.failed(binding);return;}
+   this.lastError=null;
+   this.active={binding,totalTicks,bars:Math.ceil(totalTicks/TICKS_PER_BAR),label:data.previewName??'',lastTick:null,lastBar:null};
    delete row.dataset.songPreparing;row.dataset.songPlaying='true';
    button.textContent='■ とめる';button.setAttribute('aria-label',`${record.title}をとめる`);button.removeAttribute('aria-busy');
    this.follow(pending.tick??-1);
-  }catch{
+  }catch(error){
    if(this.pending!==pending||pending.serial!==this.serial)return;
+   this.lastError={songId:record.id,code:String(error?.code??error?.message??'PLAYBACK_FAILED')};
    this.pending=null;this.failed(binding);
   }
  }
@@ -71,7 +76,7 @@ export class LibraryPlayback {
   const {status,progress}=active.binding;
   if(progress.value!==position)progress.value=position;
   const bar=tick<0?0:Math.min(active.bars,Math.floor(position/TICKS_PER_BAR)+1);
-  if(bar!==active.lastBar){active.lastBar=bar;status.textContent=bar?`再生中 ${bar} / ${active.bars}小節`:'カウント中';}
+  if(bar!==active.lastBar){active.lastBar=bar;status.textContent=(active.label?`${active.label}・`:'')+(bar?`再生中 ${bar} / ${active.bars}小節`:'カウント中');}
  }
  stop(){
   this.serial++;this.pending=null;this.active=null;

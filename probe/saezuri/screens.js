@@ -1,9 +1,9 @@
-import {MelodyLearning} from './learning.js?v=v0.1.0-20261030102318-2f22e53';
-import {emptySequence,canKeepPhrase,keepPhrase,sequencePlayback,proposeSequence,commitSequence,undoPlacement} from './sequence-session.js?v=v0.1.0-20261030102318-2f22e53';
-import {readCaptureReport} from './capture-report.js?v=v0.1.0-20261030102318-2f22e53';
-import {setupPlaybackSheet} from './sheet-controls.js?v=v0.1.0-20261030102318-2f22e53';
-import {PlacementWorkflow} from './placement-workflow.js?v=v0.1.0-20261030102318-2f22e53';
-import {EndingWorkflow} from './ending-workflow.js?v=v0.1.0-20261030102318-2f22e53';
+import {MelodyLearning} from './learning.js?v=v0.1.0-20261030201633-6a8c11c';
+import {emptySequence,canKeepPhrase,keepPhrase,sequencePlayback,proposeSequence,commitSequence,undoPlacement} from './sequence-session.js?v=v0.1.0-20261030201633-6a8c11c';
+import {readCaptureReport} from './capture-report.js?v=v0.1.0-20261030201633-6a8c11c';
+import {setupPlaybackSheet} from './sheet-controls.js?v=v0.1.0-20261030201633-6a8c11c';
+import {PlacementWorkflow} from './placement-workflow.js?v=v0.1.0-20261030201633-6a8c11c';
+import {EndingWorkflow} from './ending-workflow.js?v=v0.1.0-20261030201633-6a8c11c';
 const $=id=>document.getElementById(id);
 const trialBuild=new URL(import.meta.url).searchParams.get('v')||'local-20261010';
 const trialVersion=trialBuild.match(/-(\d{14})-/)?.[1]||trialBuild;
@@ -206,7 +206,7 @@ export class MelodyScreens {
   this.sequence=next;this.keptPhrase=next.patterns.at(-1);this.renderSequence();return true;
  }
  diagnostics(){
-  return {build:trialBuild,screen:this.screen,phrases:this.sequence.patterns.length,placements:this.sequence.placements.length,pending:!!this.proposal,shelfButtons:$('phrase-shelf').querySelectorAll('[data-phrase]').length,songId:this.songWorkflow?.id??null,saveStatus:$('song-status')?.textContent??'',saveError:this.songWorkflow?.error?.code??null,navigation:this.navigationHistory??[]};
+  return {build:trialBuild,screen:this.screen,phrases:this.sequence.patterns.length,placements:this.sequence.placements.length,pending:!!this.proposal,shelfButtons:$('phrase-shelf').querySelectorAll('[data-phrase]').length,songId:this.songWorkflow?.id??null,saveStatus:$('song-status')?.textContent??'',saveError:this.songWorkflow?.error?.code??null,libraryError:this.songWorkflow?.libraryPlayer.lastError??null,navigation:this.navigationHistory??[]};
  }
  connectKeptPhrase(){
   this.go('connect');
