@@ -132,6 +132,10 @@ body.melody-app{background:#faf5ed;color:#443b36}
 .melody-app dialog #composer-beats{grid-template-columns:repeat(4,1fr)}
 .melody-app dialog #composer-view{width:100%}
 .melody-app #phrase-shelf{display:flex;gap:8px;flex-wrap:wrap;max-height:180px;overflow:auto}
+.melody-app .phrase-source-actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:8px 0}
+.melody-app #sequence-song-name{font-size:13px;line-height:18px;margin:8px 0 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.melody-app .phrase-source-actions button{margin:0;padding:8px 6px;min-width:0;font-size:14px;background:#dce9d5}
+.melody-app #sequence-import{background:#ece5da}
 .melody-app #phrase-shelf button{background:#e7ddef;margin:0;font-size:14px}
 .melody-app #phrase-shelf [data-kept-phrase]{background:#dce9d5;box-shadow:inset 0 0 0 2px #6d9791}
 .melody-app #sequence-line{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;max-height:32svh;overflow:auto;min-height:70px;background:#fff;padding:8px;border-radius:12px}
@@ -360,6 +364,16 @@ body.melody-app{background:#faf5ed;color:#443b36}
 .melody-app #song-rename .song-actions{grid-template-columns:1fr 1fr;gap:8px}
 .melody-app #song-rename .song-actions button{min-width:0;min-height:44px;margin:0;padding:8px;font-size:14px}
 .melody-app #song-rename-confirm{background:#dce9d5}
+.melody-app #phrase-import label{display:flex;flex-direction:column;gap:4px;min-width:0;font-size:14px;margin:8px 0}
+.melody-app #phrase-import select{width:100%;box-sizing:border-box}
+.melody-app #phrase-import .song-actions{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.melody-app #phrase-import .song-actions button{margin:0;padding:8px 6px;min-width:0;font-size:14px}
+.melody-app #phrase-import-add{background:#dce9d5}
+.melody-app #phrase-import-status{min-height:2.8em;line-height:1.4;font-size:13px;margin:8px 0}
+.melody-app .song-playback{grid-column:1/-1;min-width:0;font-size:13px}
+.melody-app .song-playback progress{display:block;width:100%;height:8px;margin-top:4px;accent-color:#458f91}
+.melody-app .song-row[data-song-playing]{background:#edf3e7;box-shadow:inset 3px 0 #6d9791;border-radius:8px}
+.melody-app .song-row [data-song-play][aria-pressed=true]{background:#dce9d5;box-shadow:inset 0 0 0 2px #6d9791}
 .melody-app #image-chords [data-playing]{background:#dce9d5;box-shadow:inset 0 -3px #458f91}
 
 /* Audio sheets share header/footer controls; only the body scrolls. */

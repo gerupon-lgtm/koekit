@@ -1,9 +1,9 @@
-import {MelodyLearning} from './learning.js?v=v0.1.0-20261029232900-c4e5b66';
-import {emptySequence,canKeepPhrase,keepPhrase,sequencePlayback,proposeSequence,commitSequence,undoPlacement} from './sequence-session.js?v=v0.1.0-20261029232900-c4e5b66';
-import {readCaptureReport} from './capture-report.js?v=v0.1.0-20261029232900-c4e5b66';
-import {setupPlaybackSheet} from './sheet-controls.js?v=v0.1.0-20261029232900-c4e5b66';
-import {PlacementWorkflow} from './placement-workflow.js?v=v0.1.0-20261029232900-c4e5b66';
-import {EndingWorkflow} from './ending-workflow.js?v=v0.1.0-20261029232900-c4e5b66';
+import {MelodyLearning} from './learning.js?v=v0.1.0-20261030101941-321839b';
+import {emptySequence,canKeepPhrase,keepPhrase,sequencePlayback,proposeSequence,commitSequence,undoPlacement} from './sequence-session.js?v=v0.1.0-20261030101941-321839b';
+import {readCaptureReport} from './capture-report.js?v=v0.1.0-20261030101941-321839b';
+import {setupPlaybackSheet} from './sheet-controls.js?v=v0.1.0-20261030101941-321839b';
+import {PlacementWorkflow} from './placement-workflow.js?v=v0.1.0-20261030101941-321839b';
+import {EndingWorkflow} from './ending-workflow.js?v=v0.1.0-20261030101941-321839b';
 const $=id=>document.getElementById(id);
 const trialBuild=new URL(import.meta.url).searchParams.get('v')||'local-20261010';
 const trialVersion=trialBuild.match(/-(\d{14})-/)?.[1]||trialBuild;
@@ -37,8 +37,10 @@ export class MelodyScreens {
   length.querySelector('select').onchange=()=>editor.changeStructure({type:'resize',bars:Number($('phrase-bars').value)});
   $('composer-panel').querySelector('details>summary').textContent='入力位置・表示・コピー';
   const connect=document.createElement('section');connect.id='melody-connect';connect.className='melody-screen';
-  connect.innerHTML='<div class="screen-heading"><button data-screen-back>← トップ</button><h2 tabindex="-1">つなげる</h2><button id="sequence-settings">音の設定</button></div><p id="sequence-empty">まだフレーズがありません。つくる画面で「フレーズにする」を押すと、ここで選べます。</p><button id="sequence-create">フレーズをつくる</button><h3>使うフレーズを選ぶ</h3><div id="phrase-shelf" aria-label="使えるフレーズ"></div><h3>ならべる順番 <small id="sequence-count"></small></h3><div id="sequence-line" aria-label="曲の順番"></div><div class="sequence-edit"><button id="sequence-left">← 前へ</button><button id="sequence-right">次へ →</button><button id="sequence-delete">はずす</button></div><p id="sequence-message" role="status">フレーズを選ぶと、最後に追加する候補になります。</p><div class="sequence-actions"><button id="sequence-preview">▶ 聴く</button><button id="sequence-confirm">オッケー</button><button id="sequence-undo">もどす</button></div>';
+  connect.innerHTML='<div class="screen-heading"><button data-screen-back>← トップ</button><h2 tabindex="-1">つなげる</h2><button id="sequence-settings">音の設定</button></div><p id="sequence-empty">まだフレーズがありません。新しくつくるか、ほかの曲からえらぼう。</p><div class="phrase-source-actions"><button id="sequence-create">フレーズをつくる</button><button id="sequence-import">ほかの曲から</button></div><h3>使うフレーズを選ぶ</h3><div id="phrase-shelf" aria-label="使えるフレーズ"></div><h3>ならべる順番 <small id="sequence-count"></small></h3><div id="sequence-line" aria-label="曲の順番"></div><div class="sequence-edit"><button id="sequence-left">← 前へ</button><button id="sequence-right">次へ →</button><button id="sequence-delete">はずす</button></div><p id="sequence-message" role="status">フレーズを選ぶと、最後に追加する候補になります。</p><div class="sequence-actions"><button id="sequence-preview">▶ 聴く</button><button id="sequence-confirm">オッケー</button><button id="sequence-undo">もどす</button></div>';
   main.append(home,choose,create,connect);
+  const songChoice=button('曲をえらぶ',()=>this.songWorkflow?.library({destination:'connect'}));songChoice.id='sequence-song';connect.querySelector('.phrase-source-actions').prepend(songChoice);
+  const songName=document.createElement('p');songName.id='sequence-song-name';connect.querySelector('.phrase-source-actions').before(songName);
   this.screens={home,choose,create,connect};
   const source=$('editor-source');source.open=true;$('creation-choices').append(source);
   const chooseMic=button('マイク ON',()=>$('mic').click());chooseMic.id='choose-mic';$('creation-choices').prepend(chooseMic);
@@ -73,7 +75,7 @@ export class MelodyScreens {
   save.innerHTML='<label>フレーズの名前<input id="phrase-name" maxlength="24" placeholder="フレーズ1"></label><button id="keep-phrase">フレーズにする</button><p id="phrase-feedback" role="status"></p>';
   create.append(save);
   const next=document.createElement('div');next.id='after-keep';next.hidden=true;next.innerHTML='<button id="after-keep-connect">つなげるへ</button><button id="after-keep-more">もうひとつ つくる</button>';create.append(next);
-  $('after-keep-connect').onclick=()=>this.connectKeptPhrase();$('after-keep-more').onclick=()=>this.go('choose');
+  $('after-keep-connect').onclick=()=>this.connectKeptPhrase();$('after-keep-more').onclick=()=>this.createAnotherPhrase();
   $('keep-phrase').onclick=()=>this.keep();
   for(const b of document.querySelectorAll('[data-mode]')) b.onclick=()=>{this.setMode(b.dataset.mode);this.onNavigate();};
   for(const id of ['capture-score','capture-blocks'])$(id).addEventListener('click',event=>{if(!this.busy&&!editor.pending&&event.target.closest('[data-note-id]'))this.setMode('edit');});
@@ -82,7 +84,7 @@ export class MelodyScreens {
    this.icon(b,'back','もどる',destination==='choose'?'つくり方を選ぶ画面へ':'トップへ');b.onclick=()=>this.go(destination);
   }
   $('home-create').onclick=()=>this.go('choose');$('home-connect').onclick=()=>this.go('connect');
-  $('home-resume').onclick=()=>this.go('create');$('sequence-create').onclick=()=>this.go('choose');
+  $('home-resume').onclick=()=>this.go('create');$('sequence-create').onclick=()=>this.createAnotherPhrase();
   $('adopt').addEventListener('click',()=>{if(!editor.isOpen)this.go('home');});
   $('discard').onclick=()=>this.requestDiscard(()=>this.go('home'),true);
   create.querySelector('.screen-heading').append($('discard'));
@@ -141,6 +143,7 @@ export class MelodyScreens {
   document.querySelector('body > footer').hidden=!['create','connect','samples'].includes(screen);
   if(push)history.pushState({...history.state,melodyScreen:screen},'');
   this.onNavigate();this.sync(this.phase??'idle');window.scrollTo(0,0);
+  this.navigationHistory??=[];this.navigationHistory.push({screen,phrases:this.sequence.patterns.length,placements:this.sequence.placements.length,at:new Date().toISOString()});this.navigationHistory=this.navigationHistory.slice(-10);
   if(focus)(this.screens[screen].querySelector('h2,h1')??this.screens[screen].querySelector('button'))?.focus({preventScroll:true});
  }
  setMode(mode){
@@ -187,13 +190,23 @@ export class MelodyScreens {
      this.songWorkflow.practice=false;
     }
   if(!this.editor.accepted)this.editor.command('confirm');
-  const next=keepPhrase(this.sequence,this.editor.pattern,$('phrase-name').value);
-  if(next.code)return;
-  this.sequence=next;this.proposal=null;this.keptPhrase=next.patterns.at(-1);
-  $('phrase-feedback').textContent=`「${next.patterns.at(-1).name}」をつなげる画面に追加しました。`;
+  if(!this.addPhrase(this.editor.pattern,$('phrase-name').value))return;
+  $('phrase-feedback').textContent=`「${this.keptPhrase.name}」をつなげる画面に追加しました。`;
   $('after-keep').hidden=false;
-  $('phrase-name').value='';$('phrase-name').placeholder=`フレーズ${next.patterns.length+1}`;
+  $('phrase-name').value='';$('phrase-name').placeholder=`フレーズ${this.sequence.patterns.length+1}`;
   this.renderSequence();
+ }
+ createAnotherPhrase(){
+  if(this.busy||this.proposal||this.placementWorkflow?.active)return;
+  this.go('choose');
+ }
+ addPhrase(pattern,name){
+  if(this.busy||this.proposal||this.placementWorkflow?.active)return false;
+  const next=keepPhrase(this.sequence,pattern,name);if(next.code)return false;
+  this.sequence=next;this.keptPhrase=next.patterns.at(-1);this.renderSequence();return true;
+ }
+ diagnostics(){
+  return {build:trialBuild,screen:this.screen,phrases:this.sequence.patterns.length,placements:this.sequence.placements.length,pending:!!this.proposal,shelfButtons:$('phrase-shelf').querySelectorAll('[data-phrase]').length,songId:this.songWorkflow?.id??null,saveStatus:$('song-status')?.textContent??'',saveError:this.songWorkflow?.error?.code??null,navigation:this.navigationHistory??[]};
  }
  connectKeptPhrase(){
   this.go('connect');
@@ -220,7 +233,10 @@ export class MelodyScreens {
  renderSequence() {
   const draft=this.proposal?.next??this.sequence,locked=this.busy||!!this.proposal||!!this.placementWorkflow?.active;
   $('sequence-empty').hidden=!!this.sequence.patterns.length;
-  $('sequence-create').hidden=!!this.sequence.patterns.length;
+  $('sequence-create').textContent=this.sequence.patterns.length?'もうひとつ つくる':'フレーズをつくる';
+  $('sequence-create').disabled=locked;$('sequence-import').disabled=locked;
+  $('sequence-song').disabled=this.busy;$('sequence-song-name').textContent=this.songWorkflow?.id?`いまの曲：${$('song-title')?.value||this.songWorkflow.title||'わたしのきょく'}`:'新しい曲';
+  $('home-connect').querySelector('small').textContent=this.sequence.patterns.length?`フレーズ${this.sequence.patterns.length}こ・ならべた順番${draft.placements.length}こ`:'フレーズをならべて、長い曲に';
   const shelf=$('phrase-shelf');shelf.replaceChildren();
   for(const p of this.sequence.patterns){const b=button(`${p.name} ・ ${p.bars}小節`,()=>this.stage({type:'append',placement:{id:`place-${this.sequence.revision}`,patternId:p.id}}));b.dataset.phrase=p.id;b.toggleAttribute('data-kept-phrase',p===this.keptPhrase);b.disabled=locked||draft.placements.length>=16;shelf.append(b);}
   const line=$('sequence-line');line.replaceChildren();
@@ -240,6 +256,7 @@ export class MelodyScreens {
   this.placementWorkflow?.render(locked);
   this.endingWorkflow?.render(draft,playback);
   this.songWorkflow?.schedule();
+  this.songWorkflow?.phraseTransfer?.render();
  }
  follow(tick){if(this.screen!=='connect')return;const active=tick==null?null:this.ranges?.find(p=>p.start<=tick&&tick<p.end);
   if(this.playingId===active?.id)return;this.playingId=active?.id;
