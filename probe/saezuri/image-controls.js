@@ -1,13 +1,14 @@
 import {GENRES,CHORD_INTERVALS,CHORD_PITCH_NAMES,chordLabel} from '../../saezuri/music/catalog.js?v=v0.1.0-20261031153113-7832e2d';
-import {RHYTHMS,PROGRESSIONS,PRESETS,SOUNDS,accompanimentSounds,soundLabel,harmonicSegments,recommendProgressions} from '../../saezuri/music/accompaniment.js?v=v0.1.0-20261031153113-7832e2d';
+import {RHYTHMS,DRUM_PATTERNS,PROGRESSIONS,PRESETS,SOUND_PRESETS,SOUNDS,accompanimentSounds,soundLabel,recommendProgressions} from '../../saezuri/music/accompaniment.js?v=v0.1.0-20261031153113-7832e2d';
 import {setupPlaybackSheet} from './sheet-controls.js?v=v0.1.0-20261031153113-7832e2d';
 import {ImageModeControls} from './image-mode-controls.js?v=v0.1.0-20261031153113-7832e2d';
 import {readChordSlots,writeChordSlots} from './chord-slots.js?v=v0.1.0-20261031153113-7832e2d';
 import {ChordMetronome} from './chord-metronome.js?v=v0.1.0-20261031153113-7832e2d';
+import {chordAtTick,chordChangesInBar,setChordAtBeat,removeChordAtBeat} from '../../saezuri/music/chord-timing.js';
 const pitches=CHORD_PITCH_NAMES;
 export const chordPitches=pitches;
 export {chordLabel};
-const fallback={enabled:false,genre:'nursery',rhythm:'quarters',progression:'home'};
+const fallback={enabled:false,genre:'nursery',rhythm:'quarters',drumPattern:'auto',progression:'home'};
 const $=id=>document.getElementById(id);
 function fill(node,items){node.replaceChildren(...items.map(([id,label])=>{const o=document.createElement('option');o.value=id;o.textContent=label;return o;}));}
 export class ImageControls {
@@ -16,14 +17,18 @@ export class ImageControls {
   const source=document.querySelector('.source-actions');if(!source)return;
   this.create=document.createElement('button');this.create.id='new-image';this.create.textContent='イメージからつくる';this.create.onclick=onNew;source.prepend(this.create);
   const panel=document.createElement('details');panel.id='image-settings';
-  panel.innerHTML='<summary>伴奏のイメージ</summary><label class="composer-replace"><input id="image-enabled" type="checkbox">伴奏といっしょに聴く</label><div class="composer-values"><label>ジャンル<select id="image-genre"></select></label><label>リズム<select id="image-rhythm"></select></label></div><label>進行<select id="image-progression"></select></label><div id="image-chords" aria-label="小節ごとのコード"></div><div class="image-more"><button id="image-suggest">進行のおすすめ</button><button id="image-sounds">パートの音色</button></div><div id="image-suggestions" hidden></div><button id="image-tempo"></button><p class="image-hint">コードをタッチで変更。聴いて、オッケーで決めよう。</p>';
+  panel.innerHTML='<summary>伴奏のイメージ</summary><label class="composer-replace"><input id="image-enabled" type="checkbox">伴奏といっしょに聴く</label><div class="composer-values"><label>ジャンル<select id="image-genre"></select></label><label>和音の弾き方<select id="image-rhythm"></select></label></div><label>打楽器の刻み<select id="image-drums"></select></label><label>進行<select id="image-progression"></select></label><div id="image-chords" aria-label="小節ごとのコード"></div><div class="image-more"><button id="image-suggest">進行のおすすめ</button><button id="image-sounds">パートの音色</button></div><div id="image-suggestions" hidden></div><button id="image-tempo"></button><p class="image-hint">コードをタッチで変更。聴いて、オッケーで決めよう。</p>';
   $('composer-panel').before(panel);this.panel=panel;this.$=id=>$(`image-${id}`);
   this.fill=(id,entries)=>fill(this.$(id),entries.map(v=>[v.id,v.label]));
-  this.fill('genre',GENRES);this.fill('rhythm',RHYTHMS);
-  for(const id of ['enabled','genre','rhythm','progression'])this.$(id).onchange=()=>{
+  this.fill('genre',GENRES);this.fill('rhythm',RHYTHMS);this.fill('drums',DRUM_PATTERNS);
+  for(const id of ['enabled','genre','rhythm','progression','drums'])this.$(id).onchange=()=>{
    const old=this.value(),value={...old,enabled:this.$('enabled').checked,genre:this.$('genre').value,rhythm:this.$('rhythm').value,progression:this.$('progression').value||old.progression};
    if(id==='genre')Object.assign(value,{rhythm:PRESETS[value.genre].rhythm,progression:PRESETS[value.genre].progression});
-   if(value.imageChoice)value.manualSettings={...value.manualSettings,[id]:true,...(id==='genre'?{rhythm:true,progression:true}:{})};
+   if(id==='drums'){
+    value.drumPattern=this.$('drums').value;
+    if(value.drumPattern!=='none'&&accompanimentSounds(value).drums==='none')value.sounds={...value.sounds,drums:SOUND_PRESETS[value.genre].drums};
+   }
+   if(value.imageChoice&&id!=='drums')value.manualSettings={...value.manualSettings,[id]:true,...(id==='genre'?{rhythm:true,progression:true}:{})};
    if(value.imageChoice&&id==='progression'&&!this.$('progression').value)value.manualSettings.progression=false;
    editor.changeStructure({type:'accompaniment',value});
   };
@@ -40,7 +45,8 @@ export class ImageControls {
   if(compact){
    const settings=document.createElement('dialog');settings.id='backing-settings';settings.className='backing-sheet';settings.setAttribute('aria-label','伴奏の設定');settings.innerHTML='<div class="screen-heading"><h2>伴奏の設定</h2><button id="backing-settings-close">とじる</button></div>';
    const settingsActions=document.createElement('div');settingsActions.className='backing-setting-actions';settingsActions.append(this.$('tempo'),this.$('sounds'));
-   settings.append(this.$('enabled').closest('label'),this.$('genre').closest('.composer-values'),this.$('progression').closest('label'),settingsActions);
+   const drumHint=document.createElement('p');drumHint.className='image-hint';drumHint.textContent='のばす伴奏の「おまかせ」は打楽器なし。ハットは1・3拍目に鳴ります。';
+   settings.append(this.$('enabled').closest('label'),this.$('genre').closest('.composer-values'),this.$('drums').closest('label'),drumHint,this.$('progression').closest('label'),settingsActions);
    document.querySelector('main').append(settings);this.settingsSheet=settings;
    const open=document.createElement('button');open.id='image-settings-open';open.textContent='伴奏の設定';open.onclick=()=>this.show(settings);this.$('suggest').before(open);
    const summary=document.createElement('p');summary.id='image-summary';this.$('chords').before(summary);
@@ -88,9 +94,12 @@ export class ImageControls {
     <div id="chord-detail" role="tabpanel" hidden><div class="chord-fields"><label>ルート<select id="chord-root"></select></label><label>種類<select id="chord-quality"></select></label><label>ベース<select id="chord-bass"></select></label></div>
      <div class="chord-slot-register"><span id="chord-slot-target"></span><button id="chord-slot-add">よくつかうに登録</button></div><p class="chord-slot-guide">黄色の枠に保存します。曲がかわっても使えます。</p>
     </div></div>
-   <p id="chord-candidate" role="status"></p>
+   <div class="chord-choice-status"><p id="chord-candidate" role="status"></p><button id="chord-remove">この拍の変更を外す</button></div>
    <div class="sheet-actions"><button id="chord-single-preview">▶ このコードをきく</button><button id="chord-use">つかう</button><button id="chord-preview">▶ 曲をはじめから聴く</button><button id="chord-stop">■ とめる</button><button id="chord-confirm">オッケー</button></div>`;
   document.querySelector('main').append(d);this.chordSheet=d;
+  const beats=document.createElement('div');beats.id='chord-beats';beats.setAttribute('role','group');beats.setAttribute('aria-label','コードを変える拍');
+  for(let beat=0;beat<4;beat++){const b=document.createElement('button');b.dataset.chordBeat=beat;b.onclick=()=>this.openChord(this.bar,beat);beats.append(b);}d.querySelector('.chord-picker-tabs').before(beats);
+  $('chord-remove').onclick=()=>{this.onNavigate?.();this.editor.changeStructure({type:'accompaniment',value:removeChordAtBeat(this.editor.previewPattern,this.bar,this.beat)});this.openChord(this.bar,this.beat);};
   this.metronome=new ChordMetronome({parent:d,tempoInput:$('tempo'),prepareTrack:()=>this.prepareMetronome(),onError:message=>{$('chord-candidate').textContent=message;}});
   d.querySelector('.chord-picker-tabs').after(this.metronome.row);
   for(const id of ['chord-root','chord-bass'])fill($(id),pitches.map((p,i)=>[i,p]));
@@ -122,14 +131,14 @@ export class ImageControls {
   const s=document.createElement('dialog');s.id='sounds-sheet';s.className='backing-sheet';s.setAttribute('aria-label','パートの音色');s.innerHTML='<div class="screen-heading"><h2>パートの音色</h2><button id="sounds-close">とじる</button></div><div class="sound-fields"><label>コード<select id="sound-chord"></select></label><label>ベース<select id="sound-bass"></select></label><label>ドラム<select id="sound-drums"></select></label></div><p>アコースティック風と電子音を、組み合わせて使えます。</p><p>とじて聴き、オッケーで決めよう。</p>';
   document.querySelector('main').append(s);this.soundSheet=s;
    for(const part of ['chord','bass'])fill($(`sound-${part}`),SOUNDS.map(v=>[v.id,soundLabel(v.id,this.engine)]));fill($('sound-drums'),[['acoustic','アコースティック風'],['electronic','電子ドラム'],['none','なし']]);
-  for(const part of ['chord','bass','drums'])$(`sound-${part}`).onchange=()=>{const value=this.value();value.sounds={...value.sounds,[part]:$(`sound-${part}`).value};this.editor.changeStructure({type:'accompaniment',value});};
+  for(const part of ['chord','bass','drums'])$(`sound-${part}`).onchange=()=>{const value=this.value();value.sounds={...value.sounds,[part]:$(`sound-${part}`).value};if(part==='drums'){if(value.sounds.drums==='none')value.drumPattern='none';else if(value.drumPattern==='none')value.drumPattern='auto';}this.editor.changeStructure({type:'accompaniment',value});};
   $('sounds-close').onclick=()=>s.close();s.addEventListener('close',()=>this.onNavigate?.());
   this.$('sounds').onclick=()=>{const sounds=accompanimentSounds(this.value());for(const part of ['chord','bass','drums'])$(`sound-${part}`).value=sounds[part];this.show(s);};
   setupPlaybackSheet(d,{closeId:'chord-close',stopId:'chord-stop',onStop:()=>this.onStop?.()});
   if(this.inlineChords)d.classList.add('inline-chord-editor');
   setupPlaybackSheet(s,{closeId:'sounds-close',stopId:'sounds-stop',onStop:()=>this.onStop?.()});
  }
- sheetChord(){return {startTick:this.bar*16,durationTick:16,root:Number($('chord-root').value),quality:$('chord-quality').value,bass:Number($('chord-bass').value),manual:true};}
+ sheetChord(){return {startTick:this.bar*16+(this.beat??0)*4,durationTick:16-(this.beat??0)*4,root:Number($('chord-root').value),quality:$('chord-quality').value,bass:Number($('chord-bass').value),manual:true};}
  chooseChord(chord,slot=null){
   for(const part of ['root','quality','bass'])$(`chord-${part}`).value=chord[part];
   this.bassLinked=chord.bass===chord.root;this.selectedSlot=slot;this.slotNotice='';this.onNavigate?.();this.updateChordChoice();this.onChordPreview?.(this.sheetChord());
@@ -187,22 +196,25 @@ export class ImageControls {
   const bounds=row.getBoundingClientRect(),selected=button.getBoundingClientRect();if(selected.left<bounds.left||selected.right>bounds.right)row.scrollLeft+=selected.left-bounds.left-(row.clientWidth-selected.width)/2;
  }
  updateChordChoice(){
-  const chord=this.sheetChord(),current=harmonicSegments(this.editor.previewPattern).find(c=>c.startTick===this.bar*16);
+  const chord=this.sheetChord(),current=chordAtTick(this.editor.previewPattern,chord.startTick);
+  for(const b of $('chord-beats').children){const beat=Number(b.dataset.chordBeat),c=chordAtTick(this.editor.previewPattern,this.bar*16+beat*4);b.textContent=`${beat+1}拍 ${chordLabel(c)}`;b.setAttribute('aria-pressed',String(beat===this.beat));b.disabled=!!this.busy;}
+  const previous=this.beat?chordAtTick(this.editor.previewPattern,chord.startTick-1):null;
+  $('chord-remove').disabled=!!this.busy||!previous||['root','quality','bass'].every(k=>previous[k]===current[k]);
   const same=current&&['root','quality','bass'].every(k=>current[k]===chord[k]);
-  $('chord-candidate').textContent=this.slotNotice||(same?`いま ${chordLabel(current)}${current.manual?'（この小節に入っています）':''}`:`いま ${chordLabel(current)} → 候補 ${chordLabel(chord)}`);
-  $('chord-candidate').setAttribute('aria-label',`${this.bar+1}小節目。${$('chord-candidate').textContent}。「つかう」で入れて、最後に「オッケー」。`);
+  $('chord-candidate').textContent=this.slotNotice||(same?`いま ${chordLabel(current)}${current.manual?'（この拍に入っています）':''}`:`いま ${chordLabel(current)} → 候補 ${chordLabel(chord)}`);
+  $('chord-candidate').setAttribute('aria-label',`${this.bar+1}小節目 ${this.beat+1}拍目。${$('chord-candidate').textContent}。「つかう」で入れて、最後に「オッケー」。`);
   for(const button of $('chord-grid').children)button.setAttribute('aria-pressed',String(button.dataset.chordSlot!==undefined?Number(button.dataset.chordSlot)===this.selectedSlot&&!!this.chordSlots[this.selectedSlot]:this.selectedSlot===null&&Number(button.dataset.root)===chord.root&&button.dataset.quality===chord.quality&&chord.bass===chord.root));
   const target=this.availableChordSlot();$('chord-slot-add').disabled=!!this.busy||target<0;
   $('chord-slot-target').textContent=target<0?'9枠とも登録ずみ':`追加枠 ${target+1} / ${this.chordSlots.length}`;
   $('chord-use').disabled=!!this.busy||!!(same&&current.manual);$('chord-previous').disabled=!!this.busy||this.bar===0;$('chord-next').disabled=!!this.busy||this.bar>=this.editor.previewPattern.bars-1;
  }
- stageChord(){const before=this.value(),value=structuredClone(before),start=this.bar*16;value.enabled=true;value.chords=[...(value.chords??[]).filter(c=>c.startTick+c.durationTick<=start||c.startTick>=start+16),this.sheetChord()].sort((a,b)=>a.startTick-b.startTick);if(JSON.stringify(value)!==JSON.stringify(before))this.editor.changeStructure({type:'accompaniment',value});}
- openChord(bar){
+ stageChord(){const before=this.value(),value=setChordAtBeat({...this.editor.previewPattern,accompaniment:before},this.bar,this.beat,this.sheetChord());if(JSON.stringify(value)!==JSON.stringify(before))this.editor.changeStructure({type:'accompaniment',value});}
+ openChord(bar,beat=0){
   if(this.busy||this.editor.entry||!this.editor.isOpen)return;
   this.cancelSlotPress();if(this.slotMenu.open)this.slotMenu.close();
   bar=Math.max(0,Math.min(this.editor.previewPattern.bars-1,bar));
   if(!this.chordSheet.open)this.onStop?.();else this.onNavigate?.();
-  this.bar=bar;const chord=harmonicSegments(this.editor.previewPattern).find(c=>c.startTick===bar*16);
+  this.bar=bar;this.beat=Math.max(0,Math.min(3,beat));const chord=chordAtTick(this.editor.previewPattern,bar*16+this.beat*4);
   $('chord-title').textContent=`${bar+1} / ${this.editor.previewPattern.bars} 小節`;$('chord-title').setAttribute('aria-label',`${bar+1}小節目のコード`);
   for(const part of ['root','quality','bass'])$(`chord-${part}`).value=chord[part];this.bassLinked=chord.root===chord.bass;
   const chords=this.key==='Am'?[[9,'minor'],[11,'m7♭5'],[0,'major'],[2,'minor'],[4,'major'],[5,'major'],[7,'major']]:[[0,'major'],[2,'minor'],[4,'minor'],[5,'major'],[7,'major'],[9,'minor'],[11,'m7♭5']];
@@ -227,10 +239,11 @@ export class ImageControls {
   if(value.imageChoice){const automatic=document.createElement('option');automatic.value='';automatic.textContent='イメージに おまかせ';this.$('progression').prepend(automatic);}
   this.$('tempo').onclick=()=>this.onTempo?.(PRESETS[this.$('genre').value].tempo);
   this.$('enabled').checked=value.enabled;for(const id of ['genre','rhythm','progression'])this.$(id).value=value[id];this.$('tempo').textContent=`おすすめのBPM ${PRESETS[value.genre].tempo} にする`;
+  this.$('drums').value=accompanimentSounds(value).drums==='none'?'none':value.drumPattern;
   if(value.imageChoice&&!value.manualSettings?.progression)this.$('progression').value='';
-  if($('image-summary'))$('image-summary').textContent=`${GENRES.find(g=>g.id===value.genre).label}・${RHYTHMS.find(r=>r.id===value.rhythm).label}・${value.enabled?'伴奏ON':'伴奏OFF'}`;
-  const row=this.$('chords');row.replaceChildren();const segments=harmonicSegments(pattern);
-  for(let bar=0;bar<pattern.bars;bar++){const chord=segments.find(c=>c.startTick===bar*16),b=document.createElement('button');b.dataset.chordBar=bar;b.textContent=`${bar+1}：${chordLabel(chord)}`;b.disabled=busy||!!this.editor.entry;b.setAttribute('aria-label',`${bar+1}小節目 ${chordLabel(chord)} を変更`);b.onclick=()=>this.openChord(bar);row.append(b);}
+  if($('image-summary'))$('image-summary').textContent=`${GENRES.find(g=>g.id===value.genre).label}・${RHYTHMS.find(r=>r.id===value.rhythm).label}・${DRUM_PATTERNS.find(p=>p.id===this.$('drums').value)?.label??''}・${value.enabled?'伴奏ON':'伴奏OFF'}`;
+  const row=this.$('chords');row.replaceChildren();
+  for(let bar=0;bar<pattern.bars;bar++){const changes=chordChangesInBar(pattern,bar),b=document.createElement('button');b.dataset.chordBar=bar;b.textContent=`${bar+1}：${changes.map(chordLabel).join('→')}`;b.disabled=busy||!!this.editor.entry;b.setAttribute('aria-label',`${bar+1}小節目 ${changes.map(c=>`${(c.startTick%16)/4+1}拍目 ${chordLabel(c)}`).join('、')} を変更`);b.onclick=()=>this.openChord(bar);row.append(b);}
   for(const control of this.panel.querySelectorAll('input,select,button'))control.disabled=busy||!!this.editor.entry;
   if(this.settingsSheet)for(const control of this.settingsSheet.querySelectorAll('input,select,button'))control.disabled=['backing-settings-close','backing-settings-stop'].includes(control.id)?false:busy||!!this.editor.entry;
   for(const control of this.$('suggestions').querySelectorAll('button'))control.disabled=busy;

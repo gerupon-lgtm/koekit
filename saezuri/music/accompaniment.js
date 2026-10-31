@@ -2,7 +2,9 @@
 import {GENRES,CHORD_INTERVALS,chordTones} from './catalog.js?v=v0.1.0-20261031153113-7832e2d';
 import {validImageChoice,validateImageArrangement} from './image-arrangement.js?v=v0.1.0-20261031153113-7832e2d';
 import {POP_EIGHT_BEAT} from './backing-patterns.js?v=v0.1.0-20261031153113-7832e2d';
-export const RHYTHMS=[{id:'quarters',label:'4つずつ'},{id:'offbeat',label:'うらで弾く'},{id:'arpeggio',label:'音をばらして弾く'},{id:POP_EIGHT_BEAT.rhythm,label:POP_EIGHT_BEAT.label}];
+export const RHYTHMS=[{id:'quarters',label:'4つずつ'},{id:'offbeat',label:'うらで弾く'},{id:'arpeggio',label:'音をばらして弾く'},{id:POP_EIGHT_BEAT.rhythm,label:POP_EIGHT_BEAT.label},{id:'whole',label:'全音符でのばす'},{id:'halves',label:'二分音符でのばす'}];
+export const DRUM_PATTERNS=[{id:'auto',label:'おまかせ'},{id:'none',label:'打楽器なし'},{id:'hat-half-front',label:'ハット2拍ずつ・前を強く'},{id:'hat-half-back',label:'ハット2拍ずつ・後を強く'}];
+const heldLength=rhythm=>rhythm==='whole'?16:rhythm==='halves'?8:0;
 export const PROGRESSIONS={
  C:[{id:'home',label:'C → F → G → C',chords:[[0,'major'],[5,'major'],[7,'major'],[0,'major']]},
     {id:'pop',label:'C → G → Am → F',chords:[[0,'major'],[7,'major'],[9,'minor'],[5,'major']]},
@@ -27,6 +29,7 @@ export function accompanimentSounds(value){
 }
 export function validateAccompaniment(value,bars=8) {
  if(!value || typeof value.enabled!=='boolean'||!GENRES.some(g=>g.id===value.genre)||!RHYTHMS.some(r=>r.id===value.rhythm)||!PROGRESSIONS.C.some(p=>p.id===value.progression)) return {code:'ACCOMPANIMENT_INVALID'};
+ if(value.drumPattern!==undefined&&!DRUM_PATTERNS.some(p=>p.id===value.drumPattern))return {code:'ACCOMPANIMENT_INVALID'};
  if(value.imageChoice!==undefined&&!validImageChoice(value.imageChoice))return {code:'IMAGE_INVALID'};
  if(value.imageArrangement!==undefined){const invalid=validateImageArrangement(value.imageArrangement);if(!value.imageArrangement||invalid)return invalid??{code:'IMAGE_INVALID'};}
  if(value.manualSettings!==undefined&&(!value.manualSettings||typeof value.manualSettings!=='object'||Array.isArray(value.manualSettings)||Object.entries(value.manualSettings).some(([key,v])=>!['enabled','genre','rhythm','progression'].includes(key)||typeof v!=='boolean')))return {code:'IMAGE_INVALID'};
@@ -71,7 +74,8 @@ export function accompanimentEvents(pattern) {
  const value=pattern.accompaniment;
  if(!value?.enabled||validateAccompaniment(value,pattern.bars)) return [];
  const arrangement=value.imageArrangement;
- const events=[],sounds=accompanimentSounds(value),nursery=value.genre==='nursery';let previous=[];
+ const events=[],sounds=accompanimentSounds(value),nursery=value.genre==='nursery',held=heldLength(value.rhythm),drumPattern=value.drumPattern??'auto';
+ const automaticDrums=drumPattern==='auto'&&!held&&sounds.drums!=='none';let previous=[];
  for(const segment of harmonicSegments(pattern)){
   const {startTick,durationTick,root,quality,bass}=segment;
   let chord=chordVoicing({root,quality},previous);previous=chord;
@@ -81,12 +85,23 @@ export function accompanimentEvents(pattern) {
    chord.sort((a,b)=>a-b);if(arrangement.voicing==='falling')chord.reverse();
   }
   const push=(tick,length,midi,instrument,gain,part)=>events.push({startTick:startTick+tick,durationTick:Math.min(length,durationTick-tick),midi,instrument,gain:gain*(nursery?(part==='chord'?.65:part==='bass'?.8:1):1),part,...(value.rhythm==='tutorial'||nursery&&part!=='drums'?{velocity:55}:{})});
+  if(held){
+   // Keep the half/whole grid anchored to the bar. A chord change starts a new
+   // held note immediately and releases the previous chord at that boundary.
+   const ticks=[0];for(let tick=held-startTick%held;tick<durationTick;tick+=held)ticks.push(tick);
+   for(const tick of ticks){
+    const length=Math.min(held-(startTick+tick)%held,durationTick-tick);
+    push(tick,length,36+bass,sounds.bass,.075,'bass');
+    for(const midi of chord)push(tick,length,midi,sounds.chord,value.genre==='rock'?.035:.045,'chord');
+   }
+   continue;
+  }
   if(value.rhythm==='tutorial'){
    for(const tick of POP_EIGHT_BEAT.bassTicks)if(tick<durationTick)push(tick,2,36+bass,sounds.bass,.12,'bass');
    for(const tick of POP_EIGHT_BEAT.chordTicks)if(tick<durationTick)for(const midi of chord)push(tick,2,midi,sounds.chord,tick===0?.06:.045,'chord');
-   if(sounds.drums!=='none'){
+   if(automaticDrums){
     const prefix=sounds.drums==='electronic'?'electro-':'';
-    for(const [tick,kind,gain] of [[0,'kick',.09],[8,'kick',.055],[4,'snare',.05],[12,'snare',.05],[0,'hat',.035],[2,'hat',.02],[6,'hat',.02],[10,'hat',.02],[14,'hat',.02]])if(tick<durationTick)push(tick,1,kind==='kick'?36:kind==='snare'?38:42,prefix+kind,gain,'drums');
+    for(const [tick,kind,gain] of [[0,'kick',.09],[8,'kick',.055],[4,'snare',.05],[12,'snare',.05],[0,'hat',.035],[2,'hat',.02],[6,'hat',.02],[10,'hat',.02],[14,'hat',.02]])if(tick>=startTick%16&&tick<startTick%16+durationTick)push(tick-startTick%16,1,kind==='kick'?36:kind==='snare'?38:42,prefix+kind,gain,'drums');
    }
    continue;
   }
@@ -99,17 +114,25 @@ export function accompanimentEvents(pattern) {
     const voices=['rising','falling'].includes(voicing)?[chord[i%chord.length]]:voicing==='broken'?(i%2?chord.slice(1):[chord[0]]):chord;
     for(const midi of voices)push(tick,Math.min(arrangement.gate,(ticks[i+1]??16)-tick),midi,sounds.chord,.04*strength*(i%2?.92:1),'chord');
    }
-   if(sounds.drums!=='none')for(const [kind,ticks] of Object.entries(arrangement.drums))for(const tick of ticks)if(tick<durationTick)push(tick,1,kind==='kick'?36:kind==='snare'?38:42,`${sounds.drums==='electronic'?'electro-':''}${kind}`,(kind==='hat'?.012:.028)*strength,'drums');
+   if(automaticDrums)for(const [kind,ticks] of Object.entries(arrangement.drums))for(const tick of ticks)if(tick>=startTick%16&&tick<startTick%16+durationTick)push(tick-startTick%16,1,kind==='kick'?36:kind==='snare'?38:42,`${sounds.drums==='electronic'?'electro-':''}${kind}`,(kind==='hat'?.012:.028)*strength,'drums');
    continue;
   }
   const bassTicks=value.genre==='rock'?[0,4,8,12]:value.genre==='ballad'?[0]:[0,8];
   for(const tick of bassTicks)if(tick<durationTick)push(tick,value.genre==='ballad'?14:7,36+bass,sounds.bass,.075,'bass');
   const ticks=value.rhythm==='quarters'?[0,4,8,12]:value.rhythm==='offbeat'?[2,6,10,14]:[0,2,4,6,8,10,12,14];
   for(const [i,tick] of ticks.entries())if(tick<durationTick)for(const midi of value.rhythm==='arpeggio'?[chord[i%chord.length]]:chord)push(tick,value.rhythm==='quarters'?3:2,midi,sounds.chord,value.genre==='rock'?.035:.045,'chord');
-  if(sounds.drums!=='none')for(let tick=0;tick<durationTick;tick+=2){
+  if(automaticDrums)for(let tick=0;tick<16;tick+=2){
+   if(tick<startTick%16||tick>=startTick%16+durationTick)continue;
    if(value.genre==='ballad'&&tick%8)continue;
    const kind=tick%8===0?'kick':tick%8===4?'snare':'hat';
-   push(tick,1,kind==='kick'?36:kind==='snare'?38:42,`${sounds.drums==='electronic'?'electro-':''}${kind}`,value.genre==='rock'?.055:.025,'drums');
+   push(tick-startTick%16,1,kind==='kick'?36:kind==='snare'?38:42,`${sounds.drums==='electronic'?'electro-':''}${kind}`,value.genre==='rock'?.055:.025,'drums');
+  }
+ }
+ // Sparse hats are independent of harmony boundaries and contain no kick/snare.
+ if(sounds.drums!=='none'&&['hat-half-front','hat-half-back'].includes(drumPattern)){
+  for(let tick=0;tick<pattern.bars*16;tick+=8){
+   const strong=(tick%16===0)===(drumPattern==='hat-half-front');
+   events.push({startTick:tick,durationTick:1,midi:42,instrument:`${sounds.drums==='electronic'?'electro-':''}hat`,gain:strong?.03:.015,part:'drums'});
   }
  }
  return events;

@@ -93,7 +93,7 @@ export class ImageModeControls {
   for(const key of ['type','speed','mood']){const node=$(`image-word-${key}`);node.value=value.imageChoice[key];node.disabled=busy||!this.editor.canGenerateAccompaniment;}
   this.next.disabled=busy||!this.editor.canGenerateAccompaniment;
   this.next.title=this.next.disabled?'止めて、入力や編集の候補を決めてから使えます。':'メロディーを保って、伴奏だけを変えます。';
-  const manual=Object.values(value.manualSettings??{}).some(Boolean)||!!value.chords?.length||!!Object.keys(value.sounds??{}).length;
+  const manual=!!value.drumPattern&&value.drumPattern!=='auto'||Object.values(value.manualSettings??{}).some(Boolean)||!!value.chords?.length||!!Object.keys(value.sounds??{}).length;
   this.reset.hidden=!manual;this.reset.disabled=this.next.disabled;
   const tempo=$('image-tempo');if(tempo){tempo.textContent=`「${IMAGE_SPEEDS.find(([id])=>id===value.imageChoice.speed)[1]}」のBPM案 ${IMAGE_TEMPOS[value.imageChoice.speed]} にする`;tempo.onclick=()=>this.onTempo?.(IMAGE_TEMPOS[this.editor.previewPattern.accompaniment.imageChoice.speed]);}
  }
