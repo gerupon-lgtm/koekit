@@ -26,7 +26,7 @@ export class ImageControls {
    if(id==='genre')Object.assign(value,{rhythm:PRESETS[value.genre].rhythm,progression:PRESETS[value.genre].progression});
    if(id==='drums'){
     value.drumPattern=this.$('drums').value;
-    if(['hat-half-front','hat-half-back'].includes(value.drumPattern)&&accompanimentSounds(value).drums==='none')value.sounds={...value.sounds,drums:SOUND_PRESETS[value.genre].drums};
+    if(DRUM_PATTERNS.some(p=>p.id===value.drumPattern&&p.ticks)&&accompanimentSounds(value).drums==='none')value.sounds={...value.sounds,drums:SOUND_PRESETS[value.genre].drums};
    }
    if(value.imageChoice&&id!=='drums')value.manualSettings={...value.manualSettings,[id]:true,...(id==='genre'?{rhythm:true,progression:true}:{})};
    if(value.imageChoice&&id==='progression'&&!this.$('progression').value)value.manualSettings.progression=false;
@@ -45,7 +45,7 @@ export class ImageControls {
   if(compact){
    const settings=document.createElement('dialog');settings.id='backing-settings';settings.className='backing-sheet';settings.setAttribute('aria-label','伴奏の設定');settings.innerHTML='<div class="screen-heading"><h2>伴奏の設定</h2><button id="backing-settings-close">とじる</button></div>';
    const settingsActions=document.createElement('div');settingsActions.className='backing-setting-actions';settingsActions.append(this.$('tempo'),this.$('sounds'));
-   const drumHint=document.createElement('p');drumHint.className='image-hint';drumHint.textContent='のばす伴奏の「おまかせ」は打楽器なし。ハットは1・3拍目に鳴ります。';
+   const drumHint=document.createElement('p');drumHint.className='image-hint';drumHint.textContent='のばす伴奏の「おまかせ」は打楽器なし。裏打ちは2・4拍目に鳴ります。';
    settings.append(this.$('enabled').closest('label'),this.$('genre').closest('.composer-values'),this.$('drums').closest('label'),drumHint,this.$('progression').closest('label'),settingsActions);
    document.querySelector('main').append(settings);this.settingsSheet=settings;
    const open=document.createElement('button');open.id='image-settings-open';open.textContent='伴奏の設定';open.onclick=()=>this.show(settings);this.$('suggest').before(open);

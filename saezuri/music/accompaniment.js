@@ -3,7 +3,7 @@ import {GENRES,CHORD_INTERVALS,chordTones} from './catalog.js?v=v0.1.0-202610311
 import {validImageChoice,validateImageArrangement} from './image-arrangement.js?v=v0.1.0-20261031180708-32cf338';
 import {POP_EIGHT_BEAT} from './backing-patterns.js?v=v0.1.0-20261031180708-32cf338';
 export const RHYTHMS=[{id:'quarters',label:'4つずつ'},{id:'offbeat',label:'うらで弾く'},{id:'arpeggio',label:'音をばらして弾く'},{id:POP_EIGHT_BEAT.rhythm,label:POP_EIGHT_BEAT.label},{id:'whole',label:'全音符でのばす'},{id:'halves',label:'二分音符でのばす'}];
-export const DRUM_PATTERNS=[{id:'auto',label:'おまかせ'},{id:'none',label:'打楽器なし'},{id:'hat-half-front',label:'ハット2拍ずつ・前を強く'},{id:'hat-half-back',label:'ハット2拍ずつ・後を強く'}];
+export const DRUM_PATTERNS=[{id:'auto',label:'おまかせ'},{id:'none',label:'打楽器なし'},{id:'hat-half-front',label:'ハット2拍ずつ・前を強く',ticks:[0,8],gains:[.03,.015]},{id:'hat-half-back',label:'ハット2拍ずつ・後を強く',ticks:[0,8],gains:[.015,.03]},{id:'hat-backbeat',label:'ハット2・4拍（裏打ち）',ticks:[4,12],gains:[.02,.02]}];
 const heldLength=rhythm=>rhythm==='whole'?16:rhythm==='halves'?8:0;
 export const PROGRESSIONS={
  C:[{id:'home',label:'C → F → G → C',chords:[[0,'major'],[5,'major'],[7,'major'],[0,'major']]},
@@ -129,10 +129,10 @@ export function accompanimentEvents(pattern) {
   }
  }
  // Sparse hats are independent of harmony boundaries and contain no kick/snare.
- if(sounds.drums!=='none'&&['hat-half-front','hat-half-back'].includes(drumPattern)){
-  for(let tick=0;tick<pattern.bars*16;tick+=8){
-   const strong=(tick%16===0)===(drumPattern==='hat-half-front');
-   events.push({startTick:tick,durationTick:1,midi:42,instrument:`${sounds.drums==='electronic'?'electro-':''}hat`,gain:strong?.03:.015,part:'drums'});
+ const hat=DRUM_PATTERNS.find(p=>p.id===drumPattern&&p.ticks);
+ if(sounds.drums!=='none'&&hat){
+  for(let bar=0;bar<pattern.bars;bar++)for(const [i,tick] of hat.ticks.entries()){
+   events.push({startTick:bar*16+tick,durationTick:1,midi:42,instrument:`${sounds.drums==='electronic'?'electro-':''}hat`,gain:hat.gains[i],part:'drums'});
   }
  }
  return events;
