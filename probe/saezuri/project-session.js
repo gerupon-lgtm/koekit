@@ -1,6 +1,6 @@
-import {openEditSession} from './edit-session.js?v=v0.1.0-20261031144007-3fbf8da';
-import {restoreCheckpoint,checkpointFingerprint} from './song-session.js?v=v0.1.0-20261031144007-3fbf8da';
-import {canKeepPhrase} from './sequence-session.js?v=v0.1.0-20261031144007-3fbf8da';
+import {openEditSession} from './edit-session.js?v=v0.1.0-20261031153113-7832e2d';
+import {restoreCheckpoint,checkpointFingerprint} from './song-session.js?v=v0.1.0-20261031153113-7832e2d';
+import {canKeepPhrase} from './sequence-session.js?v=v0.1.0-20261031153113-7832e2d';
 const copy=value=>structuredClone(value);
 export function emptyPartCheckpoint(pattern,{accepted=false}={}){
  const session=openEditSession(pattern);if(session.code)throw new Error(session.code);
@@ -14,7 +14,7 @@ export function validateProject(project,sequence){
   if(part.patternId&&!sequence.patterns.some(p=>p.id===part.patternId))return 'PART_PATTERN_MISSING';
   if(part.checkpoint&&!restoreCheckpoint(part.checkpoint))return 'PART_CHECKPOINT_INVALID';
   if(!part.patternId&&!part.checkpoint)return 'PART_EMPTY';
- }if(project.activeId&&!ids.has(project.activeId))return 'PART_ACTIVE_MISSING';}catch{return 'PART_CHECKPOINT_INVALID';}
+ }if(project.activeId&&!ids.has(project.activeId))return 'PART_ACTIVE_MISSING';if(project.editingOriginalId&&project.editingOriginalId!==project.activeId)return 'PART_EDIT_TARGET_INVALID';}catch{return 'PART_CHECKPOINT_INVALID';}
  return null;
 }
 export function migrateProject(data){
@@ -31,13 +31,13 @@ export function allocatePart(project,pattern,{copyFrom=null}={}){
  if(copyFrom){const stem=(copyFrom.familyName??project.parts.find(p=>p.patternId===copyFrom.familyId)?.name??copyFrom.name??'パーツ').slice(0,20);let n=2;do{name=stem+n++;}while(names.has(name));}
  else{let n=1;do{name='パーツ'+n++;}while(names.has(name));}
  const part={id,name,patternId:null,mode:pattern.source==='manual'?'input':'edit',checkpoint:emptyPartCheckpoint(pattern,{accepted:!!copyFrom})};
- project.parts.push(part);project.activeId=id;return part;
+ project.parts.push(part);project.activeId=id;project.editingOriginalId=null;return part;
 }
 export function capturePart(project,sequence,checkpoint,mode){
  let part=project.parts.find(p=>p.id===project.activeId);if(!part)return;
  const source=sequence.patterns.find(p=>p.id===part.patternId),incoming=checkpoint?.confirmed?.pattern;
  const content=p=>Object.fromEntries(Object.entries(p).filter(([k])=>!['id','name','familyId','familyName','derivedFrom','revision'].includes(k)));
- if(source&&incoming&&sequence.placements.some(p=>p.patternId===source.id)&&checkpointFingerprint(content(source))!==checkpointFingerprint(content(incoming))){
+ if(project.editingOriginalId!==part.id&&source&&incoming&&sequence.placements.some(p=>p.patternId===source.id)&&checkpointFingerprint(content(source))!==checkpointFingerprint(content(incoming))){
   // Even browser Back or a retained editor cannot overwrite every occurrence.
   const previous=part;part=allocatePart(project,incoming,{copyFrom:source});previous.checkpoint=emptyPartCheckpoint(source,{accepted:true});
  }
@@ -53,5 +53,5 @@ export function capturePart(project,sequence,checkpoint,mode){
 export function syncProjectParts(project,sequence){
  for(const pattern of sequence.patterns)if(!project.parts.some(p=>p.patternId===pattern.id))project.parts.push({id:pattern.id,name:pattern.name,patternId:pattern.id,checkpoint:null,mode:pattern.source==='manual'?'input':'edit'});
  project.parts=project.parts.filter(part=>!part.patternId||sequence.patterns.some(p=>p.id===part.patternId));
- if(project.activeId&&!project.parts.some(p=>p.id===project.activeId))project.activeId=null;
+ if(project.activeId&&!project.parts.some(p=>p.id===project.activeId)){project.activeId=null;project.editingOriginalId=null;}
 }

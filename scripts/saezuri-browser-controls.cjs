@@ -41,6 +41,6 @@ async function startNewPart(page,source='new-manual'){
 }
 async function openProjectPart(page,index=-1){
  const parts=page.locator('#phrase-shelf [data-phrase]');await parts.nth(index<0?await parts.count()-1:index).click();
- await page.getByRole('button',{name:'つづきをつくる',exact:true}).click();
+ await page.locator('[data-part-original]').click();
 }
 module.exports.startNewPart=startNewPart;module.exports.openProjectPart=openProjectPart;

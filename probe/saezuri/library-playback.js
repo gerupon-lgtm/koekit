@@ -1,4 +1,5 @@
-import {songPlaybackChoices} from './workflow-state.js?v=v0.1.0-20261031144007-3fbf8da';
+import {songLibraryView} from './song-library-view.js?v=v0.1.0-20261031153113-7832e2d';
+import {songPlaybackChoices} from './workflow-state.js?v=v0.1.0-20261031153113-7832e2d';
 
 const TICKS_PER_BAR=16;
 
@@ -19,7 +20,7 @@ export class LibraryPlayback {
  idle(binding){
   const {record,row,button,view,status,progress}=binding;
   delete row.dataset.songPlaying;delete row.dataset.songPreparing;
-  button.textContent='▶ 聴く';button.setAttribute('aria-label',`${record.title}を聴く`);button.setAttribute('aria-pressed','false');button.removeAttribute('aria-busy');
+  const viewState=songLibraryView(record);button.textContent=viewState.listenLabel;button.setAttribute('aria-label',viewState.listenAria);button.setAttribute('aria-pressed','false');button.removeAttribute('aria-busy');
   view.hidden=true;status.textContent='';progress.hidden=false;progress.value=0;
  }
  async play(binding){
@@ -32,7 +33,8 @@ export class LibraryPlayback {
   try{
    const choices=songPlaybackChoices(record);
    if(!choices.length)throw new Error('NO_PLAYBACK_SOURCE');
-   const choice=choices.length===1?choices[0]:await this.onChoose?.(record,choices);
+   const choosePart=!record.data.sequence?.placements?.length||choices.length>1;
+   const choice=choosePart&&this.onChoose?await this.onChoose(record,choices):choices[0];
    if(this.pending!==pending||pending.serial!==this.serial)return;
    if(!choice){this.pending=null;this.idle(binding);return;}
    const data={...choice.data,previewName:`${record.title}・${choice.label}（${choice.state}）`};

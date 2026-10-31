@@ -10,13 +10,14 @@ DB `koekit-saezuri`、songsレコードのschemaVersion=1、曲上限10、既存
 project: {
  version: 1,
  activeId: 'part id or null',
+ editingOriginalId: 'explicit original edit target or null',
  parts: [{id, name, patternId: 'sequence.patterns id or null', mode, checkpoint}]
 }
 ```
 
 部品checkpointは既存のconfirmedとdraftを再利用。空でも作成済み部品はdraftに初期状態を持ち、構造・音符候補・イメージ候補を保つ。音を確定すると、その部品の確定内容をsequence.patternsへ同期する。保存は確定操作ではない。未確定音はpatternへ入れない。配置から外してもproject.partsとpatternsを残す。
 
-配置済みpatternの音楽内容は直接上書きしない。保存側でも使用済みIDの内容変更を検知し、独立した部品へ分離する。配置の特定箇所編集は既存derive/commitを使い、元の部品・他の配置を維持する。
+【2026-11-01更新】[元編集・草稿試聴・一覧順の追補](project-clarity-followup.md)を優先。利用者が明示的に元を編集した場合は、editingOriginalIdで対象を限定し、同じIDを使う全配置へ確定内容を反映する。コピー・派生版は別IDのまま。元編集の指定がない使用済みIDの変更は、従来どおり独立した部品へ分離する。配置の特定箇所編集は既存derive/commitを使い、元の部品・他の配置を維持する。
 
 `sequenceDraft`は並びの候補、`placementDraft`は一か所の修正草稿。保留した修正中に別の並び候補を作れないよう、追加・移動・外す・Undo・エンディングを保護する。座標・長押しタイマー・ゴーストは保存しない。
 

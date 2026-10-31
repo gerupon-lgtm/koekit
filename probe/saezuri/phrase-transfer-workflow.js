@@ -1,5 +1,5 @@
-import {extractSongPhrases} from './phrase-transfer.js?v=v0.1.0-20261031144007-3fbf8da';
-import {setupPlaybackSheet} from './sheet-controls.js?v=v0.1.0-20261031144007-3fbf8da';
+import {extractSongPhrases} from './phrase-transfer.js?v=v0.1.0-20261031153113-7832e2d';
+import {setupPlaybackSheet} from './sheet-controls.js?v=v0.1.0-20261031153113-7832e2d';
 const $=id=>document.getElementById(id);
 
 // Copy a source snapshot into the current song; never open or write the source song.

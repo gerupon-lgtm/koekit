@@ -2,6 +2,8 @@ export const SONG_LIMIT=10;
 export const SONG_DATABASE='koekit-saezuri';
 const request=req=>new Promise((resolve,reject)=>{req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});
 const issue=code=>Object.assign(new Error(code),{code});
+// Editing or opening a song must not move it to a different row.
+export const compareSongCreation=(left,right)=>String(right.createdAt??'').localeCompare(String(left.createdAt??''))||String(left.id).localeCompare(String(right.id));
 
 export class SongStore {
  constructor({database=SONG_DATABASE,limit=SONG_LIMIT}={}){this.database=database;this.limit=limit;}
@@ -29,7 +31,7 @@ export class SongStore {
    Promise.resolve().then(()=>action(tx.objectStore('songs'),tx.objectStore('deleted'))).then(result=>{value=result;},error=>{failure=error;try{tx.abort();}catch{reject(error);}});
   });
  }
- list(){return this.read(async songs=>(await request(songs.getAll())).sort((a,b)=>b.updatedAt.localeCompare(a.updatedAt)));}
+ list(){return this.read(async songs=>(await request(songs.getAll())).sort(compareSongCreation));}
  get(id){return this.read(songs=>request(songs.get(id)));}
  rename(id,title,expectedRevision){return this.read(async(songs,deleted)=>{
   const [source,tombstone]=await Promise.all([request(songs.get(id)),request(deleted.get(id))]);

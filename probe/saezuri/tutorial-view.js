@@ -1,7 +1,7 @@
-import {spellPitch} from './key-signature.js?v=v0.1.0-20261031144007-3fbf8da';
-import {harmonicSegments} from '../../saezuri/music/accompaniment.js?v=v0.1.0-20261031144007-3fbf8da';
-import {createRestSymbol,restParts} from './rest-symbol.js?v=v0.1.0-20261031144007-3fbf8da';
-import {chordLabel} from '../../saezuri/music/catalog.js?v=v0.1.0-20261031144007-3fbf8da';
+import {spellPitch} from './key-signature.js?v=v0.1.0-20261031153113-7832e2d';
+import {harmonicSegments} from '../../saezuri/music/accompaniment.js?v=v0.1.0-20261031153113-7832e2d';
+import {createRestSymbol,restParts} from './rest-symbol.js?v=v0.1.0-20261031153113-7832e2d';
+import {chordLabel} from '../../saezuri/music/catalog.js?v=v0.1.0-20261031153113-7832e2d';
 
 const names=['ド','ド♯','レ','レ♯','ミ','ファ','ファ♯','ソ','ソ♯','ラ','ラ♯','シ'];
 const ns='http://www.w3.org/2000/svg';

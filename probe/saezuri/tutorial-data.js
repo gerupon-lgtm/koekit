@@ -1,6 +1,6 @@
-import {blankPattern} from './entry-session.js?v=v0.1.0-20261031144007-3fbf8da';
-import {accompanimentEvents,harmonicSegments} from '../../saezuri/music/accompaniment.js?v=v0.1.0-20261031144007-3fbf8da';
-import {POP_EIGHT_BEAT} from '../../saezuri/music/backing-patterns.js?v=v0.1.0-20261031144007-3fbf8da';
+import {blankPattern} from './entry-session.js?v=v0.1.0-20261031153113-7832e2d';
+import {accompanimentEvents,harmonicSegments} from '../../saezuri/music/accompaniment.js?v=v0.1.0-20261031153113-7832e2d';
+import {POP_EIGHT_BEAT} from '../../saezuri/music/backing-patterns.js?v=v0.1.0-20261031153113-7832e2d';
 
 export const TUTORIAL_TEMPO=112;
 const melody=[

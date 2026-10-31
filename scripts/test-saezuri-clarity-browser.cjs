@@ -1,0 +1,55 @@
+const {chromium}=require('../.local-tools/node_modules/playwright');
+const assert=require('node:assert/strict'),fs=require('node:fs');
+const base=process.env.SAEZURI_BASE||'http://127.0.0.1:8026';
+(async()=>{const browser=await chromium.launch({channel:'chrome',headless:true,args:['--autoplay-policy=no-user-gesture-required']});try{
+ const context=await browser.newContext({viewport:{width:390,height:740},hasTouch:true,serviceWorkers:'block'}),page=await context.newPage(),errors=[];
+ page.setDefaultTimeout(8000);page.on('pageerror',e=>{errors.push(e.message);console.error(e.stack)});
+ const click=async id=>{await page.locator('#'+id).click();if(id==='home-songs')await page.locator('[data-song-open]').first().waitFor({state:'visible'});};
+ const get=id=>page.evaluate(async id=>{const {SongStore}=await import('/saezuri/song-store.js');return new SongStore().get(id)},id);
+ const settle=async()=>{await page.waitForFunction(()=>document.querySelector('#song-status').dataset.saved==='true');await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));};
+ const open=async id=>{await click('home-songs');await page.locator(`[data-song-open="${id}"]`).click();await page.locator('#melody-connect').waitFor({state:'visible'});await settle();};
+ const home=async()=>{if(await page.locator('#melody-create').isVisible())await page.locator('#melody-create [data-screen-back]').click();await page.locator('#melody-connect [data-screen-back]').click();await page.locator('#melody-home').waitFor({state:'visible'});};
+ const report=async()=>{await page.locator('#report').evaluate(e=>e.click());return JSON.parse(await page.locator('#metrics').innerText())};
+ const audition=async expected=>{await page.locator('[data-part-listen]').click();await page.waitForFunction(()=>document.querySelector('#status').dataset.state==='playing');assert.deepEqual((await report()).playback.pitches,expected);await click('project-part-stop');};
+ await page.goto(base+'/probe/saezuri/');
+ const initial=await page.evaluate(async()=>{
+  const {SongStore}=await import('/saezuri/song-store.js'),{blankPattern}=await import('./entry-session.js'),{emptySequence}=await import('./sequence-session.js'),{openEditSession,confirmEditSession}=await import('./edit-session.js'),{songCheckpoint}=await import('./song-session.js'),{migrateProject,allocatePart}=await import('./project-session.js');
+  const p=(id,name,midi)=>({...blankPattern(),id,familyId:id,name,notes:[{id:'n',midi,startTick:0,durationTick:4}],accompaniment:{enabled:true,genre:'nursery',rhythm:'quarters',progression:'home'}}),store=new SongStore();
+  const a=p('a','A',60),b=p('b','B',64),a2={...p('a2','A2',69),familyId:'a'};
+  const sequence={...emptySequence(),patterns:[a,b,a2],placements:['a','a','b','a','a','a','a2'].map((id,i)=>({id:'p'+i,patternId:id}))};
+  await store.save('five',{title:'同じAを5か所',checkpoint:null,sequence,settings:{tempo:125,instrument:'fm-piano'}});
+  const draftSequence=emptySequence(),project=migrateProject({sequence:draftSequence}),draft=allocatePart(project,blankPattern());draft.name='つくりかけD';draft.checkpoint=songCheckpoint(openEditSession({...blankPattern(),notes:[{id:'d',midi:62,startTick:0,durationTick:4}]}));
+  const empty=allocatePart(project,blankPattern());empty.name='まだ音なし';project.activeId=null;
+  await store.save('draft',{title:'途中の音を確認',checkpoint:null,sequence:draftSequence,project,settings:{tempo:125,instrument:'fm-piano'}});
+  const mixedPattern=p('mixed-pattern','音の違い',60),session=confirmEditSession(openEditSession(mixedPattern));session.working.pattern.notes[0].midi=67;
+  const mixedSequence={...emptySequence(),patterns:[mixedPattern]},mixedProject={version:1,activeId:null,parts:[{id:'mixed-part',name:'音の違い',patternId:mixedPattern.id,mode:'edit',checkpoint:songCheckpoint(session)}]};
+  await store.save('mixed',{title:'決めた音と途中の音',checkpoint:null,sequence:mixedSequence,project:mixedProject,settings:{tempo:125,instrument:'fm-piano'}});
+  return {order:(await store.list()).map(r=>r.id),draftId:draft.id,emptyId:empty.id};
+ });
+ await click('home-songs');
+ const order=()=>page.locator('[data-song-open]').evaluateAll(es=>es.map(e=>e.dataset.songOpen));
+ assert.deepEqual(await order(),initial.order);assert.match(await page.locator('[data-song-open="five"]').locator('..').locator('..').innerText(),/並び 7こ・パーツ 3こ/);
+ assert.equal(await page.locator('.song-row-navigation').filter({hasText:'再開'}).count(),0);
+ await page.locator('[data-song-open="five"]').click();await settle();
+ await page.locator('[data-phrase="a"]').click();assert.equal(await page.locator('[data-part-original]').innerText(),'このフレーズを編集する');assert.equal(await page.locator('[data-part-copy]').innerText(),'コピーして直す');assert.match(await page.locator('#project-part-message').innerText(),/5か所すべて/);fs.mkdirSync('.local-tools/project-clarity-20261101',{recursive:true});await page.screenshot({path:'.local-tools/project-clarity-20261101/original-menu-390.png'});
+ const beforeListen=await get('five');await audition([60]);assert.deepEqual((await get('five')).data,beforeListen.data,'audition does not edit or confirm');
+ await page.locator('[data-part-original]').click();await page.locator('#melody-create').waitFor({state:'visible'});assert.match(await page.locator('#project-original-hint').innerText(),/5か所すべて/);
+ await click('capture-pitch-up');await page.screenshot({path:'.local-tools/project-clarity-20261101/original-edit-390.png'});assert.equal((await get('five')).data.sequence.patterns.find(p=>p.id==='a').notes[0].midi,60,'candidate does not alter shared A');
+ await click('capture-edit-confirm');await settle();let record=await get('five');
+ assert.equal(record.data.sequence.patterns.length,3);assert.equal(record.data.sequence.patterns.find(p=>p.id==='a').notes[0].midi,61);assert.equal(record.data.sequence.patterns.find(p=>p.id==='b').notes[0].midi,64);assert.equal(record.data.sequence.patterns.find(p=>p.id==='a2').notes[0].midi,69);assert.equal(record.data.sequence.placements.filter(p=>p.patternId==='a').length,5);assert.equal(record.data.settings.tempo,125);
+ await page.locator('#melody-create [data-screen-back]').click();await page.locator('[data-phrase="a"]').click();await page.locator('[data-part-copy]').click();await click('capture-pitch-up');await click('capture-edit-confirm');await settle();record=await get('five');
+ const copied=record.data.sequence.patterns.find(p=>!['a','b','a2'].includes(p.id));assert.equal(copied.notes[0].midi,62);assert.equal(record.data.sequence.patterns.find(p=>p.id==='a').notes[0].midi,61);assert.equal(record.data.sequence.placements.filter(p=>p.patternId==='a').length,5);assert.equal(record.data.project.editingOriginalId,null);
+ await page.locator('#melody-create [data-screen-back]').click();await page.locator('[data-phrase="a"]').click();await page.locator('[data-part-original]').click();await page.locator('#phrase-bars').selectOption('8');await click('capture-edit-undo');assert.equal((await get('five')).data.sequence.patterns.find(p=>p.id==='a').bars,4);await page.locator('#phrase-bars').selectOption('8');await click('capture-edit-confirm');await settle();record=await get('five');assert.equal(record.data.sequence.patterns.find(p=>p.id==='a').bars,8);assert.equal(record.data.sequence.patterns.find(p=>p.id===copied.id).bars,4);
+ await home();await click('home-songs');assert.deepEqual(await order(),initial.order,'editing several parts and their shape never reorders songs');await click('song-library-close');
+ await open('draft');await page.locator(`[data-phrase="${initial.draftId}"]`).click();assert.equal(await page.locator('[data-part-listen]').isEnabled(),true);assert.equal(await page.locator('[data-part-insert]').isDisabled(),true);assert.match(await page.locator('#project-part-listen-status').innerText(),/つくりかけ/);
+ const draftBefore=await get('draft');await audition([62]);assert.deepEqual((await get('draft')).data,draftBefore.data);assert.equal((await get('draft')).data.project.parts[0].checkpoint.confirmed,null);await click('project-part-close');
+ await page.locator(`[data-phrase="${initial.emptyId}"]`).click();assert.equal(await page.locator('[data-part-listen]').isDisabled(),true);assert.match(await page.locator('#project-part-listen-status').innerText(),/まだ音がありません/);assert.equal(await page.locator('[data-part-original]').isEnabled(),true);await click('project-part-close');await home();
+ await open('mixed');await page.locator('[data-phrase="mixed-part"]').click();assert.equal(await page.locator('[data-part-version]').count(),2);await audition([67]);await page.locator('[data-part-version="confirmed"]').click();await audition([60]);record=await get('mixed');assert.equal(record.data.sequence.patterns[0].notes[0].midi,60);assert.equal(record.data.project.parts[0].checkpoint.draft.working.pattern.notes[0].midi,67);
+ fs.mkdirSync('.local-tools/project-clarity-20261101',{recursive:true});
+ for(const [width,height] of [[320,568],[390,740],[844,390],[1280,900]]){
+  await page.setViewportSize({width,height});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);const d=await page.locator('#project-part').evaluate(e=>{const r=e.getBoundingClientRect(),stop=e.querySelector('.sheet-stop').getBoundingClientRect();return {top:r.top,bottom:r.bottom,stopBottom:stop.bottom,buttons:[...e.querySelectorAll('button')].filter(e=>e.checkVisibility()).map(e=>({w:e.offsetWidth,h:e.offsetHeight}))}});assert.ok(d.top>=0&&d.bottom<=height+1&&d.stopBottom<=height+1);assert.ok(d.buttons.every(b=>b.w>=44&&b.h>=44));await page.screenshot({path:`.local-tools/project-clarity-20261101/part-menu-${width}.png`});
+ }
+ await click('project-part-close');await home();await click('home-songs');assert.deepEqual(await order(),initial.order);await page.locator('[data-song-more="five"]').click();await page.locator('[data-song-rename="five"]').click();await page.locator('#song-rename-title').fill('名前を直しても位置は同じ');await click('song-rename-confirm');await page.locator('#song-rename').waitFor({state:'hidden'});await page.locator('[data-song-open="five"]').waitFor({state:'visible'});assert.deepEqual(await order(),initial.order,'renaming does not reorder');await click('song-library-close');
+ await page.reload();await open('five');assert.equal(await page.locator('#sequence-line [data-placement]').count(),7);record=await get('five');assert.equal(record.data.sequence.patterns.find(p=>p.id==='a').bars,8);assert.equal(record.data.sequence.patterns.find(p=>p.id==='a').notes[0].midi,61);assert.deepEqual(errors,[]);
+ console.log(JSON.stringify({result:'PASS',base,checks:'original A updates five uses, copy stays separate, resize/undo/OK, draft/confirmed audio targets and no mutation, silent draft reason, stable order after edit/rename/reload, legacy parts, four-size menu and stop'}));await context.close();
+}finally{await browser.close()}})().catch(e=>{console.error(e);process.exitCode=1});

@@ -24,11 +24,12 @@ const artifacts='.local-tools/phrase-selection-20261030';
   const page=await context.newPage(),errors=[];page.setDefaultTimeout(8000);page.on('pageerror',error=>errors.push(error.message));
   const button=id=>page.locator(`[data-song-play="${id}"]`);
   const row=id=>page.locator('.song-row').filter({has:button(id)});
+  const press=async id=>{await button(id).click();if(await page.locator('#song-listen-choices').isVisible())await page.locator('[data-listen-choice]').first().click();};
   const report=async()=>{await page.locator('#report').evaluate(node=>node.click());return JSON.parse(await page.locator('#metrics').textContent());};
   const records=()=>page.evaluate(async()=>{const {SongStore}=await import('/saezuri/song-store.js');return (await new SongStore().list()).sort((a,b)=>a.id.localeCompare(b.id));});
   const openLibrary=async()=>{await page.locator('#home-songs').click();await button('library-source').waitFor({state:'visible'});};
   const idle=async id=>{
-   await page.waitForFunction(id=>{const button=document.querySelector(`[data-song-play="${id}"]`),row=button?.closest('.song-row');return button?.textContent==='▶ 聴く'&&!row.dataset.songPlaying&&!row.dataset.songPreparing&&row.querySelector('.song-playback').hidden;},id);
+   await page.waitForFunction(id=>{const button=document.querySelector(`[data-song-play="${id}"]`),row=button?.closest('.song-row');return button?.textContent?.startsWith('▶ ')&&!row.dataset.songPlaying&&!row.dataset.songPreparing&&row.querySelector('.song-playback').hidden;},id);
   };
   const active=async id=>{
    await page.waitForFunction(id=>document.querySelector(`[data-song-play="${id}"]`)?.closest('.song-row').dataset.songPlaying==='true',id);
@@ -38,7 +39,7 @@ const artifacts='.local-tools/phrase-selection-20261030';
   };
   const progress=async(id,minimum)=>page.waitForFunction(({id,minimum})=>document.querySelector(`[data-song-play="${id}"]`)?.closest('.song-row').querySelector('progress').value>=minimum,{id,minimum});
   const heldStart=async id=>{
-   await page.evaluate(()=>window.libraryHoldResume=true);await button(id).click();
+   await page.evaluate(()=>window.libraryHoldResume=true);await press(id);
    await page.waitForFunction(id=>window.libraryResumeGates.length>0&&document.querySelector(`[data-song-play="${id}"]`)?.closest('.song-row').dataset.songPreparing==='true',id);
    assert.equal(await button(id).textContent(),'じゅんび中…');assert.equal(await row(id).locator('.song-playback-status').textContent(),'音をじゅんび中…');
   };
@@ -75,7 +76,7 @@ const artifacts='.local-tools/phrase-selection-20261030';
   assert.ok(Math.abs(secondClock.tick-firstClock.tick-(secondClock.time-firstClock.time)*12)<3,'progress follows the saved 180 BPM audio clock');
   const sourceReport=await report();assert.equal(sourceReport.playback.tempo,180);assert.equal(sourceReport.playback.bars,4);assert.deepEqual(sourceReport.playback.pitches,[60]);assert.ok(sourceReport.playback.events>=1);
 
-  await button('library-arranged').click();await active('library-arranged');await idle('library-source');
+  await press('library-arranged');await active('library-arranged');await idle('library-source');
   assert.equal(await page.locator('.song-row[data-song-playing=true]').count(),1);assert.equal(await row('library-arranged').locator('progress').getAttribute('max'),'144');
   const arrangedReport=await report();assert.equal(arrangedReport.playback.bars,9);assert.deepEqual(arrangedReport.playback.pitches,[60,67]);assert.equal(arrangedReport.playback.ending.startTick,128);assert.equal(arrangedReport.playback.ending.durationTick,16);
   await progress('library-arranged',8);
@@ -89,18 +90,18 @@ const artifacts='.local-tools/phrase-selection-20261030';
    if(width===390)await page.screenshot({path:artifacts+'/library-390.png'});
   }
   await page.locator('#song-list-stop').click();await idle('library-arranged');
-  await button('library-source').click();await active('library-source');await button('library-source').click();await idle('library-source');
-  await button('library-arranged').click();await active('library-arranged');await page.locator('#song-library-close').click();await page.locator('#song-library').waitFor({state:'hidden'});await openLibrary();
+  await press('library-source');await active('library-source');await press('library-source');await idle('library-source');
+  await press('library-arranged');await active('library-arranged');await page.locator('#song-library-close').click();await page.locator('#song-library').waitFor({state:'hidden'});await openLibrary();
   assert.equal(await page.locator('.song-row[data-song-playing],.song-row[data-song-preparing]').count(),0);
 
   // Preparation cancellation still uses the native app and its real serial guard.
   await heldStart('library-source');await page.locator('#song-list-stop').click();await idle('library-source');await release();await idle('library-source');
-  await heldStart('library-source');await button('library-source').click();await idle('library-source');await release();await idle('library-source');
-  await heldStart('library-source');await page.evaluate(()=>window.libraryHoldResume=false);await button('library-arranged').click();await active('library-arranged');await release();await active('library-arranged');await idle('library-source');await page.locator('#song-list-stop').click();
+  await heldStart('library-source');await press('library-source');await idle('library-source');await release();await idle('library-source');
+  await heldStart('library-source');await page.evaluate(()=>window.libraryHoldResume=false);await press('library-arranged');await active('library-arranged');await release();await active('library-arranged');await idle('library-source');await page.locator('#song-list-stop').click();
   await heldStart('library-source');await page.locator('#song-library-close').click();await page.locator('#song-library').waitFor({state:'hidden'});await release();await openLibrary();await idle('library-source');
 
   // A whole four-bar piece reaches the natural transport end and clears the row.
-  const naturalStart=Date.now();await button('library-source').click();await active('library-source');await progress('library-source',16);
+  const naturalStart=Date.now();await press('library-source');await active('library-source');await progress('library-source',16);
   assert.match(await row('library-source').locator('.song-playback-status').textContent(),/再生中 2 \/ 4小節$/);
   await page.waitForFunction(()=>document.querySelector('#status').dataset.state==='idle',null,{timeout:10000});await idle('library-source');
   const ended=await report();assert.equal(ended.playback.reason,'ENDED');assert.equal(ended.playback.finalTick,64);assert.ok(Date.now()-naturalStart>=5000);assert.deepEqual(await records(),initial,'all playback and cancellation leave saved records byte-for-byte equivalent');
@@ -117,7 +118,7 @@ const artifacts='.local-tools/phrase-selection-20261030';
   const afterCopy=await records(),copy=afterCopy.find(record=>!initial.some(item=>item.id===record.id));assert.ok(copy);assert.equal(copy.title,'つなげたきょく のコピー');
   assert.deepEqual(afterCopy.find(record=>record.id==='library-arranged'),initial.find(record=>record.id==='library-arranged'));
   const sourceData=structuredClone(initial.find(record=>record.id==='library-arranged').data);sourceData.title=copy.title;assert.deepEqual(copy.data,sourceData);
-  await button(copy.id).click();await active(copy.id);await progress(copy.id,3);await page.locator('#song-list-stop').click();await idle(copy.id);
+  await press(copy.id);await active(copy.id);await progress(copy.id,3);await page.locator('#song-list-stop').click();await idle(copy.id);
   assert.deepEqual(await records(),afterCopy,'copy and source remain unchanged by copied-song playback');
   await page.locator('#song-library-close').click();await openLibrary();assert.equal(await page.locator('.song-playback').count(),3);assert.equal(await page.locator('.song-playback:visible').count(),0);
   assert.deepEqual(errors,[]);assert.ok(Date.now()-started<60000,'bounded test runtime');

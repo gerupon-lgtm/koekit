@@ -1,8 +1,9 @@
-import {setupPlaybackSheet} from './sheet-controls.js?v=v0.1.0-20261031144007-3fbf8da';
-import {blankPattern} from './entry-session.js?v=v0.1.0-20261031144007-3fbf8da';
-import {migrateProject,allocatePart,capturePart,syncProjectParts,emptyPartCheckpoint} from './project-session.js?v=v0.1.0-20261031144007-3fbf8da';
-import {canKeepPhrase,emptySequence,sequencePlayback,proposeSequence} from './sequence-session.js?v=v0.1.0-20261031144007-3fbf8da';
-import {ArrangementGestures} from './arrangement-gestures.js?v=v0.1.0-20261031144007-3fbf8da';
+import {readPartView} from './part-view.js?v=v0.1.0-20261031153113-7832e2d';
+import {setupPlaybackSheet} from './sheet-controls.js?v=v0.1.0-20261031153113-7832e2d';
+import {blankPattern} from './entry-session.js?v=v0.1.0-20261031153113-7832e2d';
+import {migrateProject,allocatePart,capturePart,syncProjectParts,emptyPartCheckpoint} from './project-session.js?v=v0.1.0-20261031153113-7832e2d';
+import {canKeepPhrase,emptySequence,sequencePlayback,proposeSequence} from './sequence-session.js?v=v0.1.0-20261031153113-7832e2d';
+import {ArrangementGestures} from './arrangement-gestures.js?v=v0.1.0-20261031153113-7832e2d';
 const $=id=>document.getElementById(id),copy=v=>structuredClone(v);
 const button=(text,action)=>{const b=document.createElement('button');b.type='button';b.textContent=text;b.onclick=action;return b;};
 export class ProjectWorkflow{
@@ -13,6 +14,7 @@ export class ProjectWorkflow{
   $('melody-home').querySelector('.home-support').classList.add('project-home-support');
   $('home-tutorial').textContent='音の入れ方';$('new-tutorial').hidden=true;const lesson=button('このパーツで曲をつくる',()=>this.adoptLesson());lesson.id='learning-project';lesson.hidden=true;$('learning-guide').append(lesson);
   $('melody-connect').querySelector('h2').firstChild.textContent='曲全体';
+  const originalHint=document.createElement('p');originalHint.id='project-original-hint';originalHint.hidden=true;$('melody-create').querySelector('.screen-heading').after(originalHint);
   $('melody-create').querySelector('.song-work-tabs').hidden=true;$('melody-connect').querySelector('.song-work-tabs').hidden=true;
   const back=$('melody-create').querySelector('[data-screen-back]');shell.icon(back,'back','曲全体へ');back.onclick=()=>this.overview();
   for(const node of [$('phrase-tools'),$('after-keep'),document.querySelector('.phrase-register')])if(node)node.hidden=true;
@@ -24,7 +26,7 @@ export class ProjectWorkflow{
   shelf.before(head);
   source.hidden=true;const more=document.createElement('details');more.id='project-more';more.innerHTML='<summary>ほかの曲から・並びの操作</summary>';more.append($('sequence-import'),document.querySelector('.sequence-edit'));$('melody-connect').append(more);
   const save=button('自分の曲にする',()=>this.adoptSample());save.id='project-adopt';save.hidden=true;const songRow=document.createElement('div');songRow.className='project-song-row';$('sequence-song-name').before(songRow);songRow.append($('sequence-song-name'),save);
-  const caption=document.createElement('p');caption.id='project-caption';caption.textContent='パーツをつくって、＋で並べよう。カードは長押しで動かせるよ。';document.querySelector('.project-song-row').after(caption);
+  const caption=document.createElement('p');caption.id='project-caption';caption.textContent='上は曲の並び、下はこの曲のパーツです。';document.querySelector('.project-song-row').after(caption);
   this.dialog=document.createElement('dialog');this.dialog.id='project-part';this.dialog.className='song-dialog';this.dialog.innerHTML='<div class="screen-heading"><h2 id="project-part-title"></h2><button id="project-part-close">とじる</button></div><div id="project-part-actions"></div><p id="project-part-message" role="status"></p>';
   document.querySelector('main').append(this.dialog);$('project-part-close').onclick=()=>this.dialog.close();setupPlaybackSheet(this.dialog,{closeId:'project-part-close',stopId:'project-part-stop',onStop:()=>shell.onStop(),stopOnClose:false});this.dialog.addEventListener('close',()=>{shell.onStop();shell.onNavigate();});
   const place=document.createElement('dialog');place.id='project-insert';place.className='song-dialog';place.innerHTML='<div class="screen-heading"><h2>入れるパーツ</h2><button id="project-insert-close">とじる</button></div><div id="project-insert-options"></div>';
@@ -69,21 +71,32 @@ export class ProjectWorkflow{
   const s=this.shell;if(s.busy)return;if(s.placementWorkflow.active){this.parkedPlacement=s.placementWorkflow.snapshot();this.placementWorkspace=this.parkedPlacement?s.editor.parkWorkspace(true):null;s.placementWorkflow.finish();return;}
   this.capture();this.scroll=0;s.go('connect');
  }
- openPart(part,{duplicate=false,includeDraft=false}={}){
+ openPart(part,{duplicate=false,includeDraft=false,editOriginal=false}={}){
   const s=this.shell;if(s.busy||s.proposal||s.placementWorkflow.active)return;
-  this.capture();const source=s.sequence.patterns.find(p=>p.id===part.patternId),draft=includeDraft?copy(part.checkpoint):null;this.parkCurrent();this.dialog.close();this.switching=true;
-  try{if(duplicate){part=allocatePart(this.project,source,{copyFrom:source});if(draft)part.checkpoint=draft;}
-   this.project.activeId=part.id;const checkpoint=part.checkpoint??emptyPartCheckpoint(source,{accepted:true});const workspace=this.workspaces.get(part.id);s.songWorkflow.onRestore(checkpoint,{tempo:Number($('tempo').value),instrument:$('instrument').value});if(workspace){workspace.restore();this.workspaces.delete(part.id);}s.setMode(part.mode??'input');$('phrase-name').value=part.name;
+  if(editOriginal&&this.parkedPlacement)return;this.capture();const state=readPartView(part,s.sequence),source=state.source??state.working,draft=includeDraft?copy(part.checkpoint):null;if(!source)return;this.parkCurrent();this.dialog.close();this.switching=true;
+  try{if(duplicate){part=allocatePart(this.project,source,{copyFrom:{...source,name:part.name}});if(draft)part.checkpoint=draft;}
+   this.project.activeId=part.id;this.project.editingOriginalId=editOriginal?part.id:null;const checkpoint=part.checkpoint??emptyPartCheckpoint(source,{accepted:true});const workspace=this.workspaces.get(part.id);s.songWorkflow.onRestore(checkpoint,{tempo:Number($('tempo').value),instrument:$('instrument').value});if(workspace){workspace.restore();this.workspaces.delete(part.id);}s.setMode(state.hasDraft?part.mode??'input':'edit');$('phrase-name').value=part.name;
   }finally{this.switching=false;}
   s.go('create');s.renderSequence();
  }
  partActions(part){
-  const s=this.shell;if(s.busy||s.proposal)return;this.selectedPart=part.id;$('project-part-title').textContent=part.name;$('project-part-message').textContent=part.checkpoint?.draft?'つくりかけも、このパーツに残っています。':'';
-  const list=$('project-part-actions');list.replaceChildren();const source=s.sequence.patterns.find(p=>p.id===part.patternId),used=s.sequence.placements.some(p=>p.patternId===part.patternId);
-  if(source){list.append(button('▶ このパーツを聴く',()=>s.onAudition({pattern:source})),button('コピーして直す',()=>this.openPart(part,{duplicate:true})),button('並びに入れる',()=>{this.dialog.close();this.placingPart=source.id;s.renderSequence();}));}
-  if(part.checkpoint&&(!used||!source||part.checkpoint.draft))list.prepend(button('つづきをつくる',()=>this.openPart(part,{duplicate:used,includeDraft:used})));
-  if(used&&part.checkpoint?.draft)$('project-part-message').textContent='並べた音を残して、つくりかけから別のパーツをつくります。';
-  this.dialog.showModal();s.onNavigate();
+  const s=this.shell;if(s.busy||s.proposal)return;this.capture();this.selectedPart=part.id;
+  const state=readPartView(part,s.sequence),count=s.sequence.placements.filter(p=>p.patternId===part.patternId).length;
+  $('project-part-title').textContent=part.name;
+  const list=$('project-part-actions');list.replaceChildren();
+  const listenStatus=document.createElement('p');listenStatus.id='project-part-listen-status';listenStatus.setAttribute('role','status');
+  const choices=document.createElement('div');choices.className='project-part-choices';choices.setAttribute('role','group');choices.setAttribute('aria-label','聴く内容');
+  const listen=button('▶ このフレーズを聴く',()=>{const choice=state.listenChoices.find(c=>c.id===this.partListenChoice);if(choice)s.onAudition({pattern:choice.pattern});});listen.dataset.partListen=part.id;listen.disabled=!state.listenChoices.length;
+  const choose=id=>{this.partListenChoice=id;const choice=state.listenChoices.find(c=>c.id===id);listenStatus.textContent=choice?`聴く内容：${choice.label}${id==='draft'?'（オッケー前）':''}`:state.listenHint;for(const b of choices.children)b.setAttribute('aria-pressed',String(b.dataset.partVersion===id));};
+  if(state.listenChoices.length>1)for(const choice of state.listenChoices){const b=button(choice.label,()=>{s.onStop();choose(choice.id);});b.dataset.partVersion=choice.id;choices.append(b);}
+  choose(state.listenChoices[0]?.id);list.append(listenStatus);if(choices.children.length)list.append(choices);list.append(listen);
+  const editRow=document.createElement('div');editRow.className='project-part-edit-actions';
+  const edit=button(state.hasDraft?'つづきをつくる':'このフレーズを編集する',()=>this.openPart(part,{editOriginal:true}));edit.dataset.partOriginal=part.id;edit.disabled=!!this.parkedPlacement;editRow.append(edit);
+  if(state.source){const duplicate=button('コピーして直す',()=>this.openPart(part,{duplicate:true,includeDraft:true}));duplicate.dataset.partCopy=part.id;editRow.append(duplicate);editRow.classList.add('has-copy');}
+  list.append(editRow);
+  const insert=button(state.hasDraft&&state.canInsert?'オッケー済みを並びに入れる':'並びに入れる',()=>{this.dialog.close();this.placingPart=state.source.id;s.renderSequence();});insert.dataset.partInsert=part.id;insert.disabled=!state.canInsert||!!this.parkedPlacement;list.append(insert);
+  const messages=[];if(count)messages.push(`元を編集すると、この曲の${count}か所すべてに反映します。`);if(!state.canInsert)messages.push('音をオッケーで決めると、曲に並べられます。');if(this.parkedPlacement)messages.push('先に、保留している一か所の修正を終えてね。');
+  $('project-part-message').textContent=messages.join(' ');this.dialog.showModal();s.onNavigate();
  }
  resumePlacement(){const s=this.shell,draft=this.parkedPlacement;if(!draft||s.phase==='saving')return;s.onStop();if(s.busy||s.proposal||s.placementWorkflow.active)return;s.placementWorkflow.begin(draft.placementId,draft.checkpoint);if(!s.placementWorkflow.active)return;this.parkedPlacement=null;this.placementWorkspace?.restore();this.placementWorkspace=null;}
  cardActions(id){
@@ -106,17 +119,19 @@ export class ProjectWorkflow{
   document.body.classList.add('project-workflow');$('sequence-create').textContent='＋ つくる';$('sequence-create').disabled=locked;
   if(s.songWorkflow?.practice==='project')$('sequence-song-name').textContent='サンプルの曲（保存枠なし）';
   $('project-adopt').hidden=s.songWorkflow?.practice!=='project';$('project-adopt').disabled=s.busy;
-  $('project-caption').textContent=s.songWorkflow?.practice==='project'?'A・B・Cを A–B–A–C と並べた曲。自由にためせます。':'パーツをつくって、＋で並べよう。カードは長押しで動かせるよ。';
+  $('project-caption').textContent=s.songWorkflow?.practice==='project'?'A・B・Cを A–B–A–C と並べた曲。自由にためせます。':'上は曲の並び、下はこの曲のパーツです。';
   $('sequence-empty').hidden=true;document.querySelector('.phrase-register').hidden=true;if($('phrase-tools'))$('phrase-tools').hidden=true;$('after-keep').hidden=true;
   if(this.active&&!s.placementWorkflow.active)$('melody-create').querySelector('h2').firstChild.textContent=this.active.name;
+  const originalCount=this.active&&this.project.editingOriginalId===this.active.id?s.sequence.placements.filter(p=>p.patternId===this.active.patternId).length:0;$('project-original-hint').hidden=!originalCount||s.placementWorkflow.active;$('project-original-hint').textContent=`元を編集：オッケーで曲の${originalCount}か所すべてに反映`;
+  $('sequence-preview').textContent=s.proposal?'▶ 候補を聴く':'▶ 並びを聴く';
   const shelf=$('phrase-shelf'),oldShelf=shelf.scrollTop;shelf.replaceChildren();
-  for(const part of this.project.parts){const pattern=s.sequence.patterns.find(p=>p.id===part.patternId);const b=button(part.name,()=>this.partActions(part));b.dataset.phrase=part.id;b.disabled=locked;const small=document.createElement('small');small.textContent=(pattern?.bars??part.checkpoint?.draft?.working.pattern.bars??4)+'小節'+(part.checkpoint?.draft?'・つくりかけ':'');b.append(small);shelf.append(b);}shelf.scrollTop=oldShelf;
+  for(const part of this.project.parts){const state=readPartView(part,s.sequence),pattern=state.source;const b=button(part.name,()=>this.partActions(part));b.dataset.phrase=part.id;b.disabled=locked;const small=document.createElement('small');small.textContent=(pattern?.bars??part.checkpoint?.draft?.working.pattern.bars??4)+'小節・'+(!state.listenChoices.length?'まだ音なし':state.hasDraft?'つくりかけ':'音あり');b.append(small);shelf.append(b);}shelf.scrollTop=oldShelf;
   const line=$('sequence-line'),scroll=line.scrollTop;line.replaceChildren();
   const gap=index=>{const b=button('＋',()=>this.chooseInsertion(index));b.className='sequence-gap';b.dataset.gap=index;b.setAttribute('aria-label',index===0?'先頭にパーツを入れる':index+'個目の後にパーツを入れる');b.disabled=locked||draft.placements.length>=16;return b;};
   line.append(gap(0));for(const [i,p] of draft.placements.entries()){
    const phrase=draft.patterns.find(x=>x.id===p.patternId),b=button((i+1)+'. '+phrase.name,()=>this.gestures.tap(p.id));b.dataset.placement=p.id;b.disabled=s.busy||!!s.proposal;b.classList.toggle('sequence-draft',!!s.proposal);b.setAttribute('aria-pressed',String(s.selected===p.id));const small=document.createElement('small');small.textContent=phrase.bars+'小節';b.append(small);line.append(b,gap(i+1));
   }line.scrollTop=scroll;this.gestures.render();
-  $('sequence-message').textContent=s.proposal?'候補の並びです。聴いて、オッケーで決めよう。':this.placingPart?'＋で入れる場所を選んでね。':'カードを長押し：外す・移動';
+  $('sequence-message').textContent=s.proposal?'候補の並びです。聴いて、オッケーで決めよう。':this.placingPart?'＋で入れる場所を選んでね。':!draft.placements.length?this.project.parts.length?'下のパーツから、聴く・編集・並べる操作ができます。':'下の「＋つくる」から、最初のパーツをつくろう。':'カードを長押し：外す・移動';
   $('sequence-undo').textContent=s.proposal?'取消':'もどす';if(this.parkedPlacement)$('sequence-undo').disabled=true;
  }
 }
