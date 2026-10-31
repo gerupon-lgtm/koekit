@@ -1,5 +1,5 @@
-import {chordTones} from './catalog.js?v=v0.1.0-20261031190112-ee88028';
-import {SOUND_PRESETS,chordVoicing,harmonicSegments,validateAccompaniment} from './accompaniment.js?v=v0.1.0-20261031190112-ee88028';
+import {chordTones} from './catalog.js?v=v0.1.0-20261031210333-cc29322';
+import {SOUND_PRESETS,chordVoicing,harmonicSegments,validateAccompaniment} from './accompaniment.js?v=v0.1.0-20261031210333-cc29322';
 const error=()=>({code:'ENDING_INVALID'});
 const lastPattern=draft=>draft.patterns.find(p=>p.id===draft.placements.at(-1)?.patternId);
 export const endingBars=ending=>ending?.enabled?(ending.bars??1):0;
@@ -29,7 +29,8 @@ export function endingDescription(draft){
 export function endingEvents(draft,startTick=0){
  const ending=endingDescription(draft);if(!ending)return [];if(ending.code)return ending;
  const pattern=lastPattern(draft),value=pattern.accompaniment??{},sounds={...SOUND_PRESETS[value.genre??'nursery'],...value.imageArrangement?.sounds,...value.sounds};
- const previous=value.enabled&&!validateAccompaniment(value,pattern.bars)?chordVoicing(harmonicSegments(pattern).at(-1)):[];
+ const lastHarmony=value.enabled&&!validateAccompaniment(value,pattern.bars)?harmonicSegments(pattern).findLast(c=>!c.rest):null;
+ const previous=lastHarmony?chordVoicing(lastHarmony):[];
  const strength=value.imageArrangement?.strength??1;
  const event=(midi,instrument,gain,part)=>({startTick,durationTick:ending.durationTick,midi,instrument,gain:gain*strength,part,ending:true});
  return [event(36+ending.chord.bass,sounds.bass??'soft',.065,'bass'),...chordVoicing(ending.chord,previous).map(midi=>event(midi,sounds.chord??'piano',.04,'chord'))];

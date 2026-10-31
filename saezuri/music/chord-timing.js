@@ -1,7 +1,7 @@
 // Quarter-note editing over the existing timed-chord representation.
-import {harmonicSegments} from './accompaniment.js?v=v0.1.0-20261031190112-ee88028';
-import {chordTones} from './catalog.js?v=v0.1.0-20261031190112-ee88028';
-const same=(a,b)=>['root','quality','bass'].every(k=>a?.[k]===b?.[k]);
+import {harmonicSegments} from './accompaniment.js?v=v0.1.0-20261031210333-cc29322';
+import {chordTones,sameChord} from './catalog.js?v=v0.1.0-20261031210333-cc29322';
+const same=sameChord;
 export function chordAtTick(pattern,tick){return harmonicSegments(pattern).find(c=>c.startTick<=tick&&tick<c.startTick+c.durationTick);}
 export function chordChangesInBar(pattern,bar){
  const changes=[];for(const c of harmonicSegments(pattern).filter(c=>c.startTick>=bar*16&&c.startTick<(bar+1)*16))if(!same(c,changes.at(-1)))changes.push(c);
@@ -12,7 +12,7 @@ function beatTick(pattern,bar,beat){
  return bar*16+beat*4;
 }
 export function setChordAtBeat(pattern,bar,beat,chord){
- const startTick=beatTick(pattern,bar,beat);if(chordTones(chord).code)throw new Error('CHORD_INVALID');
+ const startTick=beatTick(pattern,bar,beat);if(chord?.rest!==true&&chordTones(chord).code)throw new Error('CHORD_INVALID');
  const current=chordAtTick(pattern,startTick),end=current.startTick+current.durationTick;
  return replaceChordRange(pattern,startTick,end,chord);
 }
@@ -24,7 +24,7 @@ function replaceChordRange(pattern,startTick,end,chord){
   if(c.startTick<startTick)chords.push({...c,durationTick:startTick-c.startTick});
   if(last>end)chords.push({...c,startTick:end,durationTick:last-end});
  }
- if(chord)chords.push({root:chord.root,quality:chord.quality,bass:chord.bass,startTick,durationTick:end-startTick,manual:true});
+ if(chord)chords.push({...chord.rest?{rest:true}:{root:chord.root,quality:chord.quality,bass:chord.bass},startTick,durationTick:end-startTick,manual:true});
  value.enabled=true;value.chords=chords.sort((a,b)=>a.startTick-b.startTick);
  // Equal adjacent manual chords are a single change, so held notes do not
  // retrigger after removing a change. Keep bar boundaries independently editable.

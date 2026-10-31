@@ -1,7 +1,8 @@
-import {PHRASE_LENGTHS} from '../document.js?v=v0.1.0-20261031190112-ee88028';
+import {PHRASE_LENGTHS} from '../document.js?v=v0.1.0-20261031210333-cc29322';
 // Agreed musical vocabulary only. Genre arrangements/voicings await trial listening.
 export const CHORD_PITCH_NAMES=Object.freeze(['C','D♭','D','E♭','E','F','G♭','G','A♭','A','B♭','B']);
-export const chordLabel=chord=>chord?`${CHORD_PITCH_NAMES[chord.root]}${({major:'',minor:'m'})[chord.quality]??chord.quality}${chord.bass===chord.root?'':`/${CHORD_PITCH_NAMES[chord.bass]}`}`:'';
+export const chordLabel=chord=>chord?.rest===true?'空白':chord?`${CHORD_PITCH_NAMES[chord.root]}${({major:'',minor:'m'})[chord.quality]??chord.quality}${chord.bass===chord.root?'':`/${CHORD_PITCH_NAMES[chord.bass]}`}`:'';
+export const sameChord=(a,b)=>!!a&&!!b&&(a.rest===true||b.rest===true?a.rest===true&&b.rest===true:['root','quality','bass'].every(k=>a[k]===b[k]));
 export const CHORD_INTERVALS = Object.freeze(Object.fromEntries(Object.entries({
   major: [0, 4, 7], minor: [0, 3, 7], '7': [0, 4, 7, 10],
   maj7: [0, 4, 7, 11], m7: [0, 3, 7, 10], sus4: [0, 5, 7],

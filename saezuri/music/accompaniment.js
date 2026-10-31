@@ -1,9 +1,9 @@
 // Editable audition presets. These concrete arrangements are trial data.
-import {GENRES,CHORD_INTERVALS,chordTones} from './catalog.js?v=v0.1.0-20261031190112-ee88028';
-import {validImageChoice,validateImageArrangement} from './image-arrangement.js?v=v0.1.0-20261031190112-ee88028';
-import {POP_EIGHT_BEAT} from './backing-patterns.js?v=v0.1.0-20261031190112-ee88028';
+import {GENRES,CHORD_INTERVALS,chordTones} from './catalog.js?v=v0.1.0-20261031210333-cc29322';
+import {validImageChoice,validateImageArrangement} from './image-arrangement.js?v=v0.1.0-20261031210333-cc29322';
+import {POP_EIGHT_BEAT} from './backing-patterns.js?v=v0.1.0-20261031210333-cc29322';
 export const RHYTHMS=[{id:'quarters',label:'4つずつ'},{id:'offbeat',label:'うらで弾く'},{id:'arpeggio',label:'音をばらして弾く'},{id:POP_EIGHT_BEAT.rhythm,label:POP_EIGHT_BEAT.label},{id:'whole',label:'全音符でのばす'},{id:'halves',label:'二分音符でのばす'}];
-import {DRUM_PATTERNS,resolveHatPattern} from './hat-patterns.js';
+import {DRUM_PATTERNS,resolveHatPattern} from './hat-patterns.js?v=v0.1.0-20261031210333-cc29322';
 export {DRUM_PATTERNS};
 const heldLength=rhythm=>rhythm==='whole'?16:rhythm==='halves'?8:0;
 export const PROGRESSIONS={
@@ -37,10 +37,10 @@ export function validateAccompaniment(value,bars=8) {
  if(value.manualSettings!==undefined&&(!value.manualSettings||typeof value.manualSettings!=='object'||Array.isArray(value.manualSettings)||Object.entries(value.manualSettings).some(([key,v])=>!['enabled','genre','rhythm','progression'].includes(key)||typeof v!=='boolean')))return {code:'IMAGE_INVALID'};
  if(value.sounds)for(const [part,id] of Object.entries(value.sounds))if(part==='drums'?!['none','acoustic','electronic'].includes(id):!['chord','bass'].includes(part)||!SOUNDS.some(s=>s.id===id))return {code:'SOUND_INVALID'};
  if(value.chords!==undefined){
-  if(!Array.isArray(value.chords))return {code:'CHORD_INVALID'};
+  if(!Array.isArray(value.chords)||value.chords.some(c=>!c||typeof c!=='object'||Array.isArray(c)))return {code:'CHORD_INVALID'};
   let end=0;
   for(const chord of [...value.chords].sort((a,b)=>a.startTick-b.startTick)){
-   if(chordTones(chord).code)return {code:'CHORD_INVALID'};
+   if(chord.rest!==undefined&&typeof chord.rest!=='boolean'||chord.rest!==true&&chordTones(chord).code)return {code:'CHORD_INVALID'};
    if(!Number.isInteger(chord.startTick)||chord.startTick<0||!Number.isInteger(chord.durationTick)||chord.durationTick<1||chord.startTick+chord.durationTick>bars*16)return {code:'CHORD_TIME'};
    if(chord.startTick<end)return {code:'CHORD_OVERLAP'};end=chord.startTick+chord.durationTick;
   }
@@ -67,6 +67,7 @@ export function recommendProgressions(pattern){
   const candidate={...structuredClone(value),enabled:true,progression:p.id};
   if(value.imageArrangement)candidate.manualSettings={...candidate.manualSettings,progression:true};let score=0;
   for(const segment of harmonicSegments({...pattern,accompaniment:candidate})){
+   if(segment.rest)continue;
    const tones=CHORD_INTERVALS[segment.quality].map(n=>(n+segment.root)%12);
    for(const note of pattern.notes){const overlap=Math.max(0,Math.min(note.startTick+note.durationTick,segment.startTick+segment.durationTick)-Math.max(note.startTick,segment.startTick));score+=overlap*(tones.includes(note.midi%12)?2:-1);}
   }return {candidate,score,index};
@@ -80,13 +81,13 @@ export function accompanimentEvents(pattern) {
  const automaticDrums=drumPattern==='auto'&&!held&&sounds.drums!=='none';let previous=[];
  for(const segment of harmonicSegments(pattern)){
   const {startTick,durationTick,root,quality,bass}=segment;
-  let chord=chordVoicing({root,quality},previous);previous=chord;
-  if(arrangement&&arrangement.patternId!==POP_EIGHT_BEAT.id){
+  let chord=segment.rest?[]:chordVoicing({root,quality},previous);if(!segment.rest)previous=chord;
+  if(!segment.rest&&arrangement&&arrangement.patternId!==POP_EIGHT_BEAT.id){
    chord.sort((a,b)=>a-b);
    for(let i=0;i<arrangement.inversion;i++){const low=chord.shift();chord.push(low+12<=79?low+12:low);}
    chord.sort((a,b)=>a-b);if(arrangement.voicing==='falling')chord.reverse();
   }
-  const push=(tick,length,midi,instrument,gain,part)=>events.push({startTick:startTick+tick,durationTick:Math.min(length,durationTick-tick),midi,instrument,gain:gain*(nursery?(part==='chord'?.65:part==='bass'?.8:1):1),part,...(value.rhythm==='tutorial'||nursery&&part!=='drums'?{velocity:55}:{})});
+  const push=(tick,length,midi,instrument,gain,part)=>{if(segment.rest&&part!=='drums')return;events.push({startTick:startTick+tick,durationTick:Math.min(length,durationTick-tick),midi,instrument,gain:gain*(nursery?(part==='chord'?.65:part==='bass'?.8:1):1),part,...(value.rhythm==='tutorial'||nursery&&part!=='drums'?{velocity:55}:{})});};
   if(held){
    // Keep the half/whole grid anchored to the bar. A chord change starts a new
    // held note immediately and releases the previous chord at that boundary.

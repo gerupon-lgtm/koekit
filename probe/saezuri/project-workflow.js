@@ -1,9 +1,9 @@
-import {readPartView} from './part-view.js?v=v0.1.0-20261031190112-ee88028';
-import {setupPlaybackSheet} from './sheet-controls.js?v=v0.1.0-20261031190112-ee88028';
-import {blankPattern} from './entry-session.js?v=v0.1.0-20261031190112-ee88028';
-import {migrateProject,allocatePart,capturePart,syncProjectParts,emptyPartCheckpoint} from './project-session.js?v=v0.1.0-20261031190112-ee88028';
-import {canKeepPhrase,emptySequence,sequencePlayback,proposeSequence} from './sequence-session.js?v=v0.1.0-20261031190112-ee88028';
-import {ArrangementGestures} from './arrangement-gestures.js?v=v0.1.0-20261031190112-ee88028';
+import {readPartView} from './part-view.js?v=v0.1.0-20261031210333-cc29322';
+import {setupPlaybackSheet} from './sheet-controls.js?v=v0.1.0-20261031210333-cc29322';
+import {blankPattern} from './entry-session.js?v=v0.1.0-20261031210333-cc29322';
+import {migrateProject,allocatePart,capturePart,syncProjectParts,emptyPartCheckpoint} from './project-session.js?v=v0.1.0-20261031210333-cc29322';
+import {canKeepPhrase,emptySequence,sequencePlayback,proposeSequence} from './sequence-session.js?v=v0.1.0-20261031210333-cc29322';
+import {ArrangementGestures} from './arrangement-gestures.js?v=v0.1.0-20261031210333-cc29322';
 const $=id=>document.getElementById(id),copy=v=>structuredClone(v);
 const button=(text,action)=>{const b=document.createElement('button');b.type='button';b.textContent=text;b.onclick=action;return b;};
 export class ProjectWorkflow{
@@ -87,7 +87,7 @@ export class ProjectWorkflow{
   const listenStatus=document.createElement('p');listenStatus.id='project-part-listen-status';listenStatus.setAttribute('role','status');
   const choices=document.createElement('div');choices.className='project-part-choices';choices.setAttribute('role','group');choices.setAttribute('aria-label','聴く内容');
   const listen=button('▶ このフレーズを聴く',()=>{const choice=state.listenChoices.find(c=>c.id===this.partListenChoice);if(choice)s.onAudition({pattern:choice.pattern});});listen.dataset.partListen=part.id;listen.disabled=!state.listenChoices.length;
-  const choose=id=>{this.partListenChoice=id;const choice=state.listenChoices.find(c=>c.id===id);listenStatus.textContent=choice?`聴く内容：${choice.label}${id==='draft'?'（オッケー前）':''}`:state.listenHint;for(const b of choices.children)b.setAttribute('aria-pressed',String(b.dataset.partVersion===id));};
+  const choose=id=>{this.partListenChoice=id;const choice=state.listenChoices.find(c=>c.id===id);listenStatus.textContent=choice?`聴く内容：${choice.label}${id==='draft'?'（オッケー前）':''}。${choice.description}`:state.listenHint;for(const b of choices.children)b.setAttribute('aria-pressed',String(b.dataset.partVersion===id));};
   if(state.listenChoices.length>1)for(const choice of state.listenChoices){const b=button(choice.label,()=>{s.onStop();choose(choice.id);});b.dataset.partVersion=choice.id;choices.append(b);}
   choose(state.listenChoices[0]?.id);list.append(listenStatus);if(choices.children.length)list.append(choices);list.append(listen);
   const editRow=document.createElement('div');editRow.className='project-part-edit-actions';
