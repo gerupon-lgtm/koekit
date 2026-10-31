@@ -1,6 +1,6 @@
-import {openEditSession, hasDraftChanges} from './edit-session.js?v=v0.1.0-20261030201633-6a8c11c';
-import {proposeEntry} from './entry-session.js?v=v0.1.0-20261030201633-6a8c11c';
-import {validateNotes} from '../../saezuri/document.js?v=v0.1.0-20261030201633-6a8c11c';
+import {openEditSession, hasDraftChanges} from './edit-session.js?v=v0.1.0-20261031005919-fd25477';
+import {proposeEntry} from './entry-session.js?v=v0.1.0-20261031005919-fd25477';
+import {validateNotes} from '../../saezuri/document.js?v=v0.1.0-20261031005919-fd25477';
 const clone=value=>structuredClone(value);
 
 export function songCheckpoint(session,{existing=false}={}) {
@@ -43,7 +43,7 @@ export function restoreCheckpoint(checkpoint,{discardDraft=false}={}) {
  return session;
 }
 
-// The data fingerprint excludes navigation, selection, input presets and Undo.
+// Exclude transient note selection and Undo; persisted navigation participates in saves.
 export function checkpointFingerprint(value) {
  return JSON.stringify(value,(key,item)=>['selectedNoteId','revision','undoStack','history'].includes(key)?undefined:item);
 }

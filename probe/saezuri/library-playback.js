@@ -1,14 +1,11 @@
-import {restoreCheckpoint} from './song-session.js?v=v0.1.0-20261030201633-6a8c11c';
-import {sequencePlayback} from './sequence-session.js?v=v0.1.0-20261030201633-6a8c11c';
-import {entryPreview} from './entry-session.js?v=v0.1.0-20261030201633-6a8c11c';
-import {extractSongPhrases} from './phrase-transfer.js?v=v0.1.0-20261030201633-6a8c11c';
+import {songPlaybackChoices} from './workflow-state.js?v=v0.1.0-20261031005919-fd25477';
 
 const TICKS_PER_BAR=16;
 
 // Playback feedback follows the transport's audio clock; song records stay untouched.
 export class LibraryPlayback {
- constructor({onPlay,onStop}){
-  Object.assign(this,{onPlay,onStop});this.bindings=new Set();this.serial=0;this.active=null;this.pending=null;
+ constructor({onPlay,onStop,onChoose,onCancelChoice}){
+  Object.assign(this,{onPlay,onStop,onChoose,onCancelChoice});this.bindings=new Set();this.serial=0;this.active=null;this.pending=null;
  }
  bind(record,row,button){
   const view=document.createElement('div');view.className='song-playback';view.hidden=true;
@@ -33,21 +30,19 @@ export class LibraryPlayback {
   row.dataset.songPreparing='true';button.textContent='じゅんび中…';button.setAttribute('aria-label',`${record.title}の再生準備をとめる`);button.setAttribute('aria-pressed','true');button.setAttribute('aria-busy','true');
   view.hidden=false;status.textContent='音をじゅんび中…';
   try{
-   let data;
-   if(record.data.sequence.placements.length){data=sequencePlayback(record.data.sequence);if(data.code)throw new Error(data.code);}
-   else{
-    const session=restoreCheckpoint(record.data.checkpoint);
-    const pattern=session?(record.data.checkpoint.confirmed?.pattern??entryPreview(session)):extractSongPhrases(record)[0]?.pattern;
-    if(!pattern)throw new Error('NO_PLAYBACK_SOURCE');
-    data={pattern,...(!session?{previewName:pattern.name??'フレーズ'}:{})};
-   }
+   const choices=songPlaybackChoices(record);
+   if(!choices.length)throw new Error('NO_PLAYBACK_SOURCE');
+   const choice=choices.length===1?choices[0]:await this.onChoose?.(record,choices);
+   if(this.pending!==pending||pending.serial!==this.serial)return;
+   if(!choice){this.pending=null;this.idle(binding);return;}
+   const data={...choice.data,previewName:`${record.title}・${choice.label}（${choice.state}）`};
    const totalTicks=data.pattern.bars*TICKS_PER_BAR;
    if(!Number.isFinite(totalTicks)||totalTicks<=0)throw new Error('INVALID_PLAYBACK_LENGTH');
    progress.max=totalTicks;
    const started=await this.onPlay(data,record.data.settings.tempo);
    if(this.pending!==pending||pending.serial!==this.serial)return;
    this.pending=null;
-   if(started!==true){this.lastError={songId:record.id,code:'START_FAILED',detail:document.getElementById('status')?.textContent??''};this.failed(binding);return;}
+   if(started!==true){this.lastError={songId:record.id,code:'START_FAILED',detail:document.getElementById('status')?.textContent??'',source:structuredClone(record),at:new Date().toISOString()};this.failed(binding);return;}
    this.lastError=null;
    this.active={binding,totalTicks,bars:Math.ceil(totalTicks/TICKS_PER_BAR),label:data.previewName??'',lastTick:null,lastBar:null};
    delete row.dataset.songPreparing;row.dataset.songPlaying='true';
@@ -55,12 +50,12 @@ export class LibraryPlayback {
    this.follow(pending.tick??-1);
   }catch(error){
    if(this.pending!==pending||pending.serial!==this.serial)return;
-   this.lastError={songId:record.id,code:String(error?.code??error?.message??'PLAYBACK_FAILED')};
+   this.lastError={songId:record.id,code:String(error?.code??error?.message??'PLAYBACK_FAILED'),source:structuredClone(record),at:new Date().toISOString()};
    this.pending=null;this.failed(binding);
   }
  }
  failed(binding){
-  this.idle(binding);binding.view.hidden=false;binding.progress.hidden=true;binding.status.textContent='このきょくは 聴けませんでした。';
+  this.idle(binding);binding.view.hidden=false;binding.progress.hidden=true;binding.status.textContent=`「${binding.record.title}」は聴けませんでした。「ひらく」で曲を確かめられます。`;
  }
  follow(tick){
   // app.play() stops the previous transport before preparing this request.
@@ -79,6 +74,7 @@ export class LibraryPlayback {
   if(bar!==active.lastBar){active.lastBar=bar;status.textContent=(active.label?`${active.label}・`:'')+(bar?`再生中 ${bar} / ${active.bars}小節`:'カウント中');}
  }
  stop(){
+  this.onCancelChoice?.();
   this.serial++;this.pending=null;this.active=null;
   for(const binding of this.bindings)this.idle(binding);
   this.onStop();

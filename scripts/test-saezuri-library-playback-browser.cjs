@@ -1,3 +1,4 @@
+const {openSongActions}=require('./saezuri-browser-controls.cjs');
 const {chromium}=require('../.local-tools/node_modules/playwright');
 const assert=require('node:assert/strict'),fs=require('node:fs');
 const base=process.env.SAEZURI_BASE||'http://127.0.0.1:8026';
@@ -81,10 +82,10 @@ const artifacts='.local-tools/phrase-selection-20261030';
   for(const [width,height] of [[320,568],[390,740]]){
    await page.setViewportSize({width,height});await page.locator('#song-library .sheet-body').evaluate(node=>node.scrollTop=0);
    const layout=await row('library-arranged').evaluate(row=>{
-    const rects=[...row.querySelectorAll('button')].map(node=>node.getBoundingClientRect()),dialog=row.closest('dialog'),d=dialog.getBoundingClientRect(),heading=dialog.querySelector('h2').getBoundingClientRect(),close=dialog.querySelector('#song-library-close').getBoundingClientRect(),stop=dialog.querySelector('#song-list-stop').getBoundingClientRect(),view=row.querySelector('.song-playback').getBoundingClientRect(),r=row.getBoundingClientRect();
+    const rects=[...row.querySelectorAll('button')].filter(node=>node.getClientRects().length).map(node=>node.getBoundingClientRect()),dialog=row.closest('dialog'),d=dialog.getBoundingClientRect(),heading=dialog.querySelector('h2').getBoundingClientRect(),close=dialog.querySelector('#song-library-close').getBoundingClientRect(),stop=dialog.querySelector('#song-list-stop').getBoundingClientRect(),view=row.querySelector('.song-playback').getBoundingClientRect(),r=row.getBoundingClientRect();
     return {count:rects.length,targets:rects.every(r=>r.width>=43.9&&r.height>=43.9),gaps:rects.every((a,i)=>rects.slice(i+1).every(b=>a.right+7.8<=b.left||b.right+7.8<=a.left||a.bottom+7.8<=b.top||b.bottom+7.8<=a.top)),overflow:document.documentElement.scrollWidth>innerWidth||dialog.scrollWidth>dialog.clientWidth,headingCenter:Math.abs((heading.left+heading.right-d.left-d.right)/2),closeRight:close.left>d.left+d.width/2&&close.right<=d.right,stopCenter:Math.abs((stop.left+stop.right-d.left-d.right)/2),stopVisible:stop.bottom<=innerHeight&&stop.top>=0,feedbackFullWidth:Math.abs(view.width-r.width+16)<2};
    });
-   assert.equal(layout.count,5);assert.ok(layout.targets&&layout.gaps&&!layout.overflow&&layout.headingCenter<2&&layout.closeRight&&layout.stopCenter<2&&layout.stopVisible&&layout.feedbackFullWidth,JSON.stringify({width,layout}));
+   assert.equal(layout.count,3);assert.ok(layout.targets&&layout.gaps&&!layout.overflow&&layout.headingCenter<2&&layout.closeRight&&layout.stopCenter<2&&layout.stopVisible&&layout.feedbackFullWidth,JSON.stringify({width,layout}));
    if(width===390)await page.screenshot({path:artifacts+'/library-390.png'});
   }
   await page.locator('#song-list-stop').click();await idle('library-arranged');
@@ -100,17 +101,17 @@ const artifacts='.local-tools/phrase-selection-20261030';
 
   // A whole four-bar piece reaches the natural transport end and clears the row.
   const naturalStart=Date.now();await button('library-source').click();await active('library-source');await progress('library-source',16);
-  assert.equal(await row('library-source').locator('.song-playback-status').textContent(),'再生中 2 / 4小節');
+  assert.match(await row('library-source').locator('.song-playback-status').textContent(),/再生中 2 \/ 4小節$/);
   await page.waitForFunction(()=>document.querySelector('#status').dataset.state==='idle',null,{timeout:10000});await idle('library-source');
   const ended=await report();assert.equal(ended.playback.reason,'ENDED');assert.equal(ended.playback.finalTick,64);assert.ok(Date.now()-naturalStart>=5000);assert.deepEqual(await records(),initial,'all playback and cancellation leave saved records byte-for-byte equivalent');
 
   // Opening rename/delete during preparation cancels it; refreshed rows bind once.
-  await heldStart('library-source');await page.locator('[data-song-rename="library-source"]').click();await release();
+  await heldStart('library-source');await openSongActions(page,'library-source');await page.locator('[data-song-rename="library-source"]').click();await release();
   await page.locator('#song-rename-title').fill('名前をかえたきょく');await page.locator('#song-rename-confirm').click();await page.locator('#song-rename').waitFor({state:'hidden'});await button('library-source').waitFor();await idle('library-source');
-  assert.equal(await page.locator('[data-song-open="library-source"]').textContent(),'名前をかえたきょく');assert.equal(await row('library-source').locator('.song-playback').count(),1);
-  await heldStart('library-source');await row('library-source').getByRole('button',{name:'名前をかえたきょくをけす',exact:true}).click();await release();await page.locator('#song-delete [data-close]').click();await idle('library-source');
+  assert.match(await page.locator('[data-song-open="library-source"]').getAttribute('aria-label'),/名前をかえたきょく/);assert.equal(await row('library-source').locator('.song-playback').count(),1);
+  await heldStart('library-source');await openSongActions(page,'library-source');await row('library-source').getByRole('button',{name:'名前をかえたきょくをけす',exact:true}).click();await release();await page.locator('#song-delete [data-close]').click();await idle('library-source');
 
-  await heldStart('library-arranged');await row('library-arranged').evaluate(node=>window.libraryDetachedRow=node);await row('library-arranged').getByRole('button',{name:'コピー',exact:true}).click();
+  await heldStart('library-arranged');await row('library-arranged').evaluate(node=>window.libraryDetachedRow=node);await openSongActions(page,'library-arranged');await row('library-arranged').getByRole('button',{name:'コピー',exact:true}).click();
   await page.waitForFunction(()=>document.querySelectorAll('[data-song-play]').length===3);await release();
   assert.equal(await page.evaluate(()=>window.libraryDetachedRow.isConnected),false);assert.equal(await page.evaluate(()=>window.libraryDetachedRow.querySelector('.song-playback').hidden),true);
   const afterCopy=await records(),copy=afterCopy.find(record=>!initial.some(item=>item.id===record.id));assert.ok(copy);assert.equal(copy.title,'つなげたきょく のコピー');

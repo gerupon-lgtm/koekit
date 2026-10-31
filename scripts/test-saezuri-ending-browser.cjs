@@ -8,7 +8,7 @@ const base=process.env.SAEZURI_BASE||'http://127.0.0.1:8026';
   page.on('pageerror',e=>errors.push(e.message));
   const report=async()=>{await page.locator('#report').evaluate(n=>n.click());return JSON.parse(await page.locator('#metrics').textContent());};
   const saved=()=>page.waitForFunction(()=>document.querySelector('#song-status').dataset.saved==='true');
-  const connect=async()=>{await page.locator('#melody-create [data-screen-back]').click();await page.locator('#melody-choose [data-screen-back]').click();await page.locator('#home-connect').click();};
+  const connect=async()=>{if(await page.locator('#melody-create').isVisible())await page.locator('#work-connect').click();};
   const reopen=async()=>{await saved();await page.reload();await page.locator('#home-songs').click();await page.locator('[data-song-open]').first().click();if(await page.locator('#song-continue').isVisible())await page.locator('#song-continue').click();};
   const phrase=async(key,name,pitch)=>{
    await page.locator('#new-manual').click();if(key==='Am'){await page.locator('#composer-key').selectOption('Am');await page.locator('#capture-edit-confirm').click();}

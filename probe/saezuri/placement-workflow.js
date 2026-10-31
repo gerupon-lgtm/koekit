@@ -1,6 +1,6 @@
-import {derivePlacement,commitSequence} from './sequence-session.js?v=v0.1.0-20261030201633-6a8c11c';
-import {setupPlaybackSheet} from './sheet-controls.js?v=v0.1.0-20261030201633-6a8c11c';
-import {restoreCheckpoint} from './song-session.js?v=v0.1.0-20261030201633-6a8c11c';
+import {derivePlacement,commitSequence} from './sequence-session.js?v=v0.1.0-20261031005919-fd25477';
+import {setupPlaybackSheet} from './sheet-controls.js?v=v0.1.0-20261031005919-fd25477';
+import {restoreCheckpoint} from './song-session.js?v=v0.1.0-20261031005919-fd25477';
 const $=id=>document.getElementById(id);
 const button=(text,action)=>{const node=document.createElement('button');node.type='button';node.textContent=text;node.onclick=action;return node;};
 
@@ -13,8 +13,7 @@ export class PlacementWorkflow {
   const replace=button('さしかえる',()=>this.chooseReplacement());replace.id='sequence-replace';actions.append(edit,replace);
   const hint=document.createElement('p');hint.id='placement-edit-hint';hint.hidden=true;hint.className='placement-edit-hint';
   $('melody-create').querySelector('.screen-heading').after(hint);
-  const back=$('melody-create').querySelector('[data-screen-back]'),original=back.onclick;
-  back.onclick=()=>this.active?this.cancel():original();
+  const cancel=button('この修正を取消',()=>this.cancel());cancel.id='placement-cancel';cancel.hidden=true;hint.after(cancel);
   const dialog=this.dialog=document.createElement('dialog');dialog.id='placement-replace';dialog.className='backing-sheet';
   dialog.innerHTML='<h2>フレーズを さしかえる</h2><p>選んだ一か所だけ変えるよ。</p><div id="placement-replacements"></div><button data-close>とじる</button>';
   document.querySelector('main').append(dialog);dialog.querySelector('[data-close]').onclick=()=>dialog.close();
@@ -84,7 +83,8 @@ export class PlacementWorkflow {
   const shell=this.shell,selected=shell.sequence.placements.find(p=>p.id===shell.selected);
   $('sequence-edit').disabled=locked||!selected;$('sequence-replace').disabled=locked||!selected;
   const hint=$('placement-edit-hint');hint.hidden=!this.active;
-  if(this.active){const source=shell.sequence.patterns.find(p=>p.id===this.context.patternId);hint.textContent=`「${source?.name??'フレーズ'}」のこの場所だけ直すよ。オッケーで別のフレーズにします。戻るととりけします。`;}
+  $('placement-cancel').hidden=!this.active;$('placement-cancel').disabled=shell.busy;
+  if(this.active){const source=shell.sequence.patterns.find(p=>p.id===this.context.patternId);hint.textContent=`「${source?.name??'フレーズ'}」のこの場所だけ直すよ。オッケーで別のフレーズにします。「この修正を取消」で元の配置に戻ります。`;}
   $('melody-create').querySelector('.screen-heading h2').firstChild.textContent=this.active?'直す':'つくる';
   $('melody-create').querySelector('.phrase-register').hidden=this.active;
   if(this.active)$('after-keep').hidden=true;

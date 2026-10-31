@@ -1,0 +1,72 @@
+const {chromium}=require('../.local-tools/node_modules/playwright');
+const assert=require('node:assert/strict'),fs=require('node:fs');
+const base=process.env.SAEZURI_BASE||'http://127.0.0.1:8026';
+(async()=>{
+ const browser=await chromium.launch({executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe',headless:true,args:['--autoplay-policy=no-user-gesture-required']});
+ try{
+  const context=await browser.newContext({viewport:{width:390,height:844},hasTouch:true,serviceWorkers:'block'}),page=await context.newPage(),errors=[];
+  page.setDefaultTimeout(6000);page.on('pageerror',e=>{errors.push(e.message);console.error(e.stack);});
+  await page.goto(base+'/probe/saezuri/');await page.locator('#home-create').waitFor();
+  assert.match(await page.locator('#home-create').innerText(),/新しくつくる/);
+  assert.equal(await page.locator('#melody-home .home-menu button:visible').count(),2,'two main entries');
+  assert.equal(await page.locator('#home-tutorial').isVisible(),true);assert.equal(await page.locator('#home-help').isVisible(),true);
+  const fixtures=await page.evaluate(async()=>{
+   const {SongStore}=await import('/saezuri/song-store.js'),{blankPattern}=await import('./entry-session.js'),{openEditSession,confirmEditSession}=await import('./edit-session.js'),{songCheckpoint}=await import('./song-session.js'),{emptySequence,keepPhrase}=await import('./sequence-session.js');
+   const pattern=midi=>({...blankPattern(),notes:[{id:'n',midi,startTick:0,durationTick:4}]}),store=new SongStore();
+   const seq=keepPhrase(keepPhrase(emptySequence(),pattern(60),'A'),pattern(67),'B'),session=confirmEditSession(openEditSession(pattern(62)));session.working.pattern.notes[0].midi=65;
+   const old=await store.save('old-materials',{title:'同じ曲名',checkpoint:null,sequence:seq,settings:{tempo:100,instrument:'fm-piano'}});
+   const work=await store.save('work-draft',{title:'同じ曲名',checkpoint:songCheckpoint(session),sequence:emptySequence(),settings:{tempo:110,instrument:'fm-piano'},navigation:{screen:'create',mode:'backing'}});
+   const arranged=structuredClone(seq);arranged.placements=[0,1,0].map((index,i)=>({id:'placed-'+i,patternId:arranged.patterns[index].id}));
+   await store.save('arranged-work',{title:'配置の修正',checkpoint:null,sequence:arranged,settings:{tempo:100,instrument:'fm-piano'},navigation:{screen:'connect',mode:'input'}});
+   return {old,work};
+  });
+  const get=id=>page.evaluate(async id=>{const {SongStore}=await import('/saezuri/song-store.js');return new SongStore().get(id);},id);
+  const click=async id=>page.locator('#'+id).click();
+  await click('home-songs');await page.locator('[data-song-play="old-materials"]').click();await page.locator('#song-listen-choices').waitFor({state:'visible'});
+  assert.equal(await page.locator('[data-listen-choice]').count(),2);
+  await page.evaluate(()=>{document.querySelector('#song-listen-choices').close();document.querySelector('[data-song-play="work-draft"]').click();});
+  await page.locator('[data-listen-choice="draft"]').click();await page.waitForFunction(()=>document.querySelector('[data-song-play="work-draft"]').closest('.song-row').dataset.songPlaying==='true');await click('song-list-stop');
+  assert.deepEqual(await get('old-materials'),fixtures.old);
+  await page.locator('[data-song-open="old-materials"]').click();await page.locator('#melody-connect').waitFor({state:'visible'});assert.equal(await page.locator('#phrase-shelf [data-phrase]').count(),2);
+  await click('sequence-create');await page.locator('#melody-choose').waitFor({state:'visible'});await click('choose-cancel');await page.locator('#melody-connect').waitFor({state:'visible'});
+  assert.equal(await page.locator('#phrase-shelf [data-phrase]').count(),2);
+  await click('sequence-create');await click('choose-example');await page.locator('[data-practice-edit="walk"]').click();await page.locator('#melody-create').waitFor({state:'visible'});
+  assert.equal(await page.locator('#tempo').inputValue(),'100','another phrase from a sample keeps this song tempo');assert.equal(await page.locator('#phrase-shelf [data-phrase]').count(),2);
+  await page.locator('#melody-create [data-screen-back]').click();await page.locator('#melody-home').waitFor({state:'visible'});
+  await click('home-songs');await page.locator('[data-song-open="work-draft"]').click();if(await page.locator('#song-continue').isVisible())await click('song-continue');
+  await page.locator('#melody-create').waitFor({state:'visible'});assert.equal(await page.locator('body').getAttribute('data-create-mode'),'backing');assert.match(await page.locator('#create-song-name').textContent(),/同じ曲名/);
+  await click('work-connect');await page.locator('#melody-connect').waitFor({state:'visible'});await click('sequence-work-create');await page.locator('#melody-create').waitFor({state:'visible'});
+  await page.locator('#melody-create [data-screen-back]').click();await page.locator('#melody-home').waitFor({state:'visible'});await click('home-songs');
+  await page.locator('[data-song-play="work-draft"]').click();await page.locator('#song-listen-choices').waitFor({state:'visible'});assert.equal(await page.locator('[data-listen-choice]').count(),2);
+  await page.locator('[data-listen-choice="draft"]').click();await page.waitForFunction(()=>document.querySelector('[data-song-play="work-draft"]').closest('.song-row').dataset.songPlaying==='true');
+  assert.match(await page.locator('.song-row').filter({has:page.locator('[data-song-play="work-draft"]')}).locator('.song-playback-status').textContent(),/未確定/);await click('song-list-stop');
+  await page.locator('[data-song-open="work-draft"]').click();if(await page.locator('#song-continue').isVisible())await click('song-continue');
+  await page.evaluate(async()=>{const url=performance.getEntriesByType('resource').find(r=>/\/saezuri\/song-store\.js\?/.test(r.name)).name,{SongStore}=await import(url);window.workflowStore=SongStore;window.workflowSave=SongStore.prototype.save;SongStore.prototype.save=async function(...args){await new Promise(resolve=>window.releaseWorkflowSave=resolve);return window.workflowSave.apply(this,args);};});
+  await click('work-connect');await page.locator('#melody-connect [data-screen-back]').click();await page.waitForFunction(()=>document.querySelector('#status').dataset.state==='saving');
+  assert.equal(await page.locator('#melody-connect').isVisible(),true,'top waits for the real storage promise');
+  await page.locator('#melody-connect [data-screen-back]').evaluate(b=>b.click());assert.equal(await page.locator('#melody-home').isVisible(),false,'repeated top does not bypass save');
+  await page.evaluate(()=>window.releaseWorkflowSave());await page.locator('#melody-home').waitFor({state:'visible'});await page.evaluate(()=>window.workflowStore.prototype.save=window.workflowSave);
+  await click('home-songs');await page.locator('[data-song-open="work-draft"]').click();if(await page.locator('#song-continue').isVisible())await click('song-continue');
+  if(await page.locator('#melody-connect').isVisible())await click('sequence-work-create');await page.waitForFunction(()=>document.querySelector('#song-status').dataset.saved==='true');
+  const beforeFailure=await get('work-draft');
+  await page.evaluate(()=>{window.originalSongPut=IDBObjectStore.prototype.put;IDBObjectStore.prototype.put=function(...args){if(this.name==='songs')throw new DOMException('test save failure','QuotaExceededError');return window.originalSongPut.apply(this,args);};});
+  await click('work-connect');await page.locator('#melody-connect [data-screen-back]').click();await page.locator('#song-failure').waitFor({state:'visible'});
+  assert.equal(await page.locator('#melody-connect').isVisible(),true);await click('song-leave');await page.locator('#song-unsaved-confirm').waitFor({state:'visible'});await click('song-unsaved-cancel');
+  assert.equal(await page.locator('#melody-connect').isVisible(),true);assert.deepEqual(await get('work-draft'),beforeFailure,'discard cancel preserves saved record');
+  await click('song-leave');await click('song-unsaved-discard');await page.locator('#melody-home').waitFor({state:'visible'});assert.deepEqual(await get('work-draft'),beforeFailure,'discard only unsaved memory');
+  await page.evaluate(()=>{IDBObjectStore.prototype.put=window.originalSongPut;});
+  await click('home-songs');await page.locator('[data-song-open="arranged-work"]').click();await page.locator('#sequence-line [data-placement]').nth(2).click();await click('sequence-edit');await click('capture-pitch-up');
+  await page.locator('#melody-create [data-screen-back]').click();await page.locator('#melody-home').waitFor({state:'visible'});assert.ok((await get('arranged-work')).data.placementDraft,'top saves the unfinished placement edit');
+  await click('home-songs');await page.locator('[data-song-open="arranged-work"]').click();await click('song-continue');await page.locator('#placement-cancel').waitFor({state:'visible'});await click('capture-edit-confirm');await page.locator('#melody-connect').waitFor({state:'visible'});await page.waitForFunction(()=>document.querySelector('#song-status').dataset.saved==='true');
+  const revision=(await get('arranged-work')).data.sequence;assert.equal(revision.patterns[0].notes[0].midi,60);assert.notEqual(revision.placements[0].patternId,revision.placements[2].patternId);assert.equal(revision.patterns.find(p=>p.id===revision.placements[2].patternId).notes[0].midi,61);
+  await page.locator('#melody-connect [data-screen-back]').click();await page.locator('#melody-home').waitFor({state:'visible'});
+  await click('home-create');await page.locator('#melody-choose').waitFor({state:'visible'});await click('choose-cancel');await page.locator('#melody-home').waitFor({state:'visible'});
+  fs.mkdirSync('.local-tools/workflow-20261031',{recursive:true});
+  for(const [width,height] of [[320,568],[390,844],[844,390]]){
+   await page.setViewportSize({width,height});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);await click('home-songs');await page.locator('[data-song-play="old-materials"]').click();
+   const controls=await page.locator('#song-listen-choices button:visible').evaluateAll(es=>es.map(e=>{const r=e.getBoundingClientRect();return {w:r.width,h:r.height};}));assert.ok(controls.every(r=>r.w>=44&&r.h>=44));
+   await page.screenshot({path:`.local-tools/workflow-20261031/listen-${width}.png`});await click('song-listen-close');await click('song-library-close');
+  }
+  assert.deepEqual(errors,[]);await context.close();console.log(JSON.stringify({result:'PASS',base,checks:'two entries, old resume, same-title identities, current mode, switch, add/cancel, source choices, sample tempo, awaited save, save failure, two-step discard, placement draft exit/reopen/derive, three sizes'}));
+ }finally{await browser.close();}
+})().catch(e=>{console.error(e);process.exitCode=1;});

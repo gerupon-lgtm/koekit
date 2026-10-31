@@ -1,4 +1,30 @@
 /* Suite menu language: wordmark, large purpose buttons, back/header and help. */
+.melody-app .home-menu #home-songs{background:#f9e1c9}
+.melody-app .home-support{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;width:min(100%,400px);margin:16px auto 0}
+.melody-app .home-support button{margin:0;background:#fffdf7;font-size:16px}
+.melody-app .song-work-tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:8px 0}
+.melody-app .song-work-tabs button{margin:0;padding:6px;font-size:14px;min-width:0}
+.melody-app .song-work-tabs button[aria-pressed=true]{background:#e7ddef;box-shadow:inset 0 0 0 2px #9687a3}
+.melody-app #choose-song-name{font-size:14px;overflow-wrap:anywhere}
+.melody-app .song-row{display:flex!important;flex-direction:column;gap:8px;min-width:0}
+.melody-app .song-row .song-row-title{margin:0;font-size:18px;font-weight:700;overflow-wrap:anywhere}
+.melody-app .song-row-navigation{font-size:13px}
+.melody-app .song-row-actions{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) 44px;gap:8px}
+.melody-app .song-row-actions>button{margin:0;min-width:0;min-height:44px!important;padding:8px!important;font-size:15px!important}
+.melody-app .song-row-actions [data-song-open]{background:#e7ddef}
+.melody-app .song-row-actions [data-song-open]::after{content:none!important}
+.melody-app .song-more-actions{display:flex;flex-wrap:wrap;gap:8px}
+.melody-app .song-more-actions[hidden]{display:none}
+.melody-app .song-more-actions button{margin:0;flex:1;min-height:44px}
+.melody-app #song-listen-choices{width:min(100vw - 16px,560px);margin:auto auto 0;padding:12px;border-radius:20px 20px 0 0}
+.melody-app #song-listen-title{font-size:16px;overflow-wrap:anywhere}
+.melody-app #song-listen-options{display:grid;gap:8px;margin:12px 0}
+.melody-app #song-listen-options button{display:flex;align-items:center;justify-content:space-between;gap:8px;text-align:left;width:100%;margin:0;padding:10px;min-height:64px;min-width:0}
+.melody-app #song-listen-options button>span:first-child{min-width:0;overflow-wrap:anywhere}
+.melody-app #song-listen-options small{display:block;font-size:13px;font-weight:400}
+.melody-app #song-unsaved-confirm .song-actions{display:grid;grid-template-columns:1fr;gap:8px}
+.melody-app #song-failure .song-actions{display:grid;grid-template-columns:1fr;gap:8px}
+.melody-app #create-song-name,.melody-app #sequence-song-name{white-space:normal;overflow:visible;overflow-wrap:anywhere}
 body.melody-app{background:#faf5ed;color:#443b36}
 .volume-settings{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;grid-column:1/-1}
 .volume-settings>label{min-width:0;font-size:13px}
@@ -7,6 +33,8 @@ body.melody-app{background:#faf5ed;color:#443b36}
 .melody-app.editor-focus .listen-settings label:has(#play-count-style){grid-column:span 4}
 .melody-app.editor-focus .listen-settings label:has(#play-count){grid-column:span 2}
 .melody-app.editor-focus main{max-width:760px;padding:8px 12px 90px}
+/* Keep focused/scrolled controls above the fixed playback footer. */
+.melody-app main :is(button,input,select,textarea,summary){scroll-margin-bottom:80px}
 .melody-app .melody-screen{margin:0;padding:0;border:0;background:transparent;border-radius:0;min-width:0}
 .melody-app button:not(.menu-help):not(.menu-home):not(.menu-help-dismiss){min-height:44px;touch-action:manipulation}
 .melody-app input:not([type=checkbox]),.melody-app select{font-size:16px}
@@ -133,7 +161,8 @@ body.melody-app{background:#faf5ed;color:#443b36}
 .melody-app dialog #composer-view{width:100%}
 .melody-app #phrase-shelf{display:flex;gap:8px;flex-wrap:wrap;max-height:180px;overflow:auto}
 .melody-app .phrase-source-actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:8px 0}
-.melody-app #sequence-song-name{font-size:13px;line-height:18px;margin:8px 0 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.melody-app #sequence-song-name{font-size:13px;line-height:18px;margin:8px 0 0;white-space:normal;overflow:visible;overflow-wrap:anywhere}
+.melody-app #create-song-name{font-size:13px;line-height:18px;margin:4px 0;white-space:normal;overflow:visible;overflow-wrap:anywhere}
 .melody-app .phrase-source-actions button{margin:0;padding:8px 6px;min-width:0;font-size:14px;background:#dce9d5}
 .melody-app #sequence-import{background:#ece5da}
 .melody-app #sequence-create{word-break:keep-all}
@@ -358,6 +387,8 @@ body.melody-app{background:#faf5ed;color:#443b36}
 .melody-app #image-chords button{scroll-snap-align:start}
 .melody-app .song-row{grid-template-columns:repeat(3,minmax(0,1fr))}
 .melody-app .song-row [data-song-open]{grid-column:1/3;background:#fff}
+.melody-app .song-row [data-song-open]::after{content:'ひらく →';display:block;font-size:12px;line-height:16px;margin-top:3px;color:#566d67}
+.melody-app #song-list-hint{font-size:13px;line-height:1.5;margin:4px 0 8px}
 .melody-app #song-rename .screen-heading{grid-template-columns:64px minmax(0,1fr) 64px}
 .melody-app #song-rename .screen-heading h2{grid-column:2}
 .melody-app #song-rename-close{grid-column:3;min-height:44px;margin:0;padding:6px;font-size:14px}

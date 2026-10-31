@@ -6,10 +6,10 @@ const base=process.env.SAEZURI_BASE||'http://127.0.0.1:8026';
  const browser=await chromium.launch({channel:'chrome',headless:true,args:['--autoplay-policy=no-user-gesture-required']});
  try{
   const context=await browser.newContext({viewport:{width:390,height:844},serviceWorkers:'block'}),page=await context.newPage(),errors=[];
-  page.on('pageerror',error=>errors.push(error.message));
+  page.on('pageerror',error=>{errors.push(error.message);console.error(error.stack);});
   const report=async()=>{await page.locator('#report').evaluate(n=>n.click());return JSON.parse(await page.locator('#metrics').textContent());};
   const names=()=>page.locator('#sequence-line [data-placement]').allTextContents();
-  const connect=async()=>{await page.locator('#melody-create [data-screen-back]').click();await page.locator('#melody-choose [data-screen-back]').click();await page.locator('#home-connect').click();};
+  const connect=async()=>{if(await page.locator('#melody-create').isVisible())await page.locator('#work-connect').click();};
   const saved=()=>page.waitForFunction(()=>document.querySelector('#song-status').dataset.saved==='true');
   const reopen=async()=>{await saved();await page.reload();await page.locator('#home-songs').click();await page.locator('[data-song-open]').first().click();if(await page.locator('#song-continue').isVisible())await page.locator('#song-continue').click();};
   await page.goto(base+'/probe/saezuri/');await page.locator('#home-create').click();await page.locator('#new-manual').click();
@@ -31,7 +31,7 @@ const base=process.env.SAEZURI_BASE||'http://127.0.0.1:8026';
   assert.equal(await page.locator(`[data-phrase-remove="${sourceId}"]`).isDisabled(),true);
   // Other placements still point to the original sound; cancelling preserves both workspaces.
   await page.locator('#sequence-line [data-placement]').nth(1).click();await page.locator('#sequence-edit').click();assert.equal((await report()).captureCandidate.notes[0].midi,60);
-  await page.locator('#capture-pitch-down').click();await page.locator('#preview').click();await page.waitForFunction(()=>document.querySelector('#status').dataset.state==='playing');await page.locator('#melody-create [data-screen-back]').click();
+  await page.locator('#capture-pitch-down').click();await page.locator('#preview').click();await page.waitForFunction(()=>document.querySelector('#status').dataset.state==='playing');await page.locator('#placement-cancel').click();
   assert.equal(await page.locator('#status').getAttribute('data-state'),'idle');assert.deepEqual(await names(),['1. A 1','2. A']);
   assert.deepEqual((await report()).captureEditing,original.captureEditing);
   const choose=async()=>{await page.locator('#sequence-replace').click();await page.locator(`[data-replacement="${derivedId}"]`).click();};
@@ -43,7 +43,7 @@ const base=process.env.SAEZURI_BASE||'http://127.0.0.1:8026';
   await reopen();assert.equal((await report()).captureEditing.undoDepth,0);await connect();await page.locator('#sequence-line [data-placement]').first().click();await page.locator('#sequence-edit').click();
   await page.locator('#capture-pitch-up').click();assert.equal((await report()).captureEditing.editCandidate.notes[0].midi,62);
   await reopen();await page.locator('#placement-edit-hint').waitFor();assert.equal((await report()).captureEditing.editCandidate.notes[0].midi,62);
-  await page.locator('#melody-create [data-screen-back]').click();const main=await report();assert.equal(main.captureEditing.editCandidate.notes[0].midi,61);assert.equal(main.captureEditing.undoDepth,0);
+  await page.locator('#placement-cancel').click();const main=await report();assert.equal(main.captureEditing.editCandidate.notes[0].midi,61);assert.equal(main.captureEditing.undoDepth,0);
   await page.locator('#sequence-edit').click();await page.locator('#capture-pitch-up').click();await page.locator('#capture-edit-confirm').click();await page.locator('#melody-connect').waitFor();
   assert.deepEqual(await names(),['1. A 2','2. A 1']);
   // Phrase deletion is a candidate, and Undo of a derivation keeps its reusable copy.

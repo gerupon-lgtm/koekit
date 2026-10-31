@@ -1,5 +1,5 @@
 const {chromium,webkit}=require('../.local-tools/node_modules/playwright'),assert=require('node:assert/strict');
-const {revealCreationControl}=require('./saezuri-browser-controls.cjs');
+const {revealCreationControl,openSongActions}=require('./saezuri-browser-controls.cjs');
 const base=process.env.SAEZURI_BASE||'http://127.0.0.1:8026',layoutOnly=process.env.SAEZURI_BROWSER==='webkit';
 (async()=>{const browser=layoutOnly?await webkit.launch({headless:true,executablePath:process.env.SAEZURI_WEBKIT_PATH}):await chromium.launch({channel:'chrome',headless:true,args:['--autoplay-policy=no-user-gesture-required']});try{
  for(const [source,bars] of [['free',8],['image',4]]){
@@ -13,7 +13,7 @@ const base=process.env.SAEZURI_BASE||'http://127.0.0.1:8026',layoutOnly=process.
   const report=async()=>{await page.locator('#report').evaluate(n=>n.click());return JSON.parse(await page.locator('#metrics').textContent());};
   const songs=()=>page.evaluate(async()=>{const {SongStore}=await import('/saezuri/song-store.js');return new SongStore().list();});
   const saved=()=>page.waitForFunction(()=>document.querySelector('#song-status').dataset.saved==='true');
-  const connect=async()=>{await page.locator('#melody-create [data-screen-back]').click();await page.locator('#melody-choose [data-screen-back]').click();await click('home-connect');};
+  const connect=async()=>{if(await page.locator('#melody-create').isVisible())await click('work-connect');};
   await page.goto(base+'/probe/saezuri/');await click('home-create');await click(source==='free'?'new-manual':'new-image');
   assert.equal(await page.locator('#keep-phrase').isDisabled(),true,'empty or unconfirmed backing is not registerable');
   if(source==='free'){
@@ -56,7 +56,7 @@ const base=process.env.SAEZURI_BASE||'http://127.0.0.1:8026',layoutOnly=process.
    if(source==='image')await page.waitForFunction(()=>document.querySelector('#status').dataset.state==='idle',{},{timeout:15000});else await click('stop');
   }
   await saved();await page.reload();await click('home-songs');records=await songs();
-  const originalId=records[0].id,row=page.locator('.song-row').filter({has:page.locator('[data-song-open="'+originalId+'"]')});await row.getByRole('button',{name:'コピー',exact:true}).click();
+  const originalId=records[0].id,row=page.locator('.song-row').filter({has:page.locator('[data-song-open="'+originalId+'"]')});await openSongActions(page,originalId);await row.getByRole('button',{name:'コピー',exact:true}).click();
   await page.waitForFunction(()=>document.querySelectorAll('[data-song-open]').length===2);records=await songs();
   const duplicate=records.find(r=>r.id!==originalId&&r.title.includes('のコピー'));
   assert.ok(duplicate);assert.deepEqual(duplicate.data.sequence,sequence);assert.deepEqual(duplicate.data.checkpoint.confirmed.pattern.notes,[]);

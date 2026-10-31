@@ -168,7 +168,7 @@ const base = process.env.SAEZURI_BASE || 'http://127.0.0.1:8000';
     await page.locator('#capture-import-button').click();
     assert.deepEqual((await report()).captureCandidate.notes,expected.notes);
     assert.deepEqual(await score('#score'),adopted);
-    await page.locator('#discard').click();
+    if(await page.locator('#melody-create').isVisible())await page.locator('#melody-create [data-screen-back]').click();else await page.locator('#discard').click();
     await page.locator('#capture-import-text').fill('{"capture":');await page.locator('#capture-import-button').click();
     assert.match(await page.locator('#capture-import-status').innerText(),/JSON/);
     assert.equal(await page.evaluate(()=>window.editorMediaRequests),1);

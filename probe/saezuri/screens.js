@@ -1,9 +1,10 @@
-import {MelodyLearning} from './learning.js?v=v0.1.0-20261030201633-6a8c11c';
-import {emptySequence,canKeepPhrase,keepPhrase,sequencePlayback,proposeSequence,commitSequence,undoPlacement} from './sequence-session.js?v=v0.1.0-20261030201633-6a8c11c';
-import {readCaptureReport} from './capture-report.js?v=v0.1.0-20261030201633-6a8c11c';
-import {setupPlaybackSheet} from './sheet-controls.js?v=v0.1.0-20261030201633-6a8c11c';
-import {PlacementWorkflow} from './placement-workflow.js?v=v0.1.0-20261030201633-6a8c11c';
-import {EndingWorkflow} from './ending-workflow.js?v=v0.1.0-20261030201633-6a8c11c';
+import {MelodyLearning} from './learning.js?v=v0.1.0-20261031005919-fd25477';
+import {emptySequence,canKeepPhrase,keepPhrase,sequencePlayback,proposeSequence,commitSequence,undoPlacement} from './sequence-session.js?v=v0.1.0-20261031005919-fd25477';
+import {readCaptureReport} from './capture-report.js?v=v0.1.0-20261031005919-fd25477';
+import {setupPlaybackSheet} from './sheet-controls.js?v=v0.1.0-20261031005919-fd25477';
+import {PlacementWorkflow} from './placement-workflow.js?v=v0.1.0-20261031005919-fd25477';
+import {EndingWorkflow} from './ending-workflow.js?v=v0.1.0-20261031005919-fd25477';
+import {extractSongPhrases} from './phrase-transfer.js?v=v0.1.0-20261031005919-fd25477';
 const $=id=>document.getElementById(id);
 const trialBuild=new URL(import.meta.url).searchParams.get('v')||'local-20261010';
 const trialVersion=trialBuild.match(/-(\d{14})-/)?.[1]||trialBuild;
@@ -19,12 +20,12 @@ export class MelodyScreens {
   document.querySelector('main > header').hidden=true;
   const main=document.querySelector('main');
   const home=document.createElement('section');home.id='melody-home';home.className='melody-screen';
-  home.innerHTML=`<nav class="home-nav"><a class="menu-home" href="../../" aria-label="コエキットへ"><svg viewBox="0 0 24 24"><path d="M12 3l9 8h-2.5v9h-5.5v-6h-2v6H5.5v-9H3z"/></svg></a><button class="menu-help" id="melody-help" aria-label="つかいかた">？</button></nav>
+  home.innerHTML=`<nav class="home-nav"><a class="menu-home" href="../../" aria-label="コエキットへ"><svg viewBox="0 0 24 24"><path d="M12 3l9 8h-2.5v9h-5.5v-6h-2v6H5.5v-9H3z"/></svg></a></nav>
    <h1 tabindex="-1"><img src="../../assets/brand/saezurhythm.svg" alt="サエズリズム"></h1><p class="home-caption">こえと タッチで、メロディーを つくろう。</p>
-   <div class="home-menu"><button id="home-create">つくる<small>音をならべて、ひとつのフレーズに</small></button><button id="home-connect">つなげる<small>フレーズをならべて、長い曲に</small></button><button id="home-resume" hidden>つづきから</button></div>
+   <div class="home-menu"><button id="home-create">新しくつくる<small>作り方を選んではじめる</small></button></div><div class="home-support"><button id="home-tutorial">おてほん</button><button id="home-help">使い方</button></div>
    <p class="session-note">このタブの中で試せます。再読み込みすると作業は消えます。</p><p class="home-credit" data-build="${trialBuild}">開発版 ${trialVersion}　© 2026 SIKUMI LAB</p>`;
   const choose=document.createElement('section');choose.id='melody-choose';choose.className='melody-screen';
-  choose.innerHTML='<div class="screen-heading"><button data-screen-back>← トップ</button><h2 tabindex="-1">つくる</h2></div><p>どこから はじめる？</p><div id="creation-choices"></div><p id="choose-notice" role="status"></p><button id="choose-resume" hidden>つづきから</button>';
+  choose.innerHTML='<div class="screen-heading"><button id="choose-cancel" data-screen-back>取消</button><h2 tabindex="-1">作り方を選ぶ</h2></div><p id="choose-song-name"></p><p>どこから はじめる？</p><div id="creation-choices"></div><p id="choose-notice" role="status"></p><button id="choose-resume" hidden>つづきから</button>';
   const create=document.createElement('div');create.id='melody-create';create.className='melody-screen';
   create.innerHTML='<div class="screen-heading"><button data-screen-back>← トップ</button><h2 tabindex="-1">つくる</h2><button id="screen-settings">設定</button></div><div id="creation-tabs" aria-label="操作"><button data-mode="input">音を置く</button><button data-mode="edit">音を直す</button><button data-mode="backing">伴奏</button></div>';
   const shape=document.createElement('div');shape.id='phrase-shape';shape.setAttribute('aria-label','ふんいきと小節数');
@@ -42,6 +43,11 @@ export class MelodyScreens {
   const songChoice=button('曲をえらぶ',()=>this.songWorkflow?.library({destination:'connect'}));songChoice.id='sequence-song';connect.querySelector('.phrase-source-actions').prepend(songChoice);
   const songName=document.createElement('p');songName.id='sequence-song-name';connect.querySelector('.phrase-source-actions').before(songName);
   this.screens={home,choose,create,connect};
+  for(const [node,prefix] of [[create,'work'],[connect,'sequence-work']]){
+   const tabs=document.createElement('div');tabs.className='song-work-tabs';tabs.setAttribute('aria-label','同じ曲の作業');
+   for(const [screen,label,id] of [['create','フレーズをつくる',`${prefix}-create`],['connect','つなげる',`${prefix}-connect`]]){const b=button(label,()=>this.go(screen));b.id=id;b.dataset.workScreen=screen;tabs.append(b);}
+   node.querySelector('.screen-heading').after(tabs);
+  }
   const source=$('editor-source');source.open=true;$('creation-choices').append(source);
   const chooseMic=button('マイク ON',()=>$('mic').click());chooseMic.id='choose-mic';$('creation-choices').prepend(chooseMic);
   $('new-manual').textContent='じゆうに つくる';$('new-image').textContent='イメージから つくる';$('capture').textContent='ハナウタで つくる';
@@ -60,8 +66,8 @@ export class MelodyScreens {
   setupPlaybackSheet(dialog,{closeId:'settings-close',stopId:'settings-stop',onStop,stopOnClose:false});
   $('settings-close').onclick=()=>dialog.close();dialog.addEventListener('close',()=>{const inline=$('keyboard-instrument');if(inline)inline.append($('instrument').closest('label'));onNavigate();});
   $('screen-settings').onclick=()=>this.openSettings();$('sequence-settings').onclick=()=>this.openSettings();
-  $('melody-help').onclick=()=>{
-   const help=document.createElement('dialog');help.className='melody-help menu-help-dialog';help.innerHTML='<h2>つかいかた</h2><p>「つくる」で音を置いて、聴いて、オッケー。「フレーズにする」でつなげる画面に持っていけます。</p><p>「つなげる」でフレーズを順番に選びます。追加・並べ替えはオッケーで決定。声を使わなくても操作できます。</p>';
+  $('home-help').onclick=()=>{
+   const help=document.createElement('dialog');help.className='melody-help menu-help-dialog';help.innerHTML='<h2>つかいかた</h2><p>「新しくつくる」で曲をはじめます。「保存した曲をひらく」で前回の作業へ戻れます。</p><p>音を置いて、聴いて、オッケー。「フレーズを登録」で同じ曲の材料に追加します。「フレーズをつくる／つなげる」で作業を切り替えられます。</p><p>作業は自動保存します。「トップへ」は保存が終わってから戻ります。一覧の「聴く」はその場で試聴し、曲をひらく操作とは別です。</p>';
    const voiceHelp=document.createElement('p');voiceHelp.textContent='マイクONと「声で操作」で、「スタート」は伴奏をループ、「ストップ」は停止。ループ中の「はなうた」「ろくおん」で次の先頭から録ります。「イメージからつくる」では「ロック」「ゆっくり」「やさしい」などで伴奏を選び、「別のパターン」で作り直せます。「きく」で聴き、「オッケー」で決めます。';help.append(voiceHelp);
    const close=button('とじる',()=>help.close());close.className='menu-help-dismiss';help.append(close);help.addEventListener('close',()=>help.remove());main.append(help);help.showModal();
   };
@@ -72,7 +78,7 @@ export class MelodyScreens {
   // Keep the candidate, confirm and audition together, independent of editor tab.
   toolbar.append($('composer-candidate'),listen,$('capture-edit-status'));
   const save=document.createElement('div');save.className='phrase-register';
-  save.innerHTML='<label>フレーズの名前<input id="phrase-name" maxlength="24" placeholder="フレーズ1"></label><button id="keep-phrase">フレーズにする</button><p id="phrase-feedback" role="status"></p>';
+  save.innerHTML='<label>フレーズの名前<input id="phrase-name" maxlength="24" placeholder="フレーズ1"></label><button id="keep-phrase">フレーズを登録</button><p id="phrase-feedback" role="status"></p>';
   create.append(save);
   const next=document.createElement('div');next.id='after-keep';next.hidden=true;next.innerHTML='<button id="after-keep-connect">つなげるへ</button><button id="after-keep-more">もうひとつ つくる</button>';create.append(next);
   $('after-keep-connect').onclick=()=>this.connectKeptPhrase();$('after-keep-more').onclick=()=>this.createAnotherPhrase();
@@ -80,15 +86,14 @@ export class MelodyScreens {
   for(const b of document.querySelectorAll('[data-mode]')) b.onclick=()=>{this.setMode(b.dataset.mode);this.onNavigate();};
   for(const id of ['capture-score','capture-blocks'])$(id).addEventListener('click',event=>{if(!this.busy&&!editor.pending&&event.target.closest('[data-note-id]'))this.setMode('edit');});
   for(const b of document.querySelectorAll('[data-screen-back]')){
-   const destination=b.closest('#melody-create')?'choose':'home';
-   this.icon(b,'back','もどる',destination==='choose'?'つくり方を選ぶ画面へ':'トップへ');b.onclick=()=>this.go(destination);
+   const choosing=!!b.closest('#melody-choose');
+   this.icon(b,'back',choosing?'取消':'トップへ');b.onclick=()=>this.go(choosing?(this.chooseReturn??'home'):'home');
   }
-  $('home-create').onclick=()=>this.go('choose');$('home-connect').onclick=()=>this.go('connect');
-  $('home-resume').onclick=()=>this.go('create');$('sequence-create').onclick=()=>this.createAnotherPhrase();
+  $('home-create').onclick=()=>{this.chooseReturn='home';this.go('choose');};$('sequence-create').onclick=()=>this.createAnotherPhrase();
+  $('home-tutorial').onclick=()=>this.requestDiscard(()=>this.learning.start(),true);
   $('adopt').addEventListener('click',()=>{if(!editor.isOpen)this.go('home');});
   $('discard').onclick=()=>this.requestDiscard(()=>this.go('home'),true);
-  create.querySelector('.screen-heading').append($('discard'));
-  this.icon($('discard'),'exit','やめる','ほぞんして終了');
+  $('discard').hidden=true;
   this.icon($('screen-settings'),'settings','設定');this.icon($('sequence-settings'),'settings','設定');
   $('choose-resume').onclick=()=>this.go('create');
   const confirm=document.createElement('dialog');confirm.id='melody-discard';confirm.setAttribute('aria-labelledby','discard-title');
@@ -108,7 +113,11 @@ export class MelodyScreens {
   $('sequence-confirm').onclick=()=>this.confirmSequence();
   $('sequence-undo').onclick=()=>{if(this.busy)return;if(this.proposal)this.proposal=null;else this.sequence=undoPlacement(this.sequence);this.renderSequence();};
   for(const [id,type,delta] of [['sequence-left','move',-1],['sequence-right','move',1],['sequence-delete','remove',0]])$(id).onclick=()=>this.stage({type,placementId:this.selected,index:this.sequence.placements.findIndex(p=>p.id===this.selected)+delta});
-  addEventListener('popstate',()=>this.go(['home','choose','create','connect','samples'].includes(history.state?.melodyScreen)?history.state.melodyScreen:'home',{history:false}));
+  addEventListener('popstate',()=>{
+   const target=['home','choose','create','connect','samples'].includes(history.state?.melodyScreen)?history.state.melodyScreen:'home';
+   if(['create','connect'].includes(target)&&this.songWorkflow&&!this.songWorkflow.id&&!this.editor.isOpen&&!this.sequence.patterns.length){this.songWorkflow.library();return;}
+   this.go(target,{history:false});
+  });
   this.placementWorkflow=new PlacementWorkflow(this,onEditWorkspace);
   this.endingWorkflow=new EndingWorkflow(this);
   this.learning=new MelodyLearning(this);
@@ -133,12 +142,18 @@ export class MelodyScreens {
  openSettings(){ $('creation-settings').hidden=this.screen!=='create';this.dialog.querySelector('.listen-settings').append($('instrument').closest('label'));this.dialog.showModal();this.onNavigate();}
  go(screen,{history:push=true,stop=true,focus=true}={}) {
   if(this.phase==='saving')return;
+  if(screen==='home'&&this.songWorkflow&&this.screen!=='home'&&!this.leavingSaved){
+   this.songWorkflow.depart(()=>{this.leavingSaved=true;try{this.go('home',{history:push,stop,focus});}finally{this.leavingSaved=false;}},true);return;
+  }
   if(this.placementWorkflow?.active)screen='create';
-  if(screen==='create'&&!this.editor.isOpen&&this.phase==='idle')screen='choose';
+  if(screen==='create'&&!this.editor.isOpen&&this.phase==='idle'){this.chooseReturn=this.screen==='connect'?'connect':'home';screen='choose';}
+  if(['create','connect'].includes(screen))this.lastWorkScreen=screen;
   if(stop)this.onStop();
   for(const open of document.querySelectorAll('dialog[open]'))open.close();
   this.discardAction=null;this.discardDialog?.close();this.dialog.close();this.screen=screen;document.body.dataset.melodyScreen=screen;
   for(const [name,node] of Object.entries(this.screens))node.hidden=name!==screen;
+  for(const b of document.querySelectorAll('[data-work-screen]'))b.setAttribute('aria-pressed',String(b.dataset.workScreen===screen));
+  $('choose-song-name').textContent=this.chooseReturn!=='home'?`いまの曲：${$('song-title')?.value||this.songWorkflow?.title||'新しい曲'}`:'';
   if(screen==='choose')$('editor-source').open=true;
   document.querySelector('body > footer').hidden=!['create','connect','samples'].includes(screen);
   if(push)history.pushState({...history.state,melodyScreen:screen},'');
@@ -164,7 +179,6 @@ export class MelodyScreens {
   $('phrase-shape-hint').textContent=this.editor.pending&&this.editor.pattern?.bars===8&&pattern?.bars===4?'後半4小節を外す候補です。聴いて「オッケー」で決めよう。':'';
   const manual=this.editor.previewPattern?.source==='manual';
   if(!manual&&this.mode==='input')this.setMode('edit');
-  $('home-resume').hidden=!this.editor.isOpen;
   $('choose-mic').textContent=$('mic').textContent;
   for(const id of ['choose-example','new-manual','new-image','capture-import-button','capture-import-text'])$(id).disabled=this.busy;
   $('capture').disabled=this.busy||$('mic').getAttribute('aria-pressed')!=='true';
@@ -176,6 +190,7 @@ export class MelodyScreens {
   if(this.proposal)$('phrase-feedback').textContent='つなげる画面の候補を確定か取消してから登録できます。';
   $('phrase-name').disabled=this.busy;
   for(const id of ['after-keep-connect','after-keep-more'])$(id).disabled=this.busy;
+  for(const b of document.querySelectorAll('[data-work-screen]'))b.disabled=this.busy||!!this.placementWorkflow?.active;
   for(const b of document.querySelectorAll('[data-mode]'))b.disabled=this.busy||(b.dataset.mode==='input'&&!manual);
   document.body.dataset.createMode=this.mode;
   $('composer-candidate').hidden=!manual||this.mode!=='input';
@@ -198,6 +213,14 @@ export class MelodyScreens {
  }
  createAnotherPhrase(){
   if(this.busy||this.proposal||this.placementWorkflow?.active)return;
+  const checkpoint=this.editor.checkpoint(!!this.songWorkflow?.id);
+  const unregistered=checkpoint&&extractSongPhrases({schemaVersion:1,data:{sequence:this.sequence,checkpoint}}).some(p=>p.id==='current');
+  if(checkpoint&&(this.editor.pending||unregistered||!canKeepPhrase(this.editor.pattern))){
+   this.go('create');if($('phrase-tools'))$('phrase-tools').open=true;
+   const message=this.editor.pending?'今の変更をオッケーか取消で決めてから、フレーズを登録してください。元の作業は残しています。':canKeepPhrase(this.editor.pattern)?'今のフレーズを登録してから、もうひとつつくれます。元の作業は残しています。':'今の作業を残しています。音や伴奏を入れ、フレーズを登録してから追加できます。';
+   $('phrase-feedback').textContent=message;$('capture-edit-status').textContent=message;return;
+  }
+  this.chooseReturn=this.screen==='connect'?'connect':'create';
   this.go('choose');
  }
  addPhrase(pattern,name){
@@ -235,8 +258,7 @@ export class MelodyScreens {
   $('sequence-empty').hidden=!!this.sequence.patterns.length;
   $('sequence-create').textContent=this.sequence.patterns.length?'もうひとつ つくる':'フレーズを つくる';
   $('sequence-create').disabled=locked;$('sequence-import').disabled=locked;
-  $('sequence-song').disabled=this.busy;$('sequence-song-name').textContent=this.songWorkflow?.id?`いまの曲：${$('song-title')?.value||this.songWorkflow.title||'わたしのきょく'}`:'新しい曲';
-  $('home-connect').querySelector('small').textContent=this.sequence.patterns.length?`フレーズ${this.sequence.patterns.length}こ・ならべた順番${draft.placements.length}こ`:'フレーズをならべて、長い曲に';
+  $('sequence-song').disabled=this.busy;for(const id of ['sequence-song-name','create-song-name']){const name=$(id);if(name){name.textContent=this.songWorkflow?.id?`いまの曲：${$('song-title')?.value||this.songWorkflow.title||'わたしのきょく'}`:'新しい曲';name.title=name.textContent;}}
   const shelf=$('phrase-shelf');shelf.replaceChildren();
   for(const p of this.sequence.patterns){const b=button(`${p.name} ・ ${p.bars}小節`,()=>this.stage({type:'append',placement:{id:`place-${this.sequence.revision}`,patternId:p.id}}));b.dataset.phrase=p.id;b.toggleAttribute('data-kept-phrase',p===this.keptPhrase);b.disabled=locked||draft.placements.length>=16;shelf.append(b);}
   const line=$('sequence-line');line.replaceChildren();

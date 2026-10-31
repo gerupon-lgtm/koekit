@@ -38,7 +38,7 @@ const base=process.env.SAEZURI_BASE||'http://127.0.0.1:8000';
    assert.equal(report.capture.notes[0].startTick,0);assert.equal(report.capture.notes[0].midi,57);
    assert.ok(report.capture.unquantizedNotes.length>0);
    assert.equal(await page.locator('#acoustic-sync').isDisabled(),false);
-   await page.locator('#discard').click();
+   if(await page.locator('#melody-create').isVisible())await page.locator('#melody-create [data-screen-back]').click();else await page.locator('#discard').click();
   }
   assert.deepEqual(errors,[]);console.log(JSON.stringify({result:'PASS',base,ui:'measured/fallback status, diagnostics and control lock',input:'synthetic Worker input after actual capture'}));
  }finally{await browser.close();}

@@ -18,4 +18,19 @@ async function revealCreationControl(page,selector){
  if(await control.evaluate(n=>(n.id==='image-next'||!!n.closest('#image-words'))&&document.querySelector('#image-choice-reopen')&&!document.querySelector('#image-choice-reopen').hidden))await page.locator('#image-choice-reopen').click();
  await disclose();
 }
-module.exports={revealCreationControl};
+async function openSongActions(page,id){
+ const action=page.locator(`[data-song-rename="${id}"]`);
+ if(!await action.isVisible())await page.locator(`[data-song-more="${id}"]`).click();
+}
+async function resumeSavedSong(page,id=null,screen=null){
+ await page.waitForFunction(()=>document.querySelector('#status')?.dataset.state!=='saving');
+ if(!await page.locator('#song-library').isVisible()){
+  if(await page.locator('#melody-home').isVisible())await page.locator('#home-songs').click();
+  else{if(await page.locator('#melody-create').isVisible())await page.locator('#work-connect').click();await page.locator('#sequence-song').click();}
+ }
+ const target=id?page.locator(`[data-song-open="${id}"]`):page.locator('[data-song-open]').first();await target.click();
+ if(await page.locator('#song-continue').isVisible())await page.locator('#song-continue').click();
+ if(screen==='create'&&await page.locator('#melody-connect').isVisible())await page.locator('#sequence-work-create').click();
+ if(screen==='connect'&&await page.locator('#melody-create').isVisible())await page.locator('#work-connect').click();
+}
+module.exports={revealCreationControl,openSongActions,resumeSavedSong};
