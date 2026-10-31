@@ -1,13 +1,14 @@
-import {MelodyLearning} from './learning.js?v=v0.1.0-20261031130511-e7ac30d';
-import {emptySequence,canKeepPhrase,keepPhrase,sequencePlayback,proposeSequence,commitSequence,undoPlacement} from './sequence-session.js?v=v0.1.0-20261031130511-e7ac30d';
-import {readCaptureReport} from './capture-report.js?v=v0.1.0-20261031130511-e7ac30d';
-import {setupPlaybackSheet} from './sheet-controls.js?v=v0.1.0-20261031130511-e7ac30d';
-import {PlacementWorkflow} from './placement-workflow.js?v=v0.1.0-20261031130511-e7ac30d';
-import {EndingWorkflow} from './ending-workflow.js?v=v0.1.0-20261031130511-e7ac30d';
-import {extractSongPhrases} from './phrase-transfer.js?v=v0.1.0-20261031130511-e7ac30d';
+import {formatBuildTime} from './build-display.js?v=v0.1.0-20261031144007-3fbf8da';
+import {MelodyLearning} from './learning.js?v=v0.1.0-20261031144007-3fbf8da';
+import {emptySequence,canKeepPhrase,keepPhrase,sequencePlayback,proposeSequence,commitSequence,undoPlacement} from './sequence-session.js?v=v0.1.0-20261031144007-3fbf8da';
+import {readCaptureReport} from './capture-report.js?v=v0.1.0-20261031144007-3fbf8da';
+import {setupPlaybackSheet} from './sheet-controls.js?v=v0.1.0-20261031144007-3fbf8da';
+import {PlacementWorkflow} from './placement-workflow.js?v=v0.1.0-20261031144007-3fbf8da';
+import {EndingWorkflow} from './ending-workflow.js?v=v0.1.0-20261031144007-3fbf8da';
+import {extractSongPhrases} from './phrase-transfer.js?v=v0.1.0-20261031144007-3fbf8da';
 const $=id=>document.getElementById(id);
 const trialBuild=new URL(import.meta.url).searchParams.get('v')||'local-20261010';
-const trialVersion=trialBuild.match(/-(\d{14})-/)?.[1]||trialBuild;
+const trialVersion=formatBuildTime(trialBuild);
 const button=(text,fn)=>{const b=document.createElement('button');b.type='button';b.textContent=text;b.onclick=fn;return b;};
 
 export class MelodyScreens {

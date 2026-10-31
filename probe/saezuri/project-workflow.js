@@ -1,8 +1,8 @@
-import {setupPlaybackSheet} from './sheet-controls.js?v=v0.1.0-20261031130511-e7ac30d';
-import {blankPattern} from './entry-session.js?v=v0.1.0-20261031130511-e7ac30d';
-import {migrateProject,allocatePart,capturePart,syncProjectParts,emptyPartCheckpoint} from './project-session.js?v=v0.1.0-20261031130511-e7ac30d';
-import {canKeepPhrase,emptySequence,sequencePlayback,proposeSequence} from './sequence-session.js?v=v0.1.0-20261031130511-e7ac30d';
-import {ArrangementGestures} from './arrangement-gestures.js?v=v0.1.0-20261031130511-e7ac30d';
+import {setupPlaybackSheet} from './sheet-controls.js?v=v0.1.0-20261031144007-3fbf8da';
+import {blankPattern} from './entry-session.js?v=v0.1.0-20261031144007-3fbf8da';
+import {migrateProject,allocatePart,capturePart,syncProjectParts,emptyPartCheckpoint} from './project-session.js?v=v0.1.0-20261031144007-3fbf8da';
+import {canKeepPhrase,emptySequence,sequencePlayback,proposeSequence} from './sequence-session.js?v=v0.1.0-20261031144007-3fbf8da';
+import {ArrangementGestures} from './arrangement-gestures.js?v=v0.1.0-20261031144007-3fbf8da';
 const $=id=>document.getElementById(id),copy=v=>structuredClone(v);
 const button=(text,action)=>{const b=document.createElement('button');b.type='button';b.textContent=text;b.onclick=action;return b;};
 export class ProjectWorkflow{
