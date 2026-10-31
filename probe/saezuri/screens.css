@@ -431,3 +431,6 @@ body.melody-app{background:#faf5ed;color:#443b36}
 .chord-choice-status{display:flex;align-items:center;gap:8px;margin:8px 0}
 .chord-choice-status #chord-candidate{flex:1;min-width:0}
 #chord-sheet #chord-remove{width:90px;min-height:44px;margin:0;padding:4px;font-size:12px}
+
+.melody-app .backing-setting-actions{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px}
+.melody-app .backing-setting-actions button{min-width:0;min-height:44px;margin:0;padding:6px;font-size:13px}

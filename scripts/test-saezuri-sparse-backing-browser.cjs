@@ -1,22 +1,22 @@
 const {chromium}=require('../.local-tools/node_modules/playwright'),assert=require('node:assert/strict');
-const {startNewPart,openProjectPart,revealCreationControl}=require('./saezuri-browser-controls.cjs');
+const {startNewPart,openProjectPart,revealCreationControl,chooseHat}=require('./saezuri-browser-controls.cjs');
 const base=process.env.SAEZURI_BASE||'http://127.0.0.1:8026';
 (async()=>{const browser=await chromium.launch({channel:'chrome',headless:true,args:['--autoplay-policy=no-user-gesture-required']});try{
  const page=await browser.newPage({viewport:{width:390,height:740},serviceWorkers:'block'}),errors=[];page.on('pageerror',e=>errors.push(e.message));page.setDefaultTimeout(12000);
  const click=s=>page.locator(s).click(),report=async()=>{await page.locator('#report').evaluate(n=>n.click());return JSON.parse(await page.locator('#metrics').textContent());};
  await page.goto(base+'/probe/saezuri/');await startNewPart(page);await click('[data-mode="backing"]');
- await page.locator('#image-rhythm').selectOption('whole');await click('#image-settings-open');await page.locator('#image-enabled').check();await page.locator('#image-drums').selectOption('hat-half-front');await click('#backing-settings-close');
- let r=await report();assert.equal(r.captureEditing.pending,true);assert.equal(r.captureEditing.editCandidate.accompaniment.rhythm,'whole');assert.equal(r.captureEditing.editCandidate.accompaniment.drumPattern,'hat-half-front');
+ await page.locator('#image-rhythm').selectOption('whole');await click('#image-settings-open');await page.locator('#image-enabled').check();await chooseHat(page,'hat-half-front');await click('#backing-settings-close');
+ let r=await report();assert.equal(r.captureEditing.pending,true);assert.equal(r.captureEditing.editCandidate.accompaniment.rhythm,'whole');assert.equal(r.captureEditing.editCandidate.accompaniment.drumPattern,'hat-half-on');
  await click('#preview');await page.waitForFunction(()=>document.querySelector('#status').dataset.state==='playing');await click('#stop');await click('#capture-edit-confirm');
- await page.locator('#image-rhythm').selectOption('halves');await click('#image-settings-open');await page.locator('#image-drums').selectOption('hat-half-back');await click('#backing-settings-close');
- await click('#capture-edit-confirm');r=await report();assert.equal(r.captureCandidate.accompaniment.rhythm,'halves');assert.equal(r.captureCandidate.accompaniment.drumPattern,'hat-half-back');
+ await page.locator('#image-rhythm').selectOption('halves');await click('#image-settings-open');await chooseHat(page,'hat-half-back');await click('#backing-settings-close');
+ await click('#capture-edit-confirm');r=await report();assert.equal(r.captureCandidate.accompaniment.rhythm,'halves');assert.equal(r.captureCandidate.accompaniment.drumPattern,'hat-half-on');
  await click('#image-settings-open');await page.locator('#image-drums').selectOption('none');await click('#backing-settings-close');await click('#capture-edit-confirm');
  await page.locator('[data-chord-bar="0"]').click();await click('#chord-count-start');await page.waitForFunction(()=>document.querySelector('#chord-metronome').dataset.state==='running');await click('#chord-count-stop');await click('#chord-close');
- await click('#capture-edit-undo');r=await report();assert.equal(r.captureEditing.editCandidate.accompaniment.drumPattern,'hat-half-back');assert.equal(r.captureCandidate.accompaniment.drumPattern,'none');await click('#capture-edit-confirm');
+ await click('#capture-edit-undo');r=await report();assert.equal(r.captureEditing.editCandidate.accompaniment.drumPattern,'hat-half-on');assert.equal(r.captureCandidate.accompaniment.drumPattern,'none');await click('#capture-edit-confirm');
  await page.locator('#image-rhythm').selectOption('whole');await click('#capture-edit-undo');r=await report();assert.equal(r.captureCandidate.accompaniment.rhythm,'halves');
  await click('#image-settings-open');await click('#image-sounds');await page.locator('#sound-drums').selectOption('none');await click('#sounds-close');
  await page.locator('#image-drums').selectOption('auto');r=await report();assert.equal(r.captureEditing.editCandidate.accompaniment.sounds.drums,'none','auto preserves explicit drum mute');assert.equal(await page.locator('#image-drums').inputValue(),'none');
- await page.locator('#image-drums').selectOption('hat-backbeat');r=await report();assert.equal(r.captureEditing.editCandidate.accompaniment.sounds.drums,'acoustic','explicit hat selection enables its sound');await click('#backing-settings-close');await click('#capture-edit-confirm');
+ await chooseHat(page,'hat-backbeat');r=await report();assert.equal(r.captureEditing.editCandidate.accompaniment.sounds.drums,'acoustic','explicit hat selection enables its sound');await click('#backing-settings-close');await click('#capture-edit-confirm');
  for(const [width,height] of [[320,568],[390,740],[740,390],[1280,800]]){
   await page.setViewportSize({width,height});await click('#image-settings-open');
   assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
@@ -25,7 +25,7 @@ const base=process.env.SAEZURI_BASE||'http://127.0.0.1:8026';
  }
  await page.setViewportSize({width:390,height:740});await page.screenshot({path:'.local-tools/sparse-backing-main.png',fullPage:true});await click('#image-settings-open');await page.screenshot({path:'.local-tools/sparse-backing-settings.png',fullPage:true});await click('#backing-settings-close');
  await page.waitForFunction(()=>document.querySelector('#song-status').dataset.saved==='true');await page.reload();await click('#home-songs');await page.locator('[data-song-open]').first().click();await openProjectPart(page);await click('[data-mode="backing"]');
- r=await report();assert.equal(r.captureCandidate.accompaniment.rhythm,'halves');assert.equal(r.captureCandidate.accompaniment.drumPattern,'hat-backbeat');await click('#image-settings-open');assert.equal(await page.locator('#image-drums').inputValue(),'hat-backbeat');await click('#backing-settings-close');
+ r=await report();assert.equal(r.captureCandidate.accompaniment.rhythm,'halves');assert.equal(r.captureCandidate.accompaniment.drumPattern,'hat-half-off');await click('#image-settings-open');assert.equal(await page.locator('#image-drums').inputValue(),'hat-half-off');await click('#backing-settings-close');
  const backbeat=await page.evaluate(async()=>{document.querySelector('#report').click();const p=JSON.parse(document.querySelector('#metrics').textContent).captureCandidate;const {accompanimentEvents}=await import('/saezuri/music/accompaniment.js');return accompanimentEvents(p).filter(e=>e.part==='drums').map(e=>e.startTick)});assert.deepEqual(backbeat,[4,12,20,28,36,44,52,60]);
  // Render the shipped voices through the native audio engine. Sustained harmony
  // stays audible between the two strikes; hats have the requested accents.

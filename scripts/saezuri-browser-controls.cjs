@@ -44,3 +44,17 @@ async function openProjectPart(page,index=-1){
  await page.locator('[data-part-original]').click();
 }
 module.exports.startNewPart=startNewPart;module.exports.openProjectPart=openProjectPart;
+
+// Exercise the two visible selectors, including fixtures saved with a combined id.
+function hatChoice(id){return ({
+ 'hat-half-front':['hat-half-on','beat-1'],'hat-half-back':['hat-half-on','beat-3'],
+ 'hat-backbeat':['hat-half-off','none'],'hat-backbeat-front':['hat-half-off','beat-2'],'hat-backbeat-back':['hat-half-off','beat-4'],
+ 'hat-quarters-first':['hat-quarter-on','beat-1'],'hat-quarters-third':['hat-quarter-on','beat-3'],
+ 'hat-quarters-front':['hat-quarter-on','beats-13'],'hat-quarters-back':['hat-quarter-on','beats-24'],
+})[id]??[id,'none'];}
+async function chooseHat(page,id,accent){
+ const [rhythm,defaultAccent]=hatChoice(id),selected=accent??defaultAccent;
+ if(await page.locator('#image-drums').inputValue()!==rhythm)await page.locator('#image-drums').selectOption(rhythm);
+ if(!['auto','none'].includes(rhythm)&&await page.locator('#image-accent').inputValue()!==selected)await page.locator('#image-accent').selectOption(selected);
+}
+module.exports.chooseHat=chooseHat;module.exports.hatChoice=hatChoice;

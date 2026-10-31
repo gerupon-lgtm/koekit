@@ -52,7 +52,7 @@ export function validateImageArrangement(value){
 export function generateImageAccompaniment(pattern,choice=DEFAULT_IMAGE,{resetManual=false}={}){
  if(!validImageChoice(choice))throw new Error('IMAGE_INVALID');
  const old=structuredClone(pattern.accompaniment??{enabled:true,genre:'nursery',rhythm:'quarters',progression:'home'});
- if(resetManual){delete old.chords;delete old.sounds;delete old.manualSettings;delete old.drumPattern;}
+ if(resetManual){delete old.chords;delete old.sounds;delete old.manualSettings;delete old.drumPattern;delete old.drumAccent;}
  const previous=old.imageArrangement,sameChoice=previous&&['type','speed','mood'].every(key=>previous.choice[key]===choice[key]);
  const manual=old.manualSettings??{},type=manual.genre?old.genre:choice.type,profile=profiles[type];
  const index=sameChoice?(previous.index+1)%imagePatternCount(type):0;
