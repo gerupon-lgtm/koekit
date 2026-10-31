@@ -54,4 +54,12 @@
 
 WebKitでは数値のネイティブ置換、役割・コード／空白・毎拍アクセント、保存／再開、3サイズと録音画面4サイズを確認。Windows WebKitで音声APIが利用できないため、この結果をSafari実機の再生・録音の証拠とはしない。Chromeの実音声計算では8／16分毎拍を含む16条件の強弱・発音・有限値・ピークを確認した。コードとベースの四分音符の空白も、全音符／二分音符の3音源方式で減衰後の無音と次コードの再発音を確認した。
 
-公開先の版・キャッシュ・ファイル一致・通常URLの結果は公開後に記録する。実機での操作感、聴感、OS・ブラウザー・キーボード・PWAごとの選択メニューは未確認として残す。
+実機での操作感、聴感、OS・ブラウザー・キーボード・PWAごとの選択メニューは未確認として残す。`SR-実機受入` で端末・OS・ブラウザー・キーボード・起動形態を記録して確認する。
+
+公開先は [サエズリズム](https://koekit.sikumilab.com/probe/saezuri/)。実装 `35a39bd`、公開 `deeb09adced79896a398d7381b2d69ff3d8b0ed4`。BUILD `v0.1.0-20261031231907-35a39bd`、画面表示 **2026/11/01 08:19:07 JST**。既存のスタンプで66参照ファイルとSWを更新し、版整合・差分チェック・最終Node360件が通過。
+
+[Pages41252140174](https://github.com/gerupon-lgtm/koekit/actions/runs/41252140174) の build／report-build-status／deploy はすべてsuccess。公開118ファイルをGitの公開コミットのバイト列・長さ・SHA-256、HTTPS、種別、HTTP状態と照合した。
+
+通常の公開URLで `test-saezuri-settings-roles-browser.cjs` が成功。3役割、数値タップ置換／再タップ部分修正／予約取消、実際のコード列、試聴・取消の非変更、明示使用、手指定・音符・空白・テンポ保持、Undo、4サイズ、保存・再開を確認。公開PWAをSW制御下で開き、数値を132へ打ち替えて保存、16分毎拍アクセントと四分音符の空白、下部とじる、再生を保った設定閉じ、保存・再開、暖機後のオフライン再開を確認した。ブラウザーの環境タイムゾーンを米国にしてもJSTの版表示と一致し、ページ内エラーはなかった。
+
+主な再現用スクリプトは `scripts/test-saezuri-settings-roles-browser.cjs`、`scripts/test-saezuri-settings-roles-webkit-browser.cjs`、`scripts/test-saezuri-image-recording-layout-browser.cjs`、`scripts/test-saezuri-hat-grid-browser.cjs`、`scripts/test-saezuri-tutorial-browser.cjs`。証拠ログは `.local-tools/settings-roles-20261101-*`、公開照合は `.local-tools/saezuri-entry-20261018/public-assets.json`。
