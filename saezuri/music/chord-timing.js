@@ -14,6 +14,9 @@ function beatTick(pattern,bar,beat){
 export function setChordAtBeat(pattern,bar,beat,chord){
  const startTick=beatTick(pattern,bar,beat);if(chordTones(chord).code)throw new Error('CHORD_INVALID');
  const current=chordAtTick(pattern,startTick),end=current.startTick+current.durationTick;
+ return replaceChordRange(pattern,startTick,end,chord);
+}
+function replaceChordRange(pattern,startTick,end,chord){
  const value=structuredClone(pattern.accompaniment),chords=[];
  for(const c of value.chords??[]){
   const last=c.startTick+c.durationTick;
@@ -30,5 +33,6 @@ export function setChordAtBeat(pattern,bar,beat,chord){
 }
 export function removeChordAtBeat(pattern,bar,beat){
  const tick=beatTick(pattern,bar,beat);if(beat===0)throw new Error('CHORD_TIME');
- return setChordAtBeat(pattern,bar,beat,chordAtTick(pattern,tick-1));
+ const previous=chordAtTick(pattern,tick-1),current=chordAtTick(pattern,tick);
+ return replaceChordRange(pattern,previous.startTick,current.startTick+current.durationTick,previous);
 }

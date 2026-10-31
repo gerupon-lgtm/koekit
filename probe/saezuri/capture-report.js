@@ -13,7 +13,7 @@ export function readCaptureReport(text) {
     if(validateNotes(pattern)||(pattern.source==='tap'&&pattern.gridStep!==1)||pattern.notes.length>pattern.bars*16||pattern.notes.some(n=>typeof n.id!=='string')||
        !Number.isFinite(tempo)||tempo<60||tempo>180||
        !((pattern.source==='tap'&&!pattern.key)||(pattern.key?.tonicPitchClass===0&&pattern.key?.mode==='major')||(pattern.key?.tonicPitchClass===9&&pattern.key?.mode==='minor'))||
-       (pattern.accompaniment && validateAccompaniment(pattern.accompaniment))) throw new Error('通常作成の記録を読み込めません。');
+       (pattern.accompaniment && validateAccompaniment(pattern.accompaniment,pattern.bars))) throw new Error('通常作成の記録を読み込めません。');
     return {pattern:structuredClone(pattern),options:{tempo},importedFrom:{prototype:report.prototype,timestamp:report.timestamp,conditions:report.conditions}};
   }
   const capture = report?.capture, options = report?.captureOptions;
@@ -22,7 +22,7 @@ export function readCaptureReport(text) {
       !Array.isArray(capture.notes) || capture.notes.length > bars*16 ||
       capture.notes.some(note => typeof note?.id !== 'string') ||
       validateNotes({ bars, gridStep: 1, notes: capture.notes })) {
-    throw new Error('4小節／8小節の取り込み記録を読み込めません。元の記録を確認してください。');
+    throw new Error('1・2・4・8小節の取り込み記録を読み込めません。元の記録を確認してください。');
   }
   let frames = [];
   if (capture.analysisComparison) {

@@ -1,6 +1,7 @@
+import {PHRASE_LENGTHS} from '../../saezuri/document.js';
 import {captureTiming} from './capture-support.js?v=v0.1.0-20261031153113-7832e2d';
 export function nextLoopHead({anchor,now,tempo,bars}){
- if(!Number.isFinite(anchor)||!Number.isFinite(now)||!Number.isFinite(tempo)||tempo<=0||![4,8].includes(bars))throw new Error('LOOP_TIME');
+ if(!Number.isFinite(anchor)||!Number.isFinite(now)||!Number.isFinite(tempo)||tempo<=0||!PHRASE_LENGTHS.includes(bars))throw new Error('LOOP_TIME');
  const length=bars*4*60/tempo;
  return now<anchor?anchor:anchor+(Math.floor((now-anchor)/length)+1)*length;
 }

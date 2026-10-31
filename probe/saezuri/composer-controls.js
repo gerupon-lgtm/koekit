@@ -15,7 +15,7 @@ export class ComposerControls {
        <label>表示<select id="composer-view"><option value="both">譜面とカード</option><option value="score">譜面</option><option value="blocks">カード</option></select></label>
        <label>小節 <select id="composer-bar"></select></label><div id="composer-beats" aria-label="入力位置"></div>
        <div class="fields"><label>キー<select id="composer-key"><option>C</option><option>Am</option></select></label>
-       <button id="composer-extend">8小節に延ばす</button><button id="composer-copy">前半をコピーして8小節</button><button id="composer-shorten">4小節にする候補</button></div>
+       <button id="composer-extend">8小節に延ばす</button><button id="composer-copy">くり返して8小節</button><button id="composer-shorten">4小節にする候補</button></div>
        <p>短縮は後半を外した候補です。聴いてオッケーで確定します。「もどす」で戻せます。</p>
       </details>
       <div class="composer-values"><label>高さ<select id="composer-octave"><option value="0">ふつう</option><option value="1">うえ</option><option value="2">うえうえ（ド）</option></select></label>
@@ -107,7 +107,7 @@ export class ComposerControls {
     const draft=editor.pending&&!entry;
     for(const control of this.panel.querySelectorAll('button,input,select')) control.disabled=busy||draft;
     this.$('extend').disabled=this.$('copy').disabled=busy||pattern.bars===8||!!entry;
-    this.$('shorten').disabled=busy||pattern.bars===4||!!entry;
+    this.$('shorten').disabled=busy||pattern.bars<=4||!!entry;
     this.$('replace').disabled=busy||draft||!!entry||!editor.selectedNoteId;
     for(const b of this.$('keys').children) b.disabled=busy||draft||(Number(this.$('octave').value)===2 && !['0','7'].includes(b.dataset.pitch));
     this.$('candidate').textContent=entry

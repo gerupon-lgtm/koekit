@@ -1,3 +1,4 @@
+import {PHRASE_LENGTHS} from '../../saezuri/document.js';
 import {formatBuildTime} from './build-display.js?v=v0.1.0-20261031153113-7832e2d';
 import {MelodyLearning} from './learning.js?v=v0.1.0-20261031153113-7832e2d';
 import {emptySequence,canKeepPhrase,keepPhrase,sequencePlayback,proposeSequence,commitSequence,undoPlacement} from './sequence-session.js?v=v0.1.0-20261031153113-7832e2d';
@@ -33,7 +34,7 @@ export class MelodyScreens {
   const key=$('composer-key'),keyLabel=key.closest('label');for(const child of [...keyLabel.childNodes])if(child.nodeType===3)child.remove();keyLabel.prepend(document.createTextNode('ふんいき'));
   key.title='あかるめ：長調（C）／くらめ：短調（Am）';
   for(const option of key.options){const value=option.value;option.value=value;option.textContent=value==='Am'?'くらめ':'あかるめ';}
-  shape.append(keyLabel);const length=document.createElement('label');length.innerHTML='小節数<select id="phrase-bars"><option value="4">4小節</option><option value="8">8小節</option></select>';shape.append(length);
+  shape.append(keyLabel);const length=document.createElement('label');length.innerHTML=`小節数<select id="phrase-bars">${PHRASE_LENGTHS.map(b=>`<option value="${b}">${b}小節</option>`).join('')}</select>`;shape.append(length);
   create.querySelector('#creation-tabs').after(shape);const shapeHint=document.createElement('p');shapeHint.id='phrase-shape-hint';shapeHint.setAttribute('role','status');shape.after(shapeHint);
   shape.before($('image-words'));shape.append($('image-next'),$('image-choice-reopen'));
   length.querySelector('select').onchange=()=>editor.changeStructure({type:'resize',bars:Number($('phrase-bars').value)});
@@ -179,7 +180,7 @@ export class MelodyScreens {
   const pattern=this.editor.previewPattern;
   $('phrase-bars').value=String(pattern?.bars??4);$('phrase-bars').disabled=this.busy||!this.editor.isOpen||!!this.editor.entry;
   $('composer-key').value=pattern?.key?.mode==='minor'?'Am':'C';$('composer-key').disabled=this.busy||!this.editor.isOpen||!!this.editor.entry;
-  $('phrase-shape-hint').textContent=this.editor.pending&&this.editor.pattern?.bars===8&&pattern?.bars===4?'後半4小節を外す候補です。聴いて「オッケー」で決めよう。':'';
+  $('phrase-shape-hint').textContent=this.editor.pending&&this.editor.pattern?.bars>pattern?.bars?`${pattern.bars}小節に短くする候補です。聴いて「オッケー」で決めよう。`:'';
   const manual=this.editor.previewPattern?.source==='manual';
   if(!manual&&this.mode==='input')this.setMode('edit');
   $('choose-mic').textContent=$('mic').textContent;

@@ -1,9 +1,10 @@
 // Pure timing/editing foundation. Persistence and Q1/Q2 lifecycle are not implemented.
 const error = (code, details = {}) => ({ code, details });
+export const PHRASE_LENGTHS=Object.freeze([1,2,4,8]);
 export const tickSeconds = (tick, tempo) => tick * 60 / (tempo * 4);
 
 export function validateNotes(pattern) {
-  if (!pattern || ![4, 8].includes(pattern.bars) || ![1, 2].includes(pattern.gridStep) || !Array.isArray(pattern.notes)) return error('PATTERN_INVALID');
+  if (!pattern || !PHRASE_LENGTHS.includes(pattern.bars) || ![1, 2].includes(pattern.gridStep) || !Array.isArray(pattern.notes)) return error('PATTERN_INVALID');
   if (pattern.notes.some(note => !note || typeof note !== 'object')) return error('NOTE_INVALID');
   const ids = new Set();
   let end = 0;
@@ -69,12 +70,20 @@ export function undo(state) {
   return { ...structuredClone(stack.pop()), revision: state.revision + 1, undoStack: stack };
 }
 export function resizePattern(state, bars, { copy = false, confirmed = false } = {}) {
-  if (![4, 8].includes(bars)) return error('PATTERN_INVALID');
+  if (!PHRASE_LENGTHS.includes(bars)) return error('PATTERN_INVALID');
   if (bars === state.pattern.bars) return state;
   const next = structuredClone(state.pattern);
-  if (bars === 4 && next.notes.some(n => n.startTick + n.durationTick > 64) && !confirmed) return error('SHORTEN_CONFIRM');
-  if (bars === 8 && copy) next.notes.push(...next.notes.map(n => ({ ...n, id: `${n.id}-copy-${state.revision}`, startTick: n.startTick + 64 })));
-  if (bars === 4) next.notes = next.notes.filter(n => n.startTick < 64).map(n => ({ ...n, durationTick: Math.min(n.durationTick, 64 - n.startTick) }));
+  const total=bars*16,sourceLength=state.pattern.bars*16;
+  const losesNotes=next.notes.some(n=>n.startTick+n.durationTick>total);
+  const losesChords=next.accompaniment?.chords?.some(c=>c.startTick+c.durationTick>total);
+  if(total<sourceLength&&(losesNotes||losesChords)&&!confirmed)return error('SHORTEN_CONFIRM');
+  if(total>sourceLength&&copy){
+    for(let offset=sourceLength;offset<total;offset+=sourceLength){
+      next.notes.push(...state.pattern.notes.map(n=>({...n,id:`${n.id}-copy-${state.revision}${offset===sourceLength?'':`-${offset}`}`,startTick:n.startTick+offset,durationTick:Math.min(n.durationTick,total-offset-n.startTick)})));
+      if(next.accompaniment?.chords)next.accompaniment.chords.push(...state.pattern.accompaniment.chords.map(c=>({...c,startTick:c.startTick+offset,durationTick:Math.min(c.durationTick,total-offset-c.startTick)})));
+    }
+  }
+  if(total<sourceLength)next.notes=next.notes.filter(n=>n.startTick<total).map(n=>({...n,durationTick:Math.min(n.durationTick,total-n.startTick)}));
   next.bars = bars;
   if(next.accompaniment?.chords)next.accompaniment.chords=next.accompaniment.chords.filter(c=>c.startTick<bars*16).map(c=>({...c,durationTick:Math.min(c.durationTick,bars*16-c.startTick)}));
   const invalid = validateNotes(next);

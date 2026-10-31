@@ -26,7 +26,7 @@ export class ImageControls {
    if(id==='genre')Object.assign(value,{rhythm:PRESETS[value.genre].rhythm,progression:PRESETS[value.genre].progression});
    if(id==='drums'){
     value.drumPattern=this.$('drums').value;
-    if(value.drumPattern!=='none'&&accompanimentSounds(value).drums==='none')value.sounds={...value.sounds,drums:SOUND_PRESETS[value.genre].drums};
+    if(['hat-half-front','hat-half-back'].includes(value.drumPattern)&&accompanimentSounds(value).drums==='none')value.sounds={...value.sounds,drums:SOUND_PRESETS[value.genre].drums};
    }
    if(value.imageChoice&&id!=='drums')value.manualSettings={...value.manualSettings,[id]:true,...(id==='genre'?{rhythm:true,progression:true}:{})};
    if(value.imageChoice&&id==='progression'&&!this.$('progression').value)value.manualSettings.progression=false;

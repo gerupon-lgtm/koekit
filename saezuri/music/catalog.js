@@ -1,3 +1,4 @@
+import {PHRASE_LENGTHS} from '../document.js';
 // Agreed musical vocabulary only. Genre arrangements/voicings await trial listening.
 export const CHORD_PITCH_NAMES=Object.freeze(['C','D♭','D','E♭','E','F','G♭','G','A♭','A','B♭','B']);
 export const chordLabel=chord=>chord?`${CHORD_PITCH_NAMES[chord.root]}${({major:'',minor:'m'})[chord.quality]??chord.quality}${chord.bass===chord.root?'':`/${CHORD_PITCH_NAMES[chord.bass]}`}`:'';
@@ -33,7 +34,7 @@ export function validateCatalog(catalog) {
     for (const chord of progression.chords) if (chordTones(chord).code) return { code: 'CHORD_INVALID' };
   }
   for (const rhythm of catalog.rhythms) {
-    if (![4, 8].includes(rhythm.bars) || !Array.isArray(rhythm.events)) return { code: 'RHYTHM_INVALID' };
+    if (!PHRASE_LENGTHS.includes(rhythm.bars) || !Array.isArray(rhythm.events)) return { code: 'RHYTHM_INVALID' };
     // Accompaniment may be polyphonic; only its timeline bounds are constrained here.
     for (const event of rhythm.events) if (!event || !Number.isInteger(event.startTick) || event.startTick < 0 || !Number.isInteger(event.durationTick) || event.durationTick < 1 || event.startTick + event.durationTick > rhythm.bars * 16) return { code: 'RHYTHM_EVENT_INVALID' };
   }
