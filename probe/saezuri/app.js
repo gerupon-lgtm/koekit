@@ -1,36 +1,37 @@
-import { proposeNote, commitNote, undo } from '../../saezuri/document.js?v=v0.1.0-20261031010401-7a305bd';
+import { proposeNote, commitNote, undo } from '../../saezuri/document.js?v=v0.1.0-20261031130511-e7ac30d';
 import { microphoneEnabled, setMicrophoneEnabled, onMicrophoneChange } from '../../src/speech/microphone.js';
 import { createSpeechInput, METHODS } from '../../src/speech/index.js';
-import { EditVoice } from './edit-voice.js?v=v0.1.0-20261031010401-7a305bd';
-import {PitchPreview} from './pitch-preview.js?v=v0.1.0-20261031010401-7a305bd';
-import { ProbeTransport,preparePlaybackOutput,scheduleVoice } from './audio.js?v=v0.1.0-20261031010401-7a305bd';
-import { ProbeCapture } from './capture.js?v=v0.1.0-20261031010401-7a305bd';
-import { renderScore, pitchName } from './score.js?v=v0.1.0-20261031010401-7a305bd';
-import { alignCaptureStart } from './capture-support.js?v=v0.1.0-20261031010401-7a305bd';
-import { inferSignature, signature } from './key-signature.js?v=v0.1.0-20261031010401-7a305bd';
-import { CaptureEditorView } from './capture-editor-view.js?v=v0.1.0-20261031010401-7a305bd';
-import { readCaptureReport } from './capture-report.js?v=v0.1.0-20261031010401-7a305bd';
-import { releaseCaptureDetails } from './capture-retention.js?v=v0.1.0-20261031010401-7a305bd';
-import { setupEditorLayout, syncEditorLayout, focusEditor } from './editor-layout.js?v=v0.1.0-20261031010401-7a305bd';
-import {ComposerControls} from './composer-controls.js?v=v0.1.0-20261031010401-7a305bd';
-import {blankPattern} from './entry-session.js?v=v0.1.0-20261031010401-7a305bd';
-import {creationVoiceProfile,TUTORIAL_VOICE_PROFILE,TUTORIAL_BACKING_VOICE_PROFILE,TUTORIAL_PLAY_PROFILE,PROGRESSION_VOICE_PROFILE,PROGRESSION_PLAY_PROFILE,LOOP_VOICE_PROFILE,STOP_VOICE_PROFILE} from './creation-voice.js?v=v0.1.0-20261031010401-7a305bd';
-import {ImageControls} from './image-controls.js?v=v0.1.0-20261031010401-7a305bd';
-import {accompanimentEvents,chordAuditionEvents,SOUNDS,soundLabel} from '../../saezuri/music/accompaniment.js?v=v0.1.0-20261031010401-7a305bd';
-import {MelodyScreens} from './screens.js?v=v0.1.0-20261031010401-7a305bd';
-import {SongWorkflow} from './song-workflow.js?v=v0.1.0-20261031010401-7a305bd';
-import {nextLoopHead} from './loop-timing.js?v=v0.1.0-20261031010401-7a305bd';
-import {alignScreenHeadings} from './headings.js?v=v0.1.0-20261031010401-7a305bd';
-import {VolumeControls,AudioMixer} from './volume.js?v=v0.1.0-20261031010401-7a305bd';
-import {KeyboardControls} from './keyboard-controls.js?v=v0.1.0-20261031010401-7a305bd';
-import {heldVoice} from './live-keyboard-audio.js?v=v0.1.0-20261031010401-7a305bd';
-import {stopLightVoices,lightVoiceStats} from './light-voice.js?v=v0.1.0-20261031010401-7a305bd';
-import {resolveSoundEngine,SOUND_POLICY_REVISION,chordAuditionEngine,CHORD_AUDITION_REVISION} from './sound-engine.js?v=v0.1.0-20261031010401-7a305bd';
-import {playbackLatencyHint,playbackScheduleAll,readPlaybackStats,playbackStatsDelta} from './playback-diagnostics.js?v=v0.1.0-20261031010401-7a305bd';
-import {DEFAULT_IMAGE} from '../../saezuri/music/image-arrangement.js?v=v0.1.0-20261031010401-7a305bd';
-import {CreationDisplays} from './creation-displays.js?v=v0.1.0-20261031010401-7a305bd';
-import {CreationLayout} from './creation-layout.js?v=v0.1.0-20261031010401-7a305bd';
-import {RECORDING_COUNT_BEATS,RECORDING_COUNT_TICKS} from './capture-support.js?v=v0.1.0-20261031010401-7a305bd';
+import { EditVoice } from './edit-voice.js?v=v0.1.0-20261031130511-e7ac30d';
+import {PitchPreview} from './pitch-preview.js?v=v0.1.0-20261031130511-e7ac30d';
+import { ProbeTransport,preparePlaybackOutput,scheduleVoice } from './audio.js?v=v0.1.0-20261031130511-e7ac30d';
+import { ProbeCapture } from './capture.js?v=v0.1.0-20261031130511-e7ac30d';
+import { renderScore, pitchName } from './score.js?v=v0.1.0-20261031130511-e7ac30d';
+import { alignCaptureStart } from './capture-support.js?v=v0.1.0-20261031130511-e7ac30d';
+import { inferSignature, signature } from './key-signature.js?v=v0.1.0-20261031130511-e7ac30d';
+import { CaptureEditorView } from './capture-editor-view.js?v=v0.1.0-20261031130511-e7ac30d';
+import { readCaptureReport } from './capture-report.js?v=v0.1.0-20261031130511-e7ac30d';
+import { releaseCaptureDetails } from './capture-retention.js?v=v0.1.0-20261031130511-e7ac30d';
+import { setupEditorLayout, syncEditorLayout, focusEditor } from './editor-layout.js?v=v0.1.0-20261031130511-e7ac30d';
+import {ComposerControls} from './composer-controls.js?v=v0.1.0-20261031130511-e7ac30d';
+import {ProjectWorkflow} from './project-workflow.js?v=v0.1.0-20261031130511-e7ac30d';
+import {blankPattern} from './entry-session.js?v=v0.1.0-20261031130511-e7ac30d';
+import {creationVoiceProfile,TUTORIAL_VOICE_PROFILE,TUTORIAL_BACKING_VOICE_PROFILE,TUTORIAL_PLAY_PROFILE,PROGRESSION_VOICE_PROFILE,PROGRESSION_PLAY_PROFILE,LOOP_VOICE_PROFILE,STOP_VOICE_PROFILE} from './creation-voice.js?v=v0.1.0-20261031130511-e7ac30d';
+import {ImageControls} from './image-controls.js?v=v0.1.0-20261031130511-e7ac30d';
+import {accompanimentEvents,chordAuditionEvents,SOUNDS,soundLabel} from '../../saezuri/music/accompaniment.js?v=v0.1.0-20261031130511-e7ac30d';
+import {MelodyScreens} from './screens.js?v=v0.1.0-20261031130511-e7ac30d';
+import {SongWorkflow} from './song-workflow.js?v=v0.1.0-20261031130511-e7ac30d';
+import {nextLoopHead} from './loop-timing.js?v=v0.1.0-20261031130511-e7ac30d';
+import {alignScreenHeadings} from './headings.js?v=v0.1.0-20261031130511-e7ac30d';
+import {VolumeControls,AudioMixer} from './volume.js?v=v0.1.0-20261031130511-e7ac30d';
+import {KeyboardControls} from './keyboard-controls.js?v=v0.1.0-20261031130511-e7ac30d';
+import {heldVoice} from './live-keyboard-audio.js?v=v0.1.0-20261031130511-e7ac30d';
+import {stopLightVoices,lightVoiceStats} from './light-voice.js?v=v0.1.0-20261031130511-e7ac30d';
+import {resolveSoundEngine,SOUND_POLICY_REVISION,chordAuditionEngine,CHORD_AUDITION_REVISION} from './sound-engine.js?v=v0.1.0-20261031130511-e7ac30d';
+import {playbackLatencyHint,playbackScheduleAll,readPlaybackStats,playbackStatsDelta} from './playback-diagnostics.js?v=v0.1.0-20261031130511-e7ac30d';
+import {DEFAULT_IMAGE} from '../../saezuri/music/image-arrangement.js?v=v0.1.0-20261031130511-e7ac30d';
+import {CreationDisplays} from './creation-displays.js?v=v0.1.0-20261031130511-e7ac30d';
+import {CreationLayout} from './creation-layout.js?v=v0.1.0-20261031130511-e7ac30d';
+import {RECORDING_COUNT_BEATS,RECORDING_COUNT_TICKS} from './capture-support.js?v=v0.1.0-20261031130511-e7ac30d';
 const compactEditor=setupEditorLayout();
 const requestedEngine=new URLSearchParams(location.search).get('sound');
 const voiceEngine=resolveSoundEngine(requestedEngine);
@@ -623,8 +624,8 @@ shell=new MelodyScreens({editor:captureEditor,onStop:()=>stop(),onNavigate:()=>{
     },
     onTutorialPlay:data=>play(data.pattern,true,{tutorial:true,standalone:true,tempo:data.tempo,totalTicks:data.totalTicks,backing:data.accompaniment}),
     onOpenPattern:(pattern,source,tempo)=>{
-      if(source!=='tutorial')shell?.learning?.end();
-      if(songWorkflow){songWorkflow.practice=source==='tutorial';if(songWorkflow.practice)songWorkflow.status('おてほんは ほぞん枠を使いません',false);}
+      if(source!=='tutorial'){shell?.learning?.end();shell?.projectWorkflow?.prepareSource(pattern);}
+      if(songWorkflow){songWorkflow.practice=source==='tutorial'?true:songWorkflow.practice==='project'?'project':false;if(songWorkflow.practice===true)songWorkflow.status('おてほんは ほぞん枠を使いません',false);}
       keyChoices.capture=null;displayOctaves.capture=0;captureAlignments.clear();
       if(!songWorkflow?.id||source==='tutorial')$('tempo').value=String(tempo);
       captureEditor.openPattern(pattern);$('review').hidden=false;record.capture=null;captureImportSource=null;record.captureOptions=null;record.playback=null;record.editingSource=source;delete record.importedFrom;
@@ -638,6 +639,7 @@ shell=new MelodyScreens({editor:captureEditor,onStop:()=>stop(),onNavigate:()=>{
     captureEditor.restore(checkpoint);$('review').hidden=!captureEditor.isOpen;record.capture=null;captureImportSource=null;record.editingSource='saved';setPhase('idle');
   }});
   shell.songWorkflow=songWorkflow;
+  shell.projectWorkflow=new ProjectWorkflow(shell);
   keyboard=new KeyboardControls({editor:captureEditor,clock:()=>ctx?.currentTime??0,onActivity:()=>syncVoice(),
     onPreview:pattern=>{drawPattern('capture',pattern);captureEditor.invalidatePlayback();},
     prepareVoice:async()=>{cancelPreviews();await prepare();return midi=>heldVoice(ctx,mixer.melody,midi,$('instrument').value,{engine:voiceEngine});},

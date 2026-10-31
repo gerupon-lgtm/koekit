@@ -1,11 +1,12 @@
-import {SongStore,SONG_LIMIT} from '../../saezuri/song-store.js?v=v0.1.0-20261031010401-7a305bd';
-import {checkpointFingerprint,restoreCheckpoint} from './song-session.js?v=v0.1.0-20261031010401-7a305bd';
-import {emptySequence} from './sequence-session.js?v=v0.1.0-20261031010401-7a305bd';
-import {validateComposition} from '../../saezuri/sequence.js?v=v0.1.0-20261031010401-7a305bd';
-import {setupPlaybackSheet} from './sheet-controls.js?v=v0.1.0-20261031010401-7a305bd';
-import {PhraseTransferWorkflow} from './phrase-transfer-workflow.js?v=v0.1.0-20261031010401-7a305bd';
-import {LibraryPlayback} from './library-playback.js?v=v0.1.0-20261031010401-7a305bd';
-import {songNavigation} from './workflow-state.js?v=v0.1.0-20261031010401-7a305bd';
+import {SongStore,SONG_LIMIT} from '../../saezuri/song-store.js?v=v0.1.0-20261031130511-e7ac30d';
+import {checkpointFingerprint,restoreCheckpoint} from './song-session.js?v=v0.1.0-20261031130511-e7ac30d';
+import {emptySequence} from './sequence-session.js?v=v0.1.0-20261031130511-e7ac30d';
+import {validateComposition} from '../../saezuri/sequence.js?v=v0.1.0-20261031130511-e7ac30d';
+import {setupPlaybackSheet} from './sheet-controls.js?v=v0.1.0-20261031130511-e7ac30d';
+import {PhraseTransferWorkflow} from './phrase-transfer-workflow.js?v=v0.1.0-20261031130511-e7ac30d';
+import {LibraryPlayback} from './library-playback.js?v=v0.1.0-20261031130511-e7ac30d';
+import {validateProject} from './project-session.js?v=v0.1.0-20261031130511-e7ac30d';
+import {songNavigation} from './workflow-state.js?v=v0.1.0-20261031130511-e7ac30d';
 const $=id=>document.getElementById(id);
 const copy=value=>structuredClone(value);
 const messages={SONG_LIMIT:`${SONG_LIMIT}きょく いっぱいです。きょくを けすと、新しく ほぞんできます。`,SONG_CONFLICT:'ほかの画面で きょくが変わりました。この画面のつくりかけは残っています。',SONG_DELETED:'ほかの画面で このきょくが消されました。この画面のつくりかけは残っています。'};
@@ -80,11 +81,12 @@ export class SongWorkflow {
  }
  snapshot(){
   if(this.practice)return null;
+  this.shell.projectWorkflow?.capture();
   const placement=this.shell.placementWorkflow;
   const checkpoint=placement?.active?placement.context.workspace?.checkpoint:this.editor.checkpoint(!!this.id||!!this.requestedFingerprint);
-  if(!checkpoint&&!this.shell.sequence.patterns.length&&!this.shell.sequence.keepEmpty)return null;
+  if(!checkpoint&&!this.shell.sequence.patterns.length&&!this.shell.sequence.keepEmpty&&!this.shell.projectWorkflow?.project.parts.length)return null;
   const sequence=copy(this.shell.sequence);sequence.undoStack=[];
-  return {title:$('song-title')?.value||this.title||'',checkpoint,sequence,placementDraft:placement?.snapshot()??null,
+  return {title:$('song-title')?.value||this.title||'',checkpoint,sequence,project:this.shell.projectWorkflow?copy(this.shell.projectWorkflow.project):undefined,placementDraft:placement?.snapshot()??copy(this.shell.projectWorkflow?.parkedPlacement??null),
    sequenceDraft:this.shell.proposal?copy({...this.shell.proposal.next,undoStack:[]}):null,
    settings:{tempo:Number($('tempo').value),instrument:$('instrument').value},
    navigation:{screen:this.shell.lastWorkScreen??'create',mode:this.shell.mode}};
@@ -112,7 +114,7 @@ export class SongWorkflow {
   const leave=()=>{if(operation!==this.departSerial)return;this.departSerial++;this.suspended=true;this.onSaving?.(false);this.onDiscard();
    if(ending){this.shell.sequence=emptySequence();this.shell.proposal=null;this.shell.renderSequence();}
    if(ending){this.id=null;this.revision=null;this.title=null;$('song-title').value='';this.savedFingerprint=this.requestedFingerprint=null;this.error=null;this.failedFingerprint=null;this.shell.keptPhrase=null;this.shell.lastWorkScreen=null;}
-   this.practice=false;this.suspended=false;this.departing=false;action();};
+   this.practice=false;if(ending)this.shell.projectWorkflow?.reset();this.suspended=false;this.departing=false;action();};
   if(await this.flush()){leave();return;}
   this.onSaving?.(false);
   $('song-failure-copy').textContent=messages[this.error?.code]??'つくりかけは この画面に残っています。';
@@ -130,7 +132,7 @@ export class SongWorkflow {
   $('song-failure').addEventListener('close',()=>{if(operation===this.departSerial)this.departing=false;},{once:true});
  }
  async allowNew(){
-  if(this.id||this.shell.sequence.patterns.length)return true;
+  if(this.id)return true;
   try{if((await this.store.list()).length>=this.store.limit){await this.library();$('song-list-status').textContent=`${this.store.limit}きょく いっぱいです。きょくを けしてから、つくろう。`;return false;}}
   catch{/* Editing remains available; the save error is shown when data changes. */}
   return true;
@@ -161,19 +163,20 @@ export class SongWorkflow {
   if(!await this.flush()){$('song-list-status').textContent='今のつくりかけを ほぞんしてから開いてください。';return;}
   const data=copy(record.data);
   if(validateComposition(data.sequence)){$('song-list-status').textContent='きょくを よみこめませんでした。';return;}
-  try{restoreCheckpoint(data.checkpoint);this.shell.placementWorkflow.validate(data.placementDraft,data.sequence);if(data.placementDraft&&data.sequenceDraft||data.sequenceDraft&&validateComposition(data.sequenceDraft))throw new Error('COMPOSITION_INVALID');}catch{$('song-list-status').textContent='つくりかけを よみこめませんでした。ほぞんしたものは残しています。';return;}
+  try{if(data.project&&validateProject(data.project,data.sequence))throw new Error('PROJECT_INVALID');restoreCheckpoint(data.checkpoint);this.shell.placementWorkflow.validate(data.placementDraft,data.sequence);if(data.placementDraft&&data.sequenceDraft||data.sequenceDraft&&validateComposition(data.sequenceDraft))throw new Error('COMPOSITION_INVALID');}catch{$('song-list-status').textContent='つくりかけを よみこめませんでした。ほぞんしたものは残しています。';return;}
   const restore=()=>{
     try{this.suspended=true;this.onDiscard();this.practice=false;this.shell.sequence={...data.sequence,undoStack:[]};this.shell.proposal=null;
+    this.shell.projectWorkflow?.restore(data);
     if(data.sequenceDraft){const next=data.sequenceDraft;const {undoStack,...base}=this.shell.sequence;this.shell.proposal={baseRevision:this.shell.sequence.revision,base:copy(base),next};}
     this.id=record.id;this.revision=record.revision;this.title=record.title;this.error=null;this.failedFingerprint=null;this.savedFingerprint=this.requestedFingerprint=null;
-    const navigation=songNavigation(data);
-    $('song-title').value=record.title;this.onRestore(data.checkpoint,data.settings);this.shell.setMode(navigation.mode);this.shell.renderSequence();$('song-library').close();$('song-resume').close();this.shell.go(navigation.screen);
-    if(data.placementDraft)this.shell.placementWorkflow.begin(data.placementDraft.placementId,data.placementDraft.checkpoint);
+    const navigation=this.shell.projectWorkflow?{...songNavigation(data),screen:'connect'}:songNavigation(data);
+    $('song-title').value=record.title;const activePart=this.shell.projectWorkflow?.active;this.onRestore(activePart?.checkpoint??data.checkpoint,data.settings);this.shell.setMode(navigation.mode);this.shell.renderSequence();$('song-library').close();$('song-resume').close();this.shell.go(navigation.screen);
+    if(data.placementDraft&&!this.shell.projectWorkflow)this.shell.placementWorkflow.begin(data.placementDraft.placementId,data.placementDraft.checkpoint);
     this.savedFingerprint=this.requestedFingerprint=checkpointFingerprint(data);this.status('ほぞんしたよ',true);
    }catch{$('song-list-status').textContent='つくりかけを よみこめませんでした。ほぞんしたものは残しています。';}
    finally{this.suspended=false;}
   };
-  if(!data.checkpoint?.draft&&!data.sequenceDraft&&!data.placementDraft){restore();return;}
+  if(this.shell.projectWorkflow||!data.checkpoint?.draft&&!data.sequenceDraft&&!data.placementDraft){restore();return;}
   const confirmed=!!data.checkpoint?.confirmed||!!data.sequence.patterns.length;
   $('song-resume-copy').textContent=confirmed?'きめたところは のこるよ。':'つくりかけを けすと、このきょくを けすよ。';
   $('song-continue').onclick=restore;

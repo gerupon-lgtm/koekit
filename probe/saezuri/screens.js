@@ -1,10 +1,10 @@
-import {MelodyLearning} from './learning.js?v=v0.1.0-20261031010401-7a305bd';
-import {emptySequence,canKeepPhrase,keepPhrase,sequencePlayback,proposeSequence,commitSequence,undoPlacement} from './sequence-session.js?v=v0.1.0-20261031010401-7a305bd';
-import {readCaptureReport} from './capture-report.js?v=v0.1.0-20261031010401-7a305bd';
-import {setupPlaybackSheet} from './sheet-controls.js?v=v0.1.0-20261031010401-7a305bd';
-import {PlacementWorkflow} from './placement-workflow.js?v=v0.1.0-20261031010401-7a305bd';
-import {EndingWorkflow} from './ending-workflow.js?v=v0.1.0-20261031010401-7a305bd';
-import {extractSongPhrases} from './phrase-transfer.js?v=v0.1.0-20261031010401-7a305bd';
+import {MelodyLearning} from './learning.js?v=v0.1.0-20261031130511-e7ac30d';
+import {emptySequence,canKeepPhrase,keepPhrase,sequencePlayback,proposeSequence,commitSequence,undoPlacement} from './sequence-session.js?v=v0.1.0-20261031130511-e7ac30d';
+import {readCaptureReport} from './capture-report.js?v=v0.1.0-20261031130511-e7ac30d';
+import {setupPlaybackSheet} from './sheet-controls.js?v=v0.1.0-20261031130511-e7ac30d';
+import {PlacementWorkflow} from './placement-workflow.js?v=v0.1.0-20261031130511-e7ac30d';
+import {EndingWorkflow} from './ending-workflow.js?v=v0.1.0-20261031130511-e7ac30d';
+import {extractSongPhrases} from './phrase-transfer.js?v=v0.1.0-20261031130511-e7ac30d';
 const $=id=>document.getElementById(id);
 const trialBuild=new URL(import.meta.url).searchParams.get('v')||'local-20261010';
 const trialVersion=trialBuild.match(/-(\d{14})-/)?.[1]||trialBuild;
@@ -111,7 +111,7 @@ export class MelodyScreens {
   },true);
   $('sequence-preview').onclick=()=>{const data=sequencePlayback(this.proposal?.next??this.sequence);if(data.pattern?.bars)onPlay(data,!!this.proposal);};
   $('sequence-confirm').onclick=()=>this.confirmSequence();
-  $('sequence-undo').onclick=()=>{if(this.busy)return;if(this.proposal)this.proposal=null;else this.sequence=undoPlacement(this.sequence);this.renderSequence();};
+  $('sequence-undo').onclick=()=>{if(this.busy||this.projectWorkflow?.parkedPlacement)return;if(this.proposal)this.proposal=null;else this.sequence=undoPlacement(this.sequence);this.renderSequence();};
   for(const [id,type,delta] of [['sequence-left','move',-1],['sequence-right','move',1],['sequence-delete','remove',0]])$(id).onclick=()=>this.stage({type,placementId:this.selected,index:this.sequence.placements.findIndex(p=>p.id===this.selected)+delta});
   addEventListener('popstate',()=>{
    const target=['home','choose','create','connect','samples'].includes(history.state?.melodyScreen)?history.state.melodyScreen:'home';
@@ -157,7 +157,9 @@ export class MelodyScreens {
   if(screen==='choose')$('editor-source').open=true;
   document.querySelector('body > footer').hidden=!['create','connect','samples'].includes(screen);
   if(push)history.pushState({...history.state,melodyScreen:screen},'');
-  this.onNavigate();this.sync(this.phase??'idle');window.scrollTo(0,0);
+  this.projectWorkflow?.gestures.cancel();
+  this.onNavigate();this.sync(this.phase??'idle');
+  if(screen!==this.previousScreen)window.scrollTo(0,0);this.previousScreen=screen;
   this.navigationHistory??=[];this.navigationHistory.push({screen,phrases:this.sequence.patterns.length,placements:this.sequence.placements.length,at:new Date().toISOString()});this.navigationHistory=this.navigationHistory.slice(-10);
   if(focus)(this.screens[screen].querySelector('h2,h1')??this.screens[screen].querySelector('button'))?.focus({preventScroll:true});
  }
@@ -212,6 +214,7 @@ export class MelodyScreens {
   this.renderSequence();
  }
  createAnotherPhrase(){
+  if(this.projectWorkflow)return this.projectWorkflow.create();
   if(this.busy||this.proposal||this.placementWorkflow?.active)return;
   const checkpoint=this.editor.checkpoint(!!this.songWorkflow?.id);
   const unregistered=checkpoint&&extractSongPhrases({schemaVersion:1,data:{sequence:this.sequence,checkpoint}}).some(p=>p.id==='current');
@@ -243,6 +246,7 @@ export class MelodyScreens {
   target.focus({preventScroll:true});
  }
  stage(command) {
+  if(this.projectWorkflow?.parkedPlacement){$('sequence-message').textContent='修正中の場所を先にオッケーか取消で決めてね。';return;}
   if(this.busy||this.proposal||this.placementWorkflow?.active)return;
   const next=proposeSequence(this.sequence,command);
   if(next.code){$('sequence-message').textContent=next.code==='PLACEMENT_LIMIT'?'16個まで並べられます。':'その並べ方にはできません。';return;}
@@ -254,6 +258,7 @@ export class MelodyScreens {
   this.sequence=next;this.proposal=null;this.renderSequence();return true;
  }
  renderSequence() {
+  this.projectWorkflow?.capture();
   const draft=this.proposal?.next??this.sequence,locked=this.busy||!!this.proposal||!!this.placementWorkflow?.active;
   $('sequence-empty').hidden=!!this.sequence.patterns.length;
   $('sequence-create').textContent=this.sequence.patterns.length?'もうひとつ つくる':'フレーズを つくる';
@@ -276,7 +281,9 @@ export class MelodyScreens {
   $('sequence-count').textContent=`${draft.placements.length} / 16 ・ ${(this.ranges.at(-1)?.end??0)/16}小節`;
   $('sequence-message').textContent=this.proposal?'仮の順番です。聴いてからオッケーで決めます。':'フレーズを選ぶと、最後に追加する候補になります。';
   this.placementWorkflow?.render(locked);
-  this.endingWorkflow?.render(draft,playback);
+  if(!this.projectWorkflow)this.endingWorkflow?.render(draft,playback);
+  this.projectWorkflow?.render();
+  if(this.projectWorkflow)this.endingWorkflow?.render(draft,playback);
   this.songWorkflow?.schedule();
   this.songWorkflow?.phraseTransfer?.render();
  }

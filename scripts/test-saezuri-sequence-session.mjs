@@ -88,9 +88,9 @@ test('phrase identities and derivative names do not collide after deletion, Undo
  const {validateComposition}=await import('../saezuri/sequence.js');
  let s=keepPhrase(emptySequence(),phrase(),'A');s=append(s,s.patterns[0].id);
  const first=commitSequence(s,derivePlacement(s,s.placements[0].id,s.patterns[0]));
- s=undoPlacement(first);s=keepPhrase(s,phrase(),'A 2');
+ s=undoPlacement(first);s=keepPhrase(s,phrase(),'A2');
  const changed=commitSequence(s,derivePlacement(s,s.placements[0].id,s.patterns[0]));
- assert.equal(changed.patterns.at(-1).name,'A 3');
+ assert.equal(changed.patterns.at(-1).name,'A3');
  const saved=JSON.parse(JSON.stringify({...changed,undoStack:[]}));assert.equal(validateComposition(saved),null);
  assert.equal(new Set(saved.patterns.map(p=>p.id)).size,saved.patterns.length);
  let empty=keepPhrase(emptySequence(),phrase(),'A');empty=commitSequence(empty,proposeSequence(empty,{type:'delete-pattern',patternId:empty.patterns[0].id}));
@@ -126,3 +126,5 @@ test('editing one placement derives a complete phrase and leaves its source and 
  assert.notEqual(derived.id,source.id);assert.equal(derived.familyId,source.familyId);assert.notEqual(derived.name,source.name);
  assert.deepEqual(derived.notes,edited.notes);assert.deepEqual(derived.key,edited.key);assert.deepEqual(derived.accompaniment,edited.accompaniment);
 });
+
+test('arrangement Undo retains independent updates to an existing unplaced part',()=>{let s=keepPhrase(keepPhrase(emptySequence(),phrase(),'A'),phrase(4,62),'B');s=append(s,s.patterns[0].id);const id=s.patterns[1].id;s.patterns[1].notes[0].midi=67;const result=undoPlacement(s);assert.equal(result.placements.length,0);assert.equal(result.patterns.find(p=>p.id===id).notes[0].midi,67);});

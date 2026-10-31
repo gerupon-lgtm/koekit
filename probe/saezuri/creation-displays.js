@@ -1,4 +1,4 @@
-import {renderTutorialView,highlightTutorialView} from './tutorial-view.js?v=v0.1.0-20261031010401-7a305bd';
+import {renderTutorialView,highlightTutorialView} from './tutorial-view.js?v=v0.1.0-20261031130511-e7ac30d';
 const $=id=>document.getElementById(id),storageKey='saezuri.creationDisplays.v1';
 
 // Display preferences never enter the song, candidate, cursor or undo history.
@@ -23,6 +23,7 @@ export class CreationDisplays{
   if(kind==='input')this.keyboard.release();
   this[kind]=value;this.apply();try{localStorage.setItem(storageKey,JSON.stringify({note:this.note,input:this.input}));}catch{}
   this.onChange();
+  if(kind==='input'&&document.getElementById('creation-options')){document.getElementById('creation-options').hidden=true;const toggle=document.getElementById('creation-options-toggle');toggle.setAttribute('aria-expanded','false');toggle.focus({preventScroll:true});}
  }
  render(phase){
   this.phase=phase;const learning=this.shell.learning?.active,pattern=this.editor.previewPattern;

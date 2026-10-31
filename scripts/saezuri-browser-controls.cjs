@@ -34,3 +34,13 @@ async function resumeSavedSong(page,id=null,screen=null){
  if(screen==='connect'&&await page.locator('#melody-create').isVisible())await page.locator('#work-connect').click();
 }
 module.exports={revealCreationControl,openSongActions,resumeSavedSong};
+
+// Start at the song overview before choosing a new part's source.
+async function startNewPart(page,source='new-manual'){
+ await page.locator('#home-create').click();await page.locator('#sequence-create').click();await page.locator('#'+source).click();
+}
+async function openProjectPart(page,index=-1){
+ const parts=page.locator('#phrase-shelf [data-phrase]');await parts.nth(index<0?await parts.count()-1:index).click();
+ await page.getByRole('button',{name:'つづきをつくる',exact:true}).click();
+}
+module.exports.startNewPart=startNewPart;module.exports.openProjectPart=openProjectPart;

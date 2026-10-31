@@ -1,7 +1,7 @@
-import {validateNotes} from '../../saezuri/document.js?v=v0.1.0-20261031010401-7a305bd';
-import {validateComposition,proposeSequence,commitSequence,undoSequence} from '../../saezuri/sequence.js?v=v0.1.0-20261031010401-7a305bd';
-import {accompanimentEvents,validateAccompaniment} from '../../saezuri/music/accompaniment.js?v=v0.1.0-20261031010401-7a305bd';
-import {endingEvents,endingDescription} from '../../saezuri/music/ending.js?v=v0.1.0-20261031010401-7a305bd';
+import {validateNotes} from '../../saezuri/document.js?v=v0.1.0-20261031130511-e7ac30d';
+import {validateComposition,proposeSequence,commitSequence,undoSequence} from '../../saezuri/sequence.js?v=v0.1.0-20261031130511-e7ac30d';
+import {accompanimentEvents,validateAccompaniment} from '../../saezuri/music/accompaniment.js?v=v0.1.0-20261031130511-e7ac30d';
+import {endingEvents,endingDescription} from '../../saezuri/music/ending.js?v=v0.1.0-20261031130511-e7ac30d';
 export const emptySequence=()=>({patterns:[],placements:[],revision:0,undoStack:[]});
 export function canKeepPhrase(pattern){
  if(validateNotes(pattern))return false;
@@ -21,7 +21,7 @@ export function derivePlacement(draft,placementId,pattern){
  const placement=draft.placements.find(p=>p.id===placementId),source=draft.patterns.find(p=>p.id===placement?.patternId);
  if(!source)return {code:'PLACEMENT_NOT_FOUND'};
  const stem=(source.familyName??draft.patterns.find(p=>p.id===source.familyId)?.name??source.name??'フレーズ').slice(0,20),names=new Set(draft.patterns.map(p=>p.name));
- let number=1,name;do{name=`${stem} ${number++}`;}while(names.has(name));
+ let number=2,name;do{name=`${stem}${number++}`;}while(names.has(name));
  return proposeSequence(draft,{type:'derive',placementId,patternId:phraseId(draft),pattern,name});
 }
 export function sequencePlayback(draft) {
@@ -39,7 +39,7 @@ export function sequencePlayback(draft) {
 }
 // Arrangement undo must preserve the phrase shelf, which is independently added to.
 export function undoPlacement(draft) {
- const restored=undoSequence(draft),patterns=[...restored.patterns];
+ const restored=undoSequence(draft),patterns=restored.patterns.map(p=>draft.patterns.find(current=>current.id===p.id)??p);
  for(const pattern of draft.patterns)if(!patterns.some(p=>p.id===pattern.id))patterns.push(pattern);
  return {...restored,patterns};
 }

@@ -1,4 +1,4 @@
-import { createCaptureEditor, proposeCaptureEdit, commitNote } from './capture-editor.js?v=v0.1.0-20261031010401-7a305bd';
+import { createCaptureEditor, proposeCaptureEdit, commitNote } from './capture-editor.js?v=v0.1.0-20261031130511-e7ac30d';
 
 const copy = value => structuredClone(value);
 const error = code => ({code, details:{}});

@@ -1,9 +1,9 @@
-import {GENRES,CHORD_INTERVALS,CHORD_PITCH_NAMES,chordLabel} from '../../saezuri/music/catalog.js?v=v0.1.0-20261031010401-7a305bd';
-import {RHYTHMS,PROGRESSIONS,PRESETS,SOUNDS,accompanimentSounds,soundLabel,harmonicSegments,recommendProgressions} from '../../saezuri/music/accompaniment.js?v=v0.1.0-20261031010401-7a305bd';
-import {setupPlaybackSheet} from './sheet-controls.js?v=v0.1.0-20261031010401-7a305bd';
-import {ImageModeControls} from './image-mode-controls.js?v=v0.1.0-20261031010401-7a305bd';
-import {readChordSlots,writeChordSlots} from './chord-slots.js?v=v0.1.0-20261031010401-7a305bd';
-import {ChordMetronome} from './chord-metronome.js?v=v0.1.0-20261031010401-7a305bd';
+import {GENRES,CHORD_INTERVALS,CHORD_PITCH_NAMES,chordLabel} from '../../saezuri/music/catalog.js?v=v0.1.0-20261031130511-e7ac30d';
+import {RHYTHMS,PROGRESSIONS,PRESETS,SOUNDS,accompanimentSounds,soundLabel,harmonicSegments,recommendProgressions} from '../../saezuri/music/accompaniment.js?v=v0.1.0-20261031130511-e7ac30d';
+import {setupPlaybackSheet} from './sheet-controls.js?v=v0.1.0-20261031130511-e7ac30d';
+import {ImageModeControls} from './image-mode-controls.js?v=v0.1.0-20261031130511-e7ac30d';
+import {readChordSlots,writeChordSlots} from './chord-slots.js?v=v0.1.0-20261031130511-e7ac30d';
+import {ChordMetronome} from './chord-metronome.js?v=v0.1.0-20261031130511-e7ac30d';
 const pitches=CHORD_PITCH_NAMES;
 export const chordPitches=pitches;
 export {chordLabel};
@@ -71,7 +71,7 @@ export class ImageControls {
   const target=this.$('suggestions').querySelector(`[data-progression-index="${command.index}"] [data-progression-${command.action}]`);
   if(target&&!target.disabled)target.click();return true;
  }
- value(){return structuredClone(this.editor.previewPattern?.accompaniment??fallback);}
+ value(){return structuredClone({...fallback,...this.editor.previewPattern?.accompaniment});}
  follow(tick){
   if(!this.panel)return;
   const bar=tick==null?null:Math.floor(tick/16),row=this.$('chords');

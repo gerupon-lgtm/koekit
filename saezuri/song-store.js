@@ -53,7 +53,7 @@ export class SongStore {
   return this.read(async(songs,deleted)=>{
    const [previous,tombstone,count]=await Promise.all([request(songs.get(id)),request(deleted.get(id)),request(songs.count())]);
    if(tombstone || (expectedRevision!==null&&!previous))throw issue('SONG_DELETED');
-   if(previous&&previous.schemaVersion!==1)throw issue('SONG_SCHEMA');
+   if(previous&&(previous.schemaVersion!==1||previous.data.project&&!payload.project))throw issue('SONG_SCHEMA');
    if((previous?.revision??null)!==expectedRevision)throw issue('SONG_CONFLICT');
    if(!previous && count>=this.limit)throw issue('SONG_LIMIT');
    const now=new Date().toISOString();

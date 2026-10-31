@@ -1,0 +1,63 @@
+/* Reuse the current warm paper, lavender, sage and rounded type. */
+.melody-app.project-workflow .song-work-tabs,.melody-app.project-workflow #phrase-tools,.melody-app.project-workflow .phrase-register,.melody-app.project-workflow #after-keep{display:none!important}
+.melody-app.project-workflow #melody-create #create-song-name{display:none}
+.melody-app.project-workflow #melody-create .song-status[data-saved=true]{display:none}
+.melody-app.project-workflow .screen-heading{min-height:44px}
+.melody-app.project-workflow #creation-tabs{margin:4px 0 8px}
+.melody-app.project-workflow #creation-tabs button{min-height:44px}
+.melody-app.project-workflow #sequence-song-name{font-size:13px;margin:4px 0}
+.melody-app.project-workflow #project-caption{font-size:13px;line-height:1.5;margin:4px 0 8px}
+.melody-app.project-workflow #melody-connect h3{font-size:15px;text-align:left;margin:8px 0}
+.melody-app.project-workflow #sequence-line{display:grid;grid-template-columns:minmax(0,1fr) 44px;gap:8px;max-height:clamp(150px,40svh,340px);min-height:44px;overflow:auto;overscroll-behavior:contain;padding:8px;border:1px solid #ddd4c5;overflow-anchor:none}
+.melody-app.project-workflow #sequence-line [data-placement]{display:flex;align-items:center;justify-content:space-between;gap:8px;min-width:0;min-height:48px;background:#e7ddef;border:2px solid transparent;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;touch-action:pan-y}
+.melody-app.project-workflow #sequence-line .sequence-gap{min-height:44px;width:44px;padding:4px;background:#fffdf7;border:1px dashed #9687a3;color:#51406a;font-size:23px}
+.melody-app.project-workflow #sequence-line .sequence-gap:first-child{grid-column:1/-1;width:100%;font-size:20px}
+.melody-app.project-workflow #sequence-line [data-placement][data-move-ready]{touch-action:none;outline:3px solid #6d9791;background:#d9e6de}
+.melody-app.project-workflow #sequence-line [data-drop-before]{box-shadow:0 -5px #16816e}
+.melody-app.project-workflow #sequence-line [data-drop-after]{box-shadow:0 5px #16816e}
+.melody-app.project-workflow #sequence-line [data-placement].sequence-draft{border:2px dashed #b06018}
+.melody-app .sequence-ghost{position:fixed;z-index:1000;pointer-events:none;width:140px;box-sizing:border-box;padding:12px;border-radius:14px;background:#e7ddef;border:2px solid #6d9791;box-shadow:0 5px 18px #443b3640;font-weight:700}
+.melody-app.project-workflow #sequence-message{font-size:13px;line-height:1.4;margin:8px 0;min-height:18px}
+.melody-app.project-workflow .sequence-actions{margin:8px 0}
+.melody-app.project-workflow .project-parts-heading{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.melody-app.project-workflow #sequence-create{font-size:14px;min-height:44px;margin:0;padding:6px 12px;background:#d9ebd5}
+.melody-app.project-workflow #phrase-shelf{max-height:150px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;overflow:auto;overscroll-behavior:contain}
+.melody-app.project-workflow #phrase-shelf button{min-width:0;min-height:56px;padding:6px;overflow-wrap:anywhere}
+.melody-app.project-workflow #phrase-shelf small,.melody-app.project-workflow #sequence-line small{font-size:12px;font-weight:400}
+.melody-app.project-workflow #phrase-shelf small{display:block}
+.melody-app.project-workflow #project-more{margin:8px 0;border-top:1px solid #ddd4c5}
+.melody-app.project-workflow #project-more>summary{box-sizing:border-box;min-height:44px;padding:10px 4px;font-size:13px;cursor:pointer}
+.melody-app.project-workflow #project-more>.sequence-edit{grid-template-columns:repeat(3,minmax(0,1fr))}
+.melody-app.project-workflow #project-part-actions,.melody-app.project-workflow #project-insert-options,.melody-app.project-workflow .project-menu-actions{display:grid;gap:8px;margin-top:12px}
+.melody-app.project-workflow #project-part-actions>button,.melody-app.project-workflow #project-insert-options>button,.melody-app.project-workflow .project-menu-actions>button{margin:0;min-height:48px}
+.melody-app.project-workflow .project-home-support{grid-template-columns:repeat(2,minmax(0,1fr))}
+.melody-app.project-workflow #home-project-sample{grid-column:1/-1;background:#d9ebd5}
+/* Keep confirmation at the working surface rather than after the keyboard. */
+.melody-app.project-workflow.free-creation[data-create-mode=input] .edit-toolbar{order:2}
+.melody-app.project-workflow.free-creation[data-create-mode=input] #live-keyboard{order:3}
+.melody-app.project-workflow:not(.learning-active):not(.recording-focus) .keyboard-help{display:none}
+.melody-app.project-workflow .composer-position-hint{display:none}
+.melody-app.project-workflow:not(.learning-active) #composer-location:not([open]){margin:0}
+.melody-app.project-workflow:not(.learning-active) #composer-location>summary{display:none}
+.melody-app.project-workflow #keyboard-practice-tools{margin:4px 0}
+.melody-app.project-workflow .keyboard-actions button{min-height:48px}
+.melody-app.project-workflow .keyboard-heading{margin:4px 0}
+@media(max-width:360px){.melody-app.project-workflow #phrase-shelf{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(min-width:650px){.melody-app.project-workflow #sequence-line{max-height:300px}.melody-app.project-workflow.free-creation[data-create-mode=input] .edit-toolbar{grid-column:1;grid-row:3}.melody-app.project-workflow #phrase-shelf{grid-template-columns:repeat(4,minmax(0,1fr))}}
+
+.melody-app.project-workflow .project-song-row{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.melody-app.project-workflow #project-adopt{min-height:44px;margin:0;font-size:13px;padding:6px 10px}
+
+.melody-app.project-workflow.free-creation[data-create-mode=input][data-input-display=cards] #image-chords{display:none}
+.melody-app.project-workflow #composer-length-buttons{gap:8px}
+.melody-app.project-workflow #composer-help{margin:0 0 4px}
+.melody-app.project-workflow.free-creation[data-create-mode=input][data-input-display=cards] #keyboard-options{order:1}
+.melody-app.project-workflow.free-creation[data-create-mode=input][data-input-display=cards] #keyboard-more{display:none}
+.melody-app.project-workflow #creation-options #composer-other-lengths>summary{min-height:44px;padding:8px;box-sizing:border-box}
+.melody-app.project-workflow #creation-options #composer-help{min-height:44px;margin:8px 0}
+.melody-app.project-workflow #creation-options #keyboard-instrument{width:100%;max-width:none;margin:8px 0}
+.melody-app.project-workflow.free-creation[data-create-mode=input][data-input-display=cards] .edit-toolbar:empty{display:none}
+.melody-app.project-workflow #creation-options #composer-other-lengths>label{display:block}
+@media(max-width:360px){.melody-app.project-workflow.editor-focus #composer-keys{grid-template-columns:repeat(4,minmax(0,1fr))}}
+
+.melody-app.project-workflow #sequence-line [data-ending]{grid-column:1/-1;min-height:44px;background:#dce9d5}

@@ -1,8 +1,8 @@
-import {CHORD_INTERVALS} from '../../saezuri/music/catalog.js?v=v0.1.0-20261031010401-7a305bd';
-import {automaticEndingChord,endingDescription,endingEvents} from '../../saezuri/music/ending.js?v=v0.1.0-20261031010401-7a305bd';
-import {proposeSequence} from './sequence-session.js?v=v0.1.0-20261031010401-7a305bd';
-import {chordLabel,chordPitches} from './image-controls.js?v=v0.1.0-20261031010401-7a305bd';
-import {setupPlaybackSheet} from './sheet-controls.js?v=v0.1.0-20261031010401-7a305bd';
+import {CHORD_INTERVALS} from '../../saezuri/music/catalog.js?v=v0.1.0-20261031130511-e7ac30d';
+import {automaticEndingChord,endingDescription,endingEvents} from '../../saezuri/music/ending.js?v=v0.1.0-20261031130511-e7ac30d';
+import {proposeSequence} from './sequence-session.js?v=v0.1.0-20261031130511-e7ac30d';
+import {chordLabel,chordPitches} from './image-controls.js?v=v0.1.0-20261031130511-e7ac30d';
+import {setupPlaybackSheet} from './sheet-controls.js?v=v0.1.0-20261031130511-e7ac30d';
 const $=id=>document.getElementById(id);
 const normalized=e=>({enabled:e?.enabled??false,bars:e?.bars||1,mode:e?.mode??'auto',bassMode:e?.bassMode??'root',customChord:e?.customChord??null});
 export class EndingWorkflow {
@@ -36,18 +36,18 @@ export class EndingWorkflow {
  }
  value(){return {enabled:false,bars:1,mode:'auto',bassMode:'root',...structuredClone((this.shell.proposal?.next??this.shell.sequence).ending??{})};}
  stage(value){
-  const shell=this.shell;if(shell.busy||shell.placementWorkflow.active||shell.proposal&&!this.ownsCandidate())return;
+  const shell=this.shell;if(shell.busy||(shell.placementWorkflow.active||shell.projectWorkflow?.parkedPlacement)||shell.proposal&&!this.ownsCandidate())return;
   if(JSON.stringify(normalized(value))===JSON.stringify(normalized(shell.sequence.ending)))shell.proposal=null;
   else {const candidate=proposeSequence(shell.sequence,{type:'ending',value});if(candidate.code){$('ending-candidate').textContent='和音と長さをたしかめてね。';return;}shell.proposal=candidate;}
   shell.renderSequence();
  }
  open(){
-  const shell=this.shell;if(shell.busy||shell.placementWorkflow.active||!shell.sequence.placements.length||shell.proposal&&!this.ownsCandidate())return;
+  const shell=this.shell;if(shell.busy||(shell.placementWorkflow.active||shell.projectWorkflow?.parkedPlacement)||!shell.sequence.placements.length||shell.proposal&&!this.ownsCandidate())return;
   shell.onStop();this.dialog.showModal();shell.onNavigate();
  }
  render(draft,playback){
   const shell=this.shell,value=this.value(),automatic=automaticEndingChord(draft),chord=value.mode==='custom'?value.customChord:automatic;
-  const ending=playback.ending,blocked=shell.busy||shell.placementWorkflow.active||!!shell.proposal&&!this.ownsCandidate();
+  const ending=playback.ending,blocked=shell.busy||(shell.placementWorkflow.active||shell.projectWorkflow?.parkedPlacement)||!!shell.proposal&&!this.ownsCandidate();
   $('ending-open').disabled=blocked||!draft.placements.length;$('ending-open').textContent=ending?`おわり：${ending.bars}小節・${chordLabel(ending.chord)}`:'おわり：追加なし';
   $('ending-length').value=value.enabled?String(value.bars):'0';
   if(chord&&!chord.code){$('ending-root').value=chord.root;$('ending-quality').value=chord.quality;$('ending-bass').value=value.mode==='custom'&&(value.bassMode==='custom'||chord.bass!==chord.root)?String(chord.bass):'';}

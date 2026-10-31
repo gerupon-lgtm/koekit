@@ -1,11 +1,11 @@
-import { openEditSession, stageEdit, stageDuration, selectEditNote, confirmEditSession, cancelEditSession, undoEditSession, hasDraftChanges } from './edit-session.js?v=v0.1.0-20261031010401-7a305bd';
-import {canGenerateAccompaniment,stageAccompanimentCandidate} from './edit-session.js?v=v0.1.0-20261031010401-7a305bd';
-import { analyzeFrames, quantizeSegments } from './analyzer.js?v=v0.1.0-20261031010401-7a305bd';
-import { decodePitchTrace } from './analysis-comparison.js?v=v0.1.0-20261031010401-7a305bd';
-import {registerLabel as pitchName} from './pitch-label.js?v=v0.1.0-20261031010401-7a305bd';
-import { orderedNotes, selectionTarget } from './note-selection.js?v=v0.1.0-20261031010401-7a305bd';
-import {proposeEntry,confirmEntry,cancelEntry,moveEntryCursor,entryPreview} from './entry-session.js?v=v0.1.0-20261031010401-7a305bd';
-import {songCheckpoint,restoreCheckpoint} from './song-session.js?v=v0.1.0-20261031010401-7a305bd';
+import { openEditSession, stageEdit, stageDuration, selectEditNote, confirmEditSession, cancelEditSession, undoEditSession, hasDraftChanges } from './edit-session.js?v=v0.1.0-20261031130511-e7ac30d';
+import {canGenerateAccompaniment,stageAccompanimentCandidate} from './edit-session.js?v=v0.1.0-20261031130511-e7ac30d';
+import { analyzeFrames, quantizeSegments } from './analyzer.js?v=v0.1.0-20261031130511-e7ac30d';
+import { decodePitchTrace } from './analysis-comparison.js?v=v0.1.0-20261031130511-e7ac30d';
+import {registerLabel as pitchName} from './pitch-label.js?v=v0.1.0-20261031130511-e7ac30d';
+import { orderedNotes, selectionTarget } from './note-selection.js?v=v0.1.0-20261031130511-e7ac30d';
+import {proposeEntry,confirmEntry,cancelEntry,moveEntryCursor,entryPreview} from './entry-session.js?v=v0.1.0-20261031130511-e7ac30d';
+import {songCheckpoint,restoreCheckpoint} from './song-session.js?v=v0.1.0-20261031130511-e7ac30d';
 
 const clone = value => value == null ? value : structuredClone(value);
 const labels = { current: '現在の設定', detail: '細かい変化', unsmoothed: 'ならしなし' };
@@ -112,7 +112,7 @@ export class CaptureEditorView {
   get isOpen() { return !!this._active && !this._active.session.closed; }
   get variant() { return this._variant; }
 
-  checkpoint(existing=false) { return songCheckpoint(this._active?.session,{existing}); }
+  checkpoint(existing=false,{includeEmpty=false}={}) { return songCheckpoint(this._active?.session,{existing,includeEmpty}); }
   releaseAnalysisVariants() {
     if(this._busy || !this.isOpen || this.pending || !this.accepted)return false;
     // Keep this exact session: its selected notes, source, cursor and Undo are

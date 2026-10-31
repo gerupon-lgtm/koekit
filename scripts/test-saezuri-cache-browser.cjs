@@ -21,7 +21,7 @@ const root=path.resolve(__dirname,'..');
  try{
   browser=await chromium.launch({channel:'chrome',headless:true});const page=await browser.newPage({viewport:{width:390,height:844},serviceWorkers:'block'}),errors=[];page.on('pageerror',e=>errors.push(e.message));
   await page.goto(`http://127.0.0.1:${server.address().port}/probe/saezuri/`);
-  const create=async()=>{await page.locator('#home-create').click();await page.locator('#new-manual').click();await page.locator('#piano-keys').waitFor();};
+  const create=async()=>{await page.locator('#home-create').click();await page.locator('#sequence-create').click();await page.locator('#new-manual').click();await page.locator('#piano-keys').waitFor();};
   await create();await page.locator('[data-keyboard-octave="-1"]').click();assert.equal(await page.locator('#piano-keys [data-reference]').getAttribute('data-midi'),'48','old cached keyboard leaves color at wrong pitch');
   // Same tab, URL and browser cache. Only the deployment changes.
   deployed=true;await page.reload();await create();await page.locator('[data-keyboard-octave="-1"]').click();assert.equal(await page.locator('#piano-keys [data-reference]').getAttribute('data-midi'),'60','new module graph bypasses old cached imports');

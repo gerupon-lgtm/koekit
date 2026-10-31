@@ -27,6 +27,16 @@ export class CreationLayout{
    if(free){this.toggle.before(this.parts[0]);this.options.append(this.parts[2],this.parts[3]);this.setup.append(this.parts[1]);this.phrase.append(this.register);}
    else{this.parts.forEach((node,i)=>{if(this.setup.contains(node))this.homes[i].after(node);});this.registerHome.after(this.register);}
   }
+  // Card input keeps pitch, duration and OK together. Secondary controls stay
+  // behind the existing display/settings button, with their original handlers.
+  this.cardNodes??=['composer-help','composer-other-lengths','composer-candidate','capture-edit-status'].map(id=>$(id));
+  this.cardHomes??=this.cardNodes.map(node=>{const anchor=document.createComment('card input layout');node.before(anchor);return anchor;});
+  this.listenHome??=(()=>{const anchor=document.createComment('listen actions');document.querySelector('.listen-actions').before(anchor);return anchor;})();
+  const cards=free&&this.shell.mode==='input'&&document.body.dataset.inputDisplay==='cards';
+  if(cards!==this.cards){this.cards=cards;const listen=document.querySelector('.listen-actions');
+   if(cards){this.options.append(this.cardNodes[0],this.cardNodes[1]);$('composer-panel').append(this.cardNodes[2],listen,this.cardNodes[3]);}
+   else{this.cardNodes.forEach((node,i)=>this.cardHomes[i].after(node));this.listenHome.after(listen);}
+  }
   this.setup.hidden=!free;
   this.phrase.hidden=!free;
   document.body.dataset.editCandidate=String(this.editor.pending);
@@ -40,6 +50,9 @@ export class CreationLayout{
   }
   if(fold&&this.shell.mode!=='input'){if(this.keyboardOptions.parentNode!==this.performance)this.performance.append(this.keyboardOptions);}
   else if(this.performance.contains(this.keyboardOptions))this.keyboardOptionsHome.after(this.keyboardOptions);
+  if(cards){if(this.instrument.parentNode!==this.options)this.options.append(this.instrument);}
+  else if(fold){if(this.instrument.parentNode!==document.querySelector('.edit-toolbar'))document.querySelector('.listen-actions').before(this.instrument);}
+  else if(this.instrument.parentNode!==this.instrumentHome.parentNode)this.instrumentHome.after(this.instrument);
   this.performance.hidden=!fold;
   if(fold&&context!==this.toolContext&&!focus){this.performance.open=false;this.keyboard.release();}
   this.toolContext=context;

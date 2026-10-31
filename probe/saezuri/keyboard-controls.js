@@ -1,5 +1,5 @@
-import {pianoKeys,TapRecording} from './tap-recording.js?v=v0.1.0-20261031010401-7a305bd';
-import {RecordingGuide} from './recording-guide.js?v=v0.1.0-20261031010401-7a305bd';
+import {pianoKeys,TapRecording} from './tap-recording.js?v=v0.1.0-20261031130511-e7ac30d';
+import {RecordingGuide} from './recording-guide.js?v=v0.1.0-20261031130511-e7ac30d';
 const $=id=>document.getElementById(id);
 export class KeyboardControls {
  constructor({editor,prepareVoice,onStart,onActivity,onPreview,clock}){

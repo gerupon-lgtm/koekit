@@ -1,8 +1,8 @@
 // ML-T02: pure composition editing drafts, not the database Song serializer.
 // undoStack is session-only. Q1 save/history lifecycle and Q2 selection UI are not implemented.
-import { validateNotes } from './document.js?v=v0.1.0-20261031010401-7a305bd';
-import {validateAccompaniment} from './music/accompaniment.js?v=v0.1.0-20261031010401-7a305bd';
-import {validateEnding,endingBars} from './music/ending.js?v=v0.1.0-20261031010401-7a305bd';
+import { validateNotes } from './document.js?v=v0.1.0-20261031130511-e7ac30d';
+import {validateAccompaniment} from './music/accompaniment.js?v=v0.1.0-20261031130511-e7ac30d';
+import {validateEnding,endingBars} from './music/ending.js?v=v0.1.0-20261031130511-e7ac30d';
 const error = code => ({ code });
 const validId = id => typeof id === 'string' && id.length > 0;
 function snapshot(draft) {
@@ -41,6 +41,10 @@ export function proposeSequence(draft, command) {
   if (invalid) return invalid;
   const next = snapshot(draft), targets = [];
   if (command.type === 'append') next.placements.push(structuredClone(command.placement));
+  else if(command.type==='insert'){
+    if(!Number.isInteger(command.index)||command.index<0||command.index>next.placements.length)return error('PLACEMENT_INDEX');
+    next.placements.splice(command.index,0,structuredClone(command.placement));
+  }
   else if (command.type === 'move' || command.type === 'remove') {
     const index = next.placements.findIndex(p => p.id === command.placementId);
     if (index < 0) return error('PLACEMENT_NOT_FOUND');

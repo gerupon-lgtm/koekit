@@ -1,14 +1,14 @@
-import {openEditSession, hasDraftChanges} from './edit-session.js?v=v0.1.0-20261031010401-7a305bd';
-import {proposeEntry} from './entry-session.js?v=v0.1.0-20261031010401-7a305bd';
-import {validateNotes} from '../../saezuri/document.js?v=v0.1.0-20261031010401-7a305bd';
+import {openEditSession, hasDraftChanges} from './edit-session.js?v=v0.1.0-20261031130511-e7ac30d';
+import {proposeEntry} from './entry-session.js?v=v0.1.0-20261031130511-e7ac30d';
+import {validateNotes} from '../../saezuri/document.js?v=v0.1.0-20261031130511-e7ac30d';
 const clone=value=>structuredClone(value);
 
-export function songCheckpoint(session,{existing=false}={}) {
+export function songCheckpoint(session,{existing=false,includeEmpty=false}={}) {
  if(!session || session.closed)return null;
  const actual=session.working.pattern;
  const melody=actual.notes.length || session.confirmed.notes.length || session.entry || (session.accepted&&session.confirmedHasRest);
  const backing=session.accepted && session.confirmed.accompaniment?.enabled;
- if(!melody&&!backing&&!(existing&&session.accepted))return null;
+ if(!includeEmpty&&!melody&&!backing&&!(existing&&session.accepted))return null;
  const confirmed=session.accepted?{pattern:clone(session.confirmed),cursor:session.confirmedCursor??session.working.cursor,hasRest:!!session.confirmedHasRest}:null;
  const pending=!!session.entry || hasDraftChanges(session) || !session.accepted;
  return {confirmed,draft:pending?{
