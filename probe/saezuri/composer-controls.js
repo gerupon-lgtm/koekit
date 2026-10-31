@@ -1,4 +1,4 @@
-import {createInputHelp} from './input-help.js?v=v0.1.0-20261031181822-dc3d23b';
+import {createInputHelp} from './input-help.js?v=v0.1.0-20261031190112-ee88028';
 const names=['ド','レ','ミ','ファ','ソ','ラ','シ'];
 const pitches=[0,2,4,5,7,9,11];
 const lengthLabel=value=>{const whole=Math.floor(value);return value%1?whole?`${whole}拍半`:'半拍':`${whole}拍`;};

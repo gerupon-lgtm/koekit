@@ -1,7 +1,7 @@
 // Editable audition presets. These concrete arrangements are trial data.
-import {GENRES,CHORD_INTERVALS,chordTones} from './catalog.js?v=v0.1.0-20261031181822-dc3d23b';
-import {validImageChoice,validateImageArrangement} from './image-arrangement.js?v=v0.1.0-20261031181822-dc3d23b';
-import {POP_EIGHT_BEAT} from './backing-patterns.js?v=v0.1.0-20261031181822-dc3d23b';
+import {GENRES,CHORD_INTERVALS,chordTones} from './catalog.js?v=v0.1.0-20261031190112-ee88028';
+import {validImageChoice,validateImageArrangement} from './image-arrangement.js?v=v0.1.0-20261031190112-ee88028';
+import {POP_EIGHT_BEAT} from './backing-patterns.js?v=v0.1.0-20261031190112-ee88028';
 export const RHYTHMS=[{id:'quarters',label:'4つずつ'},{id:'offbeat',label:'うらで弾く'},{id:'arpeggio',label:'音をばらして弾く'},{id:POP_EIGHT_BEAT.rhythm,label:POP_EIGHT_BEAT.label},{id:'whole',label:'全音符でのばす'},{id:'halves',label:'二分音符でのばす'}];
 // Strong hats are intentionally distinct; overall loudness remains controllable.
 const hatStrong=.06,hatWeak=.008;

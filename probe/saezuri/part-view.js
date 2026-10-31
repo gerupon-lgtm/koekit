@@ -1,6 +1,6 @@
-import {restoreCheckpoint,checkpointFingerprint} from './song-session.js?v=v0.1.0-20261031181822-dc3d23b';
-import {entryPreview} from './entry-session.js?v=v0.1.0-20261031181822-dc3d23b';
-import {canKeepPhrase} from './sequence-session.js?v=v0.1.0-20261031181822-dc3d23b';
+import {restoreCheckpoint,checkpointFingerprint} from './song-session.js?v=v0.1.0-20261031190112-ee88028';
+import {entryPreview} from './entry-session.js?v=v0.1.0-20261031190112-ee88028';
+import {canKeepPhrase} from './sequence-session.js?v=v0.1.0-20261031190112-ee88028';
 const clone=value=>value?structuredClone(value):null;
 const content=pattern=>Object.fromEntries(Object.entries(pattern).filter(([key])=>!['id','name','familyId','familyName','derivedFrom','revision'].includes(key)));
 // Read-only presentation: listening never registers, confirms or edits a part.
