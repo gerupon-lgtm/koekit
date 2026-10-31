@@ -112,7 +112,7 @@ export class MelodyLearning {
   $('learning-model').textContent='♪ おてほん';$('learning-model').setAttribute('aria-label','おてほんを聴く');
   $('learning-cancel').hidden=guide.kind!=='recover'||!editor.pending;
   $('learning-position').hidden=guide.kind!=='position';
-  const backingHint=$('progression-guide');if(backingHint){backingHint.hidden=this.stage!==7||!$('progression-suggestions')?.open;backingHint.textContent='C → F → G → C の候補をためそう。ほかの候補も聴き比べられます。';}
+  const backingHint=$('progression-guide');if(backingHint){backingHint.hidden=this.stage!==7||!$('progression-suggestions')?.open;backingHint.textContent='候補を聴いて、いまと違う並びを試そう。同じ並びなら、とじて今の伴奏を聴けます。';}
   for(const id of ['learning-next','learning-model','learning-position','learning-cancel'])$(id).disabled=this.shell.busy;
   document.body.classList.toggle('learning-complete',this.stage===7&&!!guide.done);document.body.dataset.learningStage=String(this.stage);
   if(guide.mode&&!this.shell.busy)this.shell.setMode(guide.mode);

@@ -1,13 +1,18 @@
 // Open the real disclosure before an existing step-entry/settings interaction.
 async function revealCreationControl(page,selector){
  const control=page.locator(selector);
+ if(!await control.isVisible()&&await control.evaluate(n=>!!n.closest('#image-chords'))&&await page.locator('[data-mode=backing]').isVisible())await page.locator('[data-mode=backing]').click();
+ if(['#creation-note-display','#instrument','#image-rhythm','#image-genre'].includes(selector))return;
+ if(!await control.isVisible()&&await control.evaluate(n=>!!n.closest('#backing-rebuild'))&&await page.locator('[data-mode=backing]').isVisible())await page.locator('[data-mode=backing]').click();
+ if(!await control.isVisible()&&await control.evaluate(n=>!!n.closest('#creation-settings'))&&await page.locator('[data-mode=edit]').isVisible())await page.locator('[data-mode=edit]').click();
+ if(!await control.isVisible()&&await control.evaluate(n=>n.matches('#image-next')||!!n.closest('#image-words'))){if(await page.locator('[data-mode=backing]').isVisible())await page.locator('[data-mode=backing]').click();if(!await page.locator('#backing-rebuild').evaluate(n=>n.open))await page.locator('#backing-rebuild>summary').click();await page.locator('#image-choice-reopen').click();}
+
  if(!await control.isVisible()&&await page.locator('#creation-options-toggle').isVisible()&&await control.evaluate(n=>!!n.closest('#creation-options')))await page.locator('#creation-options-toggle').click();
  if(!await control.isVisible()&&await page.locator('#image-record-return').isVisible()&&await control.evaluate(n=>!!n.closest('#image-edit-tools')))await page.locator('#image-record-return').click();
  const disclose=async()=>{
-  const ids=await control.evaluate(n=>{const ids=[];for(let d=n.parentElement;d;d=d.parentElement)if(d.matches('details#image-edit-tools,details#image-backing-detail,details#step-entry,details#keyboard-more,details#phrase-tools,details#keyboard-practice-tools')&&!d.open&&!(n.tagName==='SUMMARY'&&n.parentElement===d))ids.unshift(d.id);return ids;});
-  for(const id of ids)if(await page.locator(`#${id}>summary`).isVisible())await page.locator(`#${id}>summary`).click();
+  const ancestors=await control.locator('xpath=ancestor::details').all();
+  for(let pass=0;pass<2;pass++)for(const detail of ancestors){const summary=detail.locator(':scope>summary');if(!await detail.evaluate(n=>n.open)&&await summary.isVisible())await summary.click();}
  };
- if(!await control.isVisible()&&await page.locator('#image-choice-reopen').isVisible()&&await control.evaluate(n=>n.matches('#composer-key,#phrase-bars')||!!n.closest('#image-words,#image-chords')))await page.locator('#image-choice-reopen').click();
  await disclose();
  const input=page.locator('#creation-input-display');
  if(!await control.isVisible()&&!await input.isVisible()&&await page.locator('#creation-options-toggle').isVisible()&&await control.evaluate(n=>!!n.closest('#composer-panel,.keyboard-actions,.keyboard-settings')))await page.locator('#creation-options-toggle').click();
@@ -15,7 +20,6 @@ async function revealCreationControl(page,selector){
   if(await control.evaluate(n=>!!n.closest('#composer-panel')))await input.selectOption('cards');
   else if(await control.evaluate(n=>!!n.closest('.keyboard-actions,.keyboard-settings')))await input.selectOption('keyboard');
  }
- if(await control.evaluate(n=>(n.id==='image-next'||!!n.closest('#image-words'))&&document.querySelector('#image-choice-reopen')&&!document.querySelector('#image-choice-reopen').hidden))await page.locator('#image-choice-reopen').click();
  await disclose();
 }
 async function openSongActions(page,id){
@@ -58,3 +62,31 @@ async function chooseHat(page,id,accent){
  if(!['auto','none'].includes(rhythm)&&await page.locator('#image-accent').inputValue()!==selected)await page.locator('#image-accent').selectOption(selected);
 }
 module.exports.chooseHat=chooseHat;module.exports.hatChoice=hatChoice;
+
+async function chooseNoteDisplay(page,value){
+ const opened=!await page.locator('#melody-settings').isVisible();if(opened)await page.locator('#screen-settings').click();
+ if(!await page.locator('#device-tools').evaluate(n=>n.open))await page.locator('#device-tools>summary').click();
+ await page.locator('#creation-note-display').selectOption(value);if(opened)await page.locator('#settings-close-bottom').click();
+}
+async function chooseSongInstrument(page,value){
+ const opened=!await page.locator('#instrument').isVisible();if(opened)await page.locator('#screen-settings').click();
+ await page.locator('#instrument').selectOption(value);if(opened)await page.locator('#settings-close-bottom').click();
+}
+async function chooseBackingRhythm(page,value){
+ const opened=!await page.locator('#image-rhythm').isVisible();if(opened){await revealCreationControl(page,'#image-settings-open');await page.locator('#image-settings-open').click();}
+ await page.locator('#image-rhythm').selectOption(value);if(opened)await page.locator('#backing-settings-close-bottom').click();
+}
+async function chooseBackingGenre(page,value){
+ if(await page.locator('#image-genre').isVisible()&&!await page.locator('#backing-genre-use').count()){await page.locator('#image-genre').selectOption(value);return;}
+ if(await page.locator('#backing-settings').isVisible())await page.locator('#backing-settings-close-bottom').click();
+ if(!await page.locator('#backing-rebuild').isVisible())await page.locator('[data-mode=backing]').click();
+ if(!await page.locator('#backing-rebuild').evaluate(n=>n.open))await page.locator('#backing-rebuild>summary').click();
+ await page.locator('#image-genre').selectOption(value);if(await page.locator('#backing-genre-use').isVisible())await page.locator('#backing-genre-use').click();
+}
+async function chooseProgression(page,id){
+ const option=page.locator('#progression-choice option[data-progression="'+id+'"]');await page.locator('#progression-choice').selectOption(await option.getAttribute('value'));
+}
+module.exports.chooseNoteDisplay=chooseNoteDisplay;module.exports.chooseSongInstrument=chooseSongInstrument;module.exports.chooseBackingRhythm=chooseBackingRhythm;module.exports.chooseBackingGenre=chooseBackingGenre;module.exports.chooseProgression=chooseProgression;
+
+async function chooseInputDisplay(page,value){await revealCreationControl(page,'#creation-input-display');await page.locator('#creation-input-display').selectOption(value);}
+module.exports.chooseInputDisplay=chooseInputDisplay;

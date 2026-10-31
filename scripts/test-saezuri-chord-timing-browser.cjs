@@ -1,3 +1,4 @@
+const {chooseBackingRhythm}=require('./saezuri-browser-controls.cjs');
 const {chromium}=require('../.local-tools/node_modules/playwright'),assert=require('node:assert/strict');
 const {startNewPart,openProjectPart,revealCreationControl}=require('./saezuri-browser-controls.cjs');
 const base=process.env.SAEZURI_BASE||'http://127.0.0.1:8026';
@@ -5,7 +6,7 @@ const base=process.env.SAEZURI_BASE||'http://127.0.0.1:8026';
  const page=await browser.newPage({viewport:{width:390,height:740},hasTouch:true,serviceWorkers:'block'}),errors=[];page.on('pageerror',e=>errors.push(e.message));page.setDefaultTimeout(10000);
  const click=s=>page.locator(s).click(),report=async()=>{await page.locator('#report').evaluate(n=>n.click());return JSON.parse(await page.locator('#metrics').textContent());};
  const roots=async()=>{const r=await report();return page.evaluate(async p=>{const {chordAtTick}=await import('/saezuri/music/chord-timing.js');return [0,4,8,12,16].map(t=>chordAtTick(p,t).root)},r.captureEditing.editCandidate??r.captureCandidate)};
- await page.goto(base+'/probe/saezuri/');await page.evaluate(async()=>{const {setMicrophoneEnabled}=await import('/src/speech/microphone.js');setMicrophoneEnabled(false);});await startNewPart(page);await click('[data-mode="backing"]');await page.locator('#image-rhythm').selectOption('whole');await click('[data-chord-bar="0"]');
+ await page.goto(base+'/probe/saezuri/');await page.evaluate(async()=>{const {setMicrophoneEnabled}=await import('/src/speech/microphone.js');setMicrophoneEnabled(false);});await startNewPart(page);await click('[data-mode="backing"]');await chooseBackingRhythm(page,'whole');await click('[data-chord-bar="0"]');
  await click('#chord-grid [data-root="0"][data-quality="major"]');await click('#chord-use');
  await click('[data-chord-beat="2"]');await click('#chord-grid [data-root="7"][data-quality="major"]');await click('#chord-use');assert.deepEqual(await roots(),[0,0,7,7,5]);
  const before=await report();await click('#chord-single-preview');await page.waitForFunction(old=>{document.querySelector('#report').click();const value=JSON.parse(document.querySelector('#metrics').textContent);return value.chordAudition?.timestamp&&value.chordAudition.timestamp!==old},before.chordAudition?.timestamp);await click('#stop');assert.deepEqual((await report()).captureEditing,before.captureEditing);

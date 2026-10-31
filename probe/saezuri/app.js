@@ -15,7 +15,7 @@ import { setupEditorLayout, syncEditorLayout, focusEditor } from './editor-layou
 import {ComposerControls} from './composer-controls.js?v=v0.1.0-20261031212420-8226090';
 import {ProjectWorkflow} from './project-workflow.js?v=v0.1.0-20261031212420-8226090';
 import {blankPattern} from './entry-session.js?v=v0.1.0-20261031212420-8226090';
-import {creationVoiceProfile,TUTORIAL_VOICE_PROFILE,TUTORIAL_BACKING_VOICE_PROFILE,TUTORIAL_PLAY_PROFILE,PROGRESSION_VOICE_PROFILE,PROGRESSION_PLAY_PROFILE,LOOP_VOICE_PROFILE,STOP_VOICE_PROFILE} from './creation-voice.js?v=v0.1.0-20261031212420-8226090';
+import {creationVoiceProfile,TUTORIAL_VOICE_PROFILE,TUTORIAL_BACKING_VOICE_PROFILE,TUTORIAL_PLAY_PROFILE,PROGRESSION_VOICE_PROFILE,PROGRESSION_PLAY_PROFILE,REBUILD_VOICE_PROFILE,REBUILD_PLAY_PROFILE,LOOP_VOICE_PROFILE,STOP_VOICE_PROFILE} from './creation-voice.js?v=v0.1.0-20261031212420-8226090';
 import {ImageControls} from './image-controls.js?v=v0.1.0-20261031212420-8226090';
 import {accompanimentEvents,chordAuditionEvents,SOUNDS,soundLabel} from '../../saezuri/music/accompaniment.js?v=v0.1.0-20261031212420-8226090';
 import {MelodyScreens} from './screens.js?v=v0.1.0-20261031212420-8226090';
@@ -32,6 +32,8 @@ import {DEFAULT_IMAGE} from '../../saezuri/music/image-arrangement.js?v=v0.1.0-2
 import {CreationDisplays} from './creation-displays.js?v=v0.1.0-20261031212420-8226090';
 import {CreationLayout} from './creation-layout.js?v=v0.1.0-20261031212420-8226090';
 import {RECORDING_COUNT_BEATS,RECORDING_COUNT_TICKS} from './capture-support.js?v=v0.1.0-20261031212420-8226090';
+import {bindNumericSelectAll} from './numeric-inputs.js';
+bindNumericSelectAll();
 const compactEditor=setupEditorLayout();
 const requestedEngine=new URLSearchParams(location.search).get('sound');
 const voiceEngine=resolveSoundEngine(requestedEngine);
@@ -94,14 +96,14 @@ function syncVoice() {
   if(!voice) return;
   const looping=!!transport?.active&&transport.loop;
   const recording=!!keyboard?.take||['count-in','recording'].includes(phase);
-  const tutorial=shell?.learning?.active,progressions=!!imageControls?.suggestionsSheet?.open;
+  const tutorial=shell?.learning?.active,progressions=!!imageControls?.suggestionsSheet?.open,rebuilding=!!imageControls?.imageMode.rebuildSheet?.open;
   const backing=shell?.mode==='backing',tutorialIdle=backing?TUTORIAL_BACKING_VOICE_PROFILE:TUTORIAL_VOICE_PROFILE;
-  const profile=progressions?(phase==='idle'?PROGRESSION_VOICE_PROFILE:PROGRESSION_PLAY_PROFILE):tutorial?(phase==='idle'?tutorialIdle:TUTORIAL_PLAY_PROFILE):recording?STOP_VOICE_PROFILE:looping?LOOP_VOICE_PROFILE:creationVoiceProfile(captureEditor.previewPattern,{backing});
+  const profile=rebuilding?(phase==='idle'?REBUILD_VOICE_PROFILE:REBUILD_PLAY_PROFILE):progressions?(phase==='idle'?PROGRESSION_VOICE_PROFILE:PROGRESSION_PLAY_PROFILE):tutorial?(phase==='idle'?tutorialIdle:TUTORIAL_PLAY_PROFILE):recording?STOP_VOICE_PROFILE:looping?LOOP_VOICE_PROFILE:creationVoiceProfile(captureEditor.previewPattern,{backing});
   if(voice.words!==profile.words||voice.parse!==profile.parse){
     clearTimeout(voiceTimer);voiceTimer=null;voice.configure(profile.words,profile.parse,{release:false});
   }
   const enabled=$('edit-voice').checked && microphoneEnabled();
-  const available=enabled && !pitchPreview.active && !chordPreview.active && (!keyboard?.held||looping||recording) && (!shell||shell.allowsVoice) && captureEditor.isOpen && !$('review').hidden && !document.hidden && (phase==='idle'||(tutorial||progressions)&&phase==='playing'||(looping&&['playing','count-in','recording'].includes(phase)));
+  const available=enabled && !pitchPreview.active && !chordPreview.active && (!keyboard?.held||looping||recording) && (!shell||shell.allowsVoice) && captureEditor.isOpen && !$('review').hidden && !document.hidden && (phase==='idle'||(tutorial||progressions||rebuilding)&&phase==='playing'||(looping&&['playing','count-in','recording'].includes(phase)));
   if(!available){
     clearTimeout(voiceTimer);voiceTimer=null;
     voice.setActive(false,{release:!enabled || !captureEditor.isOpen || document.hidden || (shell&&!shell.allowsVoice) || ['analyzing','saving'].includes(phase) || phase==='preparing'&&!preparingPlayback});
@@ -111,7 +113,7 @@ function syncVoice() {
   }
   shell?.learning?.preview.syncVoice();
   const progressionHint=$('progression-voice-hint');if(progressionHint){progressionHint.hidden=!progressions||!enabled;progressionHint.textContent=phase==='idle'?'声：1ばんをきく／1ばんをつかう／とじる':'声：とめる／とじる';}
-  const backingHint=document.querySelector('#image-settings .image-hint');if(backingHint)backingHint.textContent=captureEditor.previewPattern?.accompaniment?.imageChoice?'聴いて、気に入ったら「オッケー」。次は録音だよ。':enabled&&phase==='idle'?'声：ポップ／はずむ8ビート／進行のおすすめ':'ジャンルとリズムをえらび、進行のおすすめで聴き比べよう。';
+  const backingHint=document.querySelector('#image-settings .image-hint');if(backingHint)backingHint.textContent=captureEditor.previewPattern?.accompaniment?.imageChoice?'聴いて、気に入ったら「オッケー」。次は録音だよ。':enabled&&phase==='idle'?'声：ポップ／はずむ8ビート／進行のおすすめ':'コードの並びは小節をタップして変えられます。';
   creationDisplays?.syncVoice();
 }
 const captureEditor = new CaptureEditorView({onPitch:previewPitch, onChange(change) {
@@ -136,7 +138,7 @@ const captureEditor = new CaptureEditorView({onPitch:previewPitch, onChange(chan
   record.captureEditing = captureEditor.snapshot();
   if (change.previewPattern) drawPattern('capture', change.previewPattern);
   setPhase(phase);
-  if(revealKeyboard&&shell?.screen==='create'){window.scrollTo(0,0);keyboard?.reveal();}
+  if(revealKeyboard&&shell?.screen==='create')window.scrollTo(0,0);
   showReport();
   songWorkflow?.schedule();
   shell?.placementWorkflow?.confirmed(change);
@@ -567,7 +569,7 @@ async function newComposition(withImage=false) {
 composer=new ComposerControls({editor:captureEditor,onNew:()=>newComposition(),onPitch:previewPitch,onNavigate:()=>{cancelPreviews();syncVoice();}});
 imageControls=new ImageControls({engine:voiceEngine,editor:captureEditor,onNew:()=>newComposition(true),onTempo:tempo=>{$('tempo').value=String(tempo);$('tempo').dispatchEvent(new Event('change'));},onPreview:(pattern,standalone=false)=>play(pattern??captureEditor.previewPattern,true,{standalone}),onChordPreview:previewChord,
  prepareMetronome:async()=>{await prepare('chord');return {ctx,mixer,style:$('play-count-style').value};},
- onStop:()=>stop(),onNavigate:()=>{cancelPreviews();setPhase(phase);},onRecord:()=>{shell?.setMode(captureEditor.previewPattern?.source==='manual'?'input':'edit');setPhase(phase);window.scrollTo(0,0);keyboard?.reveal();},compact:compactEditor&&new URLSearchParams(location.search).get('view')!=='editor'});
+ onStop:()=>stop(),onNavigate:()=>{cancelPreviews();setPhase(phase);},onRecord:()=>{shell?.setMode(captureEditor.previewPattern?.source==='manual'?'input':'edit');setPhase(phase);window.scrollTo(0,0);},compact:compactEditor&&new URLSearchParams(location.search).get('view')!=='editor'});
 async function startLoop({microphone=true,recordingCountIn=false}={}){
   if(phase!=='idle'||captureEditor.pending)return false;
   if(imageControls?.imageMode.active){imageControls.imageMode.confirmed();shell?.setMode(captureEditor.pattern.source==='manual'?'input':'edit');}

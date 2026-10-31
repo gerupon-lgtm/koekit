@@ -13,6 +13,7 @@ const accents=[
  ...[1,2,3,4].map(beat=>({id:`beat-${beat}`,label:`${beat}拍目を強く`,summary:`${beat}拍強`,beats:[beat]})),
  {id:'beats-13',label:'1・3拍目を強く',summary:'1・3拍強',beats:[1,3]},
  {id:'beats-24',label:'2・4拍目を強く',summary:'2・4拍強',beats:[2,4]},
+ {id:'beats-1234',label:'毎拍の頭を強く',summary:'毎拍強',beats:[1,2,3,4]},
 ];
 const accentTicks=(rhythm,accent)=>accent.beats.map(beat=>(beat-1)*4+rhythm.ticks[0]%4);
 export function hatAccentOptions(rhythmId){

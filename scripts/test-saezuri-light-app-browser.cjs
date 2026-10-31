@@ -1,3 +1,4 @@
+const {chooseSongInstrument}=require('./saezuri-browser-controls.cjs');
 const { chromium } = require('../.local-tools/node_modules/playwright');
 const assert = require('node:assert/strict');
 const base = process.env.SAEZURI_BASE || 'http://127.0.0.1:8018';
@@ -29,12 +30,12 @@ const base = process.env.SAEZURI_BASE || 'http://127.0.0.1:8018';
    const saved = (await report()).captureCandidate; await page.reload(); await page.locator('#home-songs').click(); await page.locator('[data-song-open]').first().click();
    if (await page.locator('#song-continue').isVisible()) await page.locator('#song-continue').click(); assert.deepEqual((await report()).captureCandidate.notes, saved.notes);
    for (const instrument of ['fm-piano','synth-bass','brass','strings','lead','wood']) {
-    await page.locator('#screen-settings').click(); await page.locator('#instrument').selectOption(instrument); await page.locator('#settings-close').click();
+    await page.locator('#screen-settings').click(); await chooseSongInstrument(page,instrument); await page.locator('#settings-close').click();
     await press(60); await page.waitForTimeout(instrument==='strings'?1000:160);
     assert.ok(await page.evaluate(() => synthNodes.filter(n => !n.ended).length)>0, instrument+' remains sounding while held');
     await page.mouse.up(); await page.waitForTimeout(550); assert.equal(await page.evaluate(() => synthNodes.filter(n => !n.ended).length),0,instrument+' release frees nodes');
    }
-   await page.locator('#screen-settings').click(); await page.locator('#instrument').selectOption('strings'); await page.locator('#settings-close').click();
+   await page.locator('#screen-settings').click(); await chooseSongInstrument(page,'strings'); await page.locator('#settings-close').click();
    await page.waitForFunction(() => document.querySelector('#song-status').dataset.saved === 'true');
    await page.reload(); await page.locator('#home-songs').click(); await page.locator('[data-song-open]').first().click();
    if(await page.locator('#song-continue').isVisible())await page.locator('#song-continue').click();assert.equal(await page.locator('#instrument').inputValue(),'strings');

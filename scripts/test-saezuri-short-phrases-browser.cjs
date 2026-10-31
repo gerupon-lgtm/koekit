@@ -1,3 +1,4 @@
+const {chooseBackingRhythm}=require('./saezuri-browser-controls.cjs');
 const {chromium}=require('../.local-tools/node_modules/playwright'),assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
 const {startNewPart,revealCreationControl}=require('./saezuri-browser-controls.cjs');const base=process.env.SAEZURI_BASE||'http://127.0.0.1:8026';
 const folder=path.resolve('.local-tools/sparse-backing-20261101');fs.mkdirSync(folder,{recursive:true});const fixture=path.join(folder,'short-440hz.wav'),rate=48000,frames=rate*2,wav=Buffer.alloc(44+frames*2);
@@ -16,7 +17,7 @@ wav.write('RIFF',0);wav.writeUInt32LE(wav.length-8,4);wav.write('WAVEfmt ',8);wa
   }
   await startNewPart(page);assert.deepEqual(await page.locator('#phrase-bars option').evaluateAll(ns=>ns.map(n=>n.value)),['1','2','4','8']);
   await page.locator('#phrase-bars').selectOption(String(bars));await click('#capture-edit-confirm');await revealCreationControl(page,'[data-pitch="0"]');await click('[data-pitch="0"]');await click('#capture-edit-confirm');
-  await click('[data-mode="backing"]');await page.locator('#image-rhythm').selectOption('halves');await click('[data-chord-bar="0"]');await click('#chord-grid [data-root="0"][data-quality="major"]');await click('#chord-use');await click('[data-chord-beat="2"]');await click('#chord-grid [data-root="7"][data-quality="major"]');await click('#chord-use');await click('#chord-confirm');
+  await click('[data-mode="backing"]');await chooseBackingRhythm(page,'halves');await click('[data-chord-bar="0"]');await click('#chord-grid [data-root="0"][data-quality="major"]');await click('#chord-use');await click('[data-chord-beat="2"]');await click('#chord-grid [data-root="7"][data-quality="major"]');await click('#chord-use');await click('#chord-confirm');
   await click('#screen-settings');await page.locator('#tempo').fill('180');await page.locator('#tempo').dispatchEvent('change');await click('#settings-close');
   await revealCreationControl(page,'#backing-loop');await click('#backing-loop');await page.waitForFunction(()=>document.querySelector('#status').dataset.state==='playing');await page.waitForFunction(()=>!document.querySelector('#loop-record').disabled);await click('#loop-record');
   await page.waitForFunction(()=>document.querySelector('#status').dataset.state==='recording');await page.waitForFunction(()=>document.querySelector('#status').dataset.state==='idle');let r=await report();

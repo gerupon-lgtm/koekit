@@ -43,8 +43,8 @@ export function lessonGuide(editor,{stage=0,heard=false,modelHeard=false,heardOr
   if(base.length!==15)return recover(editor);
   if(!editor.previewPattern?.accompaniment?.enabled){
    if(!backingMode)return result('backing-mode','「伴奏」を 押そう','本番と同じ画面で、伴奏をえらびます。',{target:'[data-mode="backing"]'});
-   if(!suggestionsOpen)return result('backing-suggestions','ジャンルとリズムを えらぼう','おてほんは「ポップ」「はずむ8ビート」。ほかの伴奏でもOK。「進行のおすすめ」で聴き比べよう。',{target:'#image-suggest'});
-   return result('backing-choice','C → F → G → C を ためそう','「聴く」でたしかめて、「この候補をつかう」を押そう。ほかの候補でも大丈夫。',{target:'[data-progression-use="home"]'});
+   if(!suggestionsOpen)return result('backing-suggestions','伴奏を 鳴らそう','「伴奏の鳴らし方」で「伴奏を鳴らす」を入れよう。コードは「コードの並びを変える」で聴き比べられます。',{target:'#image-settings-open'});
+   return result('backing-choice','コードの並びを ためそう','「候補を聴く」でたしかめて、「この並びをつかう」を押そう。いまと違う候補を選べます。',{target:'#progression-use'});
   }
   if(!heard)return listen();if(editor.pending)return confirm();return done();
  }

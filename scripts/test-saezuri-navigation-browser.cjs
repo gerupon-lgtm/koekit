@@ -1,3 +1,4 @@
+const {chooseBackingGenre}=require('./saezuri-browser-controls.cjs');
 const {chromium}=require('../.local-tools/node_modules/playwright');const assert=require('node:assert/strict');
 const {revealCreationControl}=require('./saezuri-browser-controls.cjs');
 const base=process.env.SAEZURI_BASE||'http://127.0.0.1:8014';
@@ -5,7 +6,7 @@ const base=process.env.SAEZURI_BASE||'http://127.0.0.1:8014';
  const context=await browser.newContext({viewport:{width:390,height:844},serviceWorkers:'block'}),page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
  const click=async id=>{await revealCreationControl(page,'#'+id);await page.locator('#'+id).click();};const report=async()=>{await page.locator('#report').evaluate(n=>n.click());return JSON.parse(await page.locator('#metrics').textContent());};
  const back=async()=>{if(await page.locator('#stop').isVisible()&&await page.locator('#status').getAttribute('data-state')==='playing')await click('stop');await click('work-connect');await click('sequence-create');};
- await page.goto(base+'/probe/saezuri/');await click('home-create');await click('new-image');await click('image-settings-open');await page.locator('#image-genre').selectOption('rock');await click('backing-settings-close');
+ await page.goto(base+'/probe/saezuri/');await click('home-create');await click('new-image');await click('image-settings-open');await chooseBackingGenre(page,'rock');await click('backing-settings-close');
  const image=(await report()).captureEditing;assert.equal(image.pending,true);await back();assert.deepEqual((await report()).captureEditing,image);await click('choose-resume');
  await click('image-settings-open');assert.equal(await page.locator('#image-genre').inputValue(),'rock');await click('backing-settings-close');await back();await click('new-manual');await page.locator('#composer-rest').waitFor({state:'attached'});await revealCreationControl(page,'[data-pitch="0"]');
  assert.equal(await page.locator('#melody-discard').isVisible(),false);assert.equal((await report()).captureEditing.pending,false);

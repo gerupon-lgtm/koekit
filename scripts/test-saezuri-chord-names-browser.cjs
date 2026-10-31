@@ -1,3 +1,4 @@
+const {chooseNoteDisplay}=require('./saezuri-browser-controls.cjs');
 const {chromium,webkit}=require('../.local-tools/node_modules/playwright'),assert=require('node:assert/strict'),fs=require('node:fs');
 const {revealCreationControl,openProjectPart}=require('./saezuri-browser-controls.cjs');
 const base=process.env.SAEZURI_BASE||'http://127.0.0.1:8026',layoutOnly=process.env.SAEZURI_BROWSER==='webkit';
@@ -19,7 +20,7 @@ const names=['C','D♭','D','E♭','E','F','G♭','G','A♭','A','B♭','B'];
  const labels=['D♭m7♭5/G♭','G♭sus4/D♭','E♭add9/A♭','B♭m/E♭'];
  assert.deepEqual(await page.locator('#image-chords button').allTextContents(),labels.map((s,i)=>`${i+1}：${s}`));assert.deepEqual(await page.locator('#recording-chords b').allTextContents(),labels);
  for(const id of ['ending-root','ending-bass'])assert.deepEqual(await page.locator('#'+id+' option').evaluateAll(nodes=>nodes.filter(n=>n.value!=='').map(n=>n.textContent)),names);
- await click('creation-options-toggle');await page.locator('#creation-note-display').selectOption('cards');await click('creation-options-toggle');assert.deepEqual(await page.locator('#composition-cards .tutorial-bar-heading .tutorial-chord').allTextContents(),labels);
+ await click('creation-options-toggle');await chooseNoteDisplay(page,'cards');await click('creation-options-toggle');assert.deepEqual(await page.locator('#composition-cards .tutorial-bar-heading .tutorial-chord').allTextContents(),labels);
  const rendered=await page.evaluate(async pattern=>{
   const version=new URL(document.querySelector('script[src*="app.js"]').src).search,{renderTutorialView}=await import('./tutorial-view.js'+version),{CHORD_INTERVALS}=await import('/saezuri/music/catalog.js'+version);
   const fixture=document.createElement('div');fixture.style.width='360px';document.body.append(fixture);const results=[],before=JSON.stringify(pattern);

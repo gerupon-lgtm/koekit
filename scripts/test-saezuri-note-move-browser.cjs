@@ -1,3 +1,4 @@
+const {chooseNoteDisplay}=require('./saezuri-browser-controls.cjs');
 const {chromium,webkit}=require('../.local-tools/node_modules/playwright'),assert=require('node:assert/strict'),fs=require('node:fs');
 const {revealCreationControl}=require('./saezuri-browser-controls.cjs');
 const base=process.env.SAEZURI_BASE||'http://127.0.0.1:8026',layoutOnly=process.env.SAEZURI_BROWSER==='webkit';
@@ -19,7 +20,7 @@ const base=process.env.SAEZURI_BASE||'http://127.0.0.1:8026',layoutOnly=process.
   const move=async direction=>{await page.locator('#capture-time-edit').evaluate(n=>n.scrollIntoView({block:'center'}));await click('capture-time-'+direction);};
   await open();
   for(const display of ['score','cards']){
-   await page.locator('#creation-note-display').selectOption(display);await select('a',display);
+   await chooseNoteDisplay(page,display);await select('a',display);
    const before=await report();await move('later');assert.deepEqual((await report()).captureEditing,before.captureEditing,'overlap changes no note, selection or undo');assert.match(await page.locator('#capture-edit-status').textContent(),/重なる/);
    await move('earlier');let r=await report();assert.equal(r.captureEditing.editCandidate.notes[0].startTick,3);assert.equal(r.captureEditing.selectedNoteId,'a');assert.deepEqual(r.captureCandidate,original);assert.match(await page.locator('#capture-time-position').textContent(),/16分3つ/);
    await click('capture-edit-undo');assert.equal((await report()).captureEditing.pending,false);
@@ -41,7 +42,7 @@ const base=process.env.SAEZURI_BASE||'http://127.0.0.1:8026',layoutOnly=process.
   }
   await page.waitForFunction(()=>document.querySelector('#song-status').dataset.saved==='true');await page.reload();await open();let restored=await report();assert.equal(restored.captureEditing.pending,true);assert.deepEqual(restored.captureEditing.editCandidate,staged);assert.deepEqual(restored.captureCandidate,original);
   await click('capture-edit-confirm');await page.waitForFunction(()=>document.querySelector('#song-status').dataset.saved==='true');await page.reload();await open();restored=await report();assert.equal(restored.captureEditing.pending,false);assert.deepEqual(restored.captureCandidate,staged);
-  await page.locator('#creation-note-display').selectOption('cards');await select('end','cards');assert.equal(await page.locator('#capture-time-later').isDisabled(),true,'sustain cannot extend beyond the final bar');await select('a','cards');for(let i=0;i<4;i++)await move('earlier');assert.equal(await page.locator('#capture-time-earlier').isDisabled(),true,'the first note cannot move before the song head');for(let i=0;i<4;i++)await click('capture-edit-undo');assert.equal((await report()).captureEditing.pending,false);assert.deepEqual(errors,[]);results.push({source,displays:['score','cards'],widths:[320,390,844,1280],draftAndConfirmedRestore:true});await context.close();
+  await chooseNoteDisplay(page,'cards');await select('end','cards');assert.equal(await page.locator('#capture-time-later').isDisabled(),true,'sustain cannot extend beyond the final bar');await select('a','cards');for(let i=0;i<4;i++)await move('earlier');assert.equal(await page.locator('#capture-time-earlier').isDisabled(),true,'the first note cannot move before the song head');for(let i=0;i<4;i++)await click('capture-edit-undo');assert.equal((await report()).captureEditing.pending,false);assert.deepEqual(errors,[]);results.push({source,displays:['score','cards'],widths:[320,390,844,1280],draftAndConfirmedRestore:true});await context.close();
  }
  console.log(JSON.stringify({result:'PASS',base,browser:layoutOnly?'WebKit editing/layout only':'Chrome editing/layout and injected voice',results}));
 }finally{await browser.close();}})().catch(e=>{console.error(e);process.exitCode=1;});

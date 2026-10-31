@@ -1,3 +1,4 @@
+const {chooseBackingGenre}=require('./saezuri-browser-controls.cjs');
 const {chromium}=require('../.local-tools/node_modules/playwright');
 const assert=require('node:assert/strict');
 const base=process.env.SAEZURI_BASE||'http://127.0.0.1:8014';
@@ -47,7 +48,7 @@ const base=process.env.SAEZURI_BASE||'http://127.0.0.1:8014';
  // Image changes remain provisional; audition includes backing without changing melody.
  const melody=(await report()).captureCandidate.notes;
  await page.locator('#image-settings > summary').click();await page.locator('#image-enabled').check();
- await page.locator('#image-genre').selectOption('ballad');
+ await chooseBackingGenre(page,'ballad');
  r=await report();assert.deepEqual(r.captureEditing.editCandidate.notes,melody);assert.equal(r.captureCandidate.accompaniment,undefined);
  assert.equal(r.captureEditing.editCandidate.accompaniment.rhythm,'arpeggio');
  await page.locator('#image-tempo').click();assert.equal(await page.locator('#tempo').inputValue(),'80');

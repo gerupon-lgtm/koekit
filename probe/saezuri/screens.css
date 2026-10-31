@@ -264,7 +264,7 @@ body.melody-app{background:#faf5ed;color:#443b36}
 
 .melody-app #learning-action{display:block;font-size:20px;line-height:1.4;margin:4px 0;color:#493815;overflow-wrap:anywhere}
 .melody-app.learning-active:not(.learning-complete) .phrase-register,.melody-app.learning-active:not(.learning-complete) #after-keep{display:none}
-.melody-app.learning-active .composer-replace{display:none}
+.melody-app.learning-active #composer-panel .composer-replace{display:none}
 
 #composer-lengths{display:none}
 .melody-app #composer-lengths{display:block;min-width:0;border:0;padding:0;margin:0 0 4px}
@@ -439,3 +439,78 @@ body.melody-app{background:#faf5ed;color:#443b36}
 #chord-sheet .chord-picker-controls .chord-picker-tabs{margin:0}
 #chord-sheet #chord-blank{min-width:0;min-height:44px;margin:0;padding:4px;font-size:13px}
 #chord-sheet #chord-blank[aria-pressed="true"]{outline:2px solid #6b9991;outline-offset:-2px;background:#dce9d5}
+
+/* Agreed roles: edit content on the part, orchestration in backing, shared
+   playback/device controls in the top-right sheet. Reuse existing form nodes. */
+.melody-app #melody-settings .listen-settings{display:block;margin:0;padding:0}
+.melody-app #melody-settings #settings-song,.melody-app #melody-settings #settings-device{display:grid;grid-template-columns:minmax(0,1fr);gap:10px;margin:0;padding:0;border:0;background:transparent}
+.melody-app #melody-settings #settings-device{margin-top:16px;padding-top:14px;border-top:1px solid #ddd4c5}
+.melody-app #melody-settings :is(h3,#device-tools>summary){font-size:15px;margin:0;min-height:0}
+.melody-app #melody-settings :is(#settings-song,#settings-device) label{display:grid;grid-template-columns:minmax(0,1fr) minmax(110px,44%);align-items:center;gap:8px;font-size:14px;margin:0;grid-column:auto;width:auto}
+.melody-app #melody-settings :is(#settings-song,#settings-device) label:has(input[type=checkbox]){display:flex;gap:10px;min-height:44px}
+.melody-app #melody-settings :is(select,input[type=number]){width:100%;min-width:0;margin:0;min-height:44px}
+.melody-app #melody-settings .volume-settings{display:grid;grid-template-columns:1fr;gap:10px;padding:0;margin:0}
+.melody-app #device-tools{margin:0;border:0;padding:0}
+.melody-app #device-tools>summary{padding:8px 0;min-height:44px;line-height:28px}
+.melody-app #device-tools>label{margin-top:8px!important}
+.melody-app #technical-tools{margin-top:10px}
+.melody-app #keyboard-instrument{display:none}
+.melody-app #creation-displays{grid-template-columns:minmax(0,1fr)}
+.melody-app #creation-settings{margin:8px 0 0;border-top:1px solid #ddd4c5;padding:0}
+.melody-app #creation-settings>summary{font-size:13px;min-height:44px;padding:8px 0;line-height:28px}
+.melody-app #backing-settings .backing-setting-actions{grid-template-columns:1fr}
+.melody-app #image-settings>.image-more{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:8px 0}
+.melody-app #image-settings>.image-more>button{min-width:0;min-height:52px;line-height:1.4;margin:0;font-size:14px}
+.melody-app #image-summary{display:none}
+.melody-app #backing-chord-heading{font-size:14px;margin:6px 0 4px}
+.melody-app:not([data-create-mode=backing]) #backing-chord-heading{display:none}
+.melody-app #backing-rebuild{margin:8px 0 0;border:0;border-top:1px solid #ddd4c5;padding:0}
+.melody-app #backing-rebuild>summary{padding:8px 0;min-height:44px;font-size:13px;line-height:28px}
+.melody-app #backing-rebuild>button{width:100%;margin:8px 0 0;min-height:44px}
+.melody-app #progression-suggestions .sheet-stop,.melody-app #backing-rebuild-sheet .sheet-stop{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px}
+.melody-app #progression-suggestions .sheet-stop button,.melody-app #backing-rebuild-sheet .sheet-stop button{width:100%;min-width:0;margin:0;min-height:48px;font-size:14px;line-height:1.4}
+.melody-app #progression-use,.melody-app #backing-rebuild-use{background:#dce8d2}
+.melody-app #progression-suggestions .sheet-body>h3{font-size:14px;margin:10px 0 4px}
+.melody-app #progression-suggestions .sheet-body>label{display:block;font-size:14px;margin:12px 0 0}
+.melody-app #progression-choice{width:100%;min-width:0}
+.melody-app .progression-strip{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin:6px 0 10px}
+.melody-app .progression-bar{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;border-radius:12px;background:#eee8dc;padding:7px 3px;min-width:0;min-height:56px;font-size:13px;line-height:1.4;overflow-wrap:anywhere}
+.melody-app .progression-bar small{font-size:11px;margin-bottom:3px}
+.melody-app .progression-bar[data-changed]{background:#dce8d2}
+.melody-app .progression-listen{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0 8px}
+.melody-app .progression-listen>button{min-width:0;margin:0;font-size:14px;min-height:48px}
+.melody-app #progression-stop{display:block;min-height:44px;min-width:120px;margin:8px auto 0}
+.melody-app #backing-rebuild-sheet #image-words{display:grid;grid-template-columns:1fr;gap:12px;margin:0}
+.melody-app #backing-rebuild-sheet #image-words label{font-size:14px;gap:5px}
+.melody-app #backing-rebuild-sheet #image-next{width:100%;margin:12px 0}
+.melody-app #backing-rebuild-preview,.melody-app #backing-rebuild-stop{width:100%;min-height:44px}
+.melody-app #backing-reset-use{background:#dce8d2;width:100%;min-height:48px}
+@media(prefers-color-scheme:dark){.melody-app .progression-bar{background:#3e382f}.melody-app .progression-bar[data-changed],.melody-app #progression-use,.melody-app #backing-rebuild-use,.melody-app #backing-reset-use{background:#354831}}
+
+.melody-app #melody-settings :is(#settings-song,#settings-device){border-radius:0;text-align:left}
+.melody-app #melody-settings :is(#settings-song,#settings-device) h3{text-align:left}
+.melody-app #melody-settings #settings-device label:has(#play-count){flex-direction:row;justify-content:flex-start}
+.melody-app #melody-settings #play-count{flex-shrink:0;margin:0;width:22px;min-height:22px}
+
+.melody-app.chord-editing #backing-chord-heading{display:none}
+
+.melody-app #backing-rebuild>.composer-values{display:grid;grid-template-columns:1fr;margin:8px 0}
+.melody-app #backing-rebuild #backing-genre-use[hidden]{display:none}
+
+.melody-app #progression-suggestions>.sheet-stop,.melody-app #backing-rebuild-sheet>.sheet-stop{grid-template-columns:repeat(3,minmax(0,1fr))}
+.melody-app #progression-suggestions>.sheet-stop #progression-stop{width:100%;min-width:0;margin:0}
+
+.melody-app.editor-focus.image-performing #phrase-shape>label{display:flex}
+.melody-app.image-performing #image-adopted-summary{display:none}
+.melody-app.image-mode[data-create-mode=backing] #image-flow-heading{display:none}
+
+/* The initial image choice needs its own confirmation before detailed changes. */
+.melody-app.editor-focus.image-choosing #image-settings,.melody-app.editor-focus.image-choosing #image-chords,.melody-app.editor-focus.image-choosing #backing-chord-heading{display:none}
+
+.melody-app #backing-rebuild{order:5;grid-column:1/-1}
+.melody-app:not([data-create-mode=backing]) #backing-rebuild,.melody-app.editor-focus.image-choosing #backing-rebuild,.melody-app.recording-focus #backing-rebuild,.melody-app.chord-editing #backing-rebuild{display:none}
+.melody-app #image-settings>.image-hint{display:none}
+
+/* A chord-only image part still has bulk/key/length edits, without empty note tools. */
+.melody-app.editor-focus.image-empty:not(.recording-focus)[data-create-mode=edit] .edit-toolbar{display:block}
+.melody-app.image-empty #screen-note-edit>:not(#creation-settings){display:none}

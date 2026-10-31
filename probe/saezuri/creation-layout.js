@@ -7,7 +7,7 @@ export class CreationLayout{
   this.parts=['phrase-shape','phrase-shape-hint','creation-displays'].map(id=>$(id));this.parts.push(document.querySelector('.editor-voice'));
   this.homes=this.parts.map(node=>{const home=document.createComment('creation layout');node.before(home);return home;});
   this.setup=document.createElement('div');this.setup.id='creation-setup';
-  this.setup.innerHTML='<button id="creation-options-toggle" aria-expanded="false" aria-controls="creation-options">表示・声 ▾</button><div id="creation-options" hidden></div>';
+  this.setup.innerHTML='<button id="creation-options-toggle" aria-expanded="false" aria-controls="creation-options">入力・声 ▾</button><div id="creation-options" hidden></div>';
   $('creation-tabs').after(this.setup);this.toggle=$('creation-options-toggle');this.options=$('creation-options');
   this.toggle.onclick=()=>{this.options.hidden=!this.options.hidden;this.toggle.setAttribute('aria-expanded',String(!this.options.hidden));};
   this.phrase=document.createElement('details');this.phrase.id='phrase-tools';this.phrase.innerHTML='<summary>フレーズをつなげる</summary>';

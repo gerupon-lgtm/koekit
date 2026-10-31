@@ -52,3 +52,13 @@ for(const [index,forms] of [['1','一','いち'],['2','二','に'],['3','三','�
 const choiceProfile=phrases=>({words:phrases.filter(p=>p.command.index===undefined||/^[一二三四] 番/.test(p.word)).map(p=>p.word),parse:raw=>{const p=phrases.find(p=>normalize(p.word)===normalize(raw));return p?{...p.command}:null;}});
 export const PROGRESSION_VOICE_PROFILE=choiceProfile(choicePhrases);
 export const PROGRESSION_PLAY_PROFILE=choiceProfile(choicePhrases.filter(p=>['close','stop'].includes(p.command.action)));
+
+// The rebuild sheet edits only its local candidate until the explicit Use command.
+const rebuildActions=[['きく','listen'],['聴く','listen'],['つかう','use'],['使う','use'],['聞く','listen'],['とじる','close'],['閉じる','close'],['ストップ','stop'],['とめる','stop'],['停止','stop']];
+export const REBUILD_VOICE_PROFILE={words:[...IMAGE_VOICE_WORDS,...rebuildActions.map(([word])=>word)],parse:raw=>{
+ const action=rebuildActions.find(([word])=>normalize(word)===normalize(raw));if(action)return {type:'backing-rebuild',action:action[1]};
+ const command=parseCreationCommand(raw,{image:true});return ['image-choice','image-next'].includes(command?.type)?command:null;
+}};
+export const REBUILD_PLAY_PROFILE={words:rebuildActions.filter(([,action])=>['stop','close'].includes(action)).map(([word])=>word),parse:raw=>{
+ const command=REBUILD_VOICE_PROFILE.parse(raw);return command?.type==='backing-rebuild'&&['stop','close'].includes(command.action)?command:null;
+}};

@@ -1,8 +1,9 @@
+import {setupPlaybackSheet} from './sheet-controls.js';
 import {IMAGE_TYPES,IMAGE_SPEEDS,IMAGE_MOODS,DEFAULT_IMAGE,IMAGE_TEMPOS,generateImageAccompaniment} from '../../saezuri/music/image-arrangement.js?v=v0.1.0-20261031212420-8226090';
 const $=id=>document.getElementById(id);
 export class ImageModeControls {
- constructor({editor,onTempo,onRecord,compact=false}){
-  this.editor=editor;this.onTempo=onTempo;this.onRecord=onRecord;this.compact=compact;this.collapsed=false;
+ constructor({editor,onTempo,onRecord,onPreview,onStop,onNavigate,readAccompaniment,compact=false}){
+  Object.assign(this,{editor,onTempo,onRecord,onPreview,onStop,onNavigate,readAccompaniment,compact});this.collapsed=false;
   this.panel=document.createElement('div');this.panel.id='image-words';this.panel.hidden=true;this.panel.setAttribute('aria-label','伴奏のイメージ');
   for(const [key,label,options] of [['type','音楽のタイプ',IMAGE_TYPES],['speed','はやさ',IMAGE_SPEEDS],['mood','ふんいき',IMAGE_MOODS]]){
    const field=document.createElement('label');field.textContent=label;
@@ -12,9 +13,10 @@ export class ImageModeControls {
   }
   $('composer-panel').before(this.panel);
   this.next=document.createElement('button');this.next.id='image-next';this.next.textContent='別のパターン';this.next.hidden=true;this.next.onclick=()=>this.generate();this.panel.after(this.next);
-  this.reopen=document.createElement('button');this.reopen.id='image-choice-reopen';this.reopen.textContent='伴奏をえらび直す';this.reopen.hidden=true;this.reopen.setAttribute('aria-controls','image-words');this.reopen.setAttribute('aria-expanded','false');
-  this.reopen.onclick=()=>{if(this.busy)return;this.collapsed=false;document.querySelector('[data-mode="backing"]')?.click();this.render(false);window.scrollTo(0,0);};this.next.after(this.reopen);
-  this.reset=document.createElement('button');this.reset.id='image-reset-manual';this.reset.textContent='手直しを外して おまかせ';this.reset.hidden=true;this.reset.onclick=()=>this.generate({resetManual:true});
+  this.reopen=document.createElement('button');this.reopen.id='image-choice-reopen';this.reopen.textContent='イメージで作り直す';this.reopen.hidden=true;this.reopen.setAttribute('aria-controls','image-words');this.reopen.setAttribute('aria-expanded','false');
+  this.reopen.onclick=()=>this.openRebuild();this.next.after(this.reopen);
+  this.reset=document.createElement('button');this.reset.id='image-reset-manual';this.reset.textContent='手直しを外して おまかせ';this.reset.hidden=true;this.reset.onclick=()=>this.openReset();
+  if(compact)this.createRebuildSheets();
  }
  get active(){return !!this.editor.previewPattern?.accompaniment?.imageChoice;}
  confirmed(){const expanded=this.compact&&this.active&&!this.collapsed;if(this.compact&&this.active){this.collapsed=true;if(this.tools)this.tools.open=false;if(this.advanced)this.advanced.open=false;}return expanded;}
@@ -22,14 +24,14 @@ export class ImageModeControls {
   // Reuse the editor controls. Image creation has a choice stage followed by a
   // recording stage; optional editing/display controls stay within reach below.
   if(!this.compact||!document.body.classList.contains('melody-app')||!$('creation-displays')||!$('keyboard-options'))return;
-  const tabs=$('creation-tabs'),displays=$('creation-displays'),toolbar=document.querySelector('.edit-toolbar'),options=$('keyboard-options'),settings=$('image-settings'),genres=$('image-genre').closest('.composer-values'),more=settings.querySelector('.image-more');
+  const tabs=$('creation-tabs'),displays=$('creation-displays'),toolbar=document.querySelector('.edit-toolbar'),options=$('keyboard-options'),settings=$('image-settings');
   if(!this.tools){
    this.tabsAnchor=document.createComment('creation tabs');tabs.before(this.tabsAnchor);
    this.displaysAnchor=document.createComment('creation displays');displays.before(this.displaysAnchor);
    this.toolbarAnchor=document.createComment('note editing');toolbar.before(this.toolbarAnchor);
    this.optionsAnchor=document.createComment('keyboard options');options.before(this.optionsAnchor);
    this.tools=document.createElement('details');this.tools.id='image-edit-tools';this.tools.innerHTML='<summary id="image-edit-tools-toggle">音を直す・表示をかえる</summary>';$('keyboard-options').before(this.tools);
-   this.advanced=document.createElement('details');this.advanced.id='image-backing-detail';this.advanced.innerHTML='<summary>こまかく えらぶ</summary>';settings.append(this.advanced);
+   this.advanced=this.rebuildGroup??document.createElement('details');if(!this.rebuildGroup){this.advanced.id='image-backing-detail';this.advanced.innerHTML='<summary>伴奏を作り直す</summary>';settings.append(this.advanced);}
    this.heading=document.createElement('div');this.heading.id='image-flow-heading';this.panel.before(this.heading);
    this.prompt=document.createElement('span');this.recordBack=document.createElement('button');this.recordBack.id='image-record-return';this.recordBack.textContent='録音にもどる';
    this.recordBack.onclick=()=>{if(this.busy||this.editor.pending)return;this.confirmed();this.onRecord?.();};this.heading.append(this.prompt,this.recordBack);
@@ -37,42 +39,39 @@ export class ImageModeControls {
   }
   const choosing=active&&!this.collapsed;
   document.body.classList.toggle('image-choosing',choosing);document.body.classList.toggle('image-performing',active&&!choosing);
-  this.tools.hidden=!active||choosing;this.advanced.hidden=!active;this.heading.hidden=!active;this.summary.hidden=!active||choosing;
+  this.tools.hidden=!active||choosing||document.body.dataset.createMode==='backing';this.advanced.hidden=false;this.heading.hidden=!active;this.summary.hidden=!active||choosing;
   this.recordBack.hidden=!choosing||!this.editor.accepted||this.editor.pending;this.recordBack.disabled=this.busy;
   if(active){
-   if(tabs.parentNode!==this.tools)this.tools.append(tabs,displays);
+   if(tabs.parentNode===this.tools)this.tabsAnchor.after(tabs);if(displays.parentNode!==this.tools)this.tools.append(displays);if(document.body.dataset.createMode==='edit')this.tools.open=true;
    if(toolbar.parentNode!==this.tools)this.tools.append(toolbar,options);
-   if(more.parentNode!==this.advanced)this.advanced.append($('image-summary'),more);
-   if(document.body.dataset.createMode==='backing'&&genres.parentNode!==this.advanced)this.advanced.prepend(genres);
    const value=this.editor.previewPattern;
    this.prompt.textContent=choosing?'伴奏を えらぼう':'タップか ハナウタで 録ろう';
    this.summary.textContent=`${IMAGE_TYPES.find(([id])=>id===value.accompaniment.imageChoice.type)?.[1]??''}・${value.key?.mode==='minor'?'くらめ':'あかるめ'}・${value.bars}小節`;
-   if(this.audition){const target=choosing||this.editor.pending?$('capture-note-panel'):this.tools;if(this.audition.parentNode!==target){if(target===this.tools)target.append(this.audition);else $('live-keyboard').before(this.audition);}}
+   if(this.audition){const target=$('capture-note-panel');if(this.audition.parentNode!==target)target.append(this.audition);}
   }else{
-   if(tabs.parentNode===this.tools){this.tabsAnchor.after(tabs);this.displaysAnchor.after(displays);}
+   if(tabs.parentNode===this.tools)this.tabsAnchor.after(tabs);if(displays.parentNode===this.tools)this.displaysAnchor.after(displays);
    if(toolbar.parentNode===this.tools){this.toolbarAnchor.after(toolbar);this.optionsAnchor.after(options);}
-   if(more.parentNode===this.advanced)settings.append($('image-summary'),more);
-   if(genres.parentNode===this.advanced)settings.prepend(genres);
   }
  }
  choice(){return Object.fromEntries(['type','speed','mood'].map(key=>[key,$(`image-word-${key}`).value]));}
  begin(){return this.editor.stageImageAccompaniment(generateImageAccompaniment(this.editor.previewPattern,DEFAULT_IMAGE));}
  selectVoice(field,value){
   const options={type:IMAGE_TYPES,speed:IMAGE_SPEEDS,mood:IMAGE_MOODS};
-  if(!this.active||!this.editor.canGenerateAccompaniment||!options[field]?.some(([id])=>id===value))return false;
+  if((!this.active&&!this.rebuildSheet?.open)||!this.editor.canGenerateAccompaniment||!options[field]?.some(([id])=>id===value))return false;
   $(`image-word-${field}`).value=value;return this.generate();
  }
  generate(options={}){
+  if(this.rebuildSheet?.open){this.onStop?.();this.rebuildCandidate=generateImageAccompaniment({...this.rebuildBase,accompaniment:this.rebuildCandidate??this.rebuildBase.accompaniment},this.choice(),options);this.onNavigate?.();return true;}
   if(!this.active||!this.editor.canGenerateAccompaniment)return false;
   return this.editor.stageImageAccompaniment(generateImageAccompaniment(this.editor.previewPattern,this.choice(),options));
  }
  render(busy){
   const value=this.editor.previewPattern?.accompaniment,active=this.active&&this.editor.isOpen;
   if(active&&!this.wasActive)this.collapsed=!this.editor.imageCandidate;
-  if(active&&this.editor.imageCandidate&&!this.wasImageCandidate)this.collapsed=false;
+  if(active&&this.editor.imageCandidate&&!this.wasImageCandidate&&!this.rebuildApplying)this.collapsed=false;
   this.wasActive=active;this.wasImageCandidate=this.editor.imageCandidate;this.busy=busy;
   this.panel.hidden=!active||this.compact&&(this.collapsed||busy);this.next.hidden=this.panel.hidden;
-  this.reopen.hidden=!active||!this.compact||!this.panel.hidden;this.reopen.disabled=busy;
+  this.reopen.hidden=!this.editor.isOpen||!this.compact;this.reopen.disabled=busy||!this.editor.canGenerateAccompaniment;
   this.reopen.setAttribute('aria-expanded',String(!this.panel.hidden));
   document.body.classList.toggle('image-mode',active);
   document.body.classList.toggle('image-empty',active&&!this.editor.previewPattern?.notes.length);
@@ -89,12 +88,57 @@ export class ImageModeControls {
   }
   this.workspace(active);
   const undo=$('capture-edit-undo');if(undo)undo.textContent=this.editor.imageCandidate?'もとにもどす':'もどす';
-  if(!active){this.reset.hidden=true;return;}
-  for(const key of ['type','speed','mood']){const node=$(`image-word-${key}`);node.value=value.imageChoice[key];node.disabled=busy||!this.editor.canGenerateAccompaniment;}
+  if(!active){this.reset.hidden=true;this.renderRebuild(busy);return;}
+  for(const key of ['type','speed','mood']){const node=$(`image-word-${key}`);if(!this.rebuildSheet?.open)node.value=value.imageChoice[key];node.disabled=busy||!this.editor.canGenerateAccompaniment;}
   this.next.disabled=busy||!this.editor.canGenerateAccompaniment;
   this.next.title=this.next.disabled?'止めて、入力や編集の候補を決めてから使えます。':'メロディーを保って、伴奏だけを変えます。';
   const manual=!!value.drumPattern&&value.drumPattern!=='auto'||Object.values(value.manualSettings??{}).some(Boolean)||!!value.chords?.length||!!Object.keys(value.sounds??{}).length;
   this.reset.hidden=!manual;this.reset.disabled=this.next.disabled;
+  this.renderRebuild(busy);
   const tempo=$('image-tempo');if(tempo){tempo.textContent=`「${IMAGE_SPEEDS.find(([id])=>id===value.imageChoice.speed)[1]}」のBPM案 ${IMAGE_TEMPOS[value.imageChoice.speed]} にする`;tempo.onclick=()=>this.onTempo?.(IMAGE_TEMPOS[this.editor.previewPattern.accompaniment.imageChoice.speed]);}
  }
+ createRebuildSheets(){
+  const dialog=document.createElement('dialog');dialog.id='backing-rebuild-sheet';dialog.className='backing-sheet';dialog.setAttribute('aria-label','イメージで作り直す');
+  dialog.innerHTML='<div class="screen-heading"><h2>イメージで作り直す</h2><button id="backing-rebuild-close">とじる</button></div><div id="backing-rebuild-fields"></div><p class="image-hint">手で指定したコード・空白・鳴らし方は残します。テンポは右上の設定で変えられます。</p><button id="backing-rebuild-preview">▶ この伴奏を聴く</button><button id="backing-rebuild-stop">■ とめる</button>';
+  document.querySelector('main').append(dialog);this.rebuildSheet=dialog;
+  setupPlaybackSheet(dialog,{closeId:'backing-rebuild-close',footerCloseId:'backing-rebuild-close-bottom',onStop:()=>this.onStop?.()});
+  const use=document.createElement('button');use.id='backing-rebuild-use';use.textContent='この伴奏をつかう';dialog.querySelector('.sheet-stop').append($('backing-rebuild-stop'),use);
+  $('backing-rebuild-close').onclick=()=>dialog.close();$('backing-rebuild-stop').onclick=()=>this.onStop?.();
+  $('backing-rebuild-preview').onclick=()=>{if(this.rebuildCandidate)this.onPreview?.({...structuredClone(this.rebuildBase),accompaniment:structuredClone(this.rebuildCandidate)},true);};
+  use.onclick=()=>{if(!this.busy&&JSON.stringify(this.editor.previewPattern)===this.rebuildBaseKey&&this.applyRebuild(this.rebuildCandidate))dialog.close();};
+  dialog.addEventListener('close',()=>{this.rebuildBase=null;this.rebuildCandidate=null;for(const [node,anchor] of this.rebuildHomes??[]){anchor.after(node);anchor.remove();}this.rebuildHomes=[];this.onNavigate?.();});
+  const reset=document.createElement('dialog');reset.id='backing-reset';reset.className='backing-sheet';reset.innerHTML='<div class="screen-heading"><h2>手直しを外す</h2><button id="backing-reset-close">とじる</button></div><p>このパーツで手直ししたコード・空白・鳴らし方を外し、おまかせの候補を作ります。メロディーは残ります。</p><button id="backing-reset-use">外して候補をつくる</button>';
+  document.querySelector('main').append(reset);this.resetSheet=reset;
+  setupPlaybackSheet(reset,{closeId:'backing-reset-close',footerCloseId:'backing-reset-close-bottom',onStop:()=>this.onStop?.()});
+  $('backing-reset-close').onclick=()=>reset.close();$('backing-reset-use').onclick=()=>{if(!this.busy&&this.editor.canGenerateAccompaniment){const value=generateImageAccompaniment(this.editor.previewPattern,this.editor.previewPattern.accompaniment.imageChoice??DEFAULT_IMAGE,{resetManual:true});if(this.applyRebuild(value))reset.close();}};
+  reset.addEventListener('close',()=>this.onNavigate?.());
+ }
+ openRebuild(){
+  if(!this.compact||this.busy||!this.editor.canGenerateAccompaniment)return;
+  this.onStop?.();this.rebuildCandidate=null;this.rebuildBase=structuredClone(this.editor.previewPattern);this.rebuildBaseKey=JSON.stringify(this.rebuildBase);this.rebuildBase.accompaniment=structuredClone(this.readAccompaniment());
+  const choice=this.rebuildBase.accompaniment.imageChoice??{...DEFAULT_IMAGE,type:this.rebuildBase.accompaniment.genre};
+  for(const key of ['type','speed','mood'])$(`image-word-${key}`).value=choice[key];
+  this.rebuildHomes=[this.panel,this.next].map(node=>{const anchor=document.createComment('backing builder');node.before(anchor);return [node,anchor];});
+  $('backing-rebuild-fields').append(this.panel,this.next);this.rebuildSheet.showModal();this.generate();
+ }
+ applyRebuild(value){
+  this.rebuildApplying=true;let applied;
+  try{applied=this.editor.stageImageAccompaniment(value);if(applied)this.collapsed=true;}finally{this.rebuildApplying=false;}
+  return applied;
+ }
+ openReset(){if(this.compact){if(!this.busy&&this.editor.canGenerateAccompaniment){this.onStop?.();this.resetSheet.showModal();this.onNavigate?.();}}else this.generate({resetManual:true});}
+ renderRebuild(busy){
+  if(this.rebuildSheet?.open){this.panel.hidden=false;this.next.hidden=false;for(const field of this.panel.querySelectorAll('select'))field.disabled=busy;this.next.disabled=busy;$('backing-rebuild-preview').disabled=busy||!this.rebuildCandidate;$('backing-rebuild-use').disabled=busy||!this.rebuildCandidate||!this.editor.canGenerateAccompaniment;}
+  if(this.resetSheet?.open)$('backing-reset-use').disabled=busy||!this.editor.canGenerateAccompaniment;
+ }
+
+ handleRebuildVoice(command){
+  if(!this.rebuildSheet?.open)return false;
+  if(command?.type==='image-choice')return this.selectVoice(command.field,command.value);
+  if(command?.type==='image-next')return !this.busy&&this.generate();
+  if(command?.type!=='backing-rebuild')return false;
+  const id={close:'backing-rebuild-close',stop:'backing-rebuild-stop',listen:'backing-rebuild-preview',use:'backing-rebuild-use'}[command.action];
+  if(!id||$(id).disabled)return false;$(id).click();return true;
+ }
+
 }

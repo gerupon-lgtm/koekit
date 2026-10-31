@@ -1,3 +1,4 @@
+const {startNewPart}=require('./saezuri-browser-controls.cjs');
 const {chromium}=require('../.local-tools/node_modules/playwright');const assert=require('node:assert/strict');
 const base=process.env.SAEZURI_BASE||'http://127.0.0.1:8018';
 (async()=>{const browser=await chromium.launch({channel:'chrome',headless:true,args:['--autoplay-policy=no-user-gesture-required','--use-fake-device-for-media-stream','--use-fake-ui-for-media-stream']});try{
@@ -13,15 +14,15 @@ const base=process.env.SAEZURI_BASE||'http://127.0.0.1:8018';
  const listen=word=>page.waitForFunction(word=>document.querySelector('#edit-voice-status').textContent==='声を受け付けています'&&window.recognizers.at(-1)?.grammar.includes(word),word);
  const say=async word=>{await page.waitForFunction(()=>document.querySelector('#edit-voice-status').textContent==='声を受け付けています');await page.evaluate(word=>window.recognizers.at(-1).events.result({result:{text:word}}),word);};
  await page.goto(base+'/probe/saezuri/');
- try{await click('home-create');}catch(error){console.error('startup state:',await page.evaluate(()=>({url:location.href,ready:document.readyState,title:document.title,body:document.body.innerText.slice(0,600)})));throw error;}
- await click('new-image');await page.locator('#edit-voice').check();await listen('ロック');
+ await startNewPart(page,'new-image');await page.locator('#edit-voice').check();await listen('ロック');
  const baseline=await pending();
  for(const [word,field,value] of [['ロック','type','rock'],['ゆっくり','speed','slow'],['やさしい','mood','gentle'],['バラード','type','ballad'],['普通','speed','normal'],['かなしい','mood','sad'],['どうよう','type','nursery'],['はやい','speed','fast'],['かっこいい','mood','cool'],['ポップ','type','pop'],['あかるい','mood','bright']]){
   await say(word);assert.equal(await page.locator('#image-word-'+field).inputValue(),value);assert.deepEqual((await pending()).notes,baseline.notes);
  }
  const before=JSON.stringify((await pending()).accompaniment.imageArrangement);await say('別 の パターン');assert.notEqual(JSON.stringify((await pending()).accompaniment.imageArrangement),before);assert.equal((await report()).captureEditing.undoDepth,1);
  await say('もどす');assert.equal((await report()).captureEditing.pending,false);await say('別のパターン');await say('オッケー');assert.equal((await report()).captureEditing.pending,false);
- await say('伴奏');assert.equal(await page.locator('#image-words').isVisible(),true);await say('進行 の おすすめ');await page.locator('#progression-suggestions').waitFor({state:'visible'});await say('とじる');await page.locator('#progression-suggestions').waitFor({state:'hidden'});await click('image-record-return');
+ await say('伴奏');assert.equal(await page.locator('body').getAttribute('data-create-mode'),'backing');await say('進行 の おすすめ');await page.locator('#progression-suggestions').waitFor({state:'visible'});await say('とじる');await page.locator('#progression-suggestions').waitFor({state:'hidden'});
+ const beforeRebuild=await pending();await page.locator('#backing-rebuild>summary').click();await page.locator('#image-choice-reopen').click();await listen('ロック');await say('ロック');await say('別 の パターン');assert.deepEqual(await pending(),beforeRebuild);await say('きく');await page.waitForFunction(()=>document.querySelector('#status').dataset.state==='playing');await listen('停止');await say('停止');await listen('使う');await say('使う');assert.equal((await report()).captureEditing.pending,true);await say('もどす');assert.deepEqual(await pending(),beforeRebuild);await page.locator('[data-mode=input]').click();
  // Recording words outside a loop do not start playback or alter data.
  await say('ろくおん');await say('はなうた');assert.equal(await page.locator('#status').getAttribute('data-state'),'idle');
  await say('スタート');await page.waitForFunction(()=>document.querySelector('#status').dataset.state==='playing');await listen('録音');

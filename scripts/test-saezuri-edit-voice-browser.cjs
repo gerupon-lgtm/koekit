@@ -1,3 +1,4 @@
+const {chooseSongInstrument}=require('./saezuri-browser-controls.cjs');
 const {chromium}=require('../.local-tools/node_modules/playwright');
 const assert=require('node:assert/strict');
 const base=process.env.SAEZURI_BASE || 'http://127.0.0.1:8000';
@@ -34,7 +35,7 @@ const base=process.env.SAEZURI_BASE || 'http://127.0.0.1:8000';
   let transposed=await report();
   assert.deepEqual(transposed.captureEditing.editCandidate.notes.map(n=>n.midi),initial.map(n=>n.midi+12));
   assert.deepEqual(transposed.captureCandidate.notes,initial);
-  await page.locator('#instrument').selectOption('lead');
+  await chooseSongInstrument(page,'lead');
   await page.locator('#play-count-style').selectOption('stick');
   await say('きく');await page.waitForFunction(()=>document.querySelector('#status').dataset.state==='playing');
   const previewed=await report();

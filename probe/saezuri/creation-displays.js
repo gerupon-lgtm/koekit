@@ -10,6 +10,7 @@ export class CreationDisplays{
   this.row=document.createElement('div');this.row.id='creation-displays';
   this.row.innerHTML='<label>見る<select id="creation-note-display" aria-label="ノート表示"><option value="cards">カード</option><option value="score">五線譜</option></select></label><label>入力<select id="creation-input-display" aria-label="入力表示"><option value="cards">カード</option><option value="keyboard">鍵盤</option></select></label>';
   $('creation-tabs').after(this.row);
+  $('device-tools')?.prepend(this.row.querySelector('label:has(#creation-note-display)'));
   this.cards=document.createElement('div');this.cards.id='composition-cards';this.cards.setAttribute('aria-label','メロディーのカード');$('capture-score').before(this.cards);
   this.voiceHint=document.createElement('p');this.voiceHint.id='creation-voice-hint';this.voiceHint.textContent='声：「きく」「もういちど」で聴く。';document.querySelector('.listen-actions').after(this.voiceHint);
   $('creation-note-display').onchange=()=>this.choose('note',$('creation-note-display').value);

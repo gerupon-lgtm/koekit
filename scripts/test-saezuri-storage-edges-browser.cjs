@@ -1,3 +1,4 @@
+const {chooseBackingRhythm,chooseBackingGenre}=require('./saezuri-browser-controls.cjs');
 const {revealCreationControl}=require('./saezuri-browser-controls.cjs');
 const {chromium}=require('../.local-tools/node_modules/playwright');const assert=require('node:assert/strict');
 (async()=>{const browser=await chromium.launch({channel:'chrome',headless:true});try{
@@ -45,7 +46,7 @@ const {chromium}=require('../.local-tools/node_modules/playwright');const assert
  await tutorialPut(4,1);await tutorialPut(7,.5);await tutorialPut(4,.5);await tutorialPut(5,.5);await tutorialPut(4,1);await tutorialPut(2,.5);await tutorialHear();await tutorialNext(5);
  await tutorialClick('[data-lesson-length="4"]');await tutorialHear();await tutorialClick('#capture-edit-confirm');await tutorialNext(6);
  await tutorialPut(1,1);await tutorialPut(0,.5);await tutorialPut(0,2);await tutorialHear();await tutorialNext(7);
- await tutorialClick('[data-mode="backing"]');await p3.locator('#image-genre').selectOption('pop');await p3.locator('#image-rhythm').selectOption('tutorial');await tutorialClick('#image-suggest');await tutorialClick('[data-progression-use="home"]');await tutorialHear();await tutorialClick('#capture-edit-confirm');
+ await tutorialClick('[data-mode="backing"]');await chooseBackingGenre(p3,'pop');await chooseBackingRhythm(p3,'tutorial');await tutorialClick('#image-suggest');await tutorialClick('[data-progression-use="home"]');await tutorialHear();await tutorialClick('#capture-edit-confirm');
  assert.equal(await p3.locator('body').evaluate(node=>node.classList.contains('learning-complete')),true,'full capacity permits finishing tutorial practice');
  assert.equal(await p3.evaluate(async()=>{const {SongStore}=await import('/saezuri/song-store.js');return (await new SongStore().list()).length;}),10,'tutorial practice does not claim a storage frame');
  await tutorialClick('#learning-close');await tutorialClick('#keep-phrase');await p3.locator('#song-library').waitFor({state:'visible'});assert.equal(await p3.locator('#phrase-shelf [data-phrase]').count(),0,'full capacity permits practice but prevents registering it');

@@ -5,16 +5,16 @@ export class KeyboardControls {
  constructor({editor,prepareVoice,onStart,onActivity,onPreview,clock}){
   Object.assign(this,{editor,prepareVoice,onStart,onActivity,onPreview,clock});this.octave=0;this.take=null;this.held=null;
   const panel=document.createElement('div');panel.id='live-keyboard';
-  panel.innerHTML='<div class="keyboard-actions"><button id="tap-record">タップ<br>で録る</button></div><p id="keyboard-status" role="status">れんしゅう中</p><div id="piano-keys" aria-label="練習と録音の鍵盤"></div><div class="keyboard-octaves" aria-label="鍵盤の高さ"><button data-keyboard-octave="-1">↓ 下げ</button><button data-keyboard-octave="0">元</button><button data-keyboard-octave="1">↑ 上げ</button></div><p class="keyboard-help">押しているあいだ音がのびます。録るときは「タップで録る」。</p><details id="keyboard-more"><summary>伴奏の設定・進行のおすすめ</summary><div class="keyboard-settings"></div></details><details id="step-entry"><summary>1音ずつ置く</summary></details>';
+  panel.innerHTML='<div class="keyboard-actions"><button id="tap-record">タップ<br>で録る</button></div><p id="keyboard-status" role="status">れんしゅう中</p><div id="piano-keys" aria-label="練習と録音の鍵盤"></div><div class="keyboard-octaves" aria-label="鍵盤の高さ"><button data-keyboard-octave="-1">↓ 下げ</button><button data-keyboard-octave="0">元</button><button data-keyboard-octave="1">↑ 上げ</button></div><p class="keyboard-help">押しているあいだ音がのびます。録るときは「タップで録る」。</p><details id="keyboard-more"><summary>伴奏の鳴らし方・コードの並び</summary><div class="keyboard-settings"></div></details><details id="step-entry"><summary>1音ずつ置く</summary></details>';
   const toolbar=document.querySelector('.edit-toolbar');toolbar.before(panel);this.panel=panel;
   const heading=document.createElement('div');heading.className='keyboard-heading';$('keyboard-status').before(heading);
-  const instrument=document.createElement('div');instrument.id='keyboard-instrument';instrument.append($('instrument').closest('label'));heading.append($('keyboard-status'),instrument);
+  const instrument=document.createElement('div');instrument.id='keyboard-instrument';if(!document.body.classList.contains('melody-app'))instrument.append($('instrument').closest('label'));heading.append($('keyboard-status'),instrument);
   const actions=panel.querySelector('.keyboard-actions');actions.prepend($('backing-loop'));actions.append($('loop-record'));
   actions.after($('loop-hint'));
   this.guide=new RecordingGuide(panel,$('keyboard-status'));
   $('backing-loop').innerHTML='伴奏<br>ループ';$('loop-record').innerHTML='ハナウタ<br>で録る';
   panel.before($('image-chords'));
-  panel.querySelector('.keyboard-settings').append($('image-settings-open'),$('image-suggest'));
+  panel.querySelector('.keyboard-settings').append($('image-suggest'),$('image-settings-open'));
   $('step-entry').append($('composer-panel'));$('tap-record').onclick=()=>onStart();
   const options=document.createElement('div');options.id='keyboard-options';options.append($('keyboard-more'),$('step-entry'));toolbar.after(options);
   for(const b of panel.querySelectorAll('[data-keyboard-octave]'))b.onclick=()=>{this.octave=Number(b.dataset.keyboardOctave);this.drawKeys();};

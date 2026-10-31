@@ -1,4 +1,6 @@
-const {openProjectPart}=require('./saezuri-browser-controls.cjs');
+const {chooseInputDisplay}=require('./saezuri-browser-controls.cjs');
+const {chooseNoteDisplay}=require('./saezuri-browser-controls.cjs');
+const {openProjectPart,revealCreationControl}=require('./saezuri-browser-controls.cjs');
 const {chromium,webkit}=require('../.local-tools/node_modules/playwright'),assert=require('node:assert/strict'),fs=require('node:fs');
 const base=process.env.SAEZURI_BASE||'http://127.0.0.1:8026';
 const layoutOnly=process.env.SAEZURI_BROWSER==='webkit';
@@ -20,17 +22,17 @@ const layoutOnly=process.env.SAEZURI_BROWSER==='webkit';
   await page.screenshot({path:`.local-tools/image-recording-layout-20261018/choosing-${width}.png`});
   await click('capture-edit-confirm');await page.locator('#piano-keys').waitFor({state:'visible'});
   assert.equal(await page.locator('body').getAttribute('data-input-display'),'keyboard','recording starts with the keyboard even if card input was remembered');
-  assert.equal(await page.locator('#image-words').isVisible(),false);assert.equal(await page.locator('#creation-tabs').isVisible(),false);assert.equal(await page.locator('#creation-displays').isVisible(),false);
+  assert.equal(await page.locator('#image-words').isVisible(),false);assert.equal(await page.locator('#creation-tabs').isVisible(),true,'normal editing tabs stay available');assert.equal(await page.locator('#creation-displays').isVisible(),false);
   assert.equal(await page.locator('#capture-score').isVisible(),false,'an empty staff does not push recording controls away');
-  assert.equal(await page.locator('#composer-key').isVisible(),false);assert.equal(await page.locator('#phrase-bars').isVisible(),false);
-  assert.equal(await page.locator('#instrument').isVisible(),true);assert.equal(await page.locator('#tap-record').isEnabled(),true);assert.equal(await page.locator('#loop-record').isEnabled(),true);
-  const ready=await viewport(['tap-record','loop-record','instrument','piano-keys']);
-  if(width<650){for(const [id,box] of Object.entries(ready))assert.ok(box.within,`${id} is reachable on the first recording screen`);assert.equal(await page.evaluate(()=>scrollY),0,'confirmation keeps the header and recording controls together');}
-  const before=await report();await click('image-choice-reopen');await page.locator('#image-words').waitFor({state:'visible'});assert.deepEqual(await report(),before,'reopening accompaniment changes no song or history');
-  await click('image-record-return');await page.locator('#piano-keys').waitFor({state:'visible'});assert.deepEqual(await report(),before,'return without changing accompaniment leaves the song and history intact');await click('image-choice-reopen');
-  await click('image-next');await click('capture-edit-confirm');await page.locator('#piano-keys').waitFor({state:'visible'});
+  assert.equal(await page.locator('#composer-key').isVisible(),true);assert.equal(await page.locator('#phrase-bars').isVisible(),true);
+  assert.equal(await page.locator('#instrument').isVisible(),false,'shared instrument belongs to the right settings');assert.equal(await page.locator('#tap-record').isEnabled(),true);assert.equal(await page.locator('#loop-record').isEnabled(),true);
+  const ready=await viewport(['tap-record','loop-record']);
+  if(width<650){for(const [id,box] of Object.entries(ready))assert.ok(box.within,`${id} is reachable on the first recording screen`);assert.equal(await page.evaluate(()=>scrollY),0,'confirmation does not jump the header offscreen');}
+  const openBuilder=async()=>{await revealCreationControl(page,'#image-choice-reopen');await click('image-choice-reopen');};
+  const before=await report();await openBuilder();await page.locator('#image-words').waitFor({state:'visible'});assert.deepEqual(await report(),before,'reopening accompaniment changes no song or history');
+  await click('backing-rebuild-close-bottom');assert.deepEqual(await report(),before,'cancel discards local accompaniment');await openBuilder();await click('image-next');await click('backing-rebuild-use');await click('capture-edit-confirm');await page.locator('[data-mode=input]').click();await page.locator('#piano-keys').waitFor({state:'visible'});
   if(width===390&&!layoutOnly){
-   await click('image-choice-reopen');await page.locator('#backing-loop').evaluate(n=>n.click());await page.waitForFunction(()=>document.querySelector('#status').dataset.state==='playing');assert.equal(await page.locator('#piano-keys').isVisible(),true,'voice loop start leaves a reopened settings view for the recording surface');await click('stop');
+   await click('backing-loop');await page.waitForFunction(()=>document.querySelector('#status').dataset.state==='playing');assert.equal(await page.locator('#piano-keys').isVisible(),true);await click('stop');
    // One recording button starts the backing and the take. No loop or display setup.
    await click('tap-record');await page.waitForFunction(()=>document.body.classList.contains('keyboard-recording')&&document.querySelector('#keyboard-status').textContent.startsWith('タップ録音中'));
    assert.equal(await page.locator('#loop-record').isDisabled(),true);assert.equal(await page.locator('#instrument').isDisabled(),true);
@@ -41,11 +43,11 @@ const layoutOnly=process.env.SAEZURI_BROWSER==='webkit';
    assert.equal(await page.locator('#piano-keys').isVisible(),false,'humming and keyboard recording stay exclusive');assert.equal(await page.locator('#tap-record').isDisabled(),true);await click('stop');
    assert.deepEqual((await report()).pattern,adopted.pattern,'cancelled humming leaves the accepted melody');assert.deepEqual(await page.evaluate(()=>[...new Set(requestedContexts)]),['interactive']);
    await page.waitForFunction(()=>document.querySelector('#song-status').dataset.saved==='true');await page.reload();await click('home-songs');await page.locator('[data-song-open]').first().click();if(await page.locator('#song-continue').isVisible())await click('song-continue');await openProjectPart(page);
-   await page.locator('#piano-keys').waitFor({state:'visible'});assert.equal(await page.locator('#image-words').isVisible(),false);assert.equal(await page.locator('#creation-tabs').isVisible(),false);
+   await page.locator('#piano-keys').waitFor({state:'visible'});assert.equal(await page.locator('#image-words').isVisible(),false);assert.equal(await page.locator('#creation-tabs').isVisible(),true,'normal editing tabs stay available');
   }
   await page.screenshot({path:`.local-tools/image-recording-layout-20261018/recording-${width}.png`});
-  await click('image-edit-tools-toggle');await page.locator('#creation-displays').waitFor({state:'visible'});const viewBefore=await report();
-  await page.locator('#creation-note-display').selectOption('cards');await page.locator('#creation-input-display').selectOption('cards');assert.deepEqual(await report(),viewBefore,'display preferences remain independent from music');
+  await page.locator('[data-mode=edit]').click();await page.locator('#creation-displays').waitFor({state:'visible'});const viewBefore=await report();
+  await chooseNoteDisplay(page,'cards');await chooseInputDisplay(page,'cards');assert.deepEqual(await report(),viewBefore,'display preferences remain independent from music');
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);assert.deepEqual(errors,[]);results.push({width,height,choosing,ready});await context.close();
  }
  console.log(JSON.stringify({result:'PASS',base,browser:layoutOnly?'WebKit layout only':'Chrome layout and recording',checks:layoutOnly?'four sizes, word choices and confirmation, direct access to keyboard/record buttons, optional views, no overflow':'word choices then direct recording; no required loop/display setup; tap/hum reuse; confirmation/save/restore; independent optional views; four sizes',results}));

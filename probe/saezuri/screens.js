@@ -36,7 +36,7 @@ export class MelodyScreens {
   for(const option of key.options){const value=option.value;option.value=value;option.textContent=value==='Am'?'くらめ':'あかるめ';}
   shape.append(keyLabel);const length=document.createElement('label');length.innerHTML=`小節数<select id="phrase-bars">${PHRASE_LENGTHS.map(b=>`<option value="${b}">${b}小節</option>`).join('')}</select>`;shape.append(length);
   create.querySelector('#creation-tabs').after(shape);const shapeHint=document.createElement('p');shapeHint.id='phrase-shape-hint';shapeHint.setAttribute('role','status');shape.after(shapeHint);
-  shape.before($('image-words'));shape.append($('image-next'),$('image-choice-reopen'));
+  shape.before($('image-words'));shape.append($('image-next'));
   length.querySelector('select').onchange=()=>editor.changeStructure({type:'resize',bars:Number($('phrase-bars').value)});
   $('composer-panel').querySelector('details>summary').textContent='入力位置・表示・コピー';
   const connect=document.createElement('section');connect.id='melody-connect';connect.className='melody-screen';
@@ -60,13 +60,23 @@ export class MelodyScreens {
   create.append($('edit-workspace'));
   const captureProgress=$('capture-position');create.insertBefore(captureProgress,$('edit-workspace'));
   const dialog=document.createElement('dialog');dialog.id='melody-settings';dialog.setAttribute('aria-label','設定');
-  dialog.innerHTML='<div class="screen-heading"><h2>設定</h2><button id="settings-close">とじる</button></div><div id="sound-settings"></div><div id="creation-settings"></div>';
+  dialog.innerHTML='<div class="screen-heading"><h2>設定</h2><button id="settings-close">とじる</button></div><div id="sound-settings"></div><details id="creation-settings"><summary>まとめて編集・詳しい設定</summary></details>';
   main.append(dialog);this.dialog=dialog;
-  $('sound-settings').append(document.querySelector('.listen-settings'));
-  $('creation-settings').append($('composer-panel').querySelector('details'),document.querySelector('.quick-transpose'),$('editor-more'),document.querySelector('.editor-finish'),$('technical-tools'));
+  const listening=document.querySelector('.listen-settings');$('sound-settings').append(listening);
+  const common=document.createElement('section');common.id='settings-song';common.innerHTML='<h3>この曲に共通</h3>';
+  const device=document.createElement('section');device.id='settings-device';device.innerHTML='<h3>この端末での聴こえ方</h3>';
+  common.append($('tempo').closest('label'),$('instrument').closest('label'));
+  const volumes=document.querySelector('.volume-settings');volumes.append(...['master-volume','backing-volume','count-volume'].map(id=>$(id).closest('label')));
+  device.append(volumes,$('play-count-style').closest('label'),$('play-count').closest('label'));
+  const extras=document.createElement('details');extras.id='device-tools';extras.innerHTML='<summary>表示・録音の設定</summary>';extras.append($('technical-tools'));device.append(extras);
+  listening.replaceChildren(common,device);
+  $('creation-settings').append($('composer-panel').querySelector('details'),document.querySelector('.quick-transpose'),$('editor-more'),document.querySelector('.editor-finish'));
+  const labelText=(id,text)=>{const label=$(id).closest('label');for(const node of [...label.childNodes])if(node.nodeType===3)node.remove();label.prepend(document.createTextNode(text));};
+  labelText('tempo','テンポ（BPM）');labelText('instrument','メロディーの音色');labelText('play-count-style','ドンカマの音色');labelText('play-count','試聴でドンカマを鳴らす');$('play-count').closest('label').prepend($('play-count'));
+  for(const [id,text] of [['master-volume','全体の音量'],['backing-volume','伴奏の音量'],['count-volume','ドンカマの音量']])labelText(id,text);
   dialog.append($('copy-status'),$('copy-fallback'));
   setupPlaybackSheet(dialog,{closeId:'settings-close',footerCloseId:'settings-close-bottom',onStop,stopOnClose:false});
-  $('settings-close').onclick=()=>dialog.close();dialog.addEventListener('close',()=>{const inline=$('keyboard-instrument');if(inline)inline.append($('instrument').closest('label'));onNavigate();});
+  $('settings-close').onclick=()=>dialog.close();dialog.addEventListener('close',()=>onNavigate());
   $('screen-settings').onclick=()=>this.openSettings();$('sequence-settings').onclick=()=>this.openSettings();
   $('home-help').onclick=()=>{
    const help=document.createElement('dialog');help.className='melody-help menu-help-dialog';help.innerHTML='<h2>つかいかた</h2><p>「新しくつくる」で曲をはじめます。「保存した曲をひらく」で前回の作業へ戻れます。</p><p>音を置いて、聴いて、オッケー。「フレーズを登録」で同じ曲の材料に追加します。「フレーズをつくる／つなげる」で作業を切り替えられます。</p><p>作業は自動保存します。「トップへ」は保存が終わってから戻ります。一覧の「聴く」はその場で試聴し、曲をひらく操作とは別です。</p>';
@@ -75,7 +85,7 @@ export class MelodyScreens {
   };
   const toolbar=document.querySelector('.edit-toolbar'),listen=document.querySelector('.listen-actions');
   const edit=document.createElement('div');edit.id='screen-note-edit';
-  edit.append($('capture-selection'),document.querySelector('.note-navigation'),document.querySelector('.note-actions'),$('capture-time-edit'));
+  edit.append($('capture-selection'),document.querySelector('.note-navigation'),document.querySelector('.note-actions'),$('capture-time-edit'),$('creation-settings'));
   toolbar.prepend(edit);
   // Keep the candidate, confirm and audition together, independent of editor tab.
   toolbar.append($('composer-candidate'),listen,$('capture-edit-status'));
@@ -140,8 +150,8 @@ export class MelodyScreens {
   $('discard-message').textContent='今の音列・入力中の候補・もどす履歴は消えます。';
   this.discardDialog.showModal();this.onNavigate();$('discard-cancel').focus();
  }
- get allowsVoice(){return this.screen==='create'&&![...document.querySelectorAll('dialog[open]')].some(d=>d.id!=='progression-suggestions'&&(d.id!=='learning-preview'||!this.learning?.active));}
- openSettings(){ $('creation-settings').hidden=this.screen!=='create';this.dialog.querySelector('.listen-settings').append($('instrument').closest('label'));this.dialog.showModal();this.onNavigate();}
+ get allowsVoice(){return this.screen==='create'&&![...document.querySelectorAll('dialog[open]')].some(d=>!['progression-suggestions','backing-rebuild-sheet'].includes(d.id)&&(d.id!=='learning-preview'||!this.learning?.active));}
+ openSettings(){this.dialog.showModal();this.onNavigate();}
  go(screen,{history:push=true,stop=true,focus=true}={}) {
   if(this.phase==='saving')return;
   if(screen==='home'&&this.songWorkflow&&this.screen!=='home'&&!this.leavingSaved){
@@ -169,10 +179,9 @@ export class MelodyScreens {
   this.mode=mode;
   if(mode==='backing'){$('image-settings').open=true;$('capture-note-panel').append($('image-settings'));}
   const destination=document.querySelector(mode==='backing'?'#image-settings .image-more':'.keyboard-settings');
-  if(destination&&$('image-settings-open'))destination.prepend($('image-settings-open'),$('image-suggest'));
-  const genres=$('image-genre')?.closest('.composer-values');
-  if(genres&&$('backing-settings')){if(mode==='backing')(this.editor.previewPattern?.accompaniment?.imageChoice&&$('image-backing-detail')?$('image-backing-detail'):$('image-settings')).prepend(genres);else $('image-progression').closest('label').before(genres);}
+  if(destination&&$('image-settings-open'))destination.prepend($('image-suggest'),$('image-settings-open'));
   document.body.dataset.createMode=mode;for(const b of document.querySelectorAll('[data-mode]'))b.setAttribute('aria-pressed',String(b.dataset.mode===mode));
+  if(mode!=='backing'&&$('image-chords').parentNode===$('image-settings'))$('live-keyboard')?.before($('image-chords'));
   this.onModeChange?.();
  }
  sync(phase) {

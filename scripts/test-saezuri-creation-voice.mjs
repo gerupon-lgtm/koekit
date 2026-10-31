@@ -1,7 +1,7 @@
 import test from 'node:test';import assert from 'node:assert/strict';
 import {EDIT_WORDS,parseEditCommand} from '../probe/saezuri/edit-voice.js';
 import {ENTRY_WORDS,parseEntryCommand} from '../probe/saezuri/entry-voice.js';
-import {IMAGE_VOICE_CHOICES,IMAGE_VOICE_WORDS,RECORD_VOICE_WORDS,parseCreationCommand,creationVoiceProfile,LOOP_VOICE_PROFILE,STOP_VOICE_PROFILE} from '../probe/saezuri/creation-voice.js';
+import {IMAGE_VOICE_CHOICES,IMAGE_VOICE_WORDS,RECORD_VOICE_WORDS,parseCreationCommand,creationVoiceProfile,LOOP_VOICE_PROFILE,STOP_VOICE_PROFILE,REBUILD_VOICE_PROFILE,REBUILD_PLAY_PROFILE} from '../probe/saezuri/creation-voice.js';
 import {DEFAULT_IMAGE} from '../saezuri/music/image-arrangement.js';
 test('every image word and category-qualified phrase selects exactly one field without colliding with existing commands',()=>{
  for(const [field,value,aliases] of IMAGE_VOICE_CHOICES)for(const alias of aliases){
@@ -77,4 +77,14 @@ test('genre and shared pop pattern phrases select the same backing controls only
  }
  assert.deepEqual(t.parse('はずむ 八 ビート'),{type:'backing-rhythm',rhythm:'tutorial'});assert.equal(t.parse('つぎ'),'next');
  assert.equal(creationVoiceProfile({source:'manual'},{backing:true}),creationVoiceProfile({source:'manual'},{backing:true}));
+});
+
+test('rebuild voice stays inside the local candidate and accepts stop/close during playback',()=>{
+ assert.deepEqual(REBUILD_VOICE_PROFILE.parse('ポップ'),{type:'image-choice',field:'type',value:'pop'});
+ assert.deepEqual(REBUILD_VOICE_PROFILE.parse('別 の パターン'),{type:'image-next'});
+ assert.deepEqual(REBUILD_VOICE_PROFILE.parse('つかう'),{type:'backing-rebuild',action:'use'});
+ for(const word of ['ド1','オッケー','けす','スタート'])assert.equal(REBUILD_VOICE_PROFILE.parse(word),null);
+ assert.equal(REBUILD_PLAY_PROFILE.parse('つかう'),null);assert.equal(REBUILD_PLAY_PROFILE.parse('ポップ'),null);
+ assert.deepEqual(REBUILD_PLAY_PROFILE.parse('とじる'),{type:'backing-rebuild',action:'close'});
+ assert.deepEqual(REBUILD_PLAY_PROFILE.parse('停止'),{type:'backing-rebuild',action:'stop'});
 });

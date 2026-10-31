@@ -1,3 +1,4 @@
+const {chooseSongInstrument}=require('./saezuri-browser-controls.cjs');
 const {chromium}=require('../.local-tools/node_modules/playwright');
 const assert=require('node:assert/strict');
 const base=process.env.SAEZURI_BASE||'http://127.0.0.1:8014';
@@ -34,7 +35,7 @@ const base=process.env.SAEZURI_BASE||'http://127.0.0.1:8014';
   await page.locator('#capture-pitch-up').click();
   assert.equal(await page.locator('#capture-import-button').isDisabled(),true);
   assert.equal(await page.locator('#capture').isDisabled(),true);
-  await page.locator('#instrument').selectOption('lead');await page.locator('#play-count-style').selectOption('tambourine');
+  await chooseSongInstrument(page,'lead');await page.locator('#play-count-style').selectOption('tambourine');
   await page.locator('#preview').click();await page.waitForFunction(()=>document.querySelector('#status').dataset.state==='playing');
   let r=await report();assert.equal(r.playback.pitches[0],initial[0].midi+1);assert.equal(r.playback.instrument,'lead');assert.equal(r.playback.countStyle,'tambourine');
   assert.equal(await page.locator('#instrument').isDisabled(),true);await page.locator('#stop').click();

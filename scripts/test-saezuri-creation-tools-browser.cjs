@@ -1,3 +1,4 @@
+const {chooseInputDisplay}=require('./saezuri-browser-controls.cjs');
 const {chromium,webkit}=require('../.local-tools/node_modules/playwright'),assert=require('node:assert/strict'),fs=require('node:fs');
 const base=process.env.SAEZURI_BASE||'http://127.0.0.1:8026',layoutOnly=process.env.SAEZURI_BROWSER==='webkit';
 (async()=>{const browser=layoutOnly?await webkit.launch({headless:true,executablePath:process.env.SAEZURI_WEBKIT_PATH}):await chromium.launch({channel:'chrome',headless:true,args:['--autoplay-policy=no-user-gesture-required']});try{
@@ -6,7 +7,7 @@ const base=process.env.SAEZURI_BASE||'http://127.0.0.1:8026',layoutOnly=process.
   const page=await browser.newPage({viewport:{width,height},serviceWorkers:'block'}),errors=[];page.on('pageerror',e=>errors.push(e.message));
   const report=async()=>{await page.locator('#report').evaluate(n=>n.click());const r=JSON.parse(await page.locator('#metrics').textContent());return {pattern:r.captureCandidate,edit:r.captureEditing};};
   await page.goto(base+'/probe/saezuri/');await page.locator('#home-create').click();await page.locator('#new-manual').click();await page.locator('#piano-keys').waitFor({state:'visible'});
-  await page.locator('#creation-options-toggle').click();await page.locator('#creation-input-display').selectOption('cards');await page.locator('#creation-options-toggle').click();
+  await page.locator('#creation-options-toggle').click();await chooseInputDisplay(page,'cards');await page.locator('#creation-options-toggle').click();
   assert.equal(await page.locator('#composer-keys').isVisible(),true);assert.equal(await page.locator('#keyboard-practice-tools').isVisible(),true);assert.equal(await page.locator('#piano-keys').isVisible(),false);
   const original=await report();
   for(const mode of ['edit','backing']){
@@ -28,7 +29,7 @@ const base=process.env.SAEZURI_BASE||'http://127.0.0.1:8026',layoutOnly=process.
    await page.locator('#keyboard-practice-tools>summary').click();await page.locator('#tap-record').click();await page.waitForFunction(()=>document.body.classList.contains('recording-focus'));assert.equal(await page.locator('#piano-keys').isVisible(),true);assert.equal(await page.locator('#recording-guide').isVisible(),true);assert.equal(await page.locator('#keyboard-practice-tools>summary').isVisible(),false);await page.locator('#stop').click();assert.equal(await page.locator('#instrument').isVisible(),true);assert.equal(await page.locator('#keyboard-practice-tools').getAttribute('open'),'');await page.locator('#keyboard-practice-tools>summary').click();
   }
   // Returning to note-by-note entry restores those controls in their normal place.
-  await page.locator('[data-mode="input"]').click();await page.locator('#creation-options-toggle').click();await page.locator('#creation-input-display').selectOption('cards');await page.locator('#creation-options-toggle').click();assert.equal(await page.locator('#composer-keys').isVisible(),true);assert.deepEqual(await report(),original);
+  await page.locator('[data-mode="input"]').click();await page.locator('#creation-options-toggle').click();await chooseInputDisplay(page,'cards');await page.locator('#creation-options-toggle').click();assert.equal(await page.locator('#composer-keys').isVisible(),true);assert.deepEqual(await report(),original);
   if(!layoutOnly&&width===390){await page.locator('[data-pitch="0"]').click();await page.locator('#capture-edit-confirm').click();await page.locator('[data-mode="edit"]').click();assert.equal(await page.locator('#capture-pitch-up').isVisible(),true);assert.equal(await page.locator('#capture-pitch-up').isEnabled(),true);assert.equal(await page.locator('.note-navigation').isVisible(),true);assert.equal(await page.locator('#piano-keys').isVisible(),false);}
   assert.deepEqual(errors,[]);results.push({width,height});await page.close();
  }
