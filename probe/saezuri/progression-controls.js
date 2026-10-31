@@ -1,7 +1,7 @@
-import {recommendProgressions,harmonicSegments} from '../../saezuri/music/accompaniment.js';
-import {chordChangesInBar} from '../../saezuri/music/chord-timing.js';
-import {chordLabel,sameChord} from '../../saezuri/music/catalog.js';
-import {setupPlaybackSheet} from './sheet-controls.js';
+import {recommendProgressions,harmonicSegments} from '../../saezuri/music/accompaniment.js?v=v0.1.0-20261031231907-35a39bd';
+import {chordChangesInBar} from '../../saezuri/music/chord-timing.js?v=v0.1.0-20261031231907-35a39bd';
+import {chordLabel,sameChord} from '../../saezuri/music/catalog.js?v=v0.1.0-20261031231907-35a39bd';
+import {setupPlaybackSheet} from './sheet-controls.js?v=v0.1.0-20261031231907-35a39bd';
 const clone=value=>structuredClone(value);
 const $=id=>document.getElementById(id);
 function changedBars(before,after){
