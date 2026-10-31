@@ -1,10 +1,10 @@
-import {MelodyLearning} from './learning.js?v=v0.1.0-20261031005919-fd25477';
-import {emptySequence,canKeepPhrase,keepPhrase,sequencePlayback,proposeSequence,commitSequence,undoPlacement} from './sequence-session.js?v=v0.1.0-20261031005919-fd25477';
-import {readCaptureReport} from './capture-report.js?v=v0.1.0-20261031005919-fd25477';
-import {setupPlaybackSheet} from './sheet-controls.js?v=v0.1.0-20261031005919-fd25477';
-import {PlacementWorkflow} from './placement-workflow.js?v=v0.1.0-20261031005919-fd25477';
-import {EndingWorkflow} from './ending-workflow.js?v=v0.1.0-20261031005919-fd25477';
-import {extractSongPhrases} from './phrase-transfer.js?v=v0.1.0-20261031005919-fd25477';
+import {MelodyLearning} from './learning.js?v=v0.1.0-20261031010401-7a305bd';
+import {emptySequence,canKeepPhrase,keepPhrase,sequencePlayback,proposeSequence,commitSequence,undoPlacement} from './sequence-session.js?v=v0.1.0-20261031010401-7a305bd';
+import {readCaptureReport} from './capture-report.js?v=v0.1.0-20261031010401-7a305bd';
+import {setupPlaybackSheet} from './sheet-controls.js?v=v0.1.0-20261031010401-7a305bd';
+import {PlacementWorkflow} from './placement-workflow.js?v=v0.1.0-20261031010401-7a305bd';
+import {EndingWorkflow} from './ending-workflow.js?v=v0.1.0-20261031010401-7a305bd';
+import {extractSongPhrases} from './phrase-transfer.js?v=v0.1.0-20261031010401-7a305bd';
 const $=id=>document.getElementById(id);
 const trialBuild=new URL(import.meta.url).searchParams.get('v')||'local-20261010';
 const trialVersion=trialBuild.match(/-(\d{14})-/)?.[1]||trialBuild;

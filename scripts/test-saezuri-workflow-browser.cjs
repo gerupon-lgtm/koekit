@@ -63,7 +63,10 @@ const base=process.env.SAEZURI_BASE||'http://127.0.0.1:8026';
   await click('home-create');await page.locator('#melody-choose').waitFor({state:'visible'});await click('choose-cancel');await page.locator('#melody-home').waitFor({state:'visible'});
   fs.mkdirSync('.local-tools/workflow-20261031',{recursive:true});
   for(const [width,height] of [[320,568],[390,844],[844,390]]){
-   await page.setViewportSize({width,height});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);await click('home-songs');await page.locator('[data-song-play="old-materials"]').click();
+   await page.setViewportSize({width,height});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);await click('home-songs');
+   await page.locator('[data-song-open="old-materials"]').waitFor();const rowActions=await page.locator('[data-song-open="old-materials"]').locator('..').locator('button').evaluateAll(es=>es.map(e=>{const r=e.getBoundingClientRect();return {x:r.x,y:r.y,w:r.width,h:r.height};}));
+   assert.equal(rowActions.length,3);assert.ok(rowActions.every(r=>Math.abs(r.y-rowActions[0].y)<1&&r.h>=44),'open/listen/more stay on one row');assert.ok(rowActions[0].w>=80&&rowActions[1].w>=80&&rowActions[2].w>=44,'listen text has horizontal room');
+   await page.locator('[data-song-play="old-materials"]').click();
    const controls=await page.locator('#song-listen-choices button:visible').evaluateAll(es=>es.map(e=>{const r=e.getBoundingClientRect();return {w:r.width,h:r.height};}));assert.ok(controls.every(r=>r.w>=44&&r.h>=44));
    await page.screenshot({path:`.local-tools/workflow-20261031/listen-${width}.png`});await click('song-listen-close');await click('song-library-close');
   }

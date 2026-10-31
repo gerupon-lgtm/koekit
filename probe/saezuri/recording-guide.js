@@ -1,5 +1,5 @@
-import {harmonicSegments} from '../../saezuri/music/accompaniment.js?v=v0.1.0-20261031005919-fd25477';
-import {chordLabel} from './image-controls.js?v=v0.1.0-20261031005919-fd25477';
+import {harmonicSegments} from '../../saezuri/music/accompaniment.js?v=v0.1.0-20261031010401-7a305bd';
+import {chordLabel} from './image-controls.js?v=v0.1.0-20261031010401-7a305bd';
 
 // Display only: use the existing audio clock and anchors, never a second timer.
 export function recordingPosition({now,bars,tempo,anchor=null,loop=false,kind=null,recordAnchor=null,phase='idle'}){
