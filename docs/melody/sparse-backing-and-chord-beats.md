@@ -38,4 +38,10 @@
 証拠は専用作業ツリーの`.local-tools/sparse-backing-20261101/`の各ログと`node-results.json`、`sparse-backing-main.png`／`sparse-backing-settings.png`／`chord-beats-phone.png`。スマホ実機の指の感触・スピーカーでの聴感・本人の保存領域は未確認。利用者の保存領域は触らず、独立した検証領域で確認した。
 
 ### 公開
-公開準備中。公開版のBUILD、JST表示、Pages完了と公開ファイル一致、通常URLとPWAの検証結果を追記する。
+公開コミット`5f4ba0c7078994dbe43e9b92d6ffd637e2884b18`。BUILDは`v0.1.0-20261031180708-32cf338`、画面表示は**2026/11/01 03:07:08 JST**。Pages [41227957128](https://github.com/gerupon-lgtm/koekit/actions/runs/41227957128)のbuild／report-build-status／deployがすべてsuccess。公開115ファイルのHTTPS・状態・内容種別・長さ・SHA-256がコミットと一致した。
+
+通常URL <https://koekit.sikumilab.com/probe/saezuri/> でも新しい伴奏・独立ドンカマ・拍ごとの変更と削除・候補／確定／Undo・保存再開・4画面サイズ・実際の伴奏ループ出力が成功。全音符／二分音符の持続とハットの前後アクセントも公開ソースで音声計算を確認。
+
+PWAのキャッシュ制御下でBUILD一致を確認したうえで、1・2小節それぞれの既知音声によるハナウタ録り直し、タッチによる鍵盤録音、コピー、並びに挿入、オッケー、保存再開、曲としての再生が成功。既存のサンプルもPWA上で枠を使わず試せ、コピー独立・元編集の共有反映・再生／停止が成功した。日本と米国の端末時刻設定の両方で、JSTの同じ版表示と描画された配色を確認。JavaScriptの画面エラーなし。
+
+公開検証の証拠は同じフォルダーの`public-sparse.log`／`public-chord-timing.log`／`public-short-pwa.log`／`public-jst.log`。配信ファイルの詳細は`.local-tools/saezuri-entry-20261018/public-assets.json`、サンプルのPWA確認は`.local-tools/project-workflow-20261031/public-sw.json`。スマホ実機の聴感と指での使いやすさは引き続き利用者の確認対象。
