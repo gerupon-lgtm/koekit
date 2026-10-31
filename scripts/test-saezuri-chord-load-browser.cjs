@@ -4,7 +4,7 @@ const base=process.env.SAEZURI_BASE||'http://127.0.0.1:8026';
  const results=[];for(const metronome of [false,true]){
   const context=await browser.newContext({viewport:{width:390,height:740},serviceWorkers:'block'}),page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
   await page.addInitScript(()=>{window.loadContexts=[];window.loadNodes=[];const Native=AudioContext;window.AudioContext=class extends Native{constructor(options){super(options);this.testHint=options?.latencyHint;loadContexts.push(this);}createOscillator(){const n=super.createOscillator(),start=n.start.bind(n),row={ended:false};n.start=t=>{loadNodes.push(row);return start(t);};n.addEventListener('ended',()=>row.ended=true);return n;}};});
-  await page.goto(base+'/probe/saezuri/');await page.locator('#home-create').click();await page.locator('#new-manual').click();await page.locator('[data-mode="backing"]').click();await page.locator('[data-chord-bar="0"]').click();
+  await page.goto(base+'/probe/saezuri/');await page.locator('#home-create').click();await page.locator('#sequence-create').click();await page.locator('#new-manual').click();await page.locator('[data-mode="backing"]').click();await page.locator('[data-chord-bar="0"]').click();
   const client=await context.newCDPSession(page);await client.send('Emulation.setCPUThrottlingRate',{rate:4});
   if(metronome){await page.locator('#chord-count-start').click();await page.waitForFunction(()=>document.querySelector('#chord-metronome').dataset.state==='running');}
   await page.locator('#chord-grid>button').first().click();await page.waitForFunction(()=>loadContexts.length>0);

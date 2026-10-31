@@ -1,5 +1,5 @@
 const {chromium,webkit}=require('../.local-tools/node_modules/playwright'),assert=require('node:assert/strict'),fs=require('node:fs');
-const {revealCreationControl}=require('./saezuri-browser-controls.cjs');
+const {revealCreationControl,openProjectPart}=require('./saezuri-browser-controls.cjs');
 const base=process.env.SAEZURI_BASE||'http://127.0.0.1:8026',layoutOnly=process.env.SAEZURI_BROWSER==='webkit';
 (async()=>{const browser=layoutOnly?await webkit.launch({headless:true,executablePath:process.env.SAEZURI_WEBKIT_PATH}):await chromium.launch({channel:'chrome',headless:true,args:['--autoplay-policy=no-user-gesture-required']});try{
  for(const [source,bars] of [['free',8],['image',4]]){
@@ -25,7 +25,7 @@ const base=process.env.SAEZURI_BASE||'http://127.0.0.1:8026',layoutOnly=process.
   },{source,bars});
   const click=id=>page.locator('#'+id).click(),report=async()=>{await page.locator('#report').evaluate(n=>n.click());return JSON.parse(await page.locator('#metrics').textContent());};
   const choose=async label=>{if(!await page.locator('#chord-basic').isVisible())await click('chord-basic-mode');await page.locator('#chord-basic button').getByText(label,{exact:true}).click();};
-  const open=async()=>{await click('home-songs');await page.locator('[data-song-open="chord-choice"]').click();if(await page.locator('#song-continue').isVisible())await click('song-continue');await revealCreationControl(page,'[data-mode="backing"]');await page.locator('[data-mode="backing"]').click();};
+  const open=async()=>{await click('home-songs');await page.locator('[data-song-open="chord-choice"]').click();if(await page.locator('#song-continue').isVisible())await click('song-continue');if(await page.locator('#melody-connect').isVisible())await openProjectPart(page);await revealCreationControl(page,'[data-mode="backing"]');await page.locator('[data-mode="backing"]').click();};
   await open();const initialHeight=await page.evaluate(()=>document.documentElement.scrollHeight);
   await page.locator('[data-chord-bar="1"]').click();assert.equal(await page.locator('dialog:modal').count(),0);assert.equal(await page.locator('#live-keyboard').isVisible(),false);assert.ok(await page.evaluate(()=>document.querySelector('#image-chords').getBoundingClientRect().bottom<=document.querySelector('#chord-sheet').getBoundingClientRect().top),'bar buttons stay above the inline editor');
   if(!layoutOnly)await page.evaluate(()=>window.tapBefore=toneNodes.length);

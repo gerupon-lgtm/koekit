@@ -4,11 +4,19 @@ const folder=path.resolve('.local-tools/sparse-backing-20261101');fs.mkdirSync(f
 wav.write('RIFF',0);wav.writeUInt32LE(wav.length-8,4);wav.write('WAVEfmt ',8);wav.writeUInt32LE(16,16);wav.writeUInt16LE(1,20);wav.writeUInt16LE(1,22);wav.writeUInt32LE(rate,24);wav.writeUInt32LE(rate*2,28);wav.writeUInt16LE(2,32);wav.writeUInt16LE(16,34);wav.write('data',36);wav.writeUInt32LE(frames*2,40);for(let i=0;i<frames;i++)wav.writeInt16LE(Math.round(8192*Math.sin(2*Math.PI*440*i/rate)),44+i*2);fs.writeFileSync(fixture,wav);
 (async()=>{const browser=await chromium.launch({channel:'chrome',headless:true,args:['--autoplay-policy=no-user-gesture-required','--use-fake-device-for-media-stream','--use-fake-ui-for-media-stream',`--use-file-for-fake-audio-capture=${fixture}`]});try{
  for(const bars of [1,2]){
-  const context=await browser.newContext({viewport:{width:390,height:740},hasTouch:true,permissions:['microphone'],serviceWorkers:'block'}),page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));page.setDefaultTimeout(12000);
+  const context=await browser.newContext({viewport:{width:390,height:740},hasTouch:true,permissions:['microphone'],serviceWorkers:process.env.SAEZURI_SERVICE_WORKER==='1'?'allow':'block'}),page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));page.setDefaultTimeout(12000);
   const click=s=>page.locator(s).click(),report=async()=>{await page.locator('#report').evaluate(n=>n.click());return JSON.parse(await page.locator('#metrics').textContent());};
-  await page.goto(base+'/probe/saezuri/');await startNewPart(page);assert.deepEqual(await page.locator('#phrase-bars option').evaluateAll(ns=>ns.map(n=>n.value)),['1','2','4','8']);
+  if(process.env.SAEZURI_SERVICE_WORKER==='1'){
+   await page.goto(base+'/');await page.evaluate(()=>Promise.race([navigator.serviceWorker.ready,new Promise((_,reject)=>setTimeout(()=>reject(new Error('SW readiness timeout')),30000))]));
+  }
+  await page.goto(base+'/probe/saezuri/');
+  if(process.env.SAEZURI_SERVICE_WORKER==='1'){
+   if(!await page.evaluate(()=>!!navigator.serviceWorker.controller))await page.reload();assert.ok(await page.evaluate(()=>!!navigator.serviceWorker.controller));
+   const expected=fs.readFileSync('sw.js','utf8').match(/const BUILD = '([^']+)'/)[1];assert.equal(await page.locator('.home-credit').getAttribute('data-build'),expected);
+  }
+  await startNewPart(page);assert.deepEqual(await page.locator('#phrase-bars option').evaluateAll(ns=>ns.map(n=>n.value)),['1','2','4','8']);
   await page.locator('#phrase-bars').selectOption(String(bars));await click('#capture-edit-confirm');await revealCreationControl(page,'[data-pitch="0"]');await click('[data-pitch="0"]');await click('#capture-edit-confirm');
-  await click('[data-mode="backing"]');await page.locator('#image-rhythm').selectOption('halves');await click('[data-chord-bar="0"]');await click('#chord-grid [data-root="0"][data-quality="major"]');await click('#chord-use');await click('#chord-confirm');
+  await click('[data-mode="backing"]');await page.locator('#image-rhythm').selectOption('halves');await click('[data-chord-bar="0"]');await click('#chord-grid [data-root="0"][data-quality="major"]');await click('#chord-use');await click('[data-chord-beat="2"]');await click('#chord-grid [data-root="7"][data-quality="major"]');await click('#chord-use');await click('#chord-confirm');
   await click('#screen-settings');await page.locator('#tempo').fill('180');await page.locator('#tempo').dispatchEvent('change');await click('#settings-close');
   await revealCreationControl(page,'#backing-loop');await click('#backing-loop');await page.waitForFunction(()=>document.querySelector('#status').dataset.state==='playing');await page.waitForFunction(()=>!document.querySelector('#loop-record').disabled);await click('#loop-record');
   await page.waitForFunction(()=>document.querySelector('#status').dataset.state==='recording');await page.waitForFunction(()=>document.querySelector('#status').dataset.state==='idle');let r=await report();

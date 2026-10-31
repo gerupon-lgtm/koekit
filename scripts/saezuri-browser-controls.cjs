@@ -10,10 +10,10 @@ async function revealCreationControl(page,selector){
  if(!await control.isVisible()&&await page.locator('#image-choice-reopen').isVisible()&&await control.evaluate(n=>n.matches('#composer-key,#phrase-bars')||!!n.closest('#image-words,#image-chords')))await page.locator('#image-choice-reopen').click();
  await disclose();
  const input=page.locator('#creation-input-display');
- if(!await control.isVisible()&&!await input.isVisible()&&await page.locator('#creation-options-toggle').isVisible()&&await control.evaluate(n=>!!n.closest('#composer-panel,.keyboard-actions')))await page.locator('#creation-options-toggle').click();
+ if(!await control.isVisible()&&!await input.isVisible()&&await page.locator('#creation-options-toggle').isVisible()&&await control.evaluate(n=>!!n.closest('#composer-panel,.keyboard-actions,.keyboard-settings')))await page.locator('#creation-options-toggle').click();
  if(!await control.isVisible()&&await input.isVisible()){
   if(await control.evaluate(n=>!!n.closest('#composer-panel')))await input.selectOption('cards');
-  else if(await control.evaluate(n=>!!n.closest('.keyboard-actions')))await input.selectOption('keyboard');
+  else if(await control.evaluate(n=>!!n.closest('.keyboard-actions,.keyboard-settings')))await input.selectOption('keyboard');
  }
  if(await control.evaluate(n=>(n.id==='image-next'||!!n.closest('#image-words'))&&document.querySelector('#image-choice-reopen')&&!document.querySelector('#image-choice-reopen').hidden))await page.locator('#image-choice-reopen').click();
  await disclose();

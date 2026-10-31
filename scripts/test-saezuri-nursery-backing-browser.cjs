@@ -1,6 +1,6 @@
 const {chromium}=require('../.local-tools/node_modules/playwright');
 const assert=require('node:assert/strict'),fs=require('node:fs');
-const {revealCreationControl}=require('./saezuri-browser-controls.cjs');
+const {revealCreationControl,openProjectPart}=require('./saezuri-browser-controls.cjs');
 const base=process.env.SAEZURI_BASE||'http://127.0.0.1:8026';
 (async()=>{
  const browser=await chromium.launch({channel:'chrome',headless:true,args:['--autoplay-policy=no-user-gesture-required']});
@@ -60,20 +60,21 @@ const base=process.env.SAEZURI_BASE||'http://127.0.0.1:8026';
     return payload;
    },explicit);
    const expected=explicit?'wood':'piano';
-   await page.locator('#home-songs').click();await page.locator('.song-row button').filter({hasText:'▶ 聴く'}).click();
+   await page.locator('#home-songs').click();await page.locator('[data-song-play="nursery-check"]').click();if(await page.locator('#song-listen-choices').isVisible())await page.locator('[data-listen-choice]').first().click();
    await page.waitForFunction(()=>window.lastBacking?.events?.length);
    assert.deepEqual(await page.evaluate(()=>[...new Set(lastBacking.events.filter(e=>e.part==='chord').map(e=>e.instrument))]),[expected]);
    await page.locator('#song-list-stop').click();await page.locator('[data-song-open="nursery-check"]').click();
-   if(await page.locator('#song-continue').isVisible())await page.locator('#song-continue').click();
+   if(await page.locator('#song-continue').isVisible())await page.locator('#song-continue').click();await openProjectPart(page);
    await revealCreationControl(page,'#image-settings-open');await page.locator('#image-settings-open').click();await page.locator('#image-sounds').click();
    assert.equal(await page.locator('#sound-chord').inputValue(),expected,'picker agrees with the sound heard from the saved recipe');
    await page.locator('#sounds-close').click();await page.locator('#backing-settings-close').click();
+   await page.waitForFunction(()=>document.querySelector('#song-status').dataset.saved==='true');const beforeLoop=await page.evaluate(async()=>{const {SongStore}=await import('/saezuri/song-store.js');return(await new SongStore().get('nursery-check')).data;});
    await revealCreationControl(page,'#backing-loop');await page.locator('#backing-loop').click();
    await page.waitForFunction(()=>window.lastBacking?.loop===true);
    assert.deepEqual(await page.evaluate(()=>[...new Set(lastBacking.events.filter(e=>e.part==='chord').map(e=>e.instrument))]),[expected]);
    await page.locator('#stop').click();
    const after=await page.evaluate(async()=>{const {SongStore}=await import('/saezuri/song-store.js');return (await new SongStore().get('nursery-check')).data;});
-   assert.deepEqual(after,saved,'opening, previewing and looping do not rewrite the saved melody or settings');
+   assert.deepEqual(after,beforeLoop,'previewing and looping do not rewrite the opened project');assert.deepEqual(after.checkpoint.confirmed.pattern.notes,saved.checkpoint.confirmed.pattern.notes);assert.deepEqual(after.checkpoint.confirmed.pattern.accompaniment,saved.checkpoint.confirmed.pattern.accompaniment);
    assert.deepEqual(errors,[]);await context.close();
    console.log(JSON.stringify({result:'PASS',check:'saved library playback, picker, loop, no mutation',explicitBell:explicit,chordSound:expected}));
   }

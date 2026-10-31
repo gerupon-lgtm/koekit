@@ -1,11 +1,11 @@
 const {chromium}=require('../.local-tools/node_modules/playwright'),assert=require('node:assert/strict');
-const {revealCreationControl}=require('./saezuri-browser-controls.cjs');
+const {revealCreationControl,openProjectPart}=require('./saezuri-browser-controls.cjs');
 const base=process.env.SAEZURI_BASE||'http://127.0.0.1:8026';
 (async()=>{const browser=await chromium.launch({channel:'chrome',headless:true,args:['--autoplay-policy=no-user-gesture-required']});try{
  const page=await browser.newPage({viewport:{width:390,height:740},serviceWorkers:'block'}),errors=[];page.on('pageerror',e=>errors.push(e.message));
  const click=selector=>page.locator(selector).click(),report=async()=>{await page.locator('#report').evaluate(n=>n.click());return JSON.parse(await page.locator('#metrics').textContent());};
- await page.goto(base+'/probe/saezuri/');await click('#home-create');await click('#new-manual');
- await page.locator('#creation-input-display').selectOption('cards');await click('[data-pitch="0"]');await click('#capture-edit-confirm');
+ await page.goto(base+'/probe/saezuri/');await click('#home-create');await click('#sequence-create');await click('#new-manual');
+ await revealCreationControl(page,'[data-pitch="0"]');await click('[data-pitch="0"]');await click('#capture-edit-confirm');
  const original=(await report()).captureCandidate.notes;
  await click('[data-mode="backing"]');
  assert.equal(await page.locator('#image-genre').isVisible(),true);assert.equal(await page.locator('#image-rhythm').isVisible(),true);assert.equal(await page.locator('#image-suggest').isVisible(),true);
@@ -34,10 +34,10 @@ const base=process.env.SAEZURI_BASE||'http://127.0.0.1:8026';
   const controls=await page.locator('.suggestion-row').first().locator('button').evaluateAll(ns=>ns.map(n=>{const r=n.getBoundingClientRect();return {left:r.left,right:r.right};}));assert.ok(controls[1].left-controls[0].right>=7);
   await click('#progression-close');
  }
- const image=await browser.newPage({viewport:{width:390,height:740},serviceWorkers:'block'});image.on('pageerror',e=>errors.push(e.message));await image.goto(base+'/probe/saezuri/');await image.locator('#home-create').click();await image.locator('#new-image').click();await image.locator('#image-word-type').selectOption('pop');
+ const image=await browser.newPage({viewport:{width:390,height:740},serviceWorkers:'block'});image.on('pageerror',e=>errors.push(e.message));await image.goto(base+'/probe/saezuri/');await image.locator('#home-create').click();await image.locator('#sequence-create').click();await image.locator('#new-image').click();await image.locator('#image-word-type').selectOption('pop');
  for(let i=0;i<8;i++)await image.locator('#image-next').click();
  const imageReport=async()=>{await image.locator('#report').evaluate(n=>n.click());return JSON.parse(await image.locator('#metrics').textContent());};
  assert.equal((await imageReport()).captureEditing.editCandidate.accompaniment.imageArrangement.patternId,'pop-eight-beat');await image.locator('#capture-edit-confirm').click();await image.waitForFunction(()=>document.querySelector('#song-status').dataset.saved==='true');
- await image.reload();await image.locator('#home-songs').click();await image.locator('[data-song-open]').click();if(await image.locator('#song-continue').isVisible())await image.locator('#song-continue').click();await image.locator('#melody-create').waitFor({state:'visible'});assert.equal((await imageReport()).captureCandidate.accompaniment.imageArrangement.patternId,'pop-eight-beat');
+ await image.reload();await image.locator('#home-songs').click();await image.locator('[data-song-open]').click();if(await image.locator('#song-continue').isVisible())await image.locator('#song-continue').click();await openProjectPart(image);await image.locator('#melody-create').waitFor({state:'visible'});assert.equal((await imageReport()).captureCandidate.accompaniment.imageArrangement.patternId,'pop-eight-beat');
  assert.deepEqual(errors,[]);console.log('PASS shared production genre selectors, all four genres and fourth candidates, pop pattern and saved image variant, audition/stage/confirm, practice access and sheet layout');
 }finally{await browser.close();}})().catch(e=>{console.error(e);process.exitCode=1;});

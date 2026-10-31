@@ -1,5 +1,5 @@
 const {chromium,webkit}=require('../.local-tools/node_modules/playwright'),assert=require('node:assert/strict'),fs=require('node:fs');
-const {revealCreationControl}=require('./saezuri-browser-controls.cjs');
+const {revealCreationControl,openProjectPart}=require('./saezuri-browser-controls.cjs');
 const base=process.env.SAEZURI_BASE||'http://127.0.0.1:8026',layoutOnly=process.env.SAEZURI_BROWSER==='webkit';
 const names=['C','D♭','D','E♭','E','F','G♭','G','A♭','A','B♭','B'];
 (async()=>{const browser=layoutOnly?await webkit.launch({headless:true,executablePath:process.env.SAEZURI_WEBKIT_PATH}):await chromium.launch({channel:'chrome',headless:true,args:['--autoplay-policy=no-user-gesture-required']});try{
@@ -15,7 +15,7 @@ const names=['C','D♭','D','E♭','E','F','G♭','G','A♭','A','B♭','B'];
   await new SongStore().save('flat-names',{title:'コードの表記',checkpoint:{confirmed:{pattern,cursor:36,hasRest:false},draft:null},sequence:emptySequence(),settings:{tempo:180,instrument:'piano'}});
   return {pattern,slots,expectedPitches:chordAuditionEvents(pattern,slots[0]).map(n=>n.midi)};
  });
- const open=async()=>{await click('home-songs');await page.locator('[data-song-open="flat-names"]').click();if(await page.locator('#song-continue').isVisible())await click('song-continue');};await open();
+ const open=async()=>{await click('home-songs');await page.locator('[data-song-open="flat-names"]').click();if(await page.locator('#song-continue').isVisible())await click('song-continue');if(await page.locator('#melody-connect').isVisible())await openProjectPart(page);};await open();
  const labels=['D♭m7♭5/G♭','G♭sus4/D♭','E♭add9/A♭','B♭m/E♭'];
  assert.deepEqual(await page.locator('#image-chords button').allTextContents(),labels.map((s,i)=>`${i+1}：${s}`));assert.deepEqual(await page.locator('#recording-chords b').allTextContents(),labels);
  for(const id of ['ending-root','ending-bass'])assert.deepEqual(await page.locator('#'+id+' option').evaluateAll(nodes=>nodes.filter(n=>n.value!=='').map(n=>n.textContent)),names);

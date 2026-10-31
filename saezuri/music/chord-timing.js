@@ -1,6 +1,6 @@
 // Quarter-note editing over the existing timed-chord representation.
-import {harmonicSegments} from './accompaniment.js';
-import {chordTones} from './catalog.js';
+import {harmonicSegments} from './accompaniment.js?v=v0.1.0-20261031180708-32cf338';
+import {chordTones} from './catalog.js?v=v0.1.0-20261031180708-32cf338';
 const same=(a,b)=>['root','quality','bass'].every(k=>a?.[k]===b?.[k]);
 export function chordAtTick(pattern,tick){return harmonicSegments(pattern).find(c=>c.startTick<=tick&&tick<c.startTick+c.durationTick);}
 export function chordChangesInBar(pattern,bar){
@@ -24,7 +24,7 @@ function replaceChordRange(pattern,startTick,end,chord){
   if(c.startTick<startTick)chords.push({...c,durationTick:startTick-c.startTick});
   if(last>end)chords.push({...c,startTick:end,durationTick:last-end});
  }
- chords.push({root:chord.root,quality:chord.quality,bass:chord.bass,startTick,durationTick:end-startTick,manual:true});
+ if(chord)chords.push({root:chord.root,quality:chord.quality,bass:chord.bass,startTick,durationTick:end-startTick,manual:true});
  value.enabled=true;value.chords=chords.sort((a,b)=>a.startTick-b.startTick);
  // Equal adjacent manual chords are a single change, so held notes do not
  // retrigger after removing a change. Keep bar boundaries independently editable.
@@ -34,5 +34,7 @@ function replaceChordRange(pattern,startTick,end,chord){
 export function removeChordAtBeat(pattern,bar,beat){
  const tick=beatTick(pattern,bar,beat);if(beat===0)throw new Error('CHORD_TIME');
  const previous=chordAtTick(pattern,tick-1),current=chordAtTick(pattern,tick);
- return replaceChordRange(pattern,previous.startTick,current.startTick+current.durationTick,previous);
+ // An automatic predecessor must remain automatic when its override is removed.
+ const previousOverride=(pattern.accompaniment?.chords??[]).some(c=>c.startTick<tick&&c.startTick+c.durationTick>=tick);
+ return previousOverride?replaceChordRange(pattern,previous.startTick,current.startTick+current.durationTick,previous):replaceChordRange(pattern,tick,current.startTick+current.durationTick,null);
 }

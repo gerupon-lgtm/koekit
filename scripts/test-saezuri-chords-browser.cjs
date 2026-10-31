@@ -1,12 +1,13 @@
 const {chromium}=require('../.local-tools/node_modules/playwright');const assert=require('node:assert/strict');
-const {revealCreationControl}=require('./saezuri-browser-controls.cjs');
+const {revealCreationControl,openProjectPart}=require('./saezuri-browser-controls.cjs');
 (async()=>{const browser=await chromium.launch({channel:'chrome',headless:true,args:['--autoplay-policy=no-user-gesture-required']});try{
  const context=await browser.newContext({viewport:{width:390,height:844},serviceWorkers:'block'});const page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
- await page.goto((process.env.SAEZURI_BASE||'http://127.0.0.1:8014')+'/probe/saezuri/');await page.locator('#home-create').click();await page.locator('#new-image').click();
+ await page.goto((process.env.SAEZURI_BASE||'http://127.0.0.1:8014')+'/probe/saezuri/');await page.locator('#home-create').click();await page.locator('#sequence-create').click();await page.locator('#new-image').click();
  await revealCreationControl(page,'#image-suggest');await page.locator('#image-suggest').click();assert.equal(await page.locator('.suggestion-row').count(),4);assert.equal(await page.locator('#progression-all-open').count(),0);
+ const countBeforeAudition=await page.evaluate(async()=>{const {SongStore}=await import('/saezuri/song-store.js');return (await new SongStore().list()).length;});
  for(let i=0;i<4;i++){await page.locator('.suggestion-row').nth(i).locator('button').first().click();await page.waitForFunction(()=>document.querySelector('#status').dataset.state==='playing');await page.locator('#progression-stop').click();}
  await page.locator('#progression-close').click();
- assert.equal(await page.evaluate(async()=>{const {SongStore}=await import('/saezuri/song-store.js');return (await new SongStore().list()).length;}),0,'audition does not allocate an empty song');
+ assert.equal(await page.evaluate(async()=>{const {SongStore}=await import('/saezuri/song-store.js');return (await new SongStore().list()).length;}),countBeforeAudition,'audition does not allocate another project');
  await revealCreationControl(page,'#image-suggest');await page.locator('#image-suggest').click();await page.locator('.suggestion-row').nth(3).locator('button').last().click();assert.equal(await page.locator('#progression-suggestions').isVisible(),false);assert.match(await page.locator('[data-chord-bar="0"]').textContent(),/F/);assert.equal(await page.locator('#backing-loop').isDisabled(),true);assert.match(await page.locator('#loop-hint').textContent(),/オッケー/);
  await page.locator('[data-chord-bar="0"]').click({timeout:3000});
  await page.locator('#chord-all-mode').click();
@@ -16,7 +17,7 @@ const {revealCreationControl}=require('./saezuri-browser-controls.cjs');
  assert.match(await page.locator('[data-chord-bar="0"]').textContent(),/Bm7♭5\/D♭/);
  await revealCreationControl(page,'#image-settings-open');await page.locator('#image-settings-open').click();await page.locator('#image-sounds').click();await page.locator('#sound-chord').selectOption('lead');await page.locator('#sounds-close').click();await page.locator('#backing-settings-close').click();await revealCreationControl(page,'#capture-edit-confirm');await page.locator('#capture-edit-confirm').click();
  await revealCreationControl(page,'#preview');await page.locator('#preview').click();await page.waitForFunction(()=>document.querySelector('#status').dataset.state==='playing');await page.locator('#stop').click();
- await page.locator('#melody-create [data-screen-back]').click();await page.locator('#melody-home').waitFor({state:'visible'});await page.reload();await page.locator('#home-songs').click();await page.locator('[data-song-open]').click();await revealCreationControl(page,'[data-mode="backing"]');await page.locator('[data-mode="backing"]').click();
+ await page.locator('#melody-create [data-screen-back]').click();await page.locator('#melody-connect [data-screen-back]').click();await page.locator('#melody-home').waitFor({state:'visible'});await page.reload();await page.locator('#home-songs').click();await page.locator('[data-song-open]').click();await openProjectPart(page);await revealCreationControl(page,'[data-mode="backing"]');await page.locator('[data-mode="backing"]').click();
  assert.match(await page.locator('[data-chord-bar="0"]').textContent(),/Bm7♭5\/D♭/);
  await revealCreationControl(page,'#image-settings-open');await page.locator('#image-settings-open').click();await page.locator('#image-sounds').click();assert.equal(await page.locator('#sound-chord').inputValue(),'lead');await page.locator('#sounds-close').click();await page.locator('#backing-settings-close').click();
  await page.screenshot({path:'.local-tools/saezuri-workflow-backing.png'});

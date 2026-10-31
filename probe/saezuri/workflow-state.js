@@ -1,7 +1,7 @@
-import {restoreCheckpoint} from './song-session.js?v=v0.1.0-20261031153113-7832e2d';
-import {entryPreview} from './entry-session.js?v=v0.1.0-20261031153113-7832e2d';
-import {extractSongPhrases} from './phrase-transfer.js?v=v0.1.0-20261031153113-7832e2d';
-import {sequencePlayback,canKeepPhrase} from './sequence-session.js?v=v0.1.0-20261031153113-7832e2d';
+import {restoreCheckpoint} from './song-session.js?v=v0.1.0-20261031180708-32cf338';
+import {entryPreview} from './entry-session.js?v=v0.1.0-20261031180708-32cf338';
+import {extractSongPhrases} from './phrase-transfer.js?v=v0.1.0-20261031180708-32cf338';
+import {sequencePlayback,canKeepPhrase} from './sequence-session.js?v=v0.1.0-20261031180708-32cf338';
 
 // Optional navigation never changes the musical document or commits a draft.
 export function songNavigation(data={}){

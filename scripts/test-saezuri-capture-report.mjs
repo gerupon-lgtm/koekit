@@ -44,7 +44,7 @@ test('older diagnostics can reopen the original notes without claiming to restor
 
 test('invalid JSON, overlap, out-of-range pitch and invalid tempo are refused before changing UI state', () => {
   assert.throws(() => readCaptureReport('partial {'), /JSON/);
-  assert.throws(() => readCaptureReport('null'), /4小節/);
+  assert.throws(() => readCaptureReport('null'), /取り込み記録/);
   for (const mutate of [
     r => { r.captureOptions.tempo = 0; },
     r => { r.capture.notes = [{ id: 'x', midi: 128, startTick: 0, durationTick: 1 }]; },
@@ -52,7 +52,7 @@ test('invalid JSON, overlap, out-of-range pitch and invalid tempo are refused be
     r => { r.capture.notes[0].id = {}; },
   ]) {
     const { report } = fixture(); mutate(report);
-    assert.throws(() => readCaptureReport(JSON.stringify(report)), /4小節/);
+    assert.throws(() => readCaptureReport(JSON.stringify(report)), /取り込み記録/);
   }
 });
 

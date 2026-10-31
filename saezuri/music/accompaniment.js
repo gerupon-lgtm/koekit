@@ -1,7 +1,7 @@
 // Editable audition presets. These concrete arrangements are trial data.
-import {GENRES,CHORD_INTERVALS,chordTones} from './catalog.js?v=v0.1.0-20261031153113-7832e2d';
-import {validImageChoice,validateImageArrangement} from './image-arrangement.js?v=v0.1.0-20261031153113-7832e2d';
-import {POP_EIGHT_BEAT} from './backing-patterns.js?v=v0.1.0-20261031153113-7832e2d';
+import {GENRES,CHORD_INTERVALS,chordTones} from './catalog.js?v=v0.1.0-20261031180708-32cf338';
+import {validImageChoice,validateImageArrangement} from './image-arrangement.js?v=v0.1.0-20261031180708-32cf338';
+import {POP_EIGHT_BEAT} from './backing-patterns.js?v=v0.1.0-20261031180708-32cf338';
 export const RHYTHMS=[{id:'quarters',label:'4つずつ'},{id:'offbeat',label:'うらで弾く'},{id:'arpeggio',label:'音をばらして弾く'},{id:POP_EIGHT_BEAT.rhythm,label:POP_EIGHT_BEAT.label},{id:'whole',label:'全音符でのばす'},{id:'halves',label:'二分音符でのばす'}];
 export const DRUM_PATTERNS=[{id:'auto',label:'おまかせ'},{id:'none',label:'打楽器なし'},{id:'hat-half-front',label:'ハット2拍ずつ・前を強く'},{id:'hat-half-back',label:'ハット2拍ずつ・後を強く'}];
 const heldLength=rhythm=>rhythm==='whole'?16:rhythm==='halves'?8:0;

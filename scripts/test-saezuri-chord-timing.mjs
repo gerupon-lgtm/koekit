@@ -48,5 +48,12 @@ test('automatic drum positions also stay on the bar grid across quarter-note har
 test('removing a change after an automatic chord restores a single sustained note',()=>{
  const pattern=p();pattern.accompaniment=setChordAtBeat(pattern,0,2,c(7));
  pattern.accompaniment=removeChordAtBeat(pattern,0,2);
+ assert.equal(pattern.accompaniment.chords.length,0,'removing a change keeps the preceding automatic progression automatic');
  assert.deepEqual(accompanimentEvents(pattern).filter(e=>e.part==='bass'&&e.startTick<16).map(e=>[e.startTick,e.durationTick,e.midi%12]),[[0,16,0]]);
+});
+
+test('removal joins a legacy explicit chord even without its optional manual marker',()=>{
+ const pattern=p();pattern.accompaniment.chords=[{...c(2),startTick:0,durationTick:8},{...c(7),startTick:8,durationTick:8}];
+ pattern.accompaniment=removeChordAtBeat(pattern,0,2);
+ assert.deepEqual(accompanimentEvents(pattern).filter(e=>e.part==='bass'&&e.startTick<16).map(e=>[e.startTick,e.durationTick,e.midi%12]),[[0,16,2]]);
 });
