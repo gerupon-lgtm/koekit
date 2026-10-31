@@ -1,5 +1,5 @@
 const {chromium,webkit}=require('../.local-tools/node_modules/playwright'),assert=require('node:assert/strict'),fs=require('node:fs');
-const {revealCreationControl}=require('./saezuri-browser-controls.cjs');
+const {revealCreationControl,openProjectPart}=require('./saezuri-browser-controls.cjs');
 const base=process.env.SAEZURI_BASE||'http://127.0.0.1:8026',layoutOnly=process.env.SAEZURI_BROWSER==='webkit';
 (async()=>{const browser=layoutOnly?await webkit.launch({headless:true,executablePath:process.env.SAEZURI_WEBKIT_PATH}):await chromium.launch({channel:'chrome',headless:true,args:['--autoplay-policy=no-user-gesture-required']});try{
  for(const source of ['free','image']){
@@ -23,7 +23,7 @@ const base=process.env.SAEZURI_BASE||'http://127.0.0.1:8026',layoutOnly=process.
   },source);
   const click=id=>page.locator('#'+id).click(),running=()=>page.waitForFunction(()=>document.querySelector('#chord-metronome').dataset.state==='running'),stopped=()=>page.waitForFunction(()=>document.querySelector('#chord-metronome').dataset.state==='stopped');
   const report=async()=>{await page.locator('#report').evaluate(n=>n.click());return JSON.parse(await page.locator('#metrics').textContent());};
-  const open=async()=>{await click('home-songs');await page.locator('[data-song-open="count"]').click();if(await page.locator('#song-continue').isVisible())await click('song-continue');await revealCreationControl(page,'[data-mode="backing"]');await page.locator('[data-mode="backing"]').click();await page.locator('[data-chord-bar="0"]').click();};
+  const open=async()=>{await click('home-songs');await page.locator('[data-song-open="count"]').click();if(await page.locator('#song-continue').isVisible())await click('song-continue');await openProjectPart(page);await revealCreationControl(page,'[data-mode="backing"]');await page.locator('[data-mode="backing"]').click();await page.locator('[data-chord-bar="0"]').click();};
   await open();await page.locator('#chord-tempo').fill('180');assert.equal(await page.locator('#tempo').inputValue(),'180');assert.deepEqual((await report()).captureCandidate,pattern);assert.equal((await report()).captureEditing.pending,false);
   if(!layoutOnly){
    await click('chord-count-start');await running();await page.waitForFunction(()=>countNodes.length>=5);let data=await page.evaluate(()=>({counts:countNodes.slice(),oscillators:countOscillators.length,hint:countContexts.at(-1).testHint,starts:countStarts.map(r=>({notes:r.notes,settings:r.settings}))}));

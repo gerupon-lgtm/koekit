@@ -1,5 +1,5 @@
 const {chromium,webkit}=require('../.local-tools/node_modules/playwright'),assert=require('node:assert/strict'),fs=require('node:fs');
-const {revealCreationControl}=require('./saezuri-browser-controls.cjs');
+const {revealCreationControl,openProjectPart}=require('./saezuri-browser-controls.cjs');
 const base=process.env.SAEZURI_BASE||'http://127.0.0.1:8026',layoutOnly=process.env.SAEZURI_BROWSER==='webkit';
 (async()=>{
  const browser=layoutOnly?await webkit.launch({headless:true,executablePath:process.env.SAEZURI_WEBKIT_PATH}):await chromium.launch({channel:'chrome',headless:true,args:['--autoplay-policy=no-user-gesture-required']});
@@ -17,7 +17,7 @@ const base=process.env.SAEZURI_BASE||'http://127.0.0.1:8026',layoutOnly=process.
    return pattern;
   },source);
   const click=id=>page.locator('#'+id).click(),slot=i=>page.locator(`[data-chord-slot="${i}"]`),report=async()=>{await page.locator('#report').evaluate(n=>n.click());return JSON.parse(await page.locator('#metrics').textContent());};
-  const open=async(id='slots')=>{await click('home-songs');await page.locator(`[data-song-open="${id}"]`).click();if(await page.locator('#song-continue').isVisible())await click('song-continue');await revealCreationControl(page,'[data-mode="backing"]');await page.locator('[data-mode="backing"]').click();await page.locator('[data-chord-bar="0"]').click();};
+  const open=async(id='slots')=>{await click('home-songs');await page.locator(`[data-song-open="${id}"]`).click();if(await page.locator('#song-continue').isVisible())await click('song-continue');await openProjectPart(page);await revealCreationControl(page,'[data-mode="backing"]');await page.locator('[data-mode="backing"]').click();await page.locator('[data-chord-bar="0"]').click();};
   const select=async(root,quality,bass)=>{await page.locator('#chord-root').selectOption(String(root));await page.locator('#chord-quality').selectOption(quality);await page.locator('#chord-bass').selectOption(String(bass));};
   const savedSlots=()=>page.evaluate(()=>JSON.parse(localStorage.getItem('saezuri.chordSlots.v1')));
   const longPress=async i=>{await slot(i).scrollIntoViewIfNeeded();await slot(i).hover();await page.mouse.down();await page.locator('#chord-slot-menu').waitFor({state:'visible'});await page.mouse.up();};
