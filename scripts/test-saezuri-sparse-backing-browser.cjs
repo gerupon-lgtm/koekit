@@ -20,7 +20,7 @@ const base=process.env.SAEZURI_BASE||'http://127.0.0.1:8026';
  for(const [width,height] of [[320,568],[390,740],[740,390],[1280,800]]){
   await page.setViewportSize({width,height});await click('#image-settings-open');
   assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
-  for(const selector of ['#backing-settings-close','#backing-settings-stop']){const b=await page.locator(selector).boundingBox();assert.ok(b.y>=0&&b.y+b.height<=height+1);}
+  for(const selector of ['#backing-settings-close','#backing-settings-close-bottom']){const b=await page.locator(selector).boundingBox();assert.ok(b.y>=0&&b.y+b.height<=height+1);}
   await page.locator('#image-drums').scrollIntoViewIfNeeded();const box=await page.locator('#image-drums').boundingBox();assert.ok(box.width>150&&box.height>=44);await click('#backing-settings-close');
  }
  await page.setViewportSize({width:390,height:740});await page.screenshot({path:'.local-tools/sparse-backing-main.png',fullPage:true});await click('#image-settings-open');await page.screenshot({path:'.local-tools/sparse-backing-settings.png',fullPage:true});await click('#backing-settings-close');

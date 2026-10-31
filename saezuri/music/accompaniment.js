@@ -3,7 +3,20 @@ import {GENRES,CHORD_INTERVALS,chordTones} from './catalog.js?v=v0.1.0-202610311
 import {validImageChoice,validateImageArrangement} from './image-arrangement.js?v=v0.1.0-20261031181822-dc3d23b';
 import {POP_EIGHT_BEAT} from './backing-patterns.js?v=v0.1.0-20261031181822-dc3d23b';
 export const RHYTHMS=[{id:'quarters',label:'4つずつ'},{id:'offbeat',label:'うらで弾く'},{id:'arpeggio',label:'音をばらして弾く'},{id:POP_EIGHT_BEAT.rhythm,label:POP_EIGHT_BEAT.label},{id:'whole',label:'全音符でのばす'},{id:'halves',label:'二分音符でのばす'}];
-export const DRUM_PATTERNS=[{id:'auto',label:'おまかせ'},{id:'none',label:'打楽器なし'},{id:'hat-half-front',label:'ハット2拍ずつ・前を強く',ticks:[0,8],gains:[.03,.015]},{id:'hat-half-back',label:'ハット2拍ずつ・後を強く',ticks:[0,8],gains:[.015,.03]},{id:'hat-backbeat',label:'ハット2・4拍（裏打ち）',ticks:[4,12],gains:[.02,.02]}];
+// Strong hats are intentionally distinct; overall loudness remains controllable.
+const hatStrong=.06,hatWeak=.008;
+export const DRUM_PATTERNS=[
+ {id:'auto',label:'おまかせ'},{id:'none',label:'打楽器なし'},
+ {id:'hat-half-front',label:'ハット2拍ずつ・前を強く',ticks:[0,8],gains:[hatStrong,hatWeak]},
+ {id:'hat-half-back',label:'ハット2拍ずつ・後を強く',ticks:[0,8],gains:[hatWeak,hatStrong]},
+ {id:'hat-backbeat',label:'ハット2・4拍（裏打ち）',ticks:[4,12],gains:[.02,.02]},
+ {id:'hat-backbeat-front',label:'ハット裏打ち・2拍を強く',ticks:[4,12],gains:[hatStrong,hatWeak]},
+ {id:'hat-backbeat-back',label:'ハット裏打ち・4拍を強く',ticks:[4,12],gains:[hatWeak,hatStrong]},
+ {id:'hat-quarters-first',label:'ハット毎拍・1拍を強く',ticks:[0,4,8,12],gains:[hatStrong,hatWeak,hatWeak,hatWeak]},
+ {id:'hat-quarters-third',label:'ハット毎拍・3拍を強く',ticks:[0,4,8,12],gains:[hatWeak,hatWeak,hatStrong,hatWeak]},
+ {id:'hat-quarters-front',label:'ハット毎拍・1・3拍を強く',ticks:[0,4,8,12],gains:[hatStrong,hatWeak,hatStrong,hatWeak]},
+ {id:'hat-quarters-back',label:'ハット毎拍・2・4拍を強く',ticks:[0,4,8,12],gains:[hatWeak,hatStrong,hatWeak,hatStrong]},
+];
 const heldLength=rhythm=>rhythm==='whole'?16:rhythm==='halves'?8:0;
 export const PROGRESSIONS={
  C:[{id:'home',label:'C → F → G → C',chords:[[0,'major'],[5,'major'],[7,'major'],[0,'major']]},

@@ -65,7 +65,7 @@ export class MelodyScreens {
   $('sound-settings').append(document.querySelector('.listen-settings'));
   $('creation-settings').append($('composer-panel').querySelector('details'),document.querySelector('.quick-transpose'),$('editor-more'),document.querySelector('.editor-finish'),$('technical-tools'));
   dialog.append($('copy-status'),$('copy-fallback'));
-  setupPlaybackSheet(dialog,{closeId:'settings-close',stopId:'settings-stop',onStop,stopOnClose:false});
+  setupPlaybackSheet(dialog,{closeId:'settings-close',footerCloseId:'settings-close-bottom',onStop,stopOnClose:false});
   $('settings-close').onclick=()=>dialog.close();dialog.addEventListener('close',()=>{const inline=$('keyboard-instrument');if(inline)inline.append($('instrument').closest('label'));onNavigate();});
   $('screen-settings').onclick=()=>this.openSettings();$('sequence-settings').onclick=()=>this.openSettings();
   $('home-help').onclick=()=>{

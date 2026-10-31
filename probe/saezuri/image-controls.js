@@ -45,7 +45,7 @@ export class ImageControls {
   if(compact){
    const settings=document.createElement('dialog');settings.id='backing-settings';settings.className='backing-sheet';settings.setAttribute('aria-label','伴奏の設定');settings.innerHTML='<div class="screen-heading"><h2>伴奏の設定</h2><button id="backing-settings-close">とじる</button></div>';
    const settingsActions=document.createElement('div');settingsActions.className='backing-setting-actions';settingsActions.append(this.$('tempo'),this.$('sounds'));
-   const drumHint=document.createElement('p');drumHint.className='image-hint';drumHint.textContent='のばす伴奏の「おまかせ」は打楽器なし。裏打ちは2・4拍目に鳴ります。';
+   const drumHint=document.createElement('p');drumHint.className='image-hint';drumHint.textContent='のばす伴奏の「おまかせ」は打楽器なし。裏打ちは2・4拍目、4分打ちは毎拍です。';
    settings.append(this.$('enabled').closest('label'),this.$('genre').closest('.composer-values'),this.$('drums').closest('label'),drumHint,this.$('progression').closest('label'),settingsActions);
    document.querySelector('main').append(settings);this.settingsSheet=settings;
    const open=document.createElement('button');open.id='image-settings-open';open.textContent='伴奏の設定';open.onclick=()=>this.show(settings);this.$('suggest').before(open);
@@ -55,7 +55,7 @@ export class ImageControls {
    const stopRow=document.createElement('div');stopRow.className='sheet-stop';const stop=document.createElement('button');stop.id='progression-stop';stop.textContent='■ とめる';stop.onclick=()=>this.onStop?.();stopRow.append(stop);suggestions.append(stopRow);
    suggestions.addEventListener('close',()=>this.onNavigate?.());document.querySelector('main').append(suggestions);$('progression-close').onclick=()=>{this.onStop?.();suggestions.close();};this.suggestionsSheet=suggestions;
    const suggest=this.$('suggest').onclick;this.$('suggest').onclick=()=>{suggest();this.show(suggestions);};
-   setupPlaybackSheet(settings,{closeId:'backing-settings-close',stopId:'backing-settings-stop',onStop:()=>this.onStop?.()});
+   setupPlaybackSheet(settings,{closeId:'backing-settings-close',footerCloseId:'backing-settings-close-bottom',onStop:()=>this.onStop?.()});
    setupPlaybackSheet(suggestions,{closeId:'progression-close',stopId:'progression-stop',onStop:()=>this.onStop?.()});
   }
   this.imageMode=new ImageModeControls({editor,onTempo,onRecord,compact});
@@ -136,7 +136,7 @@ export class ImageControls {
   this.$('sounds').onclick=()=>{const sounds=accompanimentSounds(this.value());for(const part of ['chord','bass','drums'])$(`sound-${part}`).value=sounds[part];this.show(s);};
   setupPlaybackSheet(d,{closeId:'chord-close',stopId:'chord-stop',onStop:()=>this.onStop?.()});
   if(this.inlineChords)d.classList.add('inline-chord-editor');
-  setupPlaybackSheet(s,{closeId:'sounds-close',stopId:'sounds-stop',onStop:()=>this.onStop?.()});
+  setupPlaybackSheet(s,{closeId:'sounds-close',footerCloseId:'sounds-close-bottom',onStop:()=>this.onStop?.()});
  }
  sheetChord(){return {startTick:this.bar*16+(this.beat??0)*4,durationTick:16-(this.beat??0)*4,root:Number($('chord-root').value),quality:$('chord-quality').value,bass:Number($('chord-bass').value),manual:true};}
  chooseChord(chord,slot=null){
@@ -245,7 +245,7 @@ export class ImageControls {
   const row=this.$('chords');row.replaceChildren();
   for(let bar=0;bar<pattern.bars;bar++){const changes=chordChangesInBar(pattern,bar),b=document.createElement('button');b.dataset.chordBar=bar;b.textContent=`${bar+1}：${changes.map(chordLabel).join('→')}`;b.disabled=busy||!!this.editor.entry;b.setAttribute('aria-label',`${bar+1}小節目 ${changes.map(c=>`${(c.startTick%16)/4+1}拍目 ${chordLabel(c)}`).join('、')} を変更`);b.onclick=()=>this.openChord(bar);row.append(b);}
   for(const control of this.panel.querySelectorAll('input,select,button'))control.disabled=busy||!!this.editor.entry;
-  if(this.settingsSheet)for(const control of this.settingsSheet.querySelectorAll('input,select,button'))control.disabled=['backing-settings-close','backing-settings-stop'].includes(control.id)?false:busy||!!this.editor.entry;
+  if(this.settingsSheet)for(const control of this.settingsSheet.querySelectorAll('input,select,button'))control.disabled=['backing-settings-close','backing-settings-close-bottom'].includes(control.id)?false:busy||!!this.editor.entry;
   for(const control of this.$('suggestions').querySelectorAll('button'))control.disabled=busy;
   for(const control of this.chordSheet.querySelectorAll('input,select,button'))control.disabled=['chord-close','chord-stop'].includes(control.id)?false:busy;
   this.metronome.render(busy);
