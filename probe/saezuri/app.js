@@ -83,7 +83,7 @@ let voice, voiceTimer, composer, imageControls, shell, songWorkflow,keyboard,cre
 let sampleChordOutput;
 const pitchPreview=new PitchPreview({prepareVoice:async()=>{await prepare();return midi=>scheduleVoice(ctx,mixer.melody,{midi,time:ctx.currentTime+.03,duration:.3,instrument:$('instrument').value,engine:voiceEngine});},onActivity:()=>syncVoice(),onError:()=>{$('capture-edit-status').textContent='音を出せませんでした。もう一度押してね。';}});
 const chordPreview=new PitchPreview({isValid:events=>Array.isArray(events)&&events.length>0,timeoutMs:950,
- prepareVoice:async()=>{await prepare('chord');const owned=ctx,output=mixer.backing;return events=>{
+ prepareVoice:async()=>{await prepare('chord');const owned=ctx,output=mixer.chordAudition;return events=>{
   if(ctx!==owned||owned.state!=='running')throw new Error('AUDIO_NOT_READY');
   // A chord alone needs more presence than quiet backing under a melody.
   // Keep its balance and velocity, with headroom for a 200% master level.
@@ -648,7 +648,7 @@ shell=new MelodyScreens({editor:captureEditor,onStop:()=>stop(),onNavigate:()=>{
     onAudition:item=>play(item.pattern,true,{standalone:true,listening:true,tempo:item.tempo,backing:item.backing,ending:item.ending}),
     onDiscard:discardCurrent,onPlay:(data,pending)=>play(data.pattern,true,{sequence:true,backing:data.backing,pending,ending:data.ending,startTick:data.startTick,fromPlacementId:data.fromPlacementId}),
   });
-  songWorkflow=new SongWorkflow({editor:captureEditor,shell,onDiscard:discardCurrent,onAudition:(data,tempo)=>play(data.pattern,true,{tempo,backing:data.backing,ending:data.ending,standalone:true,listening:true}),onSaving:saving=>setPhase(saving?'saving':'idle',saving?'ほぞんしています…':'準備できました'),onRestore:(checkpoint,settings)=>{
+  songWorkflow=new SongWorkflow({editor:captureEditor,shell,bindSongVolume:select=>volumeControls.bindSong(select),onDiscard:discardCurrent,onAudition:(data,tempo)=>play(data.pattern,true,{tempo,backing:data.backing,ending:data.ending,standalone:true,listening:true}),onSaving:saving=>setPhase(saving?'saving':'idle',saving?'ほぞんしています…':'準備できました'),onRestore:(checkpoint,settings)=>{
     $('tempo').value=String(settings.tempo);$('instrument').value=settings.instrument;
     captureEditor.restore(checkpoint);$('review').hidden=!captureEditor.isOpen;record.capture=null;captureImportSource=null;record.editingSource='saved';setPhase('idle');
   }});

@@ -523,3 +523,9 @@ body.melody-app{background:#faf5ed;color:#443b36}
 .melody-app .action-label-unit{white-space:nowrap}
 .melody-app .keyboard-settings{grid-template-columns:repeat(2,minmax(0,1fr))}
 .melody-app #progression-suggestions>.sheet-stop button,.melody-app #backing-rebuild-sheet>.sheet-stop button{padding:8px 4px}
+
+/* Listening volume stays beside Stop while the saved-song list scrolls. */
+.melody-app.editor-focus #song-library>.sheet-stop{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(80px,1fr);align-items:center;gap:12px}
+.melody-app #song-list-volume-field{display:grid;grid-template-columns:auto minmax(0,1fr);align-items:center;gap:8px;min-width:0;margin:0;font-size:14px}
+.melody-app #song-list-volume{width:100%;min-width:0;min-height:48px;font-size:16px;margin:0;padding:6px}
+.melody-app.editor-focus #song-library #song-list-stop{width:100%;min-width:0;min-height:48px;font-size:14px;padding:6px;margin:0}

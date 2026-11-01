@@ -66,14 +66,14 @@ export class MelodyScreens {
   const common=document.createElement('section');common.id='settings-song';common.innerHTML='<h3>この曲に共通</h3>';
   const device=document.createElement('section');device.id='settings-device';device.innerHTML='<h3>この端末での聴こえ方</h3><p id="screen-wake-status" class="image-hint" role="status">再生・録音中は画面の自動消灯を防ぎます。</p>';
   common.append($('tempo').closest('label'),$('instrument').closest('label'));
-  const volumes=document.querySelector('.volume-settings');volumes.append(...['master-volume','backing-volume','count-volume'].map(id=>$(id).closest('label')));
+  const volumes=document.querySelector('.volume-settings');volumes.append(...['song-volume','master-volume','backing-volume','count-volume'].map(id=>$(id).closest('label')));
   device.append(volumes,$('play-count-style').closest('label'),$('play-count').closest('label'));
   const extras=document.createElement('details');extras.id='device-tools';extras.innerHTML='<summary>表示・録音の設定</summary>';extras.append($('technical-tools'));device.append(extras);
   listening.replaceChildren(common,device);
   $('creation-settings').append($('composer-panel').querySelector('details'),document.querySelector('.quick-transpose'),$('editor-more'),document.querySelector('.editor-finish'));
   const labelText=(id,text)=>{const label=$(id).closest('label');for(const node of [...label.childNodes])if(node.nodeType===3)node.remove();label.prepend(document.createTextNode(text));};
   labelText('tempo','テンポ（BPM）');labelText('instrument','メロディーの音色');labelText('play-count-style','ドンカマの音色');labelText('play-count','編集の試聴でドンカマを鳴らす');$('play-count').closest('label').prepend($('play-count'));
-  for(const [id,text] of [['master-volume','全体の音量'],['backing-volume','伴奏の音量'],['count-volume','ドンカマの音量']])labelText(id,text);
+  for(const [id,text] of [['song-volume','曲の音量'],['master-volume','全体の音量'],['backing-volume','伴奏の音量'],['count-volume','ドンカマの音量']])labelText(id,text);
   dialog.append($('copy-status'),$('copy-fallback'));
   setupPlaybackSheet(dialog,{closeId:'settings-close',footerCloseId:'settings-close-bottom',onStop,stopOnClose:false});
   $('settings-close').onclick=()=>dialog.close();dialog.addEventListener('close',()=>onNavigate());

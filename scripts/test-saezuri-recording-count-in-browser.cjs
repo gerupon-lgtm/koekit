@@ -12,7 +12,7 @@ const {revealCreationControl}=require('./saezuri-browser-controls.cjs');
   const gum=navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);navigator.mediaDevices.getUserMedia=async(...args)=>{const stream=await gum(...args);streams.push(stream);return stream;};
  });
  const click=async id=>{await revealCreationControl(page,'#'+id);await page.locator('#'+id).click();},report=async()=>{await page.locator('#report').evaluate(n=>n.click());const r=JSON.parse(await page.locator('#metrics').textContent());return {pattern:r.captureCandidate,editing:r.captureEditing};};
- await page.goto(base+'/probe/saezuri/');await click('home-create');await click('new-manual');await page.locator('#tap-record').waitFor({state:'visible'});
+ await page.goto(base+'/probe/saezuri/');await click('home-create');await click('sequence-create');await click('new-manual');await page.locator('#tap-record').waitFor({state:'visible'});
  await page.evaluate(async()=>{
   const version=new URL(document.querySelector('script[src*="app.js"]').src).search;
   const [{ProbeTransport},{ProbeCapture},{KeyboardControls}]=await Promise.all(['audio','capture','keyboard-controls'].map(name=>import('./'+name+'.js'+version)));

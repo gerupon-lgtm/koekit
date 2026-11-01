@@ -12,7 +12,7 @@ const $=id=>document.getElementById(id);
 const copy=value=>structuredClone(value);
 const messages={SONG_LIMIT:`${SONG_LIMIT}きょく いっぱいです。きょくを けすと、新しく ほぞんできます。`,SONG_CONFLICT:'ほかの画面で きょくが変わりました。この画面のつくりかけは残っています。',SONG_DELETED:'ほかの画面で このきょくが消されました。この画面のつくりかけは残っています。'};
 export class SongWorkflow {
- constructor({editor,shell,onDiscard,onRestore,onSaving,onAudition}){
+ constructor({editor,shell,onDiscard,onRestore,onSaving,onAudition,bindSongVolume}){
   Object.assign(this,{editor,shell,onDiscard,onRestore,onSaving,onAudition});this.store=new SongStore();this.queue=Promise.resolve();this.id=null;this.revision=null;this.savedFingerprint=null;this.suspended=false;
   const status=document.createElement('small');status.id='song-status';status.className='song-status';status.setAttribute('role','status');$('melody-create').querySelector('.screen-heading h2').append(status);
   const sequenceStatus=status.cloneNode();sequenceStatus.id='sequence-song-status';$('melody-connect').querySelector('.screen-heading h2').append(sequenceStatus);
@@ -22,6 +22,7 @@ export class SongWorkflow {
   const button=document.createElement('button');button.id='home-songs';button.innerHTML='保存した曲をひらく<small>前回のつづきから</small>';button.onclick=()=>this.library();$('melody-home').querySelector('.home-menu').append(button);
   this.makeDialog('song-library','ほぞんした きょく','<p id="song-list-status" role="status"></p><div id="song-list"></div><button id="song-list-stop">■ とめる</button><button data-close>とじる</button>');
   setupPlaybackSheet($('song-library'),{closeId:'song-library-close',stopId:'song-list-stop',onStop:()=>this.libraryPlayer.stop()});
+  if(bindSongVolume){const volume=document.createElement('label');volume.id='song-list-volume-field';volume.textContent='音量';const select=document.createElement('select');select.id='song-list-volume';select.setAttribute('aria-label','保存曲の再生音量');volume.append(select);$('song-library').querySelector('.sheet-stop').prepend(volume);bindSongVolume(select);}
   const hint=document.createElement('p');hint.id='song-list-hint';hint.textContent='一行が一つの曲です。「ひらく」で並びとパーツを見られます。';$('song-list-status').before(hint);
   $('song-list-stop').onclick=()=>this.libraryPlayer.stop();
   $('song-library').addEventListener('close',()=>this.libraryPlayer.stop());

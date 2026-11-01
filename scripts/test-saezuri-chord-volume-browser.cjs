@@ -1,5 +1,5 @@
 const {chromium}=require('../.local-tools/node_modules/playwright'),assert=require('node:assert/strict');
-const {revealCreationControl}=require('./saezuri-browser-controls.cjs');
+const {revealCreationControl,openProjectPart}=require('./saezuri-browser-controls.cjs');
 const base=process.env.SAEZURI_BASE||'http://127.0.0.1:8026';
 (async()=>{const browser=await chromium.launch({channel:'chrome',headless:true,args:['--autoplay-policy=no-user-gesture-required']});try{
  const results=[];
@@ -14,7 +14,7 @@ const base=process.env.SAEZURI_BASE||'http://127.0.0.1:8026';
    await new SongStore().save('chord-volume',{title:'コード試聴の音量',checkpoint:{confirmed:{pattern,cursor:0,hasRest:false},draft:null},sequence:emptySequence(),settings:{tempo:120,instrument:'piano'}});
    return {pattern,triad:chordAuditionEvents(pattern,{root:9,quality:'minor',bass:9}),four:chordAuditionEvents(pattern,{root:6,quality:'m7♭5',bass:1})};
   },source);
-  await page.locator('#home-songs').click();await page.locator('[data-song-open="chord-volume"]').click();if(await page.locator('#song-continue').isVisible())await page.locator('#song-continue').click();await revealCreationControl(page,'[data-mode="backing"]');await page.locator('[data-mode="backing"]').click();await page.locator('[data-chord-bar="0"]').click();await page.locator('#chord-basic button').getByText('Am',{exact:true}).click();
+  await page.locator('#home-songs').click();await page.locator('[data-song-open="chord-volume"]').click();if(!await page.locator('#melody-create').isVisible())await openProjectPart(page);await revealCreationControl(page,'[data-mode="backing"]');await page.locator('[data-mode="backing"]').click();await page.locator('[data-chord-bar="0"]').click();await page.locator('#chord-basic button').getByText('Am',{exact:true}).click();
   for(const kind of ['triad','four']){
    if(kind==='four'){await page.locator('#chord-all-mode').click();await page.locator('#chord-root').selectOption('6');await page.locator('#chord-quality').selectOption('m7♭5');await page.locator('#chord-bass').selectOption('1');}
    await page.evaluate(()=>chordPeaks.length=0);await page.locator('#chord-single-preview').click();await page.waitForFunction(n=>chordPeaks.length>=n,fixture[kind].length);
@@ -22,7 +22,7 @@ const base=process.env.SAEZURI_BASE||'http://127.0.0.1:8026';
    const ratios=peaks.map((n,i)=>n/reference[i]);assert.ok(ratios.every(n=>n>2),'standalone harmony is more than twice the quiet nursery backing level');assert.ok(Math.max(...ratios)-Math.min(...ratios)<.00001,'chord/bass balance and velocity are preserved');assert.ok(peaks.reduce((sum,n)=>sum+n,0)<=.321,'summed voice peaks leave room for master 200%');
    const rendered=await page.evaluate(async({events,peaks})=>{
     const {scheduleVoice}=await import('./audio.js'),{AudioMixer}=await import('./volume.js'),{chordAuditionEngine}=await import('./sound-engine.js');
-    const render=async amplified=>{const ctx=new OfflineAudioContext(1,24000,24000),mixer=new AudioMixer(ctx,{master:2});for(const [i,event] of events.entries())scheduleVoice(ctx,mixer.backing,{...event,gain:amplified?peaks[i]/(((event.velocity??70)/70)**.8):event.gain,time:.015,duration:.4,engine:amplified?chordAuditionEngine('light',event.instrument):'light'});const data=(await ctx.startRendering()).getChannelData(0);let sum=0,peak=0;for(const v of data){sum+=v*v;peak=Math.max(peak,Math.abs(v));}return {rms:Math.sqrt(sum/data.length),peak,finite:data.every(Number.isFinite)};};return {normal:await render(false),audition:await render(true)};
+    const render=async amplified=>{const ctx=new OfflineAudioContext(1,24000,24000),mixer=new AudioMixer(ctx,{master:2,song:.5});for(const [i,event] of events.entries())scheduleVoice(ctx,amplified?mixer.chordAudition:mixer.backing,{...event,gain:amplified?peaks[i]/(((event.velocity??70)/70)**.8):event.gain,time:.015,duration:.4,engine:amplified?chordAuditionEngine('light',event.instrument):'light'});const data=(await ctx.startRendering()).getChannelData(0);let sum=0,peak=0;for(const v of data){sum+=v*v;peak=Math.max(peak,Math.abs(v));}return {rms:Math.sqrt(sum/data.length),peak,finite:data.every(Number.isFinite)};};return {normal:await render(false),audition:await render(true)};
    },{events:fixture[kind],peaks});assert.ok(rendered.audition.finite&&rendered.audition.peak<.95);assert.ok(rendered.audition.rms>rendered.normal.rms*2);
    results.push({source,kind,ratios,rendered});
   }
