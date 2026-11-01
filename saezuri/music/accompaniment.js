@@ -1,9 +1,9 @@
 // Editable audition presets. These concrete arrangements are trial data.
-import {GENRES,CHORD_INTERVALS,chordTones} from './catalog.js?v=v0.1.0-20261031231907-35a39bd';
-import {validImageChoice,validateImageArrangement} from './image-arrangement.js?v=v0.1.0-20261031231907-35a39bd';
-import {POP_EIGHT_BEAT} from './backing-patterns.js?v=v0.1.0-20261031231907-35a39bd';
+import {GENRES,CHORD_INTERVALS,chordTones} from './catalog.js?v=v0.1.0-20261101001204-e794829';
+import {validImageChoice,validateImageArrangement} from './image-arrangement.js?v=v0.1.0-20261101001204-e794829';
+import {POP_EIGHT_BEAT} from './backing-patterns.js?v=v0.1.0-20261101001204-e794829';
 export const RHYTHMS=[{id:'quarters',label:'4つずつ'},{id:'offbeat',label:'うらで弾く'},{id:'arpeggio',label:'音をばらして弾く'},{id:POP_EIGHT_BEAT.rhythm,label:POP_EIGHT_BEAT.label},{id:'whole',label:'全音符でのばす'},{id:'halves',label:'二分音符でのばす'}];
-import {DRUM_PATTERNS,resolveHatPattern} from './hat-patterns.js?v=v0.1.0-20261031231907-35a39bd';
+import {DRUM_PATTERNS,resolveHatPattern} from './hat-patterns.js?v=v0.1.0-20261101001204-e794829';
 export {DRUM_PATTERNS};
 const heldLength=rhythm=>rhythm==='whole'?16:rhythm==='halves'?8:0;
 export const PROGRESSIONS={

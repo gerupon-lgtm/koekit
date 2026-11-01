@@ -1,6 +1,6 @@
-import { validateNotes } from '../../saezuri/document.js?v=v0.1.0-20261031231907-35a39bd';
-import { decodePitchTrace } from './analysis-comparison.js?v=v0.1.0-20261031231907-35a39bd';
-import {validateAccompaniment} from '../../saezuri/music/accompaniment.js?v=v0.1.0-20261031231907-35a39bd';
+import { validateNotes } from '../../saezuri/document.js?v=v0.1.0-20261101001204-e794829';
+import { decodePitchTrace } from './analysis-comparison.js?v=v0.1.0-20261101001204-e794829';
+import {validateAccompaniment} from '../../saezuri/music/accompaniment.js?v=v0.1.0-20261101001204-e794829';
 
 // Reopen numerical diagnostics locally. This never requests a microphone or
 // restores a waveform. Manual candidates are separate from the original input.

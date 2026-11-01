@@ -1,6 +1,6 @@
-import {openEditSession} from './edit-session.js?v=v0.1.0-20261031231907-35a39bd';
-import {restoreCheckpoint,checkpointFingerprint} from './song-session.js?v=v0.1.0-20261031231907-35a39bd';
-import {canKeepPhrase} from './sequence-session.js?v=v0.1.0-20261031231907-35a39bd';
+import {openEditSession} from './edit-session.js?v=v0.1.0-20261101001204-e794829';
+import {restoreCheckpoint,checkpointFingerprint} from './song-session.js?v=v0.1.0-20261101001204-e794829';
+import {canKeepPhrase} from './sequence-session.js?v=v0.1.0-20261101001204-e794829';
 const copy=value=>structuredClone(value);
 export function emptyPartCheckpoint(pattern,{accepted=false}={}){
  const session=openEditSession(pattern);if(session.code)throw new Error(session.code);

@@ -1,4 +1,4 @@
-import {renderTutorialView,highlightTutorialView} from './tutorial-view.js?v=v0.1.0-20261031231907-35a39bd';
+import {renderTutorialView,highlightTutorialView} from './tutorial-view.js?v=v0.1.0-20261101001204-e794829';
 const $=id=>document.getElementById(id),storageKey='saezuri.creationDisplays.v1';
 
 // Display preferences never enter the song, candidate, cursor or undo history.
