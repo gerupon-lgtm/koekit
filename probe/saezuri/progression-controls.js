@@ -1,3 +1,4 @@
+import {formatActionLabels} from './action-labels.js';
 import {recommendProgressions,harmonicSegments} from '../../saezuri/music/accompaniment.js?v=v0.1.0-20261031231907-35a39bd';
 import {chordChangesInBar} from '../../saezuri/music/chord-timing.js?v=v0.1.0-20261031231907-35a39bd';
 import {chordLabel,sameChord} from '../../saezuri/music/catalog.js?v=v0.1.0-20261031231907-35a39bd';
@@ -62,7 +63,8 @@ export class ProgressionControls{
   this.busy=busy;if(!this.base||!this.dialog.open&&this.index===undefined)return;
   $('progression-choice').disabled=busy;
   for(const id of ['progression-listen-current','progression-listen-candidate'])$(id).disabled=busy;
-  $('progression-use').disabled=busy||!(this.changed?.length||this.adding);
+  $('progression-use').disabled=busy||!(this.changed?.length||this.adding);$('progression-use').textContent=this.changed?.length||this.adding?'この並びをつかう':'いまと同じ';
+  formatActionLabels(this.dialog);
   $('progression-change-hint').textContent=this.changed?.length?`変わる小節：${this.changed.join('・')}。つかった後、オッケーで決めます。`:this.adding?'このコードの伴奏を追加します。つかった後、オッケーで決めます。':'いまの並びと同じです。';
  }
  handleVoice(command){

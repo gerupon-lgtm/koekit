@@ -1,3 +1,4 @@
+import {formatActionLabels} from './action-labels.js';
 import {ProgressionControls} from './progression-controls.js?v=v0.1.0-20261031231907-35a39bd';
 import {DRUM_CHOICES,HAT_RHYTHMS,hatAccentOptions,resolveHatPattern} from '../../saezuri/music/hat-patterns.js?v=v0.1.0-20261031231907-35a39bd';
 import {GENRES,CHORD_INTERVALS,CHORD_PITCH_NAMES,chordLabel,sameChord} from '../../saezuri/music/catalog.js?v=v0.1.0-20261031231907-35a39bd';
@@ -221,11 +222,12 @@ export class ImageControls {
   const same=sameChord(current,chord);
   $('chord-blank').setAttribute('aria-pressed',String(this.blankChoice));$('chord-single-preview').disabled=!!this.busy||this.blankChoice;$('chord-single-preview').textContent=this.blankChoice?'空白のため無音':'▶ このコードをきく';
   $('chord-candidate').textContent=this.slotNotice||(same?`いま ${chordLabel(current)}${current.manual?'（この拍に入っています）':''}`:`いま ${chordLabel(current)} → 候補 ${chordLabel(chord)}${chord.rest?'（次の指定までコード・ベースなし）':''}`);
-  $('chord-candidate').setAttribute('aria-label',`${this.bar+1}小節目 ${this.beat+1}拍目。${$('chord-candidate').textContent}。「つかう」で入れて、最後に「オッケー」。`);
+  $('chord-candidate').setAttribute('aria-label',`${this.bar+1}小節目 ${this.beat+1}拍目。${$('chord-candidate').textContent}。${same&&current.manual?'すでに、この拍に入っています。':'「つかう」で入れて、最後に「オッケー」。'}`);
   for(const button of $('chord-grid').children)button.setAttribute('aria-pressed',String(!this.blankChoice&&(button.dataset.chordSlot!==undefined?Number(button.dataset.chordSlot)===this.selectedSlot&&!!this.chordSlots[this.selectedSlot]:this.selectedSlot===null&&Number(button.dataset.root)===chord.root&&button.dataset.quality===chord.quality&&chord.bass===chord.root)));
   const target=this.availableChordSlot();$('chord-slot-add').disabled=!!this.busy||this.blankChoice||target<0;
   $('chord-slot-target').textContent=target<0?'9枠とも登録ずみ':`追加枠 ${target+1} / ${this.chordSlots.length}`;
-  $('chord-use').disabled=!!this.busy||!!(same&&current.manual);$('chord-previous').disabled=!!this.busy||this.bar===0;$('chord-next').disabled=!!this.busy||this.bar>=this.editor.previewPattern.bars-1;
+  $('chord-use').disabled=!!this.busy||!!(same&&current.manual);$('chord-use').textContent=same&&current.manual?'いまと同じ':'つかう';$('chord-previous').disabled=!!this.busy||this.bar===0;$('chord-next').disabled=!!this.busy||this.bar>=this.editor.previewPattern.bars-1;
+  if(this.inlineChords)formatActionLabels(this.chordSheet);
  }
  stageChord(){const before=this.value(),value=setChordAtBeat({...this.editor.previewPattern,accompaniment:before},this.bar,this.beat,this.sheetChord());if(JSON.stringify(value)!==JSON.stringify(before))this.editor.changeStructure({type:'accompaniment',value});}
  openChord(bar,beat=0){

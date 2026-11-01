@@ -471,7 +471,7 @@ body.melody-app{background:#faf5ed;color:#443b36}
 .melody-app #progression-suggestions .sheet-stop button,.melody-app #backing-rebuild-sheet .sheet-stop button{width:100%;min-width:0;margin:0;min-height:48px;font-size:14px;line-height:1.4}
 .melody-app #progression-use,.melody-app #backing-rebuild-use{background:#dce8d2}
 .melody-app #progression-suggestions .sheet-body>h3{font-size:14px;margin:10px 0 4px}
-.melody-app #progression-suggestions .sheet-body>label{display:block;font-size:14px;margin:12px 0 0}
+.melody-app #progression-suggestions .sheet-body>label{display:flex;flex-direction:column;gap:10px;font-size:14px;margin:12px 0 0}
 .melody-app #progression-choice{width:100%;min-width:0}
 .melody-app .progression-strip{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin:6px 0 10px}
 .melody-app .progression-bar{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;border-radius:12px;background:#eee8dc;padding:7px 3px;min-width:0;min-height:56px;font-size:13px;line-height:1.4;overflow-wrap:anywhere}
@@ -485,7 +485,7 @@ body.melody-app{background:#faf5ed;color:#443b36}
 .melody-app #backing-rebuild-sheet #image-next{width:100%;margin:12px 0}
 .melody-app #backing-rebuild-preview,.melody-app #backing-rebuild-stop{width:100%;min-height:44px}
 .melody-app #backing-reset-use{background:#dce8d2;width:100%;min-height:48px}
-@media(prefers-color-scheme:dark){.melody-app .progression-bar{background:#3e382f}.melody-app .progression-bar[data-changed],.melody-app #progression-use,.melody-app #backing-rebuild-use,.melody-app #backing-reset-use{background:#354831}}
+/* These controls follow the existing light app palette in both OS schemes. */
 
 .melody-app #melody-settings :is(#settings-song,#settings-device){border-radius:0;text-align:left}
 .melody-app #melody-settings :is(#settings-song,#settings-device) h3{text-align:left}
@@ -514,3 +514,12 @@ body.melody-app{background:#faf5ed;color:#443b36}
 /* A chord-only image part still has bulk/key/length edits, without empty note tools. */
 .melody-app.editor-focus.image-empty:not(.recording-focus)[data-create-mode=edit] .edit-toolbar{display:block}
 .melody-app.image-empty #screen-note-edit>:not(#creation-settings){display:none}
+
+/* Disabled primary actions keep a readable label while showing a neutral state. */
+.melody-app.editor-focus :is(#progression-use,#backing-rebuild-use,#backing-reset-use,#chord-use,#chord-single-preview):disabled{opacity:1;color:#5e554b;background:#e6e0d5}
+
+/* Keep labels intact at meaningful break opportunities, without forcing a line. */
+.melody-app .action-label{display:inline-block;max-width:100%;min-width:0;vertical-align:middle}
+.melody-app .action-label-unit{white-space:nowrap}
+.melody-app .keyboard-settings{grid-template-columns:repeat(2,minmax(0,1fr))}
+.melody-app #progression-suggestions>.sheet-stop button,.melody-app #backing-rebuild-sheet>.sheet-stop button{padding:8px 4px}

@@ -1,3 +1,4 @@
+import {formatActionLabels} from './action-labels.js';
 import { proposeNote, commitNote, undo } from '../../saezuri/document.js?v=v0.1.0-20261031231907-35a39bd';
 import { microphoneEnabled, setMicrophoneEnabled, onMicrophoneChange } from '../../src/speech/microphone.js';
 import { createSpeechInput, METHODS } from '../../src/speech/index.js';
@@ -209,6 +210,7 @@ function setPhase(next, message) {
   creationDisplays?.render(next);
   keyboard?.follow({phase,transport,capture});
   creationLayout?.render();
+  if(document.body.classList.contains('melody-app'))formatActionLabels();
 }
 function draw() {
   drawPattern('score', state.pattern);
