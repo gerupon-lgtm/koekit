@@ -55,3 +55,13 @@ export function syncProjectParts(project,sequence){
  project.parts=project.parts.filter(part=>!part.patternId||sequence.patterns.some(p=>p.id===part.patternId));
  if(project.activeId&&!project.parts.some(p=>p.id===project.activeId)){project.activeId=null;project.editingOriginalId=null;}
 }
+
+// Rename metadata only: do not accept drafts, rewrite notes or derive a copy.
+export function renamePart(project,sequence,partId,input){
+ const part=project.parts.find(p=>p.id===partId);if(!part)return {code:'PART_NOT_FOUND'};
+ const name=typeof input==='string'?input.trim().slice(0,24):'';if(!name)return {code:'PART_NAME_EMPTY'};
+ const pattern=sequence.patterns.find(p=>p.id===part.patternId);if(part.patternId&&!pattern)return {code:'PART_PATTERN_MISSING'};
+ const changed=part.name!==name||!!pattern&&pattern.name!==name;if(!changed)return {changed:false,name};
+ part.name=name;if(pattern&&pattern.name!==name){pattern.name=name;sequence.revision++;}
+ return {changed:true,name};
+}
