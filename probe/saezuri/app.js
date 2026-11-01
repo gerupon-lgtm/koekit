@@ -1,3 +1,4 @@
+import {PlaybackScreenLock} from './screen-wake-lock.js';
 import {formatActionLabels} from './action-labels.js?v=v0.1.0-20261101014049-8fcbb21';
 import { proposeNote, commitNote, undo } from '../../saezuri/document.js?v=v0.1.0-20261101014049-8fcbb21';
 import { microphoneEnabled, setMicrophoneEnabled, onMicrophoneChange } from '../../src/speech/microphone.js';
@@ -65,8 +66,12 @@ const editingExample = () => ({ bars: 4, gridStep: 1, notes: [
 ] });
 let state = { pattern: editingExample(), cursor: 0, revision: 0 }, candidate = null, captured = null, capturedOriginal = null;
 let captureImportSource=null;
-let ctx, mixer, transport, capture, serial = 0, phase = 'idle', raf, lastFrame = 0, maxFrameGapMs = 0, lastBar = -1, playbackPreview = false, tutorialPlayback=false,preparingPlayback=false;
+let ctx, mixer, transport, capture, serial = 0, phase = 'idle', raf, lastFrame = 0, maxFrameGapMs = 0, lastBar = -1, playbackPreview = false, tutorialPlayback=false,preparingPlayback=false,sequenceStartTick=0;
 const record = { prototype: 'ML-T01-v25', workflowRevision:'2026-10-02',soundPolicyRevision:SOUND_POLICY_REVISION,audioEngine:voiceEngine,timestamp: new Date().toISOString(), userAgent: navigator.userAgent, playback: null, capture: null };
+const playbackScreenLock=new PlaybackScreenLock({onChange:state=>{
+ record.screenWakeLock=state;document.body.dataset.screenWakeLock=state.status;
+ const hint=$('screen-wake-status');if(hint)hint.textContent=!state.supported?'この端末は画面の自動消灯防止に対応していません。端末の画面消灯までの時間を長くしてください。':state.status==='held'?'再生中の画面の自動消灯を防いでいます。':['unsupported','unavailable','released'].includes(state.status)?'この端末では、いま自動消灯を防げません。再生が止まる場合は、端末の画面消灯までの時間を長くしてください。':'再生・録音中は画面の自動消灯を防ぎます。';
+}});
 record.audioLatencyPolicy='2026-10-18-window-default';
 record.audioLatencyHint=null;
 const volumeControls=new VolumeControls({onChange(levels){mixer?.setLevels(levels);record.audioLevels=levels;if(transport?.active&&record.playback)record.playback.audioLevels=levels;showReport();}});
@@ -171,9 +176,10 @@ function updateKeyButtons() {
   }
 }
 const labels = { idle: '準備できました', preparing: '音とマイクの準備中', playing: '再生中', 'count-in': '8拍のカウント中', recording: '4小節を取り込み中', analyzing: '端末内で解析中' };
+function syncScreenWakeLock(){playbackScreenLock.setActive(['preparing','playing','count-in','recording','analyzing'].includes(phase)||!!imageControls?.metronome.loop.active||!!imageControls?.metronome.loop.pending);}
 function setPhase(next, message) {
   $('stop').disabled=next==='saving';$('mic').disabled=next==='saving';
-  phase = next; $('status').dataset.state = next; $('status').textContent = message || labels[next];
+  phase = next;syncScreenWakeLock(); $('status').dataset.state = next; $('status').textContent = message || labels[next];
   for (const id of ['edit-score','tempo','instrument','length','lead','ahead','example','empty','propose','undo','capture','play','adopt','preview','discard','pitch','duration','count-sound','count-volume','record-count','play-count','play-count-style','smoothing','note-mode','timing-adjust','acoustic-sync','processing','boundary-mode','window-size','adaptive-window','rms','ratio','gap','comparison-settings','capture-import-button','capture-import-text']) $(id).disabled = next !== 'idle';
   $('align-start').disabled = next !== 'idle' || captureEditor.pending || captureEditor.edited || !capturedOriginal?.notes[0]?.startTick;
   volumeControls.setBusy(next==='saving');
@@ -226,7 +232,7 @@ function stop(message = '停止しました。必要ならもう一度開始し�
   if(!preserveTutorial){tutorialPlayback=false;shell?.learning?.preview.stop({notify:false,reason});}
   serial++; transport?.stop(false); capture?.cancel(); cancelAnimationFrame(raf);
   if(ctx)stopLightVoices(ctx);
-  playbackPreview=false;captureEditor.followPlayback(null);
+  playbackPreview=false;sequenceStartTick=0;captureEditor.followPlayback(null);
   creationDisplays?.follow(null);
   shell?.follow(null);
   songWorkflow?.libraryPlayer.follow(null);
@@ -307,10 +313,10 @@ function animate() {
   keyboard?.frame();
   keyboard?.follow({phase,transport,capture});
   if(transport.active&&transport.loop&&ctx.currentTime>=transport.anchor){captureEditor.followPlayback(tick,{notes:false,scrollPage:false});creationDisplays?.follow(tick,{notes:false});}
-  if(shell?.screen==='connect' && transport.active && ctx.currentTime>=transport.anchor)shell.follow(visualTick);
+  if(shell?.screen==='connect' && transport.active && ctx.currentTime>=transport.anchor)shell.follow(visualTick+sequenceStartTick);
   songWorkflow?.libraryPlayer.follow(transport.active?(ctx.currentTime<transport.anchor?-1:visualTick):null);
   if(transport.active&&ctx.currentTime>=transport.anchor)imageControls?.follow(visualTick);
-  const bar = Math.floor(visualTick / 16), beat = Math.floor(visualTick / 4) % 4;
+  const bar = Math.floor((visualTick+sequenceStartTick) / 16), beat = Math.floor(visualTick / 4) % 4;
   if (capture?.active && Number.isFinite(capture.anchor)) {
     if(capture.timing?.mode==='loop-estimated'){
       const remaining=Math.ceil((capture.startTime-ctx.currentTime)*capture.tempo/60);
@@ -349,7 +355,7 @@ async function play(pattern = state.pattern, preview = false, options={}) {
     for(let offset=0;offset<totalTicks;offset+=pattern.bars*16) for(const note of backing) if(offset+note.startTick<totalTicks) accompaniment.push({...note,startTick:offset+note.startTick});
     record.playback.accompaniment=pattern.accompaniment??null;
     playbackPreview=preview&&!options.sequence&&!options.standalone;
-    if(options.sequence){record.playback.sequence=true;record.playback.draft=options.pending;}
+    if(options.sequence){sequenceStartTick=options.startTick??0;record.playback.sequence=true;record.playback.draft=options.pending;record.playback.sequenceStartTick=sequenceStartTick;record.playback.fromPlacementId=options.fromPlacementId??null;}
     if(options.ending)record.playback.ending=structuredClone(options.ending);
     if(options.standalone){record.playback.previewSource='preset';record.playback.draft=false;}
     // Finish screen/recognizer preparation before the audio clock is anchored.
@@ -571,7 +577,7 @@ async function newComposition(withImage=false) {
 composer=new ComposerControls({editor:captureEditor,onNew:()=>newComposition(),onPitch:previewPitch,onNavigate:()=>{cancelPreviews();syncVoice();}});
 imageControls=new ImageControls({engine:voiceEngine,editor:captureEditor,onNew:()=>newComposition(true),onTempo:tempo=>{$('tempo').value=String(tempo);$('tempo').dispatchEvent(new Event('change'));},onPreview:(pattern,standalone=false)=>play(pattern??captureEditor.previewPattern,true,{standalone}),onChordPreview:previewChord,
  prepareMetronome:async()=>{await prepare('chord');return {ctx,mixer,style:$('play-count-style').value};},
- onStop:()=>stop(),onNavigate:()=>{cancelPreviews();setPhase(phase);},onRecord:()=>{shell?.setMode(captureEditor.previewPattern?.source==='manual'?'input':'edit');setPhase(phase);window.scrollTo(0,0);},compact:compactEditor&&new URLSearchParams(location.search).get('view')!=='editor'});
+ onStop:()=>stop(),onAudioActivity:syncScreenWakeLock,onNavigate:()=>{cancelPreviews();setPhase(phase);},onRecord:()=>{shell?.setMode(captureEditor.previewPattern?.source==='manual'?'input':'edit');setPhase(phase);window.scrollTo(0,0);},compact:compactEditor&&new URLSearchParams(location.search).get('view')!=='editor'});
 async function startLoop({microphone=true,recordingCountIn=false}={}){
   if(phase!=='idle'||captureEditor.pending)return false;
   if(imageControls?.imageMode.active){imageControls.imageMode.confirmed();shell?.setMode(captureEditor.pattern.source==='manual'?'input':'edit');}
@@ -636,13 +642,13 @@ shell=new MelodyScreens({editor:captureEditor,onStop:()=>stop(),onNavigate:()=>{
       record.timestamp=new Date().toISOString();if($('after-keep'))$('after-keep').hidden=true;setPhase('idle');showReport();
     },
     onAudition:item=>play(item.pattern,true,{standalone:true,tempo:item.tempo,backing:item.backing,ending:item.ending}),
-    onDiscard:discardCurrent,onPlay:(data,pending)=>play(data.pattern,true,{sequence:true,backing:data.backing,pending,ending:data.ending}),
+    onDiscard:discardCurrent,onPlay:(data,pending)=>play(data.pattern,true,{sequence:true,backing:data.backing,pending,ending:data.ending,startTick:data.startTick,fromPlacementId:data.fromPlacementId}),
   });
   songWorkflow=new SongWorkflow({editor:captureEditor,shell,onDiscard:discardCurrent,onAudition:(data,tempo)=>play(data.pattern,true,{tempo,backing:data.backing,ending:data.ending,standalone:true}),onSaving:saving=>setPhase(saving?'saving':'idle',saving?'ほぞんしています…':'準備できました'),onRestore:(checkpoint,settings)=>{
     $('tempo').value=String(settings.tempo);$('instrument').value=settings.instrument;
     captureEditor.restore(checkpoint);$('review').hidden=!captureEditor.isOpen;record.capture=null;captureImportSource=null;record.editingSource='saved';setPhase('idle');
   }});
-  shell.songWorkflow=songWorkflow;
+  shell.songWorkflow=songWorkflow;playbackScreenLock.publish(playbackScreenLock.status);
   shell.projectWorkflow=new ProjectWorkflow(shell);
   keyboard=new KeyboardControls({editor:captureEditor,clock:()=>ctx?.currentTime??0,onActivity:()=>syncVoice(),
     onPreview:pattern=>{drawPattern('capture',pattern);captureEditor.invalidatePlayback();},

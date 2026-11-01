@@ -25,11 +25,11 @@ export class ClickLoop{
 }
 
 export class ChordMetronome{
- constructor({parent,tempoInput,prepareTrack,onError}){
+ constructor({parent,tempoInput,prepareTrack,onError,onActivity}){
   this.source=tempoInput;this.row=document.createElement('div');this.row.id='chord-metronome';this.row.setAttribute('role','group');this.row.setAttribute('aria-label','ドンカマ（拍だけ）');
   this.row.innerHTML='<label><span>テンポ<small>ドンカマ</small></span><input id="chord-tempo" type="number" inputmode="numeric" min="60" max="180" step="1" required aria-label="ドンカマのテンポ（60〜180）"></label><button id="chord-count-start">▶ 開始</button><button id="chord-count-stop">■ 停止</button>';
   parent.append(this.row);this.input=this.row.querySelector('input');this.startButton=this.row.querySelector('#chord-count-start');this.stopButton=this.row.querySelector('#chord-count-stop');
-  this.loop=new ClickLoop({prepareTrack,onChange:()=>this.render(),onError});
+  this.loop=new ClickLoop({prepareTrack,onChange:()=>{this.render();onActivity?.();},onError});
   this.input.oninput=()=>{if(this.input.validity.valid){this.source.value=this.input.value;this.source.dispatchEvent(new Event('change'));}this.render();};
   this.input.onchange=()=>{if(!this.input.validity.valid)this.input.reportValidity();};
   this.source.addEventListener('change',()=>{this.syncTempo();this.render();});

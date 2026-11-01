@@ -64,7 +64,7 @@ export class MelodyScreens {
   main.append(dialog);this.dialog=dialog;
   const listening=document.querySelector('.listen-settings');$('sound-settings').append(listening);
   const common=document.createElement('section');common.id='settings-song';common.innerHTML='<h3>この曲に共通</h3>';
-  const device=document.createElement('section');device.id='settings-device';device.innerHTML='<h3>この端末での聴こえ方</h3>';
+  const device=document.createElement('section');device.id='settings-device';device.innerHTML='<h3>この端末での聴こえ方</h3><p id="screen-wake-status" class="image-hint" role="status">再生・録音中は画面の自動消灯を防ぎます。</p>';
   common.append($('tempo').closest('label'),$('instrument').closest('label'));
   const volumes=document.querySelector('.volume-settings');volumes.append(...['master-volume','backing-volume','count-volume'].map(id=>$(id).closest('label')));
   device.append(volumes,$('play-count-style').closest('label'),$('play-count').closest('label'));

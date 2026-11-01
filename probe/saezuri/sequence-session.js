@@ -24,10 +24,13 @@ export function derivePlacement(draft,placementId,pattern){
  let number=2,name;do{name=`${stem}${number++}`;}while(names.has(name));
  return proposeSequence(draft,{type:'derive',placementId,patternId:phraseId(draft),pattern,name});
 }
-export function sequencePlayback(draft) {
+export function sequencePlayback(draft,fromPlacementId=null) {
  const invalid=validateComposition(draft);if(invalid)return invalid;
+ const index=fromPlacementId===null?0:draft.placements.findIndex(p=>p.id===fromPlacementId);
+ if(index<0)return {code:'PLACEMENT_NOT_FOUND'};
+ const startTick=draft.placements.slice(0,index).reduce((ticks,p)=>ticks+draft.patterns.find(pattern=>pattern.id===p.patternId).bars*16,0);
  let offset=0;const notes=[],backing=[],ranges=[];
- for(const placement of draft.placements) {
+ for(const placement of draft.placements.slice(index)) {
   const p=draft.patterns.find(p=>p.id===placement.patternId);
   notes.push(...p.notes.map(n=>({...n,id:`${placement.id}-${n.id}`,startTick:offset+n.startTick})));
   backing.push(...accompanimentEvents(p).map(n=>({...n,startTick:offset+n.startTick})));
@@ -35,7 +38,7 @@ export function sequencePlayback(draft) {
  }
  const ending=endingDescription(draft);if(ending?.code)return ending;
  if(ending){const events=endingEvents(draft,offset);if(events.code)return events;backing.push(...events);ranges.push({id:'ending',start:offset,end:offset+ending.durationTick});}
- return {pattern:{bars:(offset+(ending?.durationTick??0))/16,notes},backing,ranges,ending:ending?{...ending,startTick:offset}:null};
+ return {...(fromPlacementId===null?{}:{startTick,fromPlacementId}),pattern:{bars:(offset+(ending?.durationTick??0))/16,notes},backing,ranges,ending:ending?{...ending,startTick:offset}:null};
 }
 // Arrangement undo must preserve the phrase shelf, which is independently added to.
 export function undoPlacement(draft) {

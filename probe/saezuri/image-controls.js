@@ -16,8 +16,8 @@ const fallback={enabled:false,genre:'nursery',rhythm:'quarters',drumPattern:'aut
 const $=id=>document.getElementById(id);
 function fill(node,items){node.replaceChildren(...items.map(([id,label])=>{const o=document.createElement('option');o.value=id;o.textContent=label;return o;}));}
 export class ImageControls {
- constructor({editor,onNew,onTempo,onPreview,onChordPreview,prepareMetronome,onStop,onNavigate,onRecord,compact=false,engine='classic'}) {
-  Object.assign(this,{editor,onTempo,onPreview,onChordPreview,prepareMetronome,onStop,onNavigate,engine});this.inlineChords=compact;this.chordSlots=readChordSlots();this.selectedSlot=null;
+ constructor({editor,onNew,onTempo,onPreview,onChordPreview,prepareMetronome,onStop,onNavigate,onAudioActivity,onRecord,compact=false,engine='classic'}) {
+  Object.assign(this,{editor,onTempo,onPreview,onChordPreview,prepareMetronome,onStop,onNavigate,onAudioActivity,engine});this.inlineChords=compact;this.chordSlots=readChordSlots();this.selectedSlot=null;
   const source=document.querySelector('.source-actions');if(!source)return;
   this.create=document.createElement('button');this.create.id='new-image';this.create.textContent='イメージからつくる';this.create.onclick=onNew;source.prepend(this.create);
   const panel=document.createElement('details');panel.id='image-settings';
@@ -120,7 +120,7 @@ export class ImageControls {
   for(let beat=0;beat<4;beat++){const b=document.createElement('button');b.dataset.chordBeat=beat;b.onclick=()=>this.openChord(this.bar,beat);beats.append(b);}d.querySelector('.chord-picker-controls').before(beats);
   $('chord-blank').onclick=()=>this.chooseChord({rest:true});
   $('chord-remove').onclick=()=>{this.onNavigate?.();this.editor.changeStructure({type:'accompaniment',value:removeChordAtBeat(this.editor.previewPattern,this.bar,this.beat)});this.openChord(this.bar,this.beat);};
-  this.metronome=new ChordMetronome({parent:d,tempoInput:$('tempo'),prepareTrack:()=>this.prepareMetronome(),onError:message=>{$('chord-candidate').textContent=message;}});
+  this.metronome=new ChordMetronome({parent:d,tempoInput:$('tempo'),prepareTrack:()=>this.prepareMetronome(),onActivity:()=>this.onAudioActivity?.(),onError:message=>{$('chord-candidate').textContent=message;}});
   d.querySelector('.chord-picker-controls').after(this.metronome.row);
   for(const id of ['chord-root','chord-bass'])fill($(id),pitches.map((p,i)=>[i,p]));
   fill($('chord-quality'),Object.keys(CHORD_INTERVALS).map(q=>[q,q==='major'?'メジャー':q==='minor'?'マイナー':q]));
