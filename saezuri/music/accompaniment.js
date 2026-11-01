@@ -1,10 +1,10 @@
-import {EIGHT_BEAT_RHYTHMS,eightBeatSet} from './eight-beat.js?v=v0.1.0-20261101014049-8fcbb21';
+import {EIGHT_BEAT_RHYTHMS,eightBeatSet} from './eight-beat.js?v=v0.1.0-20261101015345-b9899cc';
 // Editable audition presets. These concrete arrangements are trial data.
-import {GENRES,CHORD_INTERVALS,chordTones} from './catalog.js?v=v0.1.0-20261101014049-8fcbb21';
-import {validImageChoice,validateImageArrangement} from './image-arrangement.js?v=v0.1.0-20261101014049-8fcbb21';
-import {POP_EIGHT_BEAT} from './backing-patterns.js?v=v0.1.0-20261101014049-8fcbb21';
+import {GENRES,CHORD_INTERVALS,chordTones} from './catalog.js?v=v0.1.0-20261101015345-b9899cc';
+import {validImageChoice,validateImageArrangement} from './image-arrangement.js?v=v0.1.0-20261101015345-b9899cc';
+import {POP_EIGHT_BEAT} from './backing-patterns.js?v=v0.1.0-20261101015345-b9899cc';
 export const RHYTHMS=[...EIGHT_BEAT_RHYTHMS,{id:'quarters',label:'4つずつ'},{id:'offbeat',label:'うらで弾く'},{id:'arpeggio',label:'音をばらして弾く'},{id:POP_EIGHT_BEAT.rhythm,label:POP_EIGHT_BEAT.label},{id:'whole',label:'全音符でのばす'},{id:'halves',label:'二分音符でのばす'}];
-import {DRUM_PATTERNS,resolveHatPattern} from './hat-patterns.js?v=v0.1.0-20261101014049-8fcbb21';
+import {DRUM_PATTERNS,resolveHatPattern} from './hat-patterns.js?v=v0.1.0-20261101015345-b9899cc';
 export {DRUM_PATTERNS};
 const heldLength=rhythm=>rhythm==='whole'?16:rhythm==='halves'?8:0;
 export const PROGRESSIONS={

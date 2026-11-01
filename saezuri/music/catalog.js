@@ -1,4 +1,4 @@
-import {PHRASE_LENGTHS} from '../document.js?v=v0.1.0-20261101014049-8fcbb21';
+import {PHRASE_LENGTHS} from '../document.js?v=v0.1.0-20261101015345-b9899cc';
 // Agreed musical vocabulary only. Genre arrangements/voicings await trial listening.
 export const CHORD_PITCH_NAMES=Object.freeze(['C','D♭','D','E♭','E','F','G♭','G','A♭','A','B♭','B']);
 export const chordLabel=chord=>chord?.rest===true?'空白':chord?`${CHORD_PITCH_NAMES[chord.root]}${({major:'',minor:'m'})[chord.quality]??chord.quality}${chord.bass===chord.root?'':`/${CHORD_PITCH_NAMES[chord.bass]}`}`:'';
