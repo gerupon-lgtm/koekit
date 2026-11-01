@@ -1,6 +1,6 @@
-import { scoreEvents } from '../../saezuri/document.js?v=v0.1.0-20261101025758-aff91ad';
-import { signature, spellPitch } from './key-signature.js?v=v0.1.0-20261101025758-aff91ad';
-import {createRestSymbol} from './rest-symbol.js?v=v0.1.0-20261101025758-aff91ad';
+import { scoreEvents } from '../../saezuri/document.js?v=v0.1.0-20261101031405-99da58a';
+import { signature, spellPitch } from './key-signature.js?v=v0.1.0-20261101031405-99da58a';
+import {createRestSymbol} from './rest-symbol.js?v=v0.1.0-20261101031405-99da58a';
 const ns = 'http://www.w3.org/2000/svg';
 function svgElement(tag, attrs = {}, text) {
   const node = document.createElementNS(ns, tag);

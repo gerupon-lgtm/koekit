@@ -1,6 +1,6 @@
 // Quarter-note editing over the existing timed-chord representation.
-import {harmonicSegments} from './accompaniment.js?v=v0.1.0-20261101025758-aff91ad';
-import {chordTones,sameChord} from './catalog.js?v=v0.1.0-20261101025758-aff91ad';
+import {harmonicSegments} from './accompaniment.js?v=v0.1.0-20261101031405-99da58a';
+import {chordTones,sameChord} from './catalog.js?v=v0.1.0-20261101031405-99da58a';
 const same=sameChord;
 export function chordAtTick(pattern,tick){return harmonicSegments(pattern).find(c=>c.startTick<=tick&&tick<c.startTick+c.durationTick);}
 export function chordChangesInBar(pattern,bar){

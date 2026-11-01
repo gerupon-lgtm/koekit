@@ -1,7 +1,7 @@
-import {accompanimentEvents} from '../../saezuri/music/accompaniment.js?v=v0.1.0-20261101025758-aff91ad';
-import {restoreCheckpoint,checkpointFingerprint} from './song-session.js?v=v0.1.0-20261101025758-aff91ad';
-import {entryPreview} from './entry-session.js?v=v0.1.0-20261101025758-aff91ad';
-import {canKeepPhrase} from './sequence-session.js?v=v0.1.0-20261101025758-aff91ad';
+import {accompanimentEvents} from '../../saezuri/music/accompaniment.js?v=v0.1.0-20261101031405-99da58a';
+import {restoreCheckpoint,checkpointFingerprint} from './song-session.js?v=v0.1.0-20261101031405-99da58a';
+import {entryPreview} from './entry-session.js?v=v0.1.0-20261101031405-99da58a';
+import {canKeepPhrase} from './sequence-session.js?v=v0.1.0-20261101031405-99da58a';
 const clone=value=>value?structuredClone(value):null;
 const content=pattern=>Object.fromEntries(Object.entries(pattern).filter(([key])=>!['id','name','familyId','familyName','derivedFrom','revision'].includes(key)));
 const description=(pattern,fallback)=>!pattern.notes.length&&pattern.accompaniment?.chords?.some(c=>c.rest)&&!accompanimentEvents(pattern).length?`${pattern.bars}小節の空白です。その長さだけ進みます。`:fallback;

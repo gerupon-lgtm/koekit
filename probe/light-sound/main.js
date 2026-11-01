@@ -1,7 +1,7 @@
-import { ProbeTransport } from '../saezuri/audio.js?v=v0.1.0-20261101025758-aff91ad';
-import { AudioMixer } from '../saezuri/volume.js?v=v0.1.0-20261101025758-aff91ad';
-import { lightVoiceStats, stopLightVoices, LIGHT_ONLY_INSTRUMENTS, SOUND_REVISION } from '../saezuri/light-voice.js?v=v0.1.0-20261101025758-aff91ad';
-import { accompanimentEvents } from '../../saezuri/music/accompaniment.js?v=v0.1.0-20261101025758-aff91ad';
+import { ProbeTransport } from '../saezuri/audio.js?v=v0.1.0-20261101031405-99da58a';
+import { AudioMixer } from '../saezuri/volume.js?v=v0.1.0-20261101031405-99da58a';
+import { lightVoiceStats, stopLightVoices, LIGHT_ONLY_INSTRUMENTS, SOUND_REVISION } from '../saezuri/light-voice.js?v=v0.1.0-20261101031405-99da58a';
+import { accompanimentEvents } from '../../saezuri/music/accompaniment.js?v=v0.1.0-20261101031405-99da58a';
 const $ = id => document.getElementById(id);
 const engines = { light: '軽い音', simple: 'さらに軽い音', classic: '以前の音' };
 const records = [], build = new URL(import.meta.url).searchParams.get('v');
