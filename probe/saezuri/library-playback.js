@@ -73,7 +73,7 @@ export class LibraryPlayback {
   const {status,progress}=active.binding;
   if(progress.value!==position)progress.value=position;
   const bar=tick<0?0:Math.min(active.bars,Math.floor(position/TICKS_PER_BAR)+1);
-  if(bar!==active.lastBar){active.lastBar=bar;status.textContent=(active.label?`${active.label}・`:'')+(bar?`再生中 ${bar} / ${active.bars}小節`:'カウント中');}
+  if(bar!==active.lastBar){active.lastBar=bar;status.textContent=(active.label?`${active.label}・`:'')+(bar?`再生中 ${bar} / ${active.bars}小節`:'再生準備中');}
  }
  stop(){
   this.onCancelChoice?.();

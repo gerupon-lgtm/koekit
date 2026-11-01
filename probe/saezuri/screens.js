@@ -72,7 +72,7 @@ export class MelodyScreens {
   listening.replaceChildren(common,device);
   $('creation-settings').append($('composer-panel').querySelector('details'),document.querySelector('.quick-transpose'),$('editor-more'),document.querySelector('.editor-finish'));
   const labelText=(id,text)=>{const label=$(id).closest('label');for(const node of [...label.childNodes])if(node.nodeType===3)node.remove();label.prepend(document.createTextNode(text));};
-  labelText('tempo','テンポ（BPM）');labelText('instrument','メロディーの音色');labelText('play-count-style','ドンカマの音色');labelText('play-count','試聴でドンカマを鳴らす');$('play-count').closest('label').prepend($('play-count'));
+  labelText('tempo','テンポ（BPM）');labelText('instrument','メロディーの音色');labelText('play-count-style','ドンカマの音色');labelText('play-count','編集の試聴でドンカマを鳴らす');$('play-count').closest('label').prepend($('play-count'));
   for(const [id,text] of [['master-volume','全体の音量'],['backing-volume','伴奏の音量'],['count-volume','ドンカマの音量']])labelText(id,text);
   dialog.append($('copy-status'),$('copy-fallback'));
   setupPlaybackSheet(dialog,{closeId:'settings-close',footerCloseId:'settings-close-bottom',onStop,stopOnClose:false});

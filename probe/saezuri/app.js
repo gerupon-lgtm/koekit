@@ -348,7 +348,9 @@ async function play(pattern = state.pattern, preview = false, options={}) {
       if (offset + note.startTick >= totalTicks) continue;
       notes.push({ ...note, startTick: offset + note.startTick, durationTick: Math.min(note.durationTick, totalTicks - offset - note.startTick) });
     }
-    record.playback = { tempo, bars, instrument: $('instrument').value, latencyHint:record.audioLatencyHint, sampleRate: ctx.sampleRate, baseLatency: ctx.baseLatency, outputLatency: ctx.outputLatency, notes: notes.length, draft:preview ? captureEditor.pending : !!candidate, pitches:notes.map(n=>n.midi), countSound: options.countSound??$('play-count').checked, countStyle: $('play-count-style').value, countVolume: Number($('count-volume').value) };
+    // A detached editing audition can still use the guide. Read-only listening cannot.
+    const countSound=!options.sequence&&!options.listening&&!options.tutorial&&(options.countSound??$('play-count').checked);
+    record.playback = { tempo, bars, instrument: $('instrument').value, latencyHint:record.audioLatencyHint, sampleRate: ctx.sampleRate, baseLatency: ctx.baseLatency, outputLatency: ctx.outputLatency, notes: notes.length, draft:preview ? captureEditor.pending : !!candidate, pitches:notes.map(n=>n.midi), countSound, countStyle: $('play-count-style').value, countVolume: Number($('count-volume').value) };
     const backing=options.backing??accompanimentEvents(pattern),accompaniment=[];
     record.playback.audioLevels=volumeControls.value();
     record.playback.voiceControls={enabled:$('edit-voice').checked,microphoneEnabled:microphoneEnabled()};
@@ -367,7 +369,7 @@ async function play(pattern = state.pattern, preview = false, options={}) {
     // Queue short auditions completely as live notes; long pieces keep a bounded
     // window. Neither path pre-renders notes or changes their envelopes.
     const settings=playbackSettings();
-    transport.start(notes, { tempo,totalTicks,instrument:options.tutorial?'fm-piano':$('instrument').value,...settings,...(options.countSound!==undefined?{countSound:options.countSound}:{}),lead:Math.max(.6,settings.lead),ahead:Math.max(1,settings.ahead),scheduleAll:playbackScheduleAll(requestedAudioSchedule,totalTicks),...(options.tutorial?{preRollTicks:16,preRollStep:4,countSound:false}:{}),accompaniment });
+    transport.start(notes, { tempo,totalTicks,instrument:options.tutorial?'fm-piano':$('instrument').value,...settings,countSound,lead:Math.max(.6,settings.lead),ahead:Math.max(1,settings.ahead),scheduleAll:playbackScheduleAll(requestedAudioSchedule,totalTicks),...(options.tutorial?{preRollTicks:16,preRollStep:4,countSound:false}:{}),accompaniment });
     preparingPlayback=false;
     $('status').textContent=labels.playing;lastFrame = 0; maxFrameGapMs = 0; lastBar = -1; animate();return true;
   } catch (error) { if (request === serial) stop(error.message,{reason:'ERROR'});return false; }
@@ -578,6 +580,8 @@ composer=new ComposerControls({editor:captureEditor,onNew:()=>newComposition(),o
 imageControls=new ImageControls({engine:voiceEngine,editor:captureEditor,onNew:()=>newComposition(true),onTempo:tempo=>{$('tempo').value=String(tempo);$('tempo').dispatchEvent(new Event('change'));},onPreview:(pattern,standalone=false)=>play(pattern??captureEditor.previewPattern,true,{standalone}),onChordPreview:previewChord,
  prepareMetronome:async()=>{await prepare('chord');return {ctx,mixer,style:$('play-count-style').value};},
  onStop:()=>stop(),onAudioActivity:syncScreenWakeLock,onNavigate:()=>{cancelPreviews();setPhase(phase);},onRecord:()=>{shell?.setMode(captureEditor.previewPattern?.source==='manual'?'input':'edit');setPhase(phase);window.scrollTo(0,0);},compact:compactEditor&&new URLSearchParams(location.search).get('view')!=='editor'});
+// The technical comparison view has no accompaniment controls.
+if(!imageControls.panel)imageControls=null;
 async function startLoop({microphone=true,recordingCountIn=false}={}){
   if(phase!=='idle'||captureEditor.pending)return false;
   if(imageControls?.imageMode.active){imageControls.imageMode.confirmed();shell?.setMode(captureEditor.pattern.source==='manual'?'input':'edit');}
@@ -641,10 +645,10 @@ shell=new MelodyScreens({editor:captureEditor,onStop:()=>stop(),onNavigate:()=>{
       captureEditor.openPattern(pattern);$('review').hidden=false;record.capture=null;captureImportSource=null;record.captureOptions=null;record.playback=null;record.editingSource=source;delete record.importedFrom;
       record.timestamp=new Date().toISOString();if($('after-keep'))$('after-keep').hidden=true;setPhase('idle');showReport();
     },
-    onAudition:item=>play(item.pattern,true,{standalone:true,tempo:item.tempo,backing:item.backing,ending:item.ending}),
+    onAudition:item=>play(item.pattern,true,{standalone:true,listening:true,tempo:item.tempo,backing:item.backing,ending:item.ending}),
     onDiscard:discardCurrent,onPlay:(data,pending)=>play(data.pattern,true,{sequence:true,backing:data.backing,pending,ending:data.ending,startTick:data.startTick,fromPlacementId:data.fromPlacementId}),
   });
-  songWorkflow=new SongWorkflow({editor:captureEditor,shell,onDiscard:discardCurrent,onAudition:(data,tempo)=>play(data.pattern,true,{tempo,backing:data.backing,ending:data.ending,standalone:true}),onSaving:saving=>setPhase(saving?'saving':'idle',saving?'ほぞんしています…':'準備できました'),onRestore:(checkpoint,settings)=>{
+  songWorkflow=new SongWorkflow({editor:captureEditor,shell,onDiscard:discardCurrent,onAudition:(data,tempo)=>play(data.pattern,true,{tempo,backing:data.backing,ending:data.ending,standalone:true,listening:true}),onSaving:saving=>setPhase(saving?'saving':'idle',saving?'ほぞんしています…':'準備できました'),onRestore:(checkpoint,settings)=>{
     $('tempo').value=String(settings.tempo);$('instrument').value=settings.instrument;
     captureEditor.restore(checkpoint);$('review').hidden=!captureEditor.isOpen;record.capture=null;captureImportSource=null;record.editingSource='saved';setPhase('idle');
   }});

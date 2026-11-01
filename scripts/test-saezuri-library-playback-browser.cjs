@@ -35,7 +35,7 @@ const artifacts='.local-tools/phrase-selection-20261030';
    await page.waitForFunction(id=>document.querySelector(`[data-song-play="${id}"]`)?.closest('.song-row').dataset.songPlaying==='true',id);
    assert.equal(await button(id).textContent(),'■ とめる');assert.equal(await button(id).getAttribute('aria-pressed'),'true');
    assert.equal(await row(id).locator('.song-playback').isVisible(),true);
-   assert.match(await row(id).locator('.song-playback-status').textContent(),/カウント中|再生中 \d+ \/ \d+小節/);
+   assert.match(await row(id).locator('.song-playback-status').textContent(),/再生準備中|再生中 \d+ \/ \d+小節/);
   };
   const progress=async(id,minimum)=>page.waitForFunction(({id,minimum})=>document.querySelector(`[data-song-play="${id}"]`)?.closest('.song-row').querySelector('progress').value>=minimum,{id,minimum});
   const heldStart=async id=>{
