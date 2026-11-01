@@ -1,10 +1,10 @@
-import {inputSteps} from './input-help.js?v=v0.1.0-20261101031405-99da58a';
-import {blankPattern} from './entry-session.js?v=v0.1.0-20261101031405-99da58a';
-import {practicePhrases,practicePhrase} from './learning-data.js?v=v0.1.0-20261101031405-99da58a';
-import {lessonGuide,lessonFingerprint,LESSON_TITLES,LESSON_RANGES} from './tutorial-guide.js?v=v0.1.0-20261101031405-99da58a';
-import {tutorialPattern,tutorialExcerpt,TUTORIAL_TEMPO} from './tutorial-data.js?v=v0.1.0-20261101031405-99da58a';
-import {TutorialPreview} from './tutorial-preview.js?v=v0.1.0-20261101031405-99da58a';
-import {renderTutorialView} from './tutorial-view.js?v=v0.1.0-20261101031405-99da58a';
+import {inputSteps} from './input-help.js?v=v0.1.0-20261101044249-ec316a9';
+import {blankPattern} from './entry-session.js?v=v0.1.0-20261101044249-ec316a9';
+import {practicePhrases,practicePhrase} from './learning-data.js?v=v0.1.0-20261101044249-ec316a9';
+import {lessonGuide,lessonFingerprint,LESSON_TITLES,LESSON_RANGES} from './tutorial-guide.js?v=v0.1.0-20261101044249-ec316a9';
+import {tutorialPattern,tutorialExcerpt,TUTORIAL_TEMPO} from './tutorial-data.js?v=v0.1.0-20261101044249-ec316a9';
+import {TutorialPreview} from './tutorial-preview.js?v=v0.1.0-20261101044249-ec316a9';
+import {renderTutorialView} from './tutorial-view.js?v=v0.1.0-20261101044249-ec316a9';
 const $=id=>document.getElementById(id);
 const modelTitles=['完成形','2つの音','1小節','2小節','3小節目','つなぐ音','4小節','伴奏つき'];
 export class MelodyLearning {

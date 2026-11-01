@@ -1,11 +1,11 @@
-import { openEditSession, stageEdit, stageDuration, selectEditNote, confirmEditSession, cancelEditSession, undoEditSession, hasDraftChanges } from './edit-session.js?v=v0.1.0-20261101031405-99da58a';
-import {canGenerateAccompaniment,stageAccompanimentCandidate} from './edit-session.js?v=v0.1.0-20261101031405-99da58a';
-import { analyzeFrames, quantizeSegments } from './analyzer.js?v=v0.1.0-20261101031405-99da58a';
-import { decodePitchTrace } from './analysis-comparison.js?v=v0.1.0-20261101031405-99da58a';
-import {registerLabel as pitchName} from './pitch-label.js?v=v0.1.0-20261101031405-99da58a';
-import { orderedNotes, selectionTarget } from './note-selection.js?v=v0.1.0-20261101031405-99da58a';
-import {proposeEntry,confirmEntry,cancelEntry,moveEntryCursor,entryPreview} from './entry-session.js?v=v0.1.0-20261101031405-99da58a';
-import {songCheckpoint,restoreCheckpoint} from './song-session.js?v=v0.1.0-20261101031405-99da58a';
+import { openEditSession, stageEdit, stageDuration, selectEditNote, confirmEditSession, cancelEditSession, undoEditSession, hasDraftChanges } from './edit-session.js?v=v0.1.0-20261101044249-ec316a9';
+import {canGenerateAccompaniment,stageAccompanimentCandidate} from './edit-session.js?v=v0.1.0-20261101044249-ec316a9';
+import { analyzeFrames, quantizeSegments } from './analyzer.js?v=v0.1.0-20261101044249-ec316a9';
+import { decodePitchTrace } from './analysis-comparison.js?v=v0.1.0-20261101044249-ec316a9';
+import {registerLabel as pitchName} from './pitch-label.js?v=v0.1.0-20261101044249-ec316a9';
+import { orderedNotes, selectionTarget } from './note-selection.js?v=v0.1.0-20261101044249-ec316a9';
+import {proposeEntry,confirmEntry,cancelEntry,moveEntryCursor,entryPreview} from './entry-session.js?v=v0.1.0-20261101044249-ec316a9';
+import {songCheckpoint,restoreCheckpoint} from './song-session.js?v=v0.1.0-20261101044249-ec316a9';
 
 const clone = value => value == null ? value : structuredClone(value);
 const labels = { current: '現在の設定', detail: '細かい変化', unsmoothed: 'ならしなし' };
