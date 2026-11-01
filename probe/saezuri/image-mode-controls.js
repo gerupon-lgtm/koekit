@@ -1,5 +1,5 @@
-import {setupPlaybackSheet} from './sheet-controls.js?v=v0.1.0-20261101015345-b9899cc';
-import {IMAGE_TYPES,IMAGE_SPEEDS,IMAGE_MOODS,DEFAULT_IMAGE,IMAGE_TEMPOS,generateImageAccompaniment} from '../../saezuri/music/image-arrangement.js?v=v0.1.0-20261101015345-b9899cc';
+import {setupPlaybackSheet} from './sheet-controls.js?v=v0.1.0-20261101023905-180b545';
+import {IMAGE_TYPES,IMAGE_SPEEDS,IMAGE_MOODS,DEFAULT_IMAGE,IMAGE_TEMPOS,generateImageAccompaniment} from '../../saezuri/music/image-arrangement.js?v=v0.1.0-20261101023905-180b545';
 const $=id=>document.getElementById(id);
 export class ImageModeControls {
  constructor({editor,onTempo,onRecord,onPreview,onStop,onNavigate,readAccompaniment,compact=false}){

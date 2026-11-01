@@ -1,5 +1,5 @@
-import {songLibraryView} from './song-library-view.js?v=v0.1.0-20261101015345-b9899cc';
-import {songPlaybackChoices} from './workflow-state.js?v=v0.1.0-20261101015345-b9899cc';
+import {songLibraryView} from './song-library-view.js?v=v0.1.0-20261101023905-180b545';
+import {songPlaybackChoices} from './workflow-state.js?v=v0.1.0-20261101023905-180b545';
 
 const TICKS_PER_BAR=16;
 

@@ -1,7 +1,7 @@
-import {EIGHT_BEAT_RHYTHMS,applyEightBeatSet,eightBeatSet} from '../../saezuri/music/eight-beat.js?v=v0.1.0-20261101015345-b9899cc';
-import {GENRES} from '../../saezuri/music/catalog.js?v=v0.1.0-20261101015345-b9899cc';
-import {setupPlaybackSheet} from './sheet-controls.js?v=v0.1.0-20261101015345-b9899cc';
-import {formatActionLabels} from './action-labels.js?v=v0.1.0-20261101015345-b9899cc';
+import {EIGHT_BEAT_RHYTHMS,applyEightBeatSet,eightBeatSet} from '../../saezuri/music/eight-beat.js?v=v0.1.0-20261101023905-180b545';
+import {GENRES} from '../../saezuri/music/catalog.js?v=v0.1.0-20261101023905-180b545';
+import {setupPlaybackSheet} from './sheet-controls.js?v=v0.1.0-20261101023905-180b545';
+import {formatActionLabels} from './action-labels.js?v=v0.1.0-20261101023905-180b545';
 const $=id=>document.getElementById(id);
 export class EightBeatControls{
  constructor({editor,onPreview,onStop,onNavigate,readAccompaniment}){
