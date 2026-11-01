@@ -10,7 +10,7 @@ const layoutOnly=process.env.SAEZURI_BROWSER==='webkit';
   const context=await browser.newContext({viewport:{width,height},permissions:layoutOnly?[]:['microphone'],serviceWorkers:'block'}),page=await context.newPage(),errors=[];
   page.on('pageerror',error=>errors.push(error.message));
   await page.addInitScript(()=>{localStorage.setItem('saezuri.creationDisplays.v1',JSON.stringify({note:'score',input:'cards'}));window.requestedContexts=[];if(typeof AudioContext!=='function')return;const Native=AudioContext;window.AudioContext=class extends Native{constructor(options){super(options);requestedContexts.push(options.latencyHint);}};});
-  const click=id=>page.locator('#'+id).click();
+  const click=async id=>{await revealCreationControl(page,'#'+id);await page.locator('#'+id).click();};
   const report=async()=>{await page.locator('#report').evaluate(n=>n.click());const value=JSON.parse(await page.locator('#metrics').textContent());return {pattern:value.captureCandidate,edit:value.captureEditing};};
   const viewport=ids=>page.evaluate(ids=>{const footer=document.querySelector('body > footer').getBoundingClientRect();return Object.fromEntries(ids.map(id=>{const r=document.getElementById(id).getBoundingClientRect();return[id,{top:r.top,bottom:r.bottom,within:r.top>=0&&r.bottom<=footer.top-7}];}));},ids);
   await page.goto(base+'/probe/saezuri/');await click('home-create');await click('sequence-create');await click('new-image');await page.locator('#image-words').waitFor({state:'visible'});
@@ -43,10 +43,10 @@ const layoutOnly=process.env.SAEZURI_BROWSER==='webkit';
    assert.equal(await page.locator('#piano-keys').isVisible(),false,'humming and keyboard recording stay exclusive');assert.equal(await page.locator('#tap-record').isDisabled(),true);await click('stop');
    assert.deepEqual((await report()).pattern,adopted.pattern,'cancelled humming leaves the accepted melody');assert.deepEqual(await page.evaluate(()=>[...new Set(requestedContexts)]),['interactive']);
    await page.waitForFunction(()=>document.querySelector('#song-status').dataset.saved==='true');await page.reload();await click('home-songs');await page.locator('[data-song-open]').first().click();if(await page.locator('#song-continue').isVisible())await click('song-continue');await openProjectPart(page);
-   await page.locator('#piano-keys').waitFor({state:'visible'});assert.equal(await page.locator('#image-words').isVisible(),false);assert.equal(await page.locator('#creation-tabs').isVisible(),true,'normal editing tabs stay available');
+   await revealCreationControl(page,'#piano-keys');await page.locator('#piano-keys').waitFor({state:'visible'});assert.equal(await page.locator('#image-words').isVisible(),false);assert.equal(await page.locator('#creation-tabs').isVisible(),true,'normal editing tabs stay available');
   }
   await page.screenshot({path:`.local-tools/image-recording-layout-20261018/recording-${width}.png`});
-  await page.locator('[data-mode=edit]').click();await page.locator('#creation-displays').waitFor({state:'visible'});const viewBefore=await report();
+  await page.locator('[data-mode=edit]').click();await click('creation-options-toggle');await page.locator('#creation-displays').waitFor({state:'visible'});const viewBefore=await report();
   await chooseNoteDisplay(page,'cards');await chooseInputDisplay(page,'cards');assert.deepEqual(await report(),viewBefore,'display preferences remain independent from music');
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);assert.deepEqual(errors,[]);results.push({width,height,choosing,ready});await context.close();
  }

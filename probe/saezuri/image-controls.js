@@ -1,3 +1,4 @@
+import {EightBeatControls} from './eight-beat-controls.js';
 import {formatActionLabels} from './action-labels.js?v=v0.1.0-20261101001204-e794829';
 import {ProgressionControls} from './progression-controls.js?v=v0.1.0-20261101001204-e794829';
 import {DRUM_CHOICES,HAT_RHYTHMS,hatAccentOptions,resolveHatPattern} from '../../saezuri/music/hat-patterns.js?v=v0.1.0-20261101001204-e794829';
@@ -67,7 +68,9 @@ export class ImageControls {
   }
   this.imageMode=new ImageModeControls({editor,onTempo,onRecord,onPreview,onStop,onNavigate,readAccompaniment:()=>this.value(),compact});
   if(compact){
-   const rebuild=document.createElement('details');rebuild.id='backing-rebuild';rebuild.innerHTML='<summary>伴奏を作り直す</summary>';rebuild.append(this.imageMode.reopen,this.imageMode.reset);$('capture-note-panel').append(rebuild);this.imageMode.rebuildGroup=rebuild;
+   const rebuild=document.createElement('details');rebuild.id='backing-rebuild';rebuild.innerHTML='<summary>伴奏を作り直す</summary>';rebuild.append(this.imageMode.reopen,this.imageMode.reset);
+   this.eightBeats=new EightBeatControls({editor,onPreview,onStop,onNavigate,readAccompaniment:()=>this.value()});
+   const eightButton=document.createElement('button');eightButton.id='eight-beat-open';eightButton.textContent='8ビートから選ぶ';eightButton.onclick=()=>this.eightBeats.open();rebuild.prepend(eightButton);$('capture-note-panel').append(rebuild);this.imageMode.rebuildGroup=rebuild;
    const genres=this.$('genre').closest('.composer-values');genres.hidden=false;rebuild.prepend(genres);
    this.genreUse=document.createElement('button');this.genreUse.id='backing-genre-use';this.genreUse.textContent='このジャンルをつかう';this.genreUse.hidden=true;genres.after(this.genreUse);
    this.genreUse.onclick=()=>{if(this.busy||!this.genreCandidate)return;const value={...structuredClone(this.value()),genre:this.genreCandidate,...PRESETS[this.genreCandidate]};delete value.tempo;if(value.imageChoice)value.manualSettings={...value.manualSettings,genre:true,rhythm:true,progression:true};this.genreCandidate=null;this.genreUse.hidden=true;this.editor.changeStructure({type:'accompaniment',value});rebuild.open=false;};
@@ -281,6 +284,6 @@ export class ImageControls {
   this.metronome.render(busy);
   for(const button of row.children)button.setAttribute('aria-pressed',String(this.chordSheet.open&&Number(button.dataset.chordBar)===this.bar));
   if(this.chordSheet.open&&this.bar<pattern.bars){this.updateChordChoice();this.revealChordBar();}
-  this.progressions?.render(busy);this.imageMode.render(busy);
+  this.progressions?.render(busy);this.eightBeats?.render(busy);this.imageMode.render(busy);
  }
 }

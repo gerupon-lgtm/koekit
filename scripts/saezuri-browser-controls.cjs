@@ -1,6 +1,7 @@
 // Open the real disclosure before an existing step-entry/settings interaction.
 async function revealCreationControl(page,selector){
  const control=page.locator(selector);
+ if(['#image-suggest','#image-settings-open'].includes(selector)&&!await control.isVisible()&&await page.locator('[data-mode=backing]').isVisible())await page.locator('[data-mode=backing]').click();
  if(!await control.isVisible()&&await control.evaluate(n=>!!n.closest('#image-chords'))&&await page.locator('[data-mode=backing]').isVisible())await page.locator('[data-mode=backing]').click();
  if(['#creation-note-display','#instrument','#image-rhythm','#image-genre'].includes(selector))return;
  if(!await control.isVisible()&&await control.evaluate(n=>!!n.closest('#backing-rebuild'))&&await page.locator('[data-mode=backing]').isVisible())await page.locator('[data-mode=backing]').click();

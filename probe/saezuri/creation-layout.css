@@ -35,7 +35,7 @@
 .melody-app.free-creation:not(.keyboard-humming) #keyboard-practice-tools[open] .keyboard-octaves{display:grid}
 .melody-app.free-creation:not(.recording-focus):not(.keyboard-humming) #keyboard-practice-tools[open] .keyboard-help{display:block}
 .melody-app.free-creation:not([data-create-mode=input]) #keyboard-practice-tools #step-entry{display:none}
-.melody-app.free-creation:has(#keyboard-practice-tools:not([open]):not([hidden])) #image-chords{display:flex}
+.melody-app.free-creation:not(.image-mode):has(#keyboard-practice-tools:not([open]):not([hidden])) #image-chords{display:flex}
 .melody-app.chord-editing #keyboard-practice-tools{display:none}
 
 /* Recording owns the screen from the next-head wait through analysis. Keep
@@ -79,3 +79,36 @@
  .melody-app.free-creation #keyboard-practice-tools{grid-column:2;grid-row:auto}
  .melody-app.recording-focus #keyboard-practice-tools{grid-column:2;grid-row:1/4}
 }
+
+/* The full guide is for playing/recording; idle input keeps one short status. */
+.melody-app.free-creation:not(.recording-focus) #recording-guide:not(.following){display:none}
+
+/* Reuse all edit actions in two rows on a phone; keep their native buttons. */
+.melody-app.editor-focus[data-melody-screen=create] main{padding-bottom:72px}
+@media(min-width:380px) and (max-width:649px){
+ .melody-app.free-creation[data-create-mode=edit][data-has-melody=true] #screen-note-edit{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
+ .melody-app.free-creation[data-create-mode=edit][data-has-melody=true] #screen-note-edit>.note-navigation,
+ .melody-app.free-creation[data-create-mode=edit][data-has-melody=true] #screen-note-edit>.note-actions,
+ .melody-app.free-creation[data-create-mode=edit][data-has-melody=true] #capture-time-edit:not([hidden]){display:contents}
+ .melody-app.free-creation[data-create-mode=edit][data-has-melody=true] #capture-selection{grid-area:1/1/2/6;margin:0}
+ .melody-app.free-creation[data-create-mode=edit] #capture-first{grid-area:2/1}
+ .melody-app.free-creation[data-create-mode=edit] #capture-previous{grid-area:2/2}
+ .melody-app.free-creation[data-create-mode=edit] #capture-next{grid-area:2/3}
+ .melody-app.free-creation[data-create-mode=edit] #capture-last{grid-area:2/4}
+ .melody-app.free-creation[data-create-mode=edit] #capture-edit-delete{grid-area:2/5}
+ .melody-app.free-creation[data-create-mode=edit] #capture-pitch-up{grid-area:3/1}
+ .melody-app.free-creation[data-create-mode=edit] #capture-pitch-down{grid-area:3/2}
+ .melody-app.free-creation[data-create-mode=edit] .note-time-actions{grid-area:3/3/4/6;margin:0}
+ .melody-app.free-creation[data-create-mode=edit] #capture-time-position{grid-area:4/1/5/6;margin:0}
+ .melody-app.free-creation[data-create-mode=edit] #creation-settings{grid-area:5/1/6/6;margin-top:0}
+ .melody-app.free-creation[data-create-mode=edit] #screen-note-edit :is(.note-navigation,.note-actions,.note-time-actions)>button{margin:0;padding:4px;min-height:48px;font-size:14px;line-height:1.25}
+}
+
+/* Backing controls already have their own tab; avoid repeating that menu. */
+.melody-app.free-creation #keyboard-more{display:none}
+@media(max-width:649px){
+ .melody-app.editor-focus.free-creation #capture-score{height:112px;min-height:112px}
+ .melody-app.editor-focus.free-creation #capture-score svg{height:108px;width:100%;display:block}
+}
+
+.melody-app.free-creation #keyboard-practice-tools{margin-bottom:4px}

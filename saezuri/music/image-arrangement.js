@@ -63,7 +63,7 @@ export function generateImageAccompaniment(pattern,choice=DEFAULT_IMAGE,{resetMa
  const shift={bright:0,gentle:2,cool:4,sad:5}[choice.mood];
  const sounds={...profile.sounds};if(gentle)sounds.chord='piano';
  const voicing=rhythm==='arpeggio'?(index%2?'falling':'rising'):gentle||index%2?'broken':'block';
- const arrangement={version:1,choice:{...choice},index,progressions:{major:structuredClone(major[(index+shift)%8]),minor:structuredClone(minor[(index+shift)%8])},rhythm:rhythm===POP_EIGHT_BEAT.rhythm?'offbeat':['whole','halves'].includes(rhythm)?profile.rhythm:rhythm,voicing,chordTicks,bassTicks,
+ const arrangement={version:1,choice:{...choice},index,progressions:{major:structuredClone(major[(index+shift)%8]),minor:structuredClone(minor[(index+shift)%8])},rhythm:rhythm===POP_EIGHT_BEAT.rhythm?'offbeat':['whole','halves','eight-basic','eight-light','eight-motion'].includes(rhythm)?profile.rhythm:rhythm,voicing,chordTicks,bassTicks,
   bassIntervals:bassTicks.map((_,i)=>i%2===0?0:index%3===0?7:index%3===1?12:0),inversion:index%3,
   gate:sparse?7:type==='ballad'?3:2,strength:gentle?.65:choice.mood==='cool'?1:.85,sounds,
   drums:{kick:type==='ballad'?[0]:index%2?[0,6,8]:[0,8],snare:gentle?[12]:[4,12],hat:sparse?[4,12]:choice.speed==='fast'?[0,2,4,6,8,10,12,14]:[2,6,10,14]}};

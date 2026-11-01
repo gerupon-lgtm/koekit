@@ -20,7 +20,7 @@ export class CreationLayout{
  }
  render(){
   const scrollBefore=scrollY;
-  const free=this.editor.isOpen&&this.shell.screen==='create'&&!document.body.classList.contains('image-mode')&&!this.shell.learning?.active;
+  const free=this.editor.isOpen&&this.shell.screen==='create'&&!document.body.classList.contains('image-choosing')&&!this.shell.learning?.active;
   document.body.classList.toggle('free-creation',free);
   if(free!==this.free){
    this.free=free;
@@ -42,7 +42,8 @@ export class CreationLayout{
   document.body.dataset.editCandidate=String(this.editor.pending);
   document.body.dataset.hasMelody=String(!!this.editor.previewPattern?.notes.length);
   const focus=this.shell.screen==='create'&&!this.shell.learning?.active&&(document.body.classList.contains('keyboard-recording')||document.body.classList.contains('keyboard-humming'));
-  const fold=free&&(this.shell.mode!=='input'||document.body.dataset.inputDisplay==='cards'),context=`${free}:${this.shell.mode}:${this.shell.mode==='input'?document.body.dataset.inputDisplay:''}`;
+  const fold=free&&(this.shell.mode!=='input'||document.body.dataset.inputDisplay==='cards'),context=`${free}:${this.shell.projectWorkflow?.active?.id??''}:${this.shell.mode}:${this.shell.mode==='input'?document.body.dataset.inputDisplay:''}`;
+  if(context!==this.toolContext){this.options.hidden=true;this.toggle.setAttribute('aria-expanded','false');}
   if(fold!==this.fold){
    this.fold=fold;
    if(fold){this.performance.append(this.panel);document.querySelector('.listen-actions').before(this.instrument);}

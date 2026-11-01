@@ -8,8 +8,6 @@
 #image-reset-manual{margin-top:8px;width:100%;min-height:44px}
 #image-audition{order:2}
 #image-audition[hidden]{display:none}
-.melody-app.image-empty .edit-toolbar{display:none}
-@media(min-width:650px){.melody-app.editor-focus #image-audition{grid-column:1;grid-row:4}.melody-app.image-mode .edit-toolbar{grid-row:5}}
 
 /* Choose the backing once, then keep the recording surface free of setup. */
 #image-flow-heading{display:flex;align-items:center;justify-content:space-between;gap:8px;font-weight:700;font-size:15px;margin:6px 0}
@@ -44,3 +42,12 @@
  .melody-app.editor-focus.image-performing #capture-score,.melody-app.editor-focus.image-performing #composition-cards{grid-column:1;grid-row:1;height:180px;min-height:112px}
  .melody-app.editor-focus.image-performing #capture-score svg{height:176px}
 }
+
+.melody-app.image-choosing #creation-displays{display:none}
+
+#eight-beat-sheet label{display:grid;gap:10px;margin:12px 0}
+#eight-beat-sheet .sheet-stop{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+#eight-beat-sheet .sheet-stop button{min-width:0}
+
+.melody-app #eight-beat-sheet .sheet-stop button{width:100%;min-width:0;margin:0;min-height:48px;padding:8px 4px;font-size:14px;line-height:1.4}
+.melody-app.editor-focus #eight-beat-use:disabled{opacity:1;color:#5e554b;background:#e6e0d5}

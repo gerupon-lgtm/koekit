@@ -105,7 +105,7 @@ export class ComposerControls {
     this.$('bar').value=bar;this.$('key').value=pattern.key?.mode==='minor'?'Am':'C';
     for(const b of this.$('beats').children) b.setAttribute('aria-pressed',String((bar-1)*16+Number(b.dataset.tick)===cursor));
     const draft=editor.pending&&!entry;
-    for(const control of this.panel.querySelectorAll('button,input,select')) control.disabled=busy||draft;
+    for(const control of this.panel.querySelectorAll('button,input,select')) if(!control.closest('.listen-actions'))control.disabled=busy||draft;
     this.$('extend').disabled=this.$('copy').disabled=busy||pattern.bars===8||!!entry;
     this.$('shorten').disabled=busy||pattern.bars<=4||!!entry;
     this.$('replace').disabled=busy||draft||!!entry||!editor.selectedNoteId;

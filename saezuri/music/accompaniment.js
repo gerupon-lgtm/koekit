@@ -1,8 +1,9 @@
+import {EIGHT_BEAT_RHYTHMS,eightBeatSet} from './eight-beat.js';
 // Editable audition presets. These concrete arrangements are trial data.
 import {GENRES,CHORD_INTERVALS,chordTones} from './catalog.js?v=v0.1.0-20261101001204-e794829';
 import {validImageChoice,validateImageArrangement} from './image-arrangement.js?v=v0.1.0-20261101001204-e794829';
 import {POP_EIGHT_BEAT} from './backing-patterns.js?v=v0.1.0-20261101001204-e794829';
-export const RHYTHMS=[{id:'quarters',label:'4つずつ'},{id:'offbeat',label:'うらで弾く'},{id:'arpeggio',label:'音をばらして弾く'},{id:POP_EIGHT_BEAT.rhythm,label:POP_EIGHT_BEAT.label},{id:'whole',label:'全音符でのばす'},{id:'halves',label:'二分音符でのばす'}];
+export const RHYTHMS=[...EIGHT_BEAT_RHYTHMS,{id:'quarters',label:'4つずつ'},{id:'offbeat',label:'うらで弾く'},{id:'arpeggio',label:'音をばらして弾く'},{id:POP_EIGHT_BEAT.rhythm,label:POP_EIGHT_BEAT.label},{id:'whole',label:'全音符でのばす'},{id:'halves',label:'二分音符でのばす'}];
 import {DRUM_PATTERNS,resolveHatPattern} from './hat-patterns.js?v=v0.1.0-20261101001204-e794829';
 export {DRUM_PATTERNS};
 const heldLength=rhythm=>rhythm==='whole'?16:rhythm==='halves'?8:0;
@@ -24,7 +25,7 @@ export const SOUND_PRESETS={nursery:{chord:'piano',bass:'soft',drums:'acoustic'}
 // Playback and the sound picker must agree, including older saved image recipes.
 // An explicit part sound is the user's choice; never replace it with the default.
 export function accompanimentSounds(value){
- const sounds={...SOUND_PRESETS[value.genre],...value.imageArrangement?.sounds,...(value.rhythm===POP_EIGHT_BEAT.rhythm?POP_EIGHT_BEAT.sounds:{}),...value.sounds};
+ const sounds={...SOUND_PRESETS[value.genre],...value.imageArrangement?.sounds,...eightBeatSet(value.genre,value.rhythm)?.sounds,...(value.rhythm===POP_EIGHT_BEAT.rhythm?POP_EIGHT_BEAT.sounds:{}),...value.sounds};
  if(value.genre==='nursery'&&!value.sounds?.chord&&sounds.chord==='wood')sounds.chord='piano';
  return sounds;
 }
@@ -76,13 +77,13 @@ export function recommendProgressions(pattern){
 export function accompanimentEvents(pattern) {
  const value=pattern.accompaniment;
  if(!value?.enabled||validateAccompaniment(value,pattern.bars)) return [];
- const arrangement=value.imageArrangement;
+ const arrangement=value.imageArrangement,eight=eightBeatSet(value.genre,value.rhythm);
  const events=[],sounds=accompanimentSounds(value),nursery=value.genre==='nursery',held=heldLength(value.rhythm),drumPattern=value.drumPattern??'auto';
  const automaticDrums=drumPattern==='auto'&&!held&&sounds.drums!=='none';let previous=[];
  for(const segment of harmonicSegments(pattern)){
   const {startTick,durationTick,root,quality,bass}=segment;
   let chord=segment.rest?[]:chordVoicing({root,quality},previous);if(!segment.rest)previous=chord;
-  if(!segment.rest&&arrangement&&arrangement.patternId!==POP_EIGHT_BEAT.id){
+  if(!segment.rest&&!eight&&arrangement&&arrangement.patternId!==POP_EIGHT_BEAT.id){
    chord.sort((a,b)=>a-b);
    for(let i=0;i<arrangement.inversion;i++){const low=chord.shift();chord.push(low+12<=79?low+12:low);}
    chord.sort((a,b)=>a-b);if(arrangement.voicing==='falling')chord.reverse();
@@ -97,6 +98,18 @@ export function accompanimentEvents(pattern) {
     push(tick,length,36+bass,sounds.bass,.075,'bass');
     for(const midi of chord)push(tick,length,midi,sounds.chord,value.genre==='rock'?.035:.045,'chord');
    }
+   continue;
+  }
+  if(eight){
+   const offset=startTick%16;
+   const hits=ticks=>[...new Set([...(segment.rest?[]:[offset]),...ticks.filter(t=>t>=offset&&t<offset+durationTick)])].sort((a,b)=>a-b);
+   for(const tick of hits(eight.bass))push(tick-offset,Math.min(7,(eight.bass.find(t=>t>tick)??16)-tick),36+bass,sounds.bass,.065*eight.level,'bass');
+   for(const tick of hits(eight.chords)){
+    const index=eight.chords.filter(t=>t<tick).length;
+    const voices=eight.voicing==='rising'?[chord[index%chord.length]]:eight.voicing==='broken'?(index%2?chord.slice(1):chord.slice(0,1)):eight.voicing==='power'?[chord[0],chord[2]??chord[1]]:chord;
+    for(const midi of voices)push(tick-offset,Math.min(eight.gate,(eight.chords.find(t=>t>tick)??16)-tick),midi,sounds.chord,.04*eight.level,'chord');
+   }
+   if(automaticDrums)for(const [kind,ticks] of Object.entries({kick:eight.kicks,snare:[4,12],hat:[0,2,4,6,8,10,12,14]}))for(const tick of ticks)if(tick>=offset&&tick<offset+durationTick)push(tick-offset,1,kind==='kick'?36:kind==='snare'?38:42,`${sounds.drums==='electronic'?'electro-':''}${kind}`,(kind==='kick'?.06:kind==='snare'?.05:tick%4===0?.024:.008)*eight.level,'drums');
    continue;
   }
   if(value.rhythm==='tutorial'){
@@ -145,6 +158,7 @@ export function accompanimentEvents(pattern) {
 export function chordAuditionEvents(pattern,chord){
  if(chordTones(chord).code)return [];
  const value=structuredClone(pattern.accompaniment??{genre:'nursery',progression:'home'});
+ if(eightBeatSet(value.genre,value.rhythm))value.sounds=accompanimentSounds(value);
  Object.assign(value,{enabled:true,rhythm:'quarters',chords:[{...chord,startTick:0,durationTick:16}],sounds:{...value.sounds,drums:'none'}});
  if(value.imageArrangement){
   value.manualSettings={...value.manualSettings,rhythm:true};

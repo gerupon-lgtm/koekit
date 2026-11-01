@@ -21,17 +21,9 @@ export class ImageModeControls {
  get active(){return !!this.editor.previewPattern?.accompaniment?.imageChoice;}
  confirmed(){const expanded=this.compact&&this.active&&!this.collapsed;if(this.compact&&this.active){this.collapsed=true;if(this.tools)this.tools.open=false;if(this.advanced)this.advanced.open=false;}return expanded;}
  workspace(active){
-  // Reuse the editor controls. Image creation has a choice stage followed by a
-  // recording stage; optional editing/display controls stay within reach below.
-  if(!this.compact||!document.body.classList.contains('melody-app')||!$('creation-displays')||!$('keyboard-options'))return;
-  const tabs=$('creation-tabs'),displays=$('creation-displays'),toolbar=document.querySelector('.edit-toolbar'),options=$('keyboard-options'),settings=$('image-settings');
-  if(!this.tools){
-   this.tabsAnchor=document.createComment('creation tabs');tabs.before(this.tabsAnchor);
-   this.displaysAnchor=document.createComment('creation displays');displays.before(this.displaysAnchor);
-   this.toolbarAnchor=document.createComment('note editing');toolbar.before(this.toolbarAnchor);
-   this.optionsAnchor=document.createComment('keyboard options');options.before(this.optionsAnchor);
-   this.tools=document.createElement('details');this.tools.id='image-edit-tools';this.tools.innerHTML='<summary id="image-edit-tools-toggle">音を直す・表示をかえる</summary>';$('keyboard-options').before(this.tools);
-   this.advanced=this.rebuildGroup??document.createElement('details');if(!this.rebuildGroup){this.advanced.id='image-backing-detail';this.advanced.innerHTML='<summary>伴奏を作り直す</summary>';settings.append(this.advanced);}
+  // Shared editing/input controls are owned by CreationLayout for every source.
+  if(!this.compact||!document.body.classList.contains('melody-app'))return;
+  if(!this.heading){
    this.heading=document.createElement('div');this.heading.id='image-flow-heading';this.panel.before(this.heading);
    this.prompt=document.createElement('span');this.recordBack=document.createElement('button');this.recordBack.id='image-record-return';this.recordBack.textContent='録音にもどる';
    this.recordBack.onclick=()=>{if(this.busy||this.editor.pending)return;this.confirmed();this.onRecord?.();};this.heading.append(this.prompt,this.recordBack);
@@ -39,19 +31,9 @@ export class ImageModeControls {
   }
   const choosing=active&&!this.collapsed;
   document.body.classList.toggle('image-choosing',choosing);document.body.classList.toggle('image-performing',active&&!choosing);
-  this.tools.hidden=!active||choosing||document.body.dataset.createMode==='backing';this.advanced.hidden=false;this.heading.hidden=!active;this.summary.hidden=!active||choosing;
+  this.advanced=this.rebuildGroup;this.heading.hidden=!choosing;this.summary.hidden=true;
   this.recordBack.hidden=!choosing||!this.editor.accepted||this.editor.pending;this.recordBack.disabled=this.busy;
-  if(active){
-   if(tabs.parentNode===this.tools)this.tabsAnchor.after(tabs);if(displays.parentNode!==this.tools)this.tools.append(displays);if(document.body.dataset.createMode==='edit')this.tools.open=true;
-   if(toolbar.parentNode!==this.tools)this.tools.append(toolbar,options);
-   const value=this.editor.previewPattern;
-   this.prompt.textContent=choosing?'伴奏を えらぼう':'タップか ハナウタで 録ろう';
-   this.summary.textContent=`${IMAGE_TYPES.find(([id])=>id===value.accompaniment.imageChoice.type)?.[1]??''}・${value.key?.mode==='minor'?'くらめ':'あかるめ'}・${value.bars}小節`;
-   if(this.audition){const target=$('capture-note-panel');if(this.audition.parentNode!==target)target.append(this.audition);}
-  }else{
-   if(tabs.parentNode===this.tools)this.tabsAnchor.after(tabs);if(displays.parentNode===this.tools)this.displaysAnchor.after(displays);
-   if(toolbar.parentNode===this.tools){this.toolbarAnchor.after(toolbar);this.optionsAnchor.after(options);}
-  }
+  if(active)this.prompt.textContent='伴奏を えらぼう';
  }
  choice(){return Object.fromEntries(['type','speed','mood'].map(key=>[key,$(`image-word-${key}`).value]));}
  begin(){return this.editor.stageImageAccompaniment(generateImageAccompaniment(this.editor.previewPattern,DEFAULT_IMAGE));}
@@ -78,13 +60,6 @@ export class ImageModeControls {
   for(const [id,text] of [['composer-key',active?'調':'ふんいき'],['phrase-bars',active?'':'小節数']]){
    const control=$(id),label=control?.closest('label'),name=[...label?.childNodes??[]].find(n=>n.nodeType===3);
    if(name)name.textContent=text;if(id==='phrase-bars')control?.setAttribute('aria-label','小節数');
-  }
-  const keyboard=$('live-keyboard'),listen=document.querySelector('.listen-actions'),toolbar=document.querySelector('.edit-toolbar'),status=$('capture-edit-status');
-  if(keyboard&&listen&&toolbar){
-   if(!this.audition){this.audition=document.createElement('div');this.audition.id='image-audition';keyboard.before(this.audition);}
-   this.audition.hidden=!active;
-   if(active&&listen.parentNode!==this.audition)this.audition.append(listen,status);
-   if(!active&&listen.parentNode===this.audition)toolbar.append(listen,status);
   }
   this.workspace(active);
   const undo=$('capture-edit-undo');if(undo)undo.textContent=this.editor.imageCandidate?'もとにもどす':'もどす';

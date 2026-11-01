@@ -513,7 +513,7 @@ body.melody-app{background:#faf5ed;color:#443b36}
 
 /* A chord-only image part still has bulk/key/length edits, without empty note tools. */
 .melody-app.editor-focus.image-empty:not(.recording-focus)[data-create-mode=edit] .edit-toolbar{display:block}
-.melody-app.image-empty #screen-note-edit>:not(#creation-settings){display:none}
+.melody-app.image-empty #screen-note-edit>:not(#creation-settings):not(#capture-selection){display:none}
 
 /* Disabled primary actions keep a readable label while showing a neutral state. */
 .melody-app.editor-focus :is(#progression-use,#backing-rebuild-use,#backing-reset-use,#chord-use,#chord-single-preview):disabled{opacity:1;color:#5e554b;background:#e6e0d5}
