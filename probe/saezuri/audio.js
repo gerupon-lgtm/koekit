@@ -1,9 +1,9 @@
 // ML-T01 only: locally synthesized comparison voices, not approved instrument assets.
-import { tickSeconds } from '../../saezuri/document.js?v=v0.1.0-20261101001204-e794829';
-import { schedulePlaybackCount, COUNT_STYLES } from './playback-count.js?v=v0.1.0-20261101001204-e794829';
-import { createLightVoice, LIGHT_ENGINES, LIGHT_ONLY_INSTRUMENTS } from './light-voice.js?v=v0.1.0-20261101001204-e794829';
-import { DEFAULT_SOUND_ENGINE } from './sound-engine.js?v=v0.1.0-20261101001204-e794829';
-import {readPlaybackStats,playbackStatsDelta} from './playback-diagnostics.js?v=v0.1.0-20261101001204-e794829';
+import { tickSeconds } from '../../saezuri/document.js?v=v0.1.0-20261101014049-8fcbb21';
+import { schedulePlaybackCount, COUNT_STYLES } from './playback-count.js?v=v0.1.0-20261101014049-8fcbb21';
+import { createLightVoice, LIGHT_ENGINES, LIGHT_ONLY_INSTRUMENTS } from './light-voice.js?v=v0.1.0-20261101014049-8fcbb21';
+import { DEFAULT_SOUND_ENGINE } from './sound-engine.js?v=v0.1.0-20261101014049-8fcbb21';
+import {readPlaybackStats,playbackStatsDelta} from './playback-diagnostics.js?v=v0.1.0-20261101014049-8fcbb21';
 export function scheduleVoice(ctx, output, { midi, time, duration, instrument = 'piano', gain = 0.16, velocity = 70, engine = DEFAULT_SOUND_ENGINE }) {
   if(/^(electro-)?(kick|snare|hat)$/.test(instrument))return schedulePercussion(ctx,output,{time,duration,instrument,gain});
   if (engine !== 'classic' && !LIGHT_ENGINES.includes(engine)) throw new Error('VOICE_ENGINE_UNKNOWN');

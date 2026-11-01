@@ -1,8 +1,8 @@
-import {formatActionLabels} from './action-labels.js?v=v0.1.0-20261101001204-e794829';
-import {recommendProgressions,harmonicSegments} from '../../saezuri/music/accompaniment.js?v=v0.1.0-20261101001204-e794829';
-import {chordChangesInBar} from '../../saezuri/music/chord-timing.js?v=v0.1.0-20261101001204-e794829';
-import {chordLabel,sameChord} from '../../saezuri/music/catalog.js?v=v0.1.0-20261101001204-e794829';
-import {setupPlaybackSheet} from './sheet-controls.js?v=v0.1.0-20261101001204-e794829';
+import {formatActionLabels} from './action-labels.js?v=v0.1.0-20261101014049-8fcbb21';
+import {recommendProgressions,harmonicSegments} from '../../saezuri/music/accompaniment.js?v=v0.1.0-20261101014049-8fcbb21';
+import {chordChangesInBar} from '../../saezuri/music/chord-timing.js?v=v0.1.0-20261101014049-8fcbb21';
+import {chordLabel,sameChord} from '../../saezuri/music/catalog.js?v=v0.1.0-20261101014049-8fcbb21';
+import {setupPlaybackSheet} from './sheet-controls.js?v=v0.1.0-20261101014049-8fcbb21';
 const clone=value=>structuredClone(value);
 const $=id=>document.getElementById(id);
 function changedBars(before,after){

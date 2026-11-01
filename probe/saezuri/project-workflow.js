@@ -1,9 +1,9 @@
-import {readPartView} from './part-view.js?v=v0.1.0-20261101001204-e794829';
-import {setupPlaybackSheet} from './sheet-controls.js?v=v0.1.0-20261101001204-e794829';
-import {blankPattern} from './entry-session.js?v=v0.1.0-20261101001204-e794829';
-import {migrateProject,allocatePart,capturePart,syncProjectParts,emptyPartCheckpoint} from './project-session.js?v=v0.1.0-20261101001204-e794829';
-import {canKeepPhrase,emptySequence,sequencePlayback,proposeSequence} from './sequence-session.js?v=v0.1.0-20261101001204-e794829';
-import {ArrangementGestures} from './arrangement-gestures.js?v=v0.1.0-20261101001204-e794829';
+import {readPartView} from './part-view.js?v=v0.1.0-20261101014049-8fcbb21';
+import {setupPlaybackSheet} from './sheet-controls.js?v=v0.1.0-20261101014049-8fcbb21';
+import {blankPattern} from './entry-session.js?v=v0.1.0-20261101014049-8fcbb21';
+import {migrateProject,allocatePart,capturePart,syncProjectParts,emptyPartCheckpoint} from './project-session.js?v=v0.1.0-20261101014049-8fcbb21';
+import {canKeepPhrase,emptySequence,sequencePlayback,proposeSequence} from './sequence-session.js?v=v0.1.0-20261101014049-8fcbb21';
+import {ArrangementGestures} from './arrangement-gestures.js?v=v0.1.0-20261101014049-8fcbb21';
 const $=id=>document.getElementById(id),copy=v=>structuredClone(v);
 const button=(text,action)=>{const b=document.createElement('button');b.type='button';b.textContent=text;b.onclick=action;return b;};
 export class ProjectWorkflow{

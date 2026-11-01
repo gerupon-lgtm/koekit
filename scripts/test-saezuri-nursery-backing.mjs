@@ -67,7 +67,7 @@ test('explicit chord sounds including bell remain selected after saving or regen
 test('the other three genres retain exactly the published pitches, timings, instruments and levels',()=>{
  const hash=createHash('sha256');let cases=0;
  for(const genre of ['pop','rock','ballad'])for(const key of ['C','Am'])for(const bars of [4,8]){
-  for(const progression of backing.PROGRESSIONS[key])for(const rhythm of backing.RHYTHMS.filter(r=>!['whole','halves'].includes(r.id))){
+  for(const progression of backing.PROGRESSIONS[key])for(const rhythm of backing.RHYTHMS.filter(r=>['quarters','offbeat','arpeggio','tutorial'].includes(r.id))){
    const pattern={...blankPattern(key),bars,accompaniment:{enabled:true,genre,rhythm:rhythm.id,progression:progression.id}};
    hash.update(JSON.stringify(backing.accompanimentEvents(pattern)));cases++;
   }
