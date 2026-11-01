@@ -75,5 +75,15 @@
 .melody-app #project-part-rename-form{margin:0}
 .melody-app #project-part-name{box-sizing:border-box;width:100%;min-height:48px;font-size:16px;margin-top:10px}
 .melody-app #project-part-rename .sheet-stop{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
-.melody-app #project-part-rename .sheet-stop>button{min-width:0;min-height:48px;margin:0}
+.melody-app #project-part-rename .sheet-stop>button{width:100%;min-width:0;min-height:48px;margin:0}
 .melody-app #project-part-name-error:empty{display:none}
+
+/* Keep the name field and confirmation inside the area above the keyboard. */
+.melody-app.editor-focus #project-part-rename{inset:var(--dialog-visible-top,8px) auto auto var(--dialog-visible-left,8px);width:var(--dialog-visible-width,calc(100% - 16px));max-width:none;max-height:var(--dialog-visible-height,calc(100dvh - 16px));margin:0;border-radius:20px;padding:12px;gap:10px}
+.melody-app.editor-focus #project-part-rename[data-viewport-short]{padding:8px;gap:8px}
+.melody-app #project-part-rename[data-viewport-short] #project-part-name-hint{display:none}
+.melody-app #project-part-rename[data-viewport-short] #project-part-name{margin-top:6px}
+.melody-app.editor-focus #project-part-rename[data-viewport-short]>.screen-heading{min-height:44px}
+.melody-app.editor-focus #project-part-rename[data-viewport-tiny]>.screen-heading{display:none}
+.melody-app.editor-focus #project-part-rename[data-viewport-tiny][open]{grid-template-rows:minmax(0,1fr) auto}
+.melody-app #project-part-rename[data-viewport-narrow]>.sheet-stop{grid-template-columns:minmax(0,1fr)}

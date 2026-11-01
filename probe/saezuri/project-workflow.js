@@ -1,5 +1,5 @@
 import {readPartView} from './part-view.js?v=v0.1.0-20261101023905-180b545';
-import {setupPlaybackSheet} from './sheet-controls.js?v=v0.1.0-20261101023905-180b545';
+import {setupPlaybackSheet,keepDialogVisible} from './sheet-controls.js?v=v0.1.0-20261101023905-180b545';
 import {blankPattern} from './entry-session.js?v=v0.1.0-20261101023905-180b545';
 import {migrateProject,allocatePart,capturePart,syncProjectParts,emptyPartCheckpoint,renamePart} from './project-session.js?v=v0.1.0-20261101023905-180b545';
 import {canKeepPhrase,emptySequence,sequencePlayback,proposeSequence} from './sequence-session.js?v=v0.1.0-20261101023905-180b545';
@@ -31,7 +31,7 @@ export class ProjectWorkflow{
   document.querySelector('main').append(this.dialog);$('project-part-close').onclick=()=>this.dialog.close();setupPlaybackSheet(this.dialog,{closeId:'project-part-close',stopId:'project-part-stop',onStop:()=>shell.onStop(),stopOnClose:false});this.dialog.addEventListener('close',()=>{shell.onStop();shell.onNavigate();const data=this.playAfterPartClose;this.playAfterPartClose=null;if(data)shell.onPlay(data,false);});
   const rename=document.createElement('dialog');rename.id='project-part-rename';rename.className='song-dialog';rename.setAttribute('aria-labelledby','project-part-rename-title');
   rename.innerHTML='<div class="screen-heading"><h2 id="project-part-rename-title">名前を変える</h2><button id="project-part-rename-close">とじる</button></div><form id="project-part-rename-form" novalidate><label for="project-part-name">フレーズの名前</label><input id="project-part-name" type="text" maxlength="24" required autocomplete="off" enterkeyhint="done" aria-describedby="project-part-name-hint project-part-name-error"><p id="project-part-name-hint" class="image-hint">24文字まで。同じフレーズを使っている場所の名前も変わります。</p><p id="project-part-name-error" class="image-hint" role="status"></p></form>';
-  document.querySelector('main').append(rename);this.renameDialog=rename;
+  document.querySelector('main').append(rename);this.renameDialog=rename;this.fitRename=keepDialogVisible(rename);
   setupPlaybackSheet(rename,{closeId:'project-part-rename-close',footerCloseId:'project-part-rename-cancel',onStop:()=>shell.onStop(),stopOnClose:false});
   const renameSave=button('この名前にする',()=>{});renameSave.id='project-part-name-save';renameSave.type='submit';renameSave.setAttribute('form','project-part-rename-form');rename.querySelector('.sheet-stop').append(renameSave);
   $('project-part-rename-cancel').textContent='やめる';$('project-part-rename-close').onclick=()=>rename.close();
@@ -115,7 +115,7 @@ export class ProjectWorkflow{
  }
  openRename(part){
   const s=this.shell;if(s.busy||s.proposal||s.placementWorkflow.active||!this.project.parts.some(p=>p.id===part.id))return;
-  s.onStop();this.renamingPartId=part.id;this.renamingComposing=false;$('project-part-name').value=part.name;$('project-part-name-error').textContent='';$('project-part-name').removeAttribute('aria-invalid');this.renameDialog.showModal();s.onNavigate();$('project-part-name').focus({preventScroll:true});$('project-part-name').select();
+  s.onStop();this.renamingPartId=part.id;this.renamingComposing=false;$('project-part-name').value=part.name;$('project-part-name-error').textContent='';$('project-part-name').removeAttribute('aria-invalid');this.renameDialog.showModal();this.fitRename();s.onNavigate();$('project-part-name').focus({preventScroll:true});$('project-part-name').select();
  }
  resumePlacement(){const s=this.shell,draft=this.parkedPlacement;if(!draft||s.phase==='saving')return;s.onStop();if(s.busy||s.proposal||s.placementWorkflow.active)return;s.placementWorkflow.begin(draft.placementId,draft.checkpoint);if(!s.placementWorkflow.active)return;this.parkedPlacement=null;this.placementWorkspace?.restore();this.placementWorkspace=null;}
  cardActions(id){
